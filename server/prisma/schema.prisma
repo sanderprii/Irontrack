@@ -19,6 +19,7 @@ model User {
   trainings          Training[]
   monthlyGoal        Int?
   phone              String?
+  address            String?
   logo               String?
   classSchedules     ClassSchedule[]
   Plan               Plan[]

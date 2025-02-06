@@ -4,7 +4,7 @@ export const getPlans = async (affiliateId) => {
     try {
 
         const token = localStorage.getItem("token");
-        const response = await fetch(API_URL, {
+        const response = await fetch(`${API_URL}/plans`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -21,7 +21,7 @@ export const getPlans = async (affiliateId) => {
 export const createPlan = async (planData) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await fetch(API_URL, {
+        const response = await fetch(`${API_URL}/plans`, {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -37,7 +37,7 @@ export const createPlan = async (planData) => {
 export const updatePlan = async (planId, planData) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/${planId}`, {
+        const response = await fetch(`${API_URL}/plans/${planId}`, {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -53,7 +53,7 @@ export const updatePlan = async (planId, planData) => {
 export const deletePlan = async (planId) => {
     try {
         const token = localStorage.getItem("token");
-        await fetch(`${API_URL}/${planId}`, { method: "DELETE",
+        await fetch(`${API_URL}/plans/${planId}`, { method: "DELETE",
             headers: {
             "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json" },
@@ -70,7 +70,7 @@ export const buyPlan = async (planData, affiliateId, appliedCredit) => {
 
         const data = { planData, appliedCredit };
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/buy-plan/${affiliateId}`, {
+        const response = await fetch(`${API_URL}/plans/buy-plan/${affiliateId}`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json" },
@@ -89,7 +89,7 @@ export const getUserCredit = async ( affiliateId) => {
 
         const token = localStorage.getItem("token");
         // Näiteks fetch() või axios() abil andmed edastada
-        const response = await fetch(`${API_URL}/credit/${affiliateId}`, {
+        const response = await fetch(`${API_URL}/plans/credit/${affiliateId}`, {
             method: "GET",
             headers: { "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json" },

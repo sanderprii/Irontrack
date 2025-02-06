@@ -19,7 +19,6 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'; // 🌙 Dark mode
 import Brightness7Icon from '@mui/icons-material/Brightness7'; // ☀️ Light mode icon
 import { ThemeContext } from '../shared-theme/AppTheme';
 
-
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -41,8 +40,8 @@ export default function AppAppBar() {
     const navigate = useNavigate();
     const [open, setOpen] = React.useState(false);
 
-    const { mode, toggleTheme } = useContext(ThemeContext); // ⬅️ Kasutame teema infot
-
+    // Kasutame teema infot (dark/light)
+    const { mode, toggleTheme } = useContext(ThemeContext);
 
     const toggleDrawer = (newOpen) => () => {
         setOpen(newOpen);
@@ -65,7 +64,7 @@ export default function AppAppBar() {
                 { name: 'Find Users', to: '/find-users' },
                 { name: 'Register for Training', to: '/register-training' },
             ];
-            rightLinks = [{ name: 'My Profile', to: '/my-profile' }, { name: 'Log Out', action: logout }];
+            rightLinks = [{ name: 'My Profile', to: '/my-profile' }, { name: 'Log Out', action: () => logout(navigate) }];
         } else if (role === 'affiliate') {
             leftLinks = [
                 { name: 'My Affiliate', to: '/my-affiliate' },
@@ -73,13 +72,13 @@ export default function AppAppBar() {
                 { name: 'Members', to: '/members' },
                 { name: 'Plans', to: '/plans' },
             ];
-            rightLinks = [{ name: 'Log Out', action: logout }];
+            rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
         } else if (role === 'trainer') {
             leftLinks = [{ name: 'Trainer Page', to: '/trainer' }];
-            rightLinks = [{ name: 'Log Out', action: logout }];
+            rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
         } else if (role === 'checkin') {
             leftLinks = [{ name: 'Check-In Page', to: '/check-in' }];
-            rightLinks = [{ name: 'Log Out', action: logout }];
+            rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
         }
     }
 
@@ -87,11 +86,12 @@ export default function AppAppBar() {
         <AppBar position="static" enableColorOnDark sx={{ boxShadow: 0, bgcolor: 'transparent' }}>
             <Container maxWidth="false">
                 <StyledToolbar variant="dense" disableGutters>
-                    {/* Logo */}
+                    {/* Logo või kaubamärgi ikoon */}
                     <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
                         <Sitemark />
                     </Box>
-                    {/* Light/Dark mode switch */}
+
+                    {/* Teema lüliti (Light/Dark) */}
                     <IconButton onClick={toggleTheme} color="inherit">
                         {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
                     </IconButton>
@@ -100,11 +100,24 @@ export default function AppAppBar() {
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         {leftLinks.map((link) =>
                             link.action ? (
-                                <Button key={link.name} onClick={link.action} variant="text" color="info" size="small">
+                                <Button
+                                    key={link.name}
+                                    onClick={link.action}
+                                    variant="text"
+                                    color="info"
+                                    size="small"
+                                >
                                     {link.name}
                                 </Button>
                             ) : (
-                                <Button key={link.name} component={Link} to={link.to} variant="text" color="info" size="small">
+                                <Button
+                                    key={link.name}
+                                    component={Link}
+                                    to={link.to}
+                                    variant="text"
+                                    color="info"
+                                    size="small"
+                                >
                                     {link.name}
                                 </Button>
                             )
@@ -115,48 +128,73 @@ export default function AppAppBar() {
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
                         {rightLinks.map((link) =>
                             link.action ? (
-                                <Button key={link.name} onClick={link.action} color="primary" variant="text" size="small">
+                                <Button
+                                    key={link.name}
+                                    onClick={link.action}
+                                    color="primary"
+                                    variant="text"
+                                    size="small"
+                                >
                                     {link.name}
                                 </Button>
                             ) : (
-                                <Button key={link.name} component={Link} to={link.to} color="primary" variant="contained" size="small">
+                                <Button
+                                    key={link.name}
+                                    component={Link}
+                                    to={link.to}
+                                    color="primary"
+                                    variant="contained"
+                                    size="small"
+                                >
                                     {link.name}
                                 </Button>
                             )
                         )}
                     </Box>
 
-                    {/* Mobile menu button */}
+                    {/* Mobile menu (hamburger) */}
                     <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
                         <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
                             <MenuIcon />
                         </IconButton>
                         <Drawer anchor="top" open={open} onClose={toggleDrawer(false)}>
                             <Box sx={{ p: 2, backgroundColor: 'background.default' }}>
+                                {/* Sulgemise nupp */}
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <IconButton onClick={toggleDrawer(false)}>
                                         <CloseRoundedIcon />
                                     </IconButton>
                                 </Box>
 
+                                {/* Mobile menüü (left links) */}
                                 {leftLinks.map((link) => (
                                     <MenuItem key={link.name} onClick={toggleDrawer(false)}>
-                                        <Button component={Link} to={link.to} color="inherit" fullWidth>
-                                            {link.name}
-                                        </Button>
+                                        {link.action ? (
+                                            <Button onClick={link.action} color="inherit" fullWidth>
+                                                {link.name}
+                                            </Button>
+                                        ) : (
+                                            <Button component={Link} to={link.to} color="inherit" fullWidth>
+                                                {link.name}
+                                            </Button>
+                                        )}
                                     </MenuItem>
                                 ))}
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* Mobile menüü (right links) */}
                                 {rightLinks.map((link) => (
                                     <MenuItem key={link.name} onClick={toggleDrawer(false)}>
-                                        <Button
-                                            onClick={link.action ? link.action : undefined}
-                                            component={link.to ? Link : undefined}
-                                            to={link.to ? link.to : undefined}
-                                            color="inherit"
-                                            fullWidth
-                                        >
-                                            {link.name}
-                                        </Button>
+                                        {link.action ? (
+                                            <Button onClick={link.action} color="inherit" fullWidth>
+                                                {link.name}
+                                            </Button>
+                                        ) : (
+                                            <Button component={Link} to={link.to} color="inherit" fullWidth>
+                                                {link.name}
+                                            </Button>
+                                        )}
                                     </MenuItem>
                                 ))}
                             </Box>

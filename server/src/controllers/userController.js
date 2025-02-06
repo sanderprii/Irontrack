@@ -91,7 +91,7 @@ exports.changePassword = async (req, res) => {
 // Edit profile
 exports.editProfile = async (req, res) => {
     const userId = req.user.id;
-    const { fullName, dateOfBirth, email } = req.body;
+    const { fullName, phone, address, dateOfBirth, email } = req.body;
 
     try {
         await prisma.user.update({
@@ -100,6 +100,8 @@ exports.editProfile = async (req, res) => {
                 fullName: fullName || null,
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
                 email: email || null,
+                phone: phone || null,
+                address: address || null,
             },
         });
 
@@ -126,6 +128,7 @@ exports.getUser = async (req, res) => {
                 homeAffiliate: true,
                 monthlyGoal: true,
                 logo: true,
+                address: true,
             }
         });
         res.json(user);

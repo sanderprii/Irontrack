@@ -62,21 +62,53 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     },
 }));
 
-const JoinUsForm = () => {
+export default function JoinUsForm() {
     const navigate = useNavigate();
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    // Kontrollboole ja errormessage'id
+    const [isAffiliateOwner, setIsAffiliateOwner] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [isAffiliateOwner, setIsAffiliateOwner] = useState(false);
+
+    // Email
     const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
+
+    // Parool
     const [passwordError, setPasswordError] = useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-    const API_URL = process.env.REACT_APP_API_URL
+
+    // Kinnituse parool
+    const [confirmPasswordError, setConfirmPasswordError] = useState(false);
+    const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = useState('');
+
+    // FullName
+    const [fullNameError, setFullNameError] = useState(false);
+    const [fullNameErrorMessage, setFullNameErrorMessage] = useState('');
+
+    // API URL
+    const API_URL = process.env.REACT_APP_API_URL;
+
     const validateInputs = () => {
         let isValid = true;
 
+        // FullName (nõutud)
+        if (!fullName.trim()) {
+            setFullNameError(true);
+            setFullNameErrorMessage('Full name is required.');
+            isValid = false;
+        } else {
+            setFullNameError(false);
+            setFullNameErrorMessage('');
+        }
+
+        // Email (nõutud + vormindus)
         if (!email || !/\S+@\S+\.\S+/.test(email)) {
             setEmailError(true);
             setEmailErrorMessage('Please enter a valid email address.');
@@ -86,6 +118,7 @@ const JoinUsForm = () => {
             setEmailErrorMessage('');
         }
 
+        // Parool (nõutud, min 6 tähte)
         if (!password || password.length < 6) {
             setPasswordError(true);
             setPasswordErrorMessage('Password must be at least 6 characters long.');
@@ -93,6 +126,16 @@ const JoinUsForm = () => {
         } else {
             setPasswordError(false);
             setPasswordErrorMessage('');
+        }
+
+        // Kinnita parool (nõutud + peab kattuma `password`)
+        if (!confirmPassword || confirmPassword !== password) {
+            setConfirmPasswordError(true);
+            setConfirmPasswordErrorMessage('Passwords do not match.');
+            isValid = false;
+        } else {
+            setConfirmPasswordError(false);
+            setConfirmPasswordErrorMessage('');
         }
 
         return isValid;
@@ -113,20 +156,27 @@ const JoinUsForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password, affiliateOwner: isAffiliateOwner }),
+                body: JSON.stringify({
+                    fullName,
+                    phone,
+                    address,
+                    email,
+                    password,
+                    affiliateOwner: isAffiliateOwner
+                }),
             });
 
             const data = await response.json();
             if (response.ok) {
-                setSuccess('Registreerimine õnnestus!');
+                setSuccess('Registration successful!');
                 localStorage.setItem('token', data.token);
                 navigate('/');
             } else {
-                setError(data.error || 'Midagi läks valesti registreerimisel.');
+                setError(data.error || 'Something went wrong with registration.');
             }
         } catch (err) {
             console.error(err);
-            setError('Serveri viga, proovi hiljem uuesti.');
+            setError('Server error, please try again later.');
         }
     };
 
@@ -135,7 +185,13 @@ const JoinUsForm = () => {
             <CssBaseline enableColorScheme />
             <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
             <SignUpContainer direction="column" justifyContent="space-between">
-                <Card variant="outlined" sx={{ bgcolor: "background.paper", boxShadow: "0px 4px 10px rgba(255, 179, 71, 0.5)" }}>
+                <Card
+                    variant="outlined"
+                    sx={{
+                        bgcolor: 'background.paper',
+                        boxShadow: '0px 4px 10px rgba(255, 179, 71, 0.5)',
+                    }}
+                >
                     <SitemarkIcon />
                     <Typography
                         component="h1"
@@ -148,7 +204,62 @@ const JoinUsForm = () => {
                     {error && <Alert severity="error">{error}</Alert>}
                     {success && <Alert severity="success">{success}</Alert>}
 
-                    <Box component="form" onSubmit={handleRegister} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box
+                        component="form"
+                        onSubmit={handleRegister}
+                        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                    >
+                        {/* Full Name */}
+                        <FormControl>
+                            <FormLabel htmlFor="fullName">Full Name</FormLabel>
+                            <TextField
+                                error={fullNameError}
+                                helperText={fullNameErrorMessage}
+                                id="fullName"
+                                name="fullName"
+                                placeholder="John Smith"
+                                autoComplete="name"
+                                required
+                                fullWidth
+                                variant="outlined"
+                                color={fullNameError ? 'error' : 'primary'}
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                            />
+                        </FormControl>
+
+                        {/* Phone (vabatahtlik) */}
+                        <FormControl>
+                            <FormLabel htmlFor="phone">Phone (optional)</FormLabel>
+                            <TextField
+                                id="phone"
+                                name="phone"
+                                placeholder="+123456789"
+                                autoComplete="tel"
+                                fullWidth
+                                variant="outlined"
+                                color="primary"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
+                        </FormControl>
+
+                        {/* Address (vabatahtlik) */}
+                        <FormControl>
+                            <FormLabel htmlFor="address">Address (optional)</FormLabel>
+                            <TextField
+                                id="address"
+                                name="address"
+                                placeholder="Your address"
+                                fullWidth
+                                variant="outlined"
+                                color="primary"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                            />
+                        </FormControl>
+
+                        {/* Email (nõutud) */}
                         <FormControl>
                             <FormLabel htmlFor="email">Email</FormLabel>
                             <TextField
@@ -157,7 +268,7 @@ const JoinUsForm = () => {
                                 id="email"
                                 type="email"
                                 name="email"
-                                placeholder="your@email.com"
+                                placeholder="john@smith.com"
                                 autoComplete="email"
                                 required
                                 fullWidth
@@ -168,6 +279,7 @@ const JoinUsForm = () => {
                             />
                         </FormControl>
 
+                        {/* Password (nõutud) */}
                         <FormControl>
                             <FormLabel htmlFor="password">Password</FormLabel>
                             <TextField
@@ -187,6 +299,26 @@ const JoinUsForm = () => {
                             />
                         </FormControl>
 
+                        {/* Confirm Password (nõutud) */}
+                        <FormControl>
+                            <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+                            <TextField
+                                error={confirmPasswordError}
+                                helperText={confirmPasswordErrorMessage}
+                                name="confirmPassword"
+                                placeholder="••••••"
+                                type="password"
+                                id="confirmPassword"
+                                required
+                                fullWidth
+                                variant="outlined"
+                                color={confirmPasswordError ? 'error' : 'primary'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </FormControl>
+
+                        {/* Kasuta Affiliates */}
                         <FormControlLabel
                             control={
                                 <Checkbox
@@ -206,10 +338,20 @@ const JoinUsForm = () => {
                     <Divider>or</Divider>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Button fullWidth variant="outlined" onClick={() => alert('Sign up with Google')} startIcon={<GoogleIcon />}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => alert('Sign up with Google')}
+                            startIcon={<GoogleIcon />}
+                        >
                             Sign up with Google
                         </Button>
-                        <Button fullWidth variant="outlined" onClick={() => alert('Sign up with Facebook')} startIcon={<FacebookIcon />}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => alert('Sign up with Facebook')}
+                            startIcon={<FacebookIcon />}
+                        >
                             Sign up with Facebook
                         </Button>
                         <Typography sx={{ textAlign: 'center' }}>
@@ -223,6 +365,4 @@ const JoinUsForm = () => {
             </SignUpContainer>
         </AppTheme>
     );
-};
-
-export default JoinUsForm;
+}

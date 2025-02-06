@@ -114,7 +114,7 @@ const addCredit = async (req, res) => {
         const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
 
 
-        await prisma.creditTransaction.create({
+        const responseOK = await prisma.creditTransaction.create({
             data: {
                 userId,
                 affiliateId,
@@ -126,7 +126,7 @@ const addCredit = async (req, res) => {
             }
         });
 
-        res.json(credit);
+        res.json(responseOK);
     } catch (error) {
         console.error("Error adding credit:", error);
         res.status(500).json({error: "Internal server error"});

@@ -33,11 +33,11 @@ export const searchUsers = async (query) => {
     }
 };
 
-export const getMemberInfo = async (userId) => {
+export const getMemberInfo = async (userId, userRole) => {
 
     const token = localStorage.getItem("token");
     try {
-        const response = await fetch(`${API_BASE}/member-info?userId=${userId}`, {
+        const response = await fetch(`${API_BASE}/member-info?userId=${userId}&userRole=${userRole}`, {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"

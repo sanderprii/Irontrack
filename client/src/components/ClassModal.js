@@ -243,7 +243,7 @@ export default function ClassModal({
 
     const handleOpenProfile = async (userId) => {
         try {
-            const userData = await getMemberInfo(userId);
+            const userData = await getMemberInfo(userId, userRole);
             setSelectedUser(userData);
             setProfileOpen(true);
         } catch (error) {

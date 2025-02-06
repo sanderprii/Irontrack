@@ -27,6 +27,9 @@ router.get("/members", ensureAuthenticated, async (req, res) => {
 // 🔹 GET: Konkreetse liikme info (krediit, plaanid jne)
 router.get("/member-info", ensureAuthenticated, async (req, res) => {
     const userId = parseInt(req.query.userId, 10);
+const role = req.query.userRole;
+
+
 
     try {
         const user = await prisma.user.findUnique({
@@ -36,14 +39,14 @@ router.get("/member-info", ensureAuthenticated, async (req, res) => {
         if (!user) return res.status(404).json({ error: "User not found" });
 
         let affiliateIds = [];
-        if (req.session.currentRole === "owner") {
+        if ( role === "affiliate") {
             const affiliate = await prisma.affiliate.findFirst({
-                where: { ownerId: req.session.userId },
+                where: { ownerId: req.user?.id },
             });
             if (affiliate) affiliateIds.push(affiliate.id);
-        } else if (req.session.currentRole === "trainer") {
+        } else if ( role === "trainer") {
             const relations = await prisma.affiliateTrainer.findMany({
-                where: { trainerId: req.session.userId },
+                where: { trainerId: req.user?.id },
             });
             affiliateIds = relations.map((r) => r.affiliateId);
         }
@@ -63,6 +66,7 @@ router.get("/member-info", ensureAuthenticated, async (req, res) => {
             phone: user.phone,
             credit: user.credit || 0,
             logo: user.logo,
+            address: user.address,
             isMember: userPlans.length > 0,
             plans: userPlans.map((plan) => ({
                 planName: plan.planName,

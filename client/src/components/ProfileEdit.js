@@ -27,6 +27,22 @@ export default function ProfileEdit({ user, onSave, onCancel }) {
                 fullWidth
             />
             <TextField
+                label="Phone"
+                name="phone"
+                value={draft.phone || ''}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+                fullWidth
+            />
+            <TextField
+                label="Address"
+                name="address"
+                value={draft.address || ''}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+                fullWidth
+            />
+            <TextField
                 type="date"
                 label="Birthdate"
                 name="dateOfBirth"

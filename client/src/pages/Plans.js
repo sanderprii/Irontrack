@@ -48,8 +48,14 @@ export default function Plans() {
     }, [theme]);
 
     const fetchPlans = async () => {
-        const data = await getPlans();
-        setPlans(data);
+        try {
+            const data = await getPlans();
+            console.log("Fetched plans:", data); // Debugging output
+            setPlans(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching plans:", error);
+            setPlans([]); // Ensure `plans` is always an array
+        }
     };
 
     const handleSave = async (planData) => {
@@ -81,7 +87,8 @@ export default function Plans() {
                 </Button>
 
                 <Grid container spacing={3} sx={{ alignItems: "center", justifyContent: "center", width: "100%" }}>
-                    {plans.map((plan) => (
+                    {(Array.isArray(plans) ? plans : []).map((plan) => (
+
                         <Grid item xs={12} sm={plan.name === "Enterprise" ? 12 : 6} md={4} key={plan.id}>
                             <StyledCard
                                 onClick={() => {

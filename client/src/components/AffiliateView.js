@@ -11,8 +11,13 @@ import {
     List,
     ListItem,
 } from '@mui/material';
+import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
+import EmailIcon from '@mui/icons-material/Email';
+import PersonIcon from '@mui/icons-material/Person';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AffiliateEdit from './AffiliateEdit';
 import { uploadAffiliateLogo } from '../api/logoApi';
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export default function AffiliateView({ token, affiliate, trainers, onUpdateAffiliate }) {
     const [editing, setEditing] = useState(false);
@@ -89,9 +94,27 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                 <Card sx={{ mt: 2, bgcolor: 'background.paper' }}>
                     <CardContent>
                         <Typography variant="h6">Contact</Typography>
-                        <Typography>Email: {affiliate.email || 'No email'}</Typography>
-                        <Typography>Phone: {affiliate.phone || 'No phone'}</Typography>
-                        <Typography>Address: {affiliate.address || 'No address'}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <EmailIcon sx={{ color: "gray" }} />
+                            <Typography>
+                                <strong></strong> {affiliate.email}
+                            </Typography>
+                        </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <PhoneAndroidIcon sx={{ color: "gray" }} />
+                            <Typography>
+                                <strong></strong> {affiliate.phone}
+                            </Typography>
+                        </Box>
+
+                        {/* Aadress */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <LocationOnIcon sx={{ color: "gray" }} />
+                            <Typography>
+                                <strong></strong> {affiliate.address}
+                            </Typography>
+                        </Box>
                     </CardContent>
                 </Card>
 
@@ -101,7 +124,16 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                         <List>
                             {trainers.length > 0 ? (
                                 trainers.map((trainer) => (
-                                    <ListItem key={trainer.trainerId}>{trainer.fullName}</ListItem>
+                                    <ListItem key={trainer.trainerId}>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                            <PersonIcon sx={{ color: "gray" }} />
+                                            <Typography>
+                                                <strong></strong> {trainer.fullName}
+                                            </Typography>
+                                        </Box>
+
+
+                                    </ListItem>
                                 ))
                             ) : (
                                 <Typography>No trainers assigned.</Typography>
@@ -114,7 +146,12 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                     <CardContent>
                         <Typography variant="h6">Bank Details</Typography>
                         <Typography>IBAN: {affiliate.iban || 'No IBAN'}</Typography>
-                        <Typography>Bank: {affiliate.bankName || 'No bank name'}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <AccountBalanceIcon sx={{ color: "gray" }} />
+                            <Typography>
+                                <strong></strong> {affiliate.bankName}
+                            </Typography>
+                        </Box>
                     </CardContent>
                 </Card>
             </Grid>

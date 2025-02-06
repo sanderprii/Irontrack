@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'salajane_jwt_voti';
 
 exports.register = async (req, res) => {
     try {
-        const { email, password, affiliateOwner } = req.body;
+        const { fullName, phone, address, email, password, affiliateOwner } = req.body;
         // Kontrolli, kas väljad on täidetud
         if (!email || !password) {
             return res.status(400).json({ error: 'Email ja parool on kohustuslikud!' });
@@ -27,6 +27,9 @@ exports.register = async (req, res) => {
             data: {
                 email,
                 password: hashedPassword,
+                fullName,
+                phone,
+                address,
                 affiliateOwner: affiliateOwner || false,
             },
         });

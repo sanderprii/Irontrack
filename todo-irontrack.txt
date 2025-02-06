@@ -1,0 +1,285 @@
+todo:
+
+Üldine:
+1. light/dark taust igal lehel käima
+2. Log out, siis viskab home lehele
+3. Home/About leht visandada.
+4. Join Us - saab mõistlikke andmeid panna
+5. Register ja login with google
+6. Remember me ka toimima
+
+registerTrainingPage:
+1. plaane ei saa osta.
+2. search bari tagune korda teha
+3. affiliate info normaalsemaks teha
+4. nupud korda
+5. REgister class ka diary lehele.
+6. Päeva nupud M + kuupäev
+7. Classes card ilusaks ja info õigeks.
+8. Add score nupp ja funktsioon
+9. capacity ikoon
+
+
+RegisterPage:
+1. form korda teha
+2. kalender M-S
+
+My Profile page:
+1. upload image
+2. kliendi andmete sisestamine/edit
+3. kliendi andmete kuvamine
+4. Purchase/Visit history nupu alla
+
+RecordsPage:
+1. Nupud korda
+2. Records card ilusamaks
+3. Kui vajutada records peale, siis avaneb modal koos chartiga. Kuvab ka mõistlikke andmeid.
+
+
+Kasutaja omavastutuse nõusolek tema profiilile owneri vaates ja kliendi vaates. lisada esimesel ostul nõusolek koos checkboxiga ja kui ei ole nõus, siis ei saa osta.
+
+Alarmi kasutajale owneri vaates, kui on vigastus või midagi muud tähtsat, mida treener peab teadma.
+treener saab note kirja panna kliendi kohta, mis ta on algaja või vajab abi või on või vigastused.
+
+
+kliendi kohta kogu info nähtavaks owner vaates
+
+
+owner ja treeneri vaates lisada kliendi kohta märkmeid, kui on temaga ühendust võetud.
+
+visit history kliendi kohta owner vaates.
+
+klient  - > owner makse: makse andmed automaatselt saidile pangast. Kas saab üldse?
+
+owner enda vaates saab plaani aktiveerida ja deaktiveerida ning ka kliendile lisada
+
+kliendi rapordid- võlgnevused jne owner vaates kliendi kohta. Lisada üldine raport ka klientide kohta.
+
+kliendi kohta statistika owner ja treeneri vaates, kes kui palju käisid treeningutel.
+kui palju tuli uusi kliente ja kui palju ära läks mingil perioodil owner vaates.
+
+kliendi analüüs
+
+at risk kliendid lisada owner vaates.  (külastused kukuvad ära jne) lisada algoritm, mis arvutab kliendi riski.
+
+waitlist klassidele tehakse automaatselt, kui klass on täis. Kui keegi loobub, siis saadetakse email kliendile, et ta saab klassi regada.
+
+klubil võimalus enda kujundus ja logo lisada.
+
+owner vaates lisada klassidele linnuke, kus saab klassi regamise kinni panna.
+
+Luba kliendil tasuta regada klassi.
+
+owner vaates lisada kui mitu korda klient on aasta jooksul külastanud.
+
+Mitu korda on klient enda skoori sisestanud - nähtav owner vaates.
+
+email saatmise võimalus - klassi kaupa, gruppide kaupa, kõik, kes on ostnud või home gym pannud.
+
+Lisada owner ja treener vaates wod kava kuu kaupa. Igale päevale saab ühe wod panna ja lisada terve päeva treeningutele.
+
+kui lepinguline klient, siis saab paketi pärast enddate regada klassi. nt 5 päevane aken. autoemail, kui makse on üle läinud. 
+
+Affiliate lepingute koostamine, kuvamine, salvestamine, kinnitamine.
+
+Võimalus kodulehele panna kalender
+
+
+User Stories & Tasks
+
+1. User Consent for Self-Responsibility
+
+As a client, I want to accept self-responsibility upon my first purchase via a checkbox, so that I can proceed with the purchase.
+
+There is a checkbox for self-responsibility agreement.
+
+If the checkbox is not selected, the purchase cannot be completed.
+
+The agreement status is saved on the user's profile.
+
+Owner View: The owner can see whether a client has accepted the agreement.
+
+Client View: The client can see and update their agreement status.
+
+2. Alerts for Important Client Conditions
+
+As an owner, I want to receive an alert if a client has an injury or other critical condition, so that I can inform the trainer.
+
+There is an option to mark a client’s condition.
+
+Clicking the button opens a modal to enter details.
+
+On the modal, I can insert condition details.
+
+The system generates an alert for the trainer when a client with a condition checks in.
+
+3. Trainer Notes for Clients
+
+As a trainer, I want to write notes about a client’s skill level or assistance needs, so that I can better guide them.
+
+There is an option to add notes to a client’s profile.
+
+Clicking the button opens a modal to insert notes.
+
+Notes are visible to the owner and trainer in the client’s profile.
+
+4. Full Client Info Visibility in Owner View
+
+As an owner, I want to see all relevant client information in one place, so that I can manage my clients effectively.
+
+The client’s profile page includes all key details.
+
+Clicking on a client opens their full profile.
+
+Profile includes membership status, visit history, notes, and conditions.
+
+5. Contact Notes for Clients
+
+As an owner or trainer, I want to log when I have contacted a client, so that I can track follow-ups.
+
+There is an option to add a contact log to a client’s profile.
+
+Clicking the button opens a modal to insert details.
+
+Contact history is visible in the owner and trainer views.
+
+6. Visit History Tracking
+
+As an owner, I want to see a client’s visit history, so that I can analyze their attendance.
+
+The client’s profile includes a visit history tab.
+
+Clicking the tab shows a list of visits.
+
+Data includes visit dates and class details.
+
+7. Automated Payment Data
+
+As an owner, I want payment data to sync automatically from the bank to the system, so that I don’t have to enter it manually.
+
+Payment transactions are fetched automatically from the bank.
+
+Payments are matched to client profiles.
+
+The system displays payment statuses.
+
+8. Plan Activation and Deactivation
+
+As an owner, I want to activate or deactivate client plans, so that I can manage subscriptions.
+
+There is an option to toggle plan activation.
+
+Clicking activates or deactivates the plan.
+
+Clients can see their plan status.
+
+9. Client Reports & Debt Tracking
+
+As an owner, I want to see reports on client debts and general trends, so that I can manage financials.
+
+A report page shows outstanding debts.
+
+A general report summarizes client trends.
+
+Reports are filterable by date and category.
+
+10. Attendance & New Client Statistics
+
+As an owner or trainer, I want to see statistics on client attendance, so that I can track participation.
+
+A dashboard shows client attendance trends.
+
+Clicking filters by time period.
+
+The system tracks new and lost clients.
+
+11. At-Risk Clients
+
+As an owner, I want to identify clients at risk of leaving, so that I can take action.
+
+An algorithm calculates client risk based on attendance trends.
+
+The system flags at-risk clients.
+
+Owners receive alerts for these clients.
+
+12. Automated Waitlist for Classes
+
+As a client, I want to be placed on a waitlist if a class is full, so that I get notified if a spot opens.
+
+The system automatically creates a waitlist for full classes.
+
+If a spot opens, an email is sent to the next client on the list.
+
+Clients can confirm or decline the spot.
+
+13. Custom Branding for Clubs
+
+As a club owner, I want to add my branding and logo, so that my platform matches my brand.
+
+There is an option to upload a club logo.
+
+The logo appears on the platform interface.
+
+Custom colors and themes are supported.
+
+14. Class Registration Toggle
+
+As an owner, I want to disable registration for a class, so that I can manage availability.
+
+Each class has a registration toggle.
+
+Clicking disables or enables registration.
+
+Clients cannot register when disabled.
+
+15. Free Class Registration
+
+As a client, I want to register for a class for free if permitted, so that I can try out sessions.
+
+Owners can enable free registration.
+
+Clients can register for free classes.
+
+16. Annual Visit Count
+
+As an owner, I want to see how many times a client has visited in a year, so that I can track engagement.
+
+The client’s profile includes a yearly visit count.
+
+Clicking shows detailed statistics.
+
+17. Client Score Entries
+
+As an owner, I want to see how many times a client has entered their score, so that I can track engagement.
+
+A section in the profile displays the number of scores submitted.
+
+Clicking opens a breakdown of scores.
+
+18. Email Sending Options
+
+As an owner, I want to send emails to different client groups, so that I can communicate effectively.
+
+Email options include by class, by group, by purchase history, or by home gym status.
+
+A template system allows personalized emails.
+
+19. WOD Programming
+
+As an owner or trainer, I want to plan WODs month by month, so that I can organize training schedules.
+
+A calendar view allows daily WOD entries.
+
+Each WOD is assigned to specific classes.
+
+The system stores historical WODs.
+
+20. Contract Clients & Post-Enddate Registration
+
+As an owner, I want contract clients to be able to register for classes for a set period after their contract ends, so that they can continue training while renewing.
+
+The system allows post-enddate registration for a grace period.
+
+An automatic email reminder is sent if payment is overdue.
+

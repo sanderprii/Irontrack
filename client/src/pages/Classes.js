@@ -240,15 +240,22 @@ export default function Classes() {
                 {/* ✅ Ainult "owner" ja "trainer" rollid näevad nuppe */}
                 {(userRole === "affiliate" || userRole === "trainer") && (
                     showWODView ? (
-                        <Button variant="contained" color="secondary" onClick={() => setShowWODView(false)}>
+                        <Button sx={{m: 1}} variant="contained" color="secondary" onClick={() => setShowWODView(false)}>
                             Show Classes
                         </Button>
                     ) : (
-                        <Button variant="contained" color="primary" onClick={() => setShowWODView(true)}>
+                        <Button sx={{m: 1}} variant="contained" color="primary" onClick={() => setShowWODView(true)}>
                             Add WOD
                         </Button>
                     )
+
                 )}
+                {(userRole === "affiliate" || userRole === "trainer") && (
+                    <Button sx={{m: 1}} variant="contained" color="primary" onClick={handleAddTraining}>
+                        Add Training
+                    </Button>
+                )}
+
             </Box>
 
 
@@ -279,12 +286,7 @@ export default function Classes() {
                             </Button>
                         )}
 
-                        {/* ✅ Ainult "owner" ja "trainer" rollid näevad seda nuppu */}
-                        {(userRole === "affiliate" || userRole === "trainer") && (
-                            <Button variant="contained" color="primary" onClick={handleAddTraining}>
-                                Add Training
-                            </Button>
-                        )}
+
 
 
                         <Button variant="contained" color="secondary" onClick={handleNextWeek}>

@@ -192,3 +192,45 @@ exports.getUserPlansByAffiliate = async (req, res) => {
         res.status(500).json({ error: 'Server error fetching user plans.' });
     }
 };
+
+exports.addUserNote = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { note, flag } = req.body;
+
+        if (!note || !flag) {
+            return res.status(400).json({ error: "note and flag are required" });
+        }
+
+        // Eeldame, et flag võib olla "red", "yellow", "green"
+        if (!["red", "yellow", "green"].includes(flag)) {
+            return res.status(400).json({ error: "Invalid flag value." });
+        }
+
+        const newNote = await prisma.userNote.create({
+            data: {
+                userId: parseInt(userId, 10),
+                note,
+                flag,
+            },
+        });
+
+        res.json(newNote);
+    } catch (error) {
+        console.error("❌ Error adding user note:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+exports.deleteUserNote = async (req, res) => {
+    try {
+        const { userId, noteId } = req.params;
+        const deletedNote = await prisma.userNote.delete({
+            where: { id: parseInt(noteId, 10) },
+        });
+        res.json(deletedNote);
+    } catch (error) {
+        console.error("❌ Error deleting user note:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};

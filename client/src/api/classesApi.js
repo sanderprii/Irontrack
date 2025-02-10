@@ -344,3 +344,4 @@ export const updateClassScore = async (classId, scoreType, score) => {
         throw error;
     }
 };
+

@@ -257,7 +257,7 @@ export default function ClassModal({
 
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog  open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
                 sx={{ textAlign: "center", fontSize: "1.8rem", fontWeight: "bold" }}
             >

@@ -65,3 +65,44 @@ export const getUserPlansByAffiliate = async (affiliateId) => {
         return [];
     }
 };
+
+export async function addUserNote(userId, noteData) {
+    // noteData = { note, flag }
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/user/notes/${userId}/notes`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(noteData),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to add note');
+        }
+        return await response.json(); // Tagastab loodud note
+    } catch (error) {
+        console.error("❌ addUserNote error:", error);
+        throw error;
+    }
+}
+
+export async function deleteUserNote(userId, noteId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/user/notes/${userId}/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            throw new Error('Failed to delete note');
+        }
+        return true;
+    } catch (error) {
+        console.error("❌ deleteUserNote error:", error);
+        throw error;
+    }
+}

@@ -27,4 +27,8 @@ router.put('/', ensureAuthenticatedJWT, userController.updateUserData);
 // user-plans
 router.get('/user-plans', ensureAuthenticatedJWT, userController.getUserPlansByAffiliate);
 
+router.post('/notes/:userId/notes', ensureAuthenticatedJWT, userController.addUserNote);
+
+router.delete('/notes/:userId/notes/:noteId', ensureAuthenticatedJWT, userController.deleteUserNote);
+
 module.exports = router;

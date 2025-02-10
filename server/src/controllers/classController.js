@@ -468,6 +468,8 @@ const updateClassScore = async (req, res) => {
     }
 };
 
+
+
 module.exports = {
     getClassInfo, getClasses, createClass, updateClass, deleteClass,
     getClassAttendees, registerForClass, cancelRegistration, checkUserEnrollment,

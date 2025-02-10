@@ -33,6 +33,16 @@ model User {
   members            Members[]
   transactions       transactions[]
   creditTransactions CreditTransaction[]
+  userNotes          UserNote[]
+}
+
+model UserNote {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  note      String
+  flag      String
+  createdAt DateTime @default(now())
 }
 
 model Credit {

@@ -34,6 +34,7 @@ const role = req.query.userRole;
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
+            include: { userNotes: true },
         });
 
         if (!user) return res.status(404).json({ error: "User not found" });
@@ -68,6 +69,7 @@ const role = req.query.userRole;
             logo: user.logo,
             address: user.address,
             isMember: userPlans.length > 0,
+            userNotes: user.userNotes,
             plans: userPlans.map((plan) => ({
                 planName: plan.planName,
                 endDate: plan.endDate,

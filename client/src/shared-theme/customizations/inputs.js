@@ -437,7 +437,7 @@ export const inputsCustomizations = {
     styleOverrides: {
       root: ({ theme }) => ({
         typography: theme.typography.caption,
-        marginBottom: 8,
+        marginBottom: 12,
       }),
     },
   },

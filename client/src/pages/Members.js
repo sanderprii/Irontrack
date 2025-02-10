@@ -108,7 +108,7 @@ export default function Members() {
             // member: { userId, user: { id, fullName, ... } }
             const userId = member.userId || (member.user && member.user.id) || member.id;
             const response = await getMemberInfo(userId);
-            console.log("👤 Member info:", response);
+
             setSelectedMember(response || {});
             setActiveComponent("profile");
         } catch (error) {
@@ -258,7 +258,7 @@ export default function Members() {
             </Drawer>
 
             {/* Parempoolne paneel: valitud kasutaja profiil ja menüü vaated */}
-            <Box sx={{ flexGrow: 1, p: 3 }}>
+            <Box sx={{ flexGrow: 1, p: { xs: 0, md: 3 }}}>
                 {isLoadingMember ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />

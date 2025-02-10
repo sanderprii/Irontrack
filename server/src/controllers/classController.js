@@ -29,7 +29,7 @@ const getClassInfo = async (req, res) => {
 // Klasside nimekirja pärimine
 const getClasses = async (req, res) => {
 
-    let { affiliateId, start, end } = req.query;
+    let {affiliateId, start, end} = req.query;
     // Kontrolli ja teisenda kuupäevad õigesse formaati
     let startDate = new Date(start);
     let endDate = new Date(end);
@@ -47,7 +47,6 @@ const getClasses = async (req, res) => {
     }
 
 
-
     try {
         const classes = await prisma.classSchedule.findMany({
             where: {
@@ -57,26 +56,37 @@ const getClasses = async (req, res) => {
                     lte: endDate
                 }
             },
-            orderBy: { time: "asc" }
+            orderBy: {time: "asc"}
         });
 
         res.json(classes);
     } catch (error) {
         console.error("❌ Error fetching classes:", error);
-        res.status(500).json({ error: "Failed to fetch classes." });
+        res.status(500).json({error: "Failed to fetch classes."});
     }
 };
 
 // Uue klassi loomine
 const createClass = async (req, res) => {
     try {
-        const { affiliateId, trainingType, trainingName, time, duration, trainer, memberCapacity, location, repeatWeekly, wodName, wodType } = req.body;
-const owner = parseInt(req.user?.id);
+        const {
+            affiliateId,
+            trainingType,
+            trainingName,
+            time,
+            duration,
+            trainer,
+            memberCapacity,
+            location,
+            repeatWeekly,
+            wodName,
+            wodType
+        } = req.body;
+        const owner = parseInt(req.user?.id);
 
 
         // Loome Prisma jaoks sobiva DateTime formaadi (YYYY-MM-DDTHH:MM:SS.000Z)
         const classTime = new Date(time.replace("Z", ""));
-
 
 
         // Kontrollime, kas loodud kuupäev on kehtiv
@@ -92,6 +102,7 @@ const owner = parseInt(req.user?.id);
                 memberCapacity: parseInt(memberCapacity),
                 location,
                 repeatWeekly,
+
                 wodName,
                 wodType,
                 ownerId: owner,
@@ -125,10 +136,10 @@ const owner = parseInt(req.user?.id);
         }
 
 
-        res.status(201).json({ message: "Class created successfully!", class: newClass });
+        res.status(201).json({message: "Class created successfully!", class: newClass});
     } catch (error) {
         console.error("❌ Error creating class:", error);
-        res.status(500).json({ error: "Failed to create class." });
+        res.status(500).json({error: "Failed to create class."});
     }
 };
 
@@ -136,7 +147,18 @@ const owner = parseInt(req.user?.id);
 // Klasside uuendamine
 const updateClass = async (req, res) => {
     const classId = parseInt(req.params.id);
-    const { trainingType, trainingName, time, duration, trainer, memberCapacity, location, repeatWeekly, wodName, wodType } = req.body;
+    const {
+        trainingType,
+        trainingName,
+        time,
+        duration,
+        trainer,
+        memberCapacity,
+        location,
+        repeatWeekly,
+        wodName,
+        wodType
+    } = req.body;
     const data = req.body;
 
 
@@ -169,15 +191,23 @@ const updateClass = async (req, res) => {
                 wodType
             }
         });
+        if (repeatWeekly < 1) {
 
-        await prisma.classSchedule.deleteMany({
-            where: {
-                seriesId: data.seriesId,
-                id: { gt: data.id }
+            // kustuta kõik klassid, kus seriesId on sama mis antud klassil, seriesId on olemas ja id on suurem kui classId. Enne tuleb selle klassi seriedId saada
+            const seriesIdGet = await prisma.classSchedule.findFirst({where: {id: classId}})
+
+            const seriesId = seriesIdGet.seriesId;
+
+            if (seriesId) {
+
+                await prisma.classSchedule.deleteMany({
+                    where: {
+                        seriesId,
+                        id: {gt: classId}
+                    }
+                });
             }
-        });
-
-
+        }
         res.status(200).json({message: "Class updated successfully!", class: updatedClass});
     } catch (error) {
         console.error("Error updating class:", error);
@@ -201,12 +231,12 @@ const deleteClass = async (req, res) => {
 // Klasside osalejate pärimine
 const getClassAttendees = async (req, res) => {
     const classId = parseInt(req.query.classId);
-    if (!classId) return res.status(400).json({ error: "Class ID required." });
+    if (!classId) return res.status(400).json({error: "Class ID required."});
 
     try {
         const attendees = await prisma.classAttendee.findMany({
-            where: { classId },
-            include: { user: { select: { id: true, fullName: true } } }
+            where: {classId},
+            include: {user: {select: {id: true, fullName: true}}}
         });
 
         res.json(attendees.map(att => ({
@@ -216,40 +246,40 @@ const getClassAttendees = async (req, res) => {
         })));
     } catch (error) {
         console.error("❌ Error fetching attendees:", error);
-        res.status(500).json({ error: "Failed to fetch attendees." });
+        res.status(500).json({error: "Failed to fetch attendees."});
     }
 };
 
 const checkInAttendee = async (req, res) => {
-    const { classId, userId } = req.body;
-    if (!classId || !userId) return res.status(400).json({ error: "Class ID and User ID required." });
+    const {classId, userId} = req.body;
+    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required."});
 
     try {
         await prisma.classAttendee.updateMany({
-            where: { classId, userId },
-            data: { checkIn: true }
+            where: {classId, userId},
+            data: {checkIn: true}
         });
 
-        res.json({ message: "Check-in successful!" });
+        res.json({message: "Check-in successful!"});
     } catch (error) {
         console.error("❌ Error checking in attendee:", error);
-        res.status(500).json({ error: "Failed to check in attendee." });
+        res.status(500).json({error: "Failed to check in attendee."});
     }
 };
 
 const deleteAttendee = async (req, res) => {
-    const { classId, userId } = req.body;
-    if (!classId || !userId) return res.status(400).json({ error: "Class ID and User ID required." });
+    const {classId, userId} = req.body;
+    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required."});
 
     try {
         await prisma.classAttendee.deleteMany({
-            where: { classId, userId }
+            where: {classId, userId}
         });
 
-        res.json({ message: "Attendee removed from class." });
+        res.json({message: "Attendee removed from class."});
     } catch (error) {
         console.error("❌ Error deleting attendee:", error);
-        res.status(500).json({ error: "Failed to remove attendee." });
+        res.status(500).json({error: "Failed to remove attendee."});
     }
 };
 
@@ -268,19 +298,18 @@ const getClassAttendeesCount = async (req, res) => {
 };
 
 
-
 // ✅ Kasutaja registreerumine klassi
 const registerForClass = async (req, res) => {
-    const { classId, planId } = req.body;
+    const {classId, planId} = req.body;
     const userId = req.user?.id;
 
     try {
         const plan = await prisma.userPlan.findUnique({
-            where: { id: planId },
+            where: {id: planId},
         });
 
         if (!plan || plan.sessionsLeft <= 0) {
-            return res.status(400).json({ error: "Invalid or expired plan" });
+            return res.status(400).json({error: "Invalid or expired plan"});
         }
 
 
@@ -294,44 +323,44 @@ const registerForClass = async (req, res) => {
         });
 
         await prisma.userPlan.update({
-            where: { id: planId },
-            data: { sessionsLeft: plan.sessionsLeft - 1 },
+            where: {id: planId},
+            data: {sessionsLeft: plan.sessionsLeft - 1},
         });
 
-        res.status(200).json({ message: "Successfully registered!" });
+        res.status(200).json({message: "Successfully registered!"});
     } catch (error) {
         console.error("❌ Error registering for class:", error);
-        res.status(500).json({ error: "Failed to register for class." });
+        res.status(500).json({error: "Failed to register for class."});
     }
 };
 
 // ✅ Kasutaja registreeringu tühistamine
 const cancelRegistration = async (req, res) => {
-    const { classId } = req.body;
+    const {classId} = req.body;
     const userId = req.user.id;
 
     try {
 
         const registration = await prisma.classAttendee.findFirst({
-            where: { userId: parseInt(userId), classId: parseInt(classId) },
+            where: {userId: parseInt(userId), classId: parseInt(classId)},
 
         });
-console.log(registration);
+
 
         await prisma.classAttendee.delete({
-            where: { id: registration.id },
+            where: {id: registration.id},
         });
 
         // Tagasta sessioon kasutajale tagasi
         await prisma.userPlan.update({
-            where: { id: registration.userPlanId },
-            data: { sessionsLeft: { increment: 1 } },
+            where: {id: registration.userPlanId},
+            data: {sessionsLeft: {increment: 1}},
         });
 
-        res.status(200).json({ message: "Registration cancelled successfully!" });
+        res.status(200).json({message: "Registration cancelled successfully!"});
     } catch (error) {
         console.error("❌ Error canceling registration:", error);
-        res.status(500).json({ error: "Failed to cancel registration." });
+        res.status(500).json({error: "Failed to cancel registration."});
     }
 };
 
@@ -339,31 +368,30 @@ console.log(registration);
 const checkUserEnrollment = async (req, res) => {
     const classId = parseInt(req.query.classId);
     const userId = parseInt(req.user.id);
-console.log(classId);
-console.log(userId);
+
     try {
         const enrollment = await prisma.classAttendee.findFirst({
-            where: { userId, classId },
+            where: {userId, classId},
         });
 
-        res.json({ enrolled: !!enrollment });
+        res.json({enrolled: !!enrollment});
     } catch (error) {
         console.error("❌ Error checking enrollment:", error);
-        res.status(500).json({ error: "Failed to check enrollment." });
+        res.status(500).json({error: "Failed to check enrollment."});
     }
 };
 
 const checkClassScore = async (req, res) => {
     try {
-        const { classId } = req.query;
+        const {classId} = req.query;
         const userId = req.user.id;
 
         const existing = await prisma.classLeaderboard.findFirst({
-            where: { classId: parseInt(classId), userId },
+            where: {classId: parseInt(classId), userId},
         });
 
         if (!existing) {
-            return res.json({ hasScore: false });
+            return res.json({hasScore: false});
         }
 
         res.json({
@@ -373,23 +401,23 @@ const checkClassScore = async (req, res) => {
         });
     } catch (error) {
         console.error("Error checking class score:", error);
-        res.status(500).json({ error: "Failed to check class score" });
+        res.status(500).json({error: "Failed to check class score"});
     }
 };
 
 const addClassScore = async (req, res) => {
     try {
-        const { classId, scoreType, score } = req.body;
+        const {classId, scoreType, score} = req.body;
         const userId = req.user.id;
 
         // Kontrolli, kas see rida juba eksisteerib
         const existing = await prisma.classLeaderboard.findFirst({
-            where: { classId, userId },
+            where: {classId, userId},
         });
         if (existing) {
             return res
                 .status(400)
-                .json({ error: "Score already exists. Please update instead." });
+                .json({error: "Score already exists. Please update instead."});
         }
 
         // Loo uus kirje
@@ -402,45 +430,46 @@ const addClassScore = async (req, res) => {
             },
         });
 
-        res.status(200).json({ message: "Score added successfully." });
+        res.status(200).json({message: "Score added successfully."});
     } catch (error) {
         console.error("Error adding class score:", error);
-        res.status(500).json({ error: "Failed to add class score" });
+        res.status(500).json({error: "Failed to add class score"});
     }
 };
 
 const updateClassScore = async (req, res) => {
     try {
-        const { classId, scoreType, score } = req.body;
+        const {classId, scoreType, score} = req.body;
         const userId = req.user.id;
 
         // Kontrolli, et kirje on olemas
         const existing = await prisma.classLeaderboard.findFirst({
-            where: { classId, userId },
+            where: {classId, userId},
         });
         if (!existing) {
             return res
                 .status(400)
-                .json({ error: "No existing score found for this class." });
+                .json({error: "No existing score found for this class."});
         }
 
         // Uuenda
         await prisma.classLeaderboard.update({
-            where: { id: existing.id },
+            where: {id: existing.id},
             data: {
                 scoreType,
                 score
             },
         });
 
-        res.status(200).json({ message: "Score updated successfully." });
+        res.status(200).json({message: "Score updated successfully."});
     } catch (error) {
         console.error("Error updating class score:", error);
-        res.status(500).json({ error: "Failed to update class score" });
+        res.status(500).json({error: "Failed to update class score"});
     }
 };
 
-module.exports = {getClassInfo, getClasses, createClass, updateClass, deleteClass,
+module.exports = {
+    getClassInfo, getClasses, createClass, updateClass, deleteClass,
     getClassAttendees, registerForClass, cancelRegistration, checkUserEnrollment,
     getClassAttendeesCount, checkInAttendee, deleteAttendee, addClassScore, updateClassScore, checkClassScore,
-    };
+};

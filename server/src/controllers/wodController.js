@@ -121,7 +121,7 @@ const applyWODToTrainings = async (req, res) => {
     const date = req.body.date;
     const affiliateId = req.body.affiliateId;
     if (!date) return res.status(400).json({error: "Date is required."});
-console.log('date',date)
+
 
 
     const affiliateIds = parseInt(affiliateId)
@@ -131,7 +131,7 @@ console.log('date',date)
         if (!wod) return res.status(404).json({error: "No WOD found for today."});
 
         const endDate = new Date(new Date(date).setDate(new Date(date).getDate() + 1));
-console.log('endDate',endDate)
+
         // Apply WOD to all classes with `trainingType: "WOD"`
         await prisma.classSchedule.updateMany({
             where: {

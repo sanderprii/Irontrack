@@ -41,7 +41,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
     };
 
     const handleSave = () => {
-        console.log("📡 Calling onSave from AffiliateEdit!");
+
 
         const updatedForm = {
             ...form,
@@ -53,7 +53,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
             })) // ✅ Lisa treenerid `updatedForm` objekti
         };
 
-        console.log("✅ Updated form before sending:", updatedForm); // Kontrollimiseks logi välja
+
         onSave(updatedForm);
     };
 

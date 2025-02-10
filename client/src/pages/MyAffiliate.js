@@ -19,9 +19,11 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { getAffiliate, updateAffiliate } from '../api/affiliateApi';
 import AffiliateView from '../components/AffiliateView';
+import FinanceView from '../components/FinanceView'; // <-- UUS IMPORT
 
 const menuItems = [
     { id: 'my-affiliate', label: 'My Affiliate', component: AffiliateView },
+    { id: 'finance', label: 'Finance', component: FinanceView }, // <-- UUS MENÜÜPUNKT
 ];
 
 export default function MyAffiliate({ token }) {
@@ -61,9 +63,9 @@ export default function MyAffiliate({ token }) {
         }
     };
 
+    // Valib aktiivse komponendi menüüst
     const ActiveComponent =
-        menuItems.find((item) => item.id === activeComponent)?.component ||
-        AffiliateView;
+        menuItems.find((item) => item.id === activeComponent)?.component || AffiliateView;
 
     return (
         <Container maxWidth={false} sx={{ mt: 4, display: 'flex' }}>
@@ -83,10 +85,13 @@ export default function MyAffiliate({ token }) {
                 }}
             >
                 <Box sx={{ width: 220, p: 2 }}>
-
                     <List>
                         {menuItems.map((item) => (
-                            <ListItem button key={item.id} onClick={() => handleMenuClick(item.id)}>
+                            <ListItem
+                                button
+                                key={item.id}
+                                onClick={() => handleMenuClick(item.id)}
+                            >
                                 <ListItemText primary={item.label} />
                             </ListItem>
                         ))}
@@ -114,7 +119,11 @@ export default function MyAffiliate({ token }) {
                 <Box sx={{ width: 240, p: 2 }}>
                     <List>
                         {menuItems.map((item) => (
-                            <ListItem button key={item.id} onClick={() => handleMenuClick(item.id)}>
+                            <ListItem
+                                button
+                                key={item.id}
+                                onClick={() => handleMenuClick(item.id)}
+                            >
                                 <ListItemText primary={item.label} />
                             </ListItem>
                         ))}

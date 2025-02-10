@@ -3,7 +3,7 @@ const API_BASE = process.env.REACT_APP_API_URL
 export const getMembers = async (affiliateId) => {
 
     const token = localStorage.getItem("token");
-console.log("affiliateId", affiliateId);
+
 
     try {
         const response = await fetch(`${API_BASE}/members?affiliateId=${affiliateId}`, {

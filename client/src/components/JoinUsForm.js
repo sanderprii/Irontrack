@@ -188,8 +188,10 @@ export default function JoinUsForm() {
                 <Card
                     variant="outlined"
                     sx={{
-                        bgcolor: 'background.paper',
+                        backgroundColor: 'background.paper',
                         boxShadow: '0px 4px 10px rgba(255, 179, 71, 0.5)',
+                        flex: 1,
+                        overflow: 'auto',
                     }}
                 >
                     <SitemarkIcon />

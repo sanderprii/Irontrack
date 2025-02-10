@@ -181,7 +181,7 @@ export default function ClassModal({
             const data = await getClassAttendees(cls.id);
             setAttendees(data || []);
 
-            console.log(isRegistered)
+
         } catch (error) {
             console.error("Error fetching attendees:", error);
             setAttendees([]);
@@ -253,8 +253,7 @@ export default function ClassModal({
     if (!cls) return null;
 
    const isClassOver = new Date(cls.time) < new Date();
-console.log(new Date(cls.time))
-    console.log(new Date())
+
 
 
     return (

@@ -71,6 +71,7 @@ export const createTraining = async (affiliateId, trainingData) => {
 export const updateTraining = async (classId, trainingData) => {
     try {
         const token = localStorage.getItem("token");
+
         const response = await fetch(`${API_URL}/classes/${classId}`, {
             method: "PUT",
             headers: {

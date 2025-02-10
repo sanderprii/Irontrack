@@ -67,7 +67,7 @@ const RegisterTrainingPage = () => {
     const [isHomeGym, setIsHomeGym] = useState(false);
     const [userPlans, setUserPlans] = useState([]);
 
-console.log("selectedAffiliate", selectedAffiliate);
+
     const navigate = useNavigate();
 
     useEffect(() => {

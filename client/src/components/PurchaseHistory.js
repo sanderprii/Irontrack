@@ -7,7 +7,7 @@ export default function PurchaseHistory({ userId }) {
     const token = localStorage.getItem('token');
     const API_URL = process.env.REACT_APP_API_URL
     useEffect(() => {
-        console.log(userId)
+
         fetch(`${API_URL}/user/user-purchase-history?userId=${userId}`, {
             headers: { Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json' },
@@ -27,7 +27,7 @@ export default function PurchaseHistory({ userId }) {
     }, [token]);
 
     return (
-        <Card sx={{ bgcolor: "background.paper" }}>
+        <Card sx={{ backgroundColor: "background.paper", border: 'none', p: 0 }}>
             <CardContent>
                 <Typography variant="h6">Products</Typography>
                 {purchases.length > 0 ? ( // ✅ Kontrollime, kas on vähemalt üks ost

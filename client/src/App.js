@@ -25,7 +25,7 @@ import MyAffiliate from "./pages/MyAffiliate";
 import Classes from "./pages/Classes";
 import Members from "./pages/Members";
 import Plans from "./pages/Plans";
-import Finance from "./pages/Finance";
+
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -52,7 +52,7 @@ function App() {
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/plans" element={<Plans />} />
-                <Route path="/finance" element={<Finance />} />
+
                 <Route path="/checkout" element={<Checkout />} />
 
                 {/* ✅ Lisa MarketingPage uue marsruudina */}

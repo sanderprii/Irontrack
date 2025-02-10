@@ -92,7 +92,7 @@ router.get("/get-affiliate-by-id", ensureAuthenticated, async (req, res) => {
 router.get("/affiliate-plans", ensureAuthenticated, async (req, res) => {
     const ownerId = parseInt(req.query.ownerId);
 
-    console.log("ownerId", ownerId);
+
 
     if (!ownerId) {
         return res.status(400).json({ error: "Owner ID required." });

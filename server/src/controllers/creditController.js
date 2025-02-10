@@ -7,7 +7,7 @@ const getUserCredits = async (req, res) => {
 
 
     const role = req.headers.role;
-    console.log(role)
+
 
     try {
         let credits

@@ -50,10 +50,10 @@ export default function Plans() {
     const fetchPlans = async () => {
         try {
             const data = await getPlans();
-            console.log("Fetched plans:", data); // Debugging output
+
             setPlans(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error("Error fetching plans:", error);
+
             setPlans([]); // Ensure `plans` is always an array
         }
     };

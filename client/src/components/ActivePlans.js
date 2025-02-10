@@ -22,7 +22,7 @@ export default function ActivePlans({ userId }) {
     }, [token]);
 
     return (
-        <Card sx={{ bgcolor: "background.paper" }}>
+        <Card sx={{ bgcolor: "background.paper", border: 'none', p: 2 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
                 Active Plans
             </Typography>

@@ -18,7 +18,7 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
 
     return (
         <Card sx={{maxWidth: 600, mx: 'auto', boxShadow: 3, borderRadius: 3, backgroundColor: 'background.paper'}}>
-            <CardContent sx={{textAlign: 'center', p: 4}}>
+            <CardContent sx={{textAlign: 'center', p: 3}}>
                 {role === "regular" ? (
                     <>
                         <Avatar

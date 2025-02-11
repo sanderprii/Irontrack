@@ -71,6 +71,7 @@ export default function AppAppBar() {
                 { name: 'Classes', to: '/classes' },
                 { name: 'Members', to: '/members' },
                 { name: 'Plans', to: '/plans' },
+                { name: 'Messages', to: '/messages' },
             ];
             rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
         } else if (role === 'trainer') {

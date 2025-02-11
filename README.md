@@ -48,6 +48,10 @@ npm install
 
 # Start development server
 ```
+npx prisma migrate dev
+```
+
+```
 npm run dev
 ```
 # Build for production
@@ -57,17 +61,8 @@ npm run build
 
 
 
-## ✅ Features Checklist
-| Functionality | Status | Description |
-|--------------|--------|-------------|
-| User Authentication | ✅ | Login & Registration |
-| API Integration | ✅ | Fetching & sending data |
-| UI Components | ✅ | Reusable design elements |
-| Database Setup | ✅ | MongoDB/PostgreSQL configuration |
 
-| CI/CD Pipeline | ❌ | Automated testing & deployment |
-| Unit Testing | ✅ | Basic test coverage |
-| Documentation | ✅ | README & API docs |
+
 
 ## 📋 Technical Requirements
 - **Frontend:** React, Material.ui

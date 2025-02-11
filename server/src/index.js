@@ -25,6 +25,8 @@ const financeRoutes = require("./routes/financeRoutes");
 const getClassesRoutes = require("./routes/getClassesRoutes");
 const creditRoutes = require('./routes/creditRoutes');
 const logoRoutes = require('./routes/logoRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const groupsRoutes = require('./routes/groupsRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -78,6 +80,8 @@ app.use("/api", financeRoutes);
 app.use("/api", getClassesRoutes);
 app.use('/api', logoRoutes);
 app.use('/api', creditRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/messagegroups', groupsRoutes);
 
 // Lihtne test endpoint
 app.get('/api', (req, res) => {

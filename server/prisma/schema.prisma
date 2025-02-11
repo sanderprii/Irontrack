@@ -34,6 +34,36 @@ model User {
   transactions       transactions[]
   creditTransactions CreditTransaction[]
   userNotes          UserNote[]
+  messageGroups      UserMessageGroup[]
+}
+
+model Message {
+  id            Int       @id @default(autoincrement())
+  affiliateId   Int
+  recipientId   Int? // Kui teade saadetakse konkreetsele kasutajale (User.id), muidu võib jääda tühjaks
+  subject       String
+  recipientType String
+  body          String
+  createdAt     DateTime  @default(now())
+  affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
+}
+
+model MessageGroup {
+  id Int @id @default(autoincrement())
+
+  groupName   String
+  affiliateId Int
+  affiliate   Affiliate          @relation(fields: [affiliateId], references: [id])
+  createdAt   DateTime           @default(now())
+  messages    UserMessageGroup[]
+}
+
+model UserMessageGroup {
+  id      Int          @id @default(autoincrement())
+  userId  Int
+  groupId Int
+  user    User         @relation(fields: [userId], references: [id])
+  group   MessageGroup @relation(fields: [groupId], references: [id])
 }
 
 model UserNote {
@@ -180,6 +210,8 @@ model Affiliate {
   transactions       transactions[]
   credit             Credit[]
   creditTransactions CreditTransaction[]
+  message            Message[]
+  messageGroups      MessageGroup[]
 }
 
 model AffiliateTrainer {

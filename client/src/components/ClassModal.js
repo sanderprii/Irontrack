@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FlagIcon from "@mui/icons-material/Flag";
 import LeaderboardModal from "./LeaderboardModal";
 import ProfileModal from "./ProfileModal";
 
@@ -252,6 +253,18 @@ export default function ClassModal({
     };
     if (!cls) return null;
 
+    function getFlagColor(flag) {
+
+        switch (flag) {
+            case "red":
+                return "#ff0000";
+            case "yellow":
+                return "gold";
+            default:
+                return "green"; // või nt "#999"
+        }
+    }
+
    const isClassOver = new Date(cls.time) < new Date();
 
 
@@ -414,19 +427,31 @@ export default function ClassModal({
                                 {/* Full Name */}
                                 <ListItemText
                                     primary={
-                                        <Typography
-                                            variant="h6"
-                                            sx={{
-                                                fontWeight: "bold",
-                                                textTransform: "uppercase",
-                                                cursor: "pointer",
-                                                color: "blue",
-                                                "&:hover": { textDecoration: "underline" },
-                                            }}
-                                            onClick={() => handleOpenProfile(attendee.userId)}
-                                        >
-                                            {attendee.fullName}
-                                        </Typography>
+                                        <Box display="flex" alignItems="center" gap={1}>
+                                            <Typography
+                                                variant="h6"
+                                                sx={{
+                                                    fontWeight: "bold",
+                                                    textTransform: "uppercase",
+                                                    cursor: "pointer",
+                                                    color: "blue",
+                                                    "&:hover": { textDecoration: "underline" },
+                                                }}
+                                                onClick={() => handleOpenProfile(attendee.userId)}
+                                            >
+                                                {attendee.fullName}
+                                            </Typography>
+
+                                            {attendee.userNotes?.map((note, index) =>
+                                                note.flag ? (
+                                                    <FlagIcon
+
+                                                        key={index}
+                                                        style={{ fill: getFlagColor(note.flag) }}
+                                                    />
+                                                ) : null
+                                            )}
+                                        </Box>
                                     }
                                 />
 

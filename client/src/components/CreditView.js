@@ -105,6 +105,27 @@ const CreditView = ({ user, affiliateId }) => {
             <Typography variant="h5" gutterBottom>
                 Credit
             </Typography>
+            {credits.length === 0 && canAddCredit && (
+                <Paper sx={{ mb: 4, p: 2 }}>
+                    <Typography variant="h6">Add Credit</Typography>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+                        <TextField
+                            label="Amount"
+                            type="number"
+                            value={creditInputs['new']?.amount || ''}
+                            onChange={(e) => handleInputChange('new', 'amount', e.target.value)}
+                        />
+                        <TextField
+                            label="Description"
+                            value={creditInputs['new']?.description || ''}
+                            onChange={(e) => handleInputChange('new', 'description', e.target.value)}
+                        />
+                        <Button variant="contained" onClick={() => handleAddCredit('new', affiliateId)}>
+                            Apply
+                        </Button>
+                    </Box>
+                </Paper>
+            )}
             <Paper sx={{ mb: 4 }}>
                 <Table>
                     <TableHead>
@@ -159,6 +180,9 @@ const CreditView = ({ user, affiliateId }) => {
                     </TableBody>
                 </Table>
             </Paper>
+            {/* kui credits = [], siis kuvatakse siin add credit form, mis kuvatakse siis kui credit on olemas koos oma funktsionaalsusega */}
+
+
             <Typography variant="h6" gutterBottom>
                 Credit History
             </Typography>

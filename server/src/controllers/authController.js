@@ -118,16 +118,29 @@ exports.getMe = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-
-
-        // Võid lisada lisakontrolli, nt kas treener, affiliateOwner jne
-        return res.json({
-            id: user.id,
-
-            email: user.email,
-            affiliateOwner: user.affiliateOwner,
-            // jne ...
+const isTrainer = await prisma.affiliateTrainer.findFirst({
+            where: {
+                trainerId: user.id,
+            },
         });
+
+        if (isTrainer) {
+            return res.json({
+                id: user.id,
+                email: user.email,
+                affiliateOwner: user.affiliateOwner,
+                isTrainer: true,
+            })
+} else {
+            return res.json({
+                id: user.id,
+                email: user.email,
+                affiliateOwner: user.affiliateOwner,
+                isTrainer: false,
+            });
+        }
+
+
     } catch (err) {
         console.error(err);
         return res.status(401).json({ error: 'Unauthorized' });

@@ -119,8 +119,8 @@ export default function FinanceView() {
 
     // Filter ja sort
     const filteredOrders = (orders || []).filter(order =>
-        ((order?.user?.fullName ?? "").includes(searchQuery)) ||
-        ((order?.planName ?? "").includes(searchQuery))
+        ((order?.user?.fullName.toLowerCase() ?? "").includes(searchQuery)) ||
+        ((order?.planName.toLowerCase() ?? "").includes(searchQuery))
     );
     const sortedOrders = [...filteredOrders].sort((a, b) => {
         switch (sortBy) {

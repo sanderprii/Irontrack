@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
     Container,
-    Grid,
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    Avatar,
-    Button,
     Drawer,
     List,
     ListItem,
     ListItemText,
     IconButton,
     Toolbar,
-    CircularProgress
+    CircularProgress,
+    Box,
+    Card,
+    CardContent,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
@@ -23,10 +19,13 @@ import PurchaseHistory from '../components/PurchaseHistory';
 import ActivePlans from '../components/ActivePlans';
 import ProfileEdit from '../components/ProfileEdit';
 import ChangePassword from '../components/ChangePassword';
-import ProfileView from "../components/ProfileView";
-import CreditView from "../components/CreditView";
+import ProfileView from '../components/ProfileView';
+import CreditView from '../components/CreditView';
+import UserContracts from '../components/UserContracts'; // <-- Importime komponendi
+
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../api/profileApi';
 import { uploadProfilePicture } from '../api/logoApi';
+import { getUserContracts } from '../api/contractApi';
 
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
@@ -36,13 +35,19 @@ const menuItems = [
     { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
     { id: 'change-password', label: 'Change Password', component: ChangePassword },
     { id: 'credit', label: 'Credit', component: CreditView },
+    // UUS menüüelement
+    { id: 'user-contracts', label: 'Contracts', component: UserContracts },
 ];
 
 export default function MyProfile({ token }) {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
     const [activeComponent, setActiveComponent] = useState('my-profile');
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // Kasutame punase märgendina kuvatavat arvu, kui status = 'sent'
+    const [sentCount, setSentCount] = useState(0);
 
     useEffect(() => {
         if (token) {
@@ -58,6 +63,31 @@ export default function MyProfile({ token }) {
         }
     }, [token]);
 
+    // Kui kasutaja info on laetud, toome tema lepingud (GET /contracts/user/:userId)
+    useEffect(() => {
+        if (user?.id) {
+            loadUserContracts(user.id);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
+
+    const loadUserContracts = async (userId) => {
+        try {
+            const data = await getUserContracts(userId);
+            if (Array.isArray(data)) {
+                const sent = data.filter((c) => c.status === 'Waiting for acceptance').length;
+                setSentCount(sent);
+            }
+        } catch (err) {
+            console.error('Error loading user contracts:', err);
+        }
+    };
+
+    const handleMenuClick = (componentId) => {
+        setActiveComponent(componentId);
+        setDrawerOpen(false);
+    };
+
     const handleUploadProfilePicture = async (file) => {
         try {
             const updatedUser = await uploadProfilePicture(file, user.id, token);
@@ -65,11 +95,6 @@ export default function MyProfile({ token }) {
         } catch (error) {
             alert(error.message);
         }
-    };
-
-    const handleMenuClick = (componentId) => {
-        setActiveComponent(componentId);
-        setDrawerOpen(false);
     };
 
     const handleSaveProfile = async (updatedUser) => {
@@ -92,16 +117,16 @@ export default function MyProfile({ token }) {
         }
     };
 
+    // Leiame aktiivse komponendi menüüelementide seast
     const ActiveComponent =
         menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
 
     return (
         <Container
             maxWidth={false}
-            // Seame tingimusliku paddingu: mobiilis (xs, sm) p = 0, alates md p = 4
             sx={{
                 mt: 4,
-                px: { xs: 0, sm: 0, md: 4 }, // <- Vasak ja parem padding
+                px: { xs: 0, sm: 0, md: 4 },
                 display: 'flex',
                 backgroundColor: 'background.default',
                 pt: 2,
@@ -130,7 +155,19 @@ export default function MyProfile({ token }) {
                                 key={item.id}
                                 onClick={() => handleMenuClick(item.id)}
                             >
-                                <ListItemText primary={item.label} />
+                                <ListItemText
+                                    primary={
+                                        item.id === 'user-contracts' && sentCount > 0
+                                            ? `${item.label} (${sentCount})`
+                                            : item.label
+                                    }
+                                    sx={{
+                                        color:
+                                            item.id === 'user-contracts' && sentCount > 0
+                                                ? 'red'
+                                                : 'inherit',
+                                    }}
+                                />
                             </ListItem>
                         ))}
                     </List>
@@ -167,7 +204,19 @@ export default function MyProfile({ token }) {
                                 key={item.id}
                                 onClick={() => handleMenuClick(item.id)}
                             >
-                                <ListItemText primary={item.label} />
+                                <ListItemText
+                                    primary={
+                                        item.id === 'user-contracts' && sentCount > 0
+                                            ? `${item.label} (${sentCount})`
+                                            : item.label
+                                    }
+                                    sx={{
+                                        color:
+                                            item.id === 'user-contracts' && sentCount > 0
+                                                ? 'red'
+                                                : 'inherit',
+                                    }}
+                                />
                             </ListItem>
                         ))}
                     </List>
@@ -178,9 +227,8 @@ export default function MyProfile({ token }) {
             <Box
                 sx={{
                     flexGrow: 1,
-                    // Seame siin ka paddingu mobiilis 0, Desktopil 3
                     p: { xs: 0, sm: 0, md: 3 },
-                    backgroundColor: 'background.paper'
+                    backgroundColor: 'background.paper',
                 }}
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>

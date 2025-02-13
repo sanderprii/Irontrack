@@ -74,7 +74,7 @@ const getCreditHistory = async (req, res) => {
 
 const addCredit = async (req, res) => {
     const {userId, amount, affiliateId, description} = req.body;
-
+let creditAccount;
     try {
         const isCreditAccount = await prisma.credit.findFirst({
             where: {userId, affiliateId}
@@ -89,7 +89,7 @@ const addCredit = async (req, res) => {
                 }
             });
 
-            const creditAccount = await prisma.credit.findFirst({
+            creditAccount = await prisma.credit.findFirst({
                 where: {userId, affiliateId}
             });
 

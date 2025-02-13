@@ -35,6 +35,10 @@ model User {
   creditTransactions CreditTransaction[]
   userNotes          UserNote[]
   messageGroups      UserMessageGroup[]
+  contract           Contract[]
+  signedContracts    SignedContract[]
+
+  contractLogs ContractLogs[]
 }
 
 model Message {
@@ -46,6 +50,71 @@ model Message {
   body          String
   createdAt     DateTime  @default(now())
   affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
+}
+
+model Contract {
+  id              String           @id @default(uuid())
+  affiliateId     Int
+  userId          Int
+  contractType    String?
+  content         String
+  paymentType     String?
+  paymentAmount   Float?
+  paymentInterval String?
+  paymentDay      Int?
+  validUntil      DateTime?
+  active          Boolean          @default(true)
+  status          String           @default("draft") // draft, sent, accepted jne
+  createdAt       DateTime         @default(now())
+  acceptedAt      DateTime?
+  affiliate       Affiliate        @relation(fields: [affiliateId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  signed          SignedContract[]
+  logs            ContractLogs[]
+}
+
+model ContractLogs {
+  id          Int       @id @default(autoincrement())
+  contractId  String
+  userId      Int
+  affiliateId Int
+  action      String
+  createdAt   DateTime  @default(now())
+  contract    Contract  @relation(fields: [contractId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+}
+
+model SignedContract {
+  id              Int    @id @default(autoincrement())
+  contractId      String
+  userId          Int
+  affiliateId     Int
+  acceptType      String
+  contractTermsId Int
+
+  signedAt      DateTime      @default(now())
+  contract      Contract      @relation(fields: [contractId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  affiliate     Affiliate     @relation(fields: [affiliateId], references: [id])
+  contractTerms ContractTerms @relation(fields: [contractTermsId], references: [id])
+}
+
+model ContractTemplate {
+  id          String    @id @default(uuid())
+  affiliateId Int
+  content     String
+  createdAt   DateTime  @default(now())
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+}
+
+model ContractTerms {
+  id        Int      @id @default(autoincrement())
+  type      String
+  terms     String
+  createdAt DateTime @default(now())
+
+  signedContracts SignedContract[]
 }
 
 model MessageGroup {
@@ -212,6 +281,11 @@ model Affiliate {
   creditTransactions CreditTransaction[]
   message            Message[]
   messageGroups      MessageGroup[]
+  contract           Contract[]
+
+  contractTemplates ContractTemplate[]
+  signedContracts   SignedContract[]
+  contractLogs      ContractLogs[]
 }
 
 model AffiliateTrainer {

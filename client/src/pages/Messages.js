@@ -57,7 +57,7 @@ export default function MessagePage() {
         setActiveComponent(componentId);
         setDrawerOpen(false);
     };
-console.log('affiliate', affiliate);
+
     return (
         <Container
             maxWidth={false}

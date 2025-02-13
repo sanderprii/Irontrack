@@ -25,7 +25,14 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                         sx={{
                             cursor: "pointer",
                             ":hover": { boxShadow: 6 },
-                            bgcolor: "background.paper",
+                            bgcolor:
+                                cls.trainingType === "WOD"
+                                ? "#f0faff" // hele-sinine
+                                : cls.trainingType === "Weightlifting"
+                                    ? "#f0fff5" // hele-roheline
+                                    : cls.trainingType === "Cardio"
+                                        ? "#fff5f5" // hele-punane
+                                        : "background.paper",
                             width: "100%",
                             mb: 2, // Lisame väikese vahe iga klassi vahele
                             p: weeklyView ? 1 : 2, // Weekly vaates väiksem padding

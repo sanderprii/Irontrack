@@ -27,6 +27,7 @@ const creditRoutes = require('./routes/creditRoutes');
 const logoRoutes = require('./routes/logoRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const groupsRoutes = require('./routes/groupsRoutes');
+const contractRoutes = require('./routes/contractRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -82,6 +83,7 @@ app.use('/api', logoRoutes);
 app.use('/api', creditRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/messagegroups', groupsRoutes);
+app.use('/api/contracts', contractRoutes);
 
 // Lihtne test endpoint
 app.get('/api', (req, res) => {

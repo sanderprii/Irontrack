@@ -236,13 +236,24 @@ const getClassAttendees = async (req, res) => {
     try {
         const attendees = await prisma.classAttendee.findMany({
             where: {classId},
-            include: {user: {select: {id: true, fullName: true}}}
+            include: {user: {select: {id: true, fullName: true}},}
         });
+
+        // võta iga attendee kohta usernote userId järgi
+         const userNotes = await prisma.userNote.findMany({
+             where: {userId: parseInt(attendees.map(att => att.userId))}
+        });
+
 
         res.json(attendees.map(att => ({
             userId: att.user.id,
             fullName: att.user.fullName,
-            checkIn: att.checkIn // ✅ Lisatud checkIn staatus
+            checkIn: att.checkIn,
+            // pane terve usernote sisse. ühel useril võib olla mitu usernote
+            userNotes: userNotes
+
+
+
         })));
     } catch (error) {
         console.error("❌ Error fetching attendees:", error);

@@ -19,18 +19,20 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { getAffiliate, updateAffiliate } from '../api/affiliateApi';
 import AffiliateView from '../components/AffiliateView';
-import FinanceView from '../components/FinanceView'; // <-- UUS IMPORT
+import FinanceView from '../components/FinanceView';
+import AffiliateContracts from '../components/AffiliateContracts';
 
 const menuItems = [
     { id: 'my-affiliate', label: 'My Affiliate', component: AffiliateView },
-    { id: 'finance', label: 'Finance', component: FinanceView }, // <-- UUS MENÜÜPUNKT
+    { id: 'finance', label: 'Finance', component: FinanceView },
+    { id: 'contracts', label: 'Contracts', component: AffiliateContracts },
 ];
 
 export default function MyAffiliate({ token }) {
     const [affiliate, setAffiliate] = useState(null);
     const [trainers, setTrainers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeComponent, setActiveComponent] = useState('my-affiliate');
+    const [activeComponent, setActiveComponent] = useState('my-affiliate', 'finance', 'contracts');
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     useEffect(() => {
@@ -38,6 +40,7 @@ export default function MyAffiliate({ token }) {
             getAffiliate(token)
                 .then((data) => {
                     setAffiliate(data.affiliate || {});
+
                     setTrainers(data.trainers || []);
                     setIsLoading(false);
                 })
@@ -144,6 +147,7 @@ export default function MyAffiliate({ token }) {
                                 token={token}
                                 affiliate={affiliate}
                                 trainers={trainers}
+                                affiliateId={affiliate.id}
                                 onUpdateAffiliate={handleUpdateAffiliate}
                             />
                         )}

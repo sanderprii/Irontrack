@@ -28,7 +28,7 @@ const menuItems = [
     { id: 'contracts', label: 'Contracts', component: AffiliateContracts },
 ];
 
-export default function MyAffiliate({ token }) {
+export default function MyAffiliate() {
     const [affiliate, setAffiliate] = useState(null);
     const [trainers, setTrainers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -36,8 +36,8 @@ export default function MyAffiliate({ token }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            getAffiliate(token)
+
+            getAffiliate()
                 .then((data) => {
                     setAffiliate(data.affiliate || {});
 
@@ -48,8 +48,8 @@ export default function MyAffiliate({ token }) {
                     console.error('Error fetching affiliate:', error);
                     setIsLoading(false);
                 });
-        }
-    }, [token]);
+
+    }, []);
 
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
@@ -57,7 +57,7 @@ export default function MyAffiliate({ token }) {
     };
 
     const handleUpdateAffiliate = async (updatedAffiliate) => {
-        const success = await updateAffiliate(updatedAffiliate, token);
+        const success = await updateAffiliate(updatedAffiliate);
         if (success) {
             setAffiliate(updatedAffiliate);
             setActiveComponent('my-affiliate');
@@ -144,7 +144,7 @@ export default function MyAffiliate({ token }) {
                             </Box>
                         ) : (
                             <ActiveComponent
-                                token={token}
+
                                 affiliate={affiliate}
                                 trainers={trainers}
                                 affiliateId={affiliate.id}

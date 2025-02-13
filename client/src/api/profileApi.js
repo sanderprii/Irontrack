@@ -1,7 +1,8 @@
 const API_URL = process.env.REACT_APP_API_URL
 
-export const getUserProfile = async (token) => {
+export const getUserProfile = async () => {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/user`, {
             headers: { Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'},
@@ -13,8 +14,9 @@ export const getUserProfile = async (token) => {
     }
 };
 
-export const updateUserProfile = async (userData, token) => {
+export const updateUserProfile = async (userData) => {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/user`, {
             method: 'PUT',
             headers: {
@@ -30,8 +32,9 @@ export const updateUserProfile = async (userData, token) => {
     }
 };
 
-export const changeUserPassword = async (passwordData, token) => {
+export const changeUserPassword = async (passwordData) => {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/user/change-password`, {
             method: 'POST',
             headers: {

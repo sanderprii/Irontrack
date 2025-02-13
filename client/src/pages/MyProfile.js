@@ -39,7 +39,7 @@ const menuItems = [
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
 ];
 
-export default function MyProfile({ token }) {
+export default function MyProfile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -50,8 +50,8 @@ export default function MyProfile({ token }) {
     const [sentCount, setSentCount] = useState(0);
 
     useEffect(() => {
-        if (token) {
-            getUserProfile(token)
+
+            getUserProfile()
                 .then((data) => {
                     setUser(data);
                     setIsLoading(false);
@@ -60,8 +60,8 @@ export default function MyProfile({ token }) {
                     console.error('Error fetching user profile:', error);
                     setIsLoading(false);
                 });
-        }
-    }, [token]);
+
+    }, []);
 
     // Kui kasutaja info on laetud, toome tema lepingud (GET /contracts/user/:userId)
     useEffect(() => {
@@ -90,7 +90,7 @@ export default function MyProfile({ token }) {
 
     const handleUploadProfilePicture = async (file) => {
         try {
-            const updatedUser = await uploadProfilePicture(file, user.id, token);
+            const updatedUser = await uploadProfilePicture(file, user.id);
             setUser(updatedUser);
         } catch (error) {
             alert(error.message);
@@ -98,7 +98,7 @@ export default function MyProfile({ token }) {
     };
 
     const handleSaveProfile = async (updatedUser) => {
-        const success = await updateUserProfile(updatedUser, token);
+        const success = await updateUserProfile(updatedUser);
         if (success) {
             setUser(updatedUser);
             setActiveComponent('my-profile');
@@ -108,7 +108,7 @@ export default function MyProfile({ token }) {
     };
 
     const handleChangePassword = async (passwordData) => {
-        const success = await changeUserPassword(passwordData, token);
+        const success = await changeUserPassword(passwordData);
         if (success) {
             alert('Password changed successfully!');
             setActiveComponent('my-profile');
@@ -250,7 +250,7 @@ export default function MyProfile({ token }) {
                             />
                         ) : (
                             <ActiveComponent
-                                token={token}
+
                                 user={user}
                                 userId={user?.id}
                                 onUploadProfilePicture={handleUploadProfilePicture}

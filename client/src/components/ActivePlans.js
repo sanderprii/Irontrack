@@ -117,7 +117,7 @@ export default function ActivePlans({ userId, affiliateId }) {
         <Card sx={{ bgcolor: "background.paper", border: 'none', p: 2 }}>
             <Typography variant="h5" sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
                 Active Plans
-                {role === 'owner' && (
+                {role === 'affiliate' && (
                 <Button variant="contained" onClick={handleOpenModal}>
                     Add Plan
                 </Button>
@@ -135,7 +135,7 @@ export default function ActivePlans({ userId, affiliateId }) {
                             <TableCell>End Date</TableCell>
                             <TableCell>Sessions Left</TableCell>
                             <TableCell>Price</TableCell>
-                            {role === 'owner' && (
+                            {role === 'affiliate' && (
                             <TableCell>Edit</TableCell>
                             )}
                         </TableRow>
@@ -181,7 +181,7 @@ export default function ActivePlans({ userId, affiliateId }) {
                                         <TableCell>{new Date(p.endDate).toLocaleDateString()}</TableCell>
                                         <TableCell>{p.sessionsLeft}</TableCell>
                                         <TableCell>{p.price} €</TableCell>
-                                        {role === 'owner' && (
+                                        {role === 'affiliate' && (
                                         <TableCell>
                                             <Button variant="text" onClick={() => handleEdit(p)}>
                                                 Edit

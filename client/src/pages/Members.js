@@ -24,12 +24,14 @@ import {
     getMemberInfo,
     searchUsers,
     getOwnerAffiliateId,
+    addMember,
 } from "../api/membersApi";
 import ProfileView from "../components/ProfileView";
 import Statistics from "../components/Statistics";
 import PurchaseHistory from "../components/PurchaseHistory";
 import ActivePlans from "../components/ActivePlans";
 import CreditView from "../components/CreditView";
+import UserContracts from "../components/UserContracts";
 
 export default function Members() {
     // Vasaku paneeli olek: liikmete nimekiri, otsing jne.
@@ -53,6 +55,7 @@ export default function Members() {
         { id: "purchase-history", label: "Purchase History", component: PurchaseHistory },
         { id: "active-plans", label: "Active Plans", component: ActivePlans },
         { id: "credit", label: "Credit", component: CreditView },
+        { id: "contracts", label: "Contracts", component: UserContracts },
     ];
 
     // Laadime esmalt omaniku affiliateId väärtuse
@@ -122,6 +125,18 @@ export default function Members() {
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
     };
+
+    const handleAddMember = async (userId) => {
+        try {
+            await addMember(userId, ownerAffiliateId);
+            // Värskenda liikmete nimekirja
+            const response = await getMembers(ownerAffiliateId);
+            setMembers(Array.isArray(response) ? response : []);
+        } catch (error) {
+            console.error("❌ Error adding member:", error);
+        }
+    }
+
 
     // Valime aktiivse komponendi menüü valikute hulgast; vaikimisi ProfileView
     const ActiveComponent =
@@ -283,6 +298,10 @@ export default function Members() {
                                         <Typography variant="body2" color="text.secondary">
                                             {selectedMember.role || "Member"}
                                         </Typography>
+
+                                        <Button onClick={() => handleAddMember(selectedMember.id)}>Add member</Button>
+
+
                                     </Box>
                                     <List>
                                         {menuItems.map((item) => (

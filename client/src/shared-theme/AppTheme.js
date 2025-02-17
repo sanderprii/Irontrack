@@ -22,10 +22,10 @@ const defaultTypography = typography || {
 const defaultColorSchemes = {
     light: {
         palette: {
-            primary: { main: '#FFB347' }, // Pehme pastelne oranž (sobib logoga)
+            primary: { main: '#4A4A4A' }, // Pehme pastelne oranž (sobib logoga)
             secondary: { main: '#4A4A4A' }, // Tumehall tasakaalustamiseks
             background: {
-                default: '#ECECEC',  // Kogu lehe taust
+                default: '#F6F5F5',  // Kogu lehe taust
                 paper: '#FFFFFF'  // Kaardid ja dialoogid
             },
             text: {
@@ -39,11 +39,11 @@ const defaultColorSchemes = {
             primary: { main: '#FFB347' }, // Oranž jääb esile ka tumedas režiimis
             secondary: { main: '#F5F5F5' }, // Helehall tasakaaluks
             background: {
-                default: '#2B2B2B',  // Tumedam hallikas must
+                default: '#333333',  // Tumedam hallikas must
                 paper: '#333333'  // Kaartide ja modaalide taust
             },
             text: {
-                primary: '#CCCCCC', // Tume taust vajab heledat teksti
+                primary: '#F6F5F5', // Tume taust vajab heledat teksti
                 secondary: '#BBBBBB' // Vähem kontrasti jaoks pehmem hall
             },
         },

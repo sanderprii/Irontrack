@@ -54,7 +54,7 @@ export default function AppAppBar() {
     let rightLinks = [];
 
     if (!isLoggedIn) {
-        leftLinks = [{ name: 'Home', to: '/' }, { name: 'About', to: '/about' }];
+        leftLinks = [{ name: 'Home', to: '/' }, { name: 'Pricing', to: '/pricing'}, { name: 'About', to: '/about' }];
         rightLinks = [{ name: 'Log In', to: '/login' }, { name: 'Join Us', to: '/register' }];
     } else {
         if (role === 'regular') {
@@ -88,8 +88,13 @@ export default function AppAppBar() {
             <Container maxWidth="false">
                 <StyledToolbar variant="dense" disableGutters>
                     {/* Logo või kaubamärgi ikoon */}
-                    <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
-                        <Sitemark />
+                    <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}>
+                        <img
+                            src="/logo2.png"
+                            alt="Irontrack Logo"
+                            style={{ height: "50px", cursor: "pointer" }}
+                            onClick={() => navigate('/')}
+                        />
                     </Box>
 
                     {/* Teema lüliti (Light/Dark) */}

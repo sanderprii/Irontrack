@@ -26,6 +26,7 @@ import Classes from "./pages/Classes";
 import Members from "./pages/Members";
 import Plans from "./pages/Plans";
 import Messages from "./pages/Messages";
+import Pricing from "./pages/Pricing";
 
 import Checkout from "./pages/Checkout";
 
@@ -55,6 +56,8 @@ function App() {
                 <Route path="/plans" element={<Plans />} />
                 <Route path="/Messages" element={<Messages />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/pricing" element={<Pricing />} />
+
 
                 {/* ✅ Lisa MarketingPage uue marsruudina */}
 

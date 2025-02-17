@@ -23,6 +23,8 @@ export default function UserContracts({ user }) {
     const [termsModalOpen, setTermsModalOpen] = useState(false);
     const [selectedContractTermsId, setSelectedContractTermsId] = useState(null);
 
+
+
     useEffect(() => {
         if (user?.id) {
             loadContracts();
@@ -65,6 +67,8 @@ export default function UserContracts({ user }) {
         setSelectedContractTermsId(termsType);
         setTermsModalOpen(true);
     };
+
+    const role = localStorage.getItem('role');
 
     return (
         <Box>
@@ -139,7 +143,7 @@ export default function UserContracts({ user }) {
                                                             </Typography>
                                                         </Box>
 
-                                                            {isSent && (
+                                                            {isSent && role === "regular" && (
                                                                 <Box display="flex" flexDirection="column" gap={1}>
                                                                     <Box display="flex" alignItems="center" gap={1}>
                                                                         <Checkbox

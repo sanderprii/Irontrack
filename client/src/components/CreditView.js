@@ -19,16 +19,19 @@ const CreditView = ({ user, affiliateId }) => {
     // Algväärtused on tühjad massiivid
     const [credits, setCredits] = useState([]);
     const [creditHistory, setCreditHistory] = useState([]);
+
+    // Juba olemasolev AddCredit plokk
     const [openRow, setOpenRow] = useState(null);
     const [creditInputs, setCreditInputs] = useState({});
+
+    // UUS state detailivaate avamiseks creditHistory reas
+    const [openHistoryRow, setOpenHistoryRow] = useState(null);
 
     // Laadime kasutaja krediidi andmed
     useEffect(() => {
         const fetchCredits = async () => {
             try {
-                // Veendu, et mõlemad parameetrid on antud
                 const data = await getUserCredits(affiliateId, user.id);
-                // Kui data ei ole massiiv, kasuta fallback väärtust []
                 setCredits(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Error fetching credits", error);
@@ -95,6 +98,15 @@ const CreditView = ({ user, affiliateId }) => {
         }
     };
 
+    // Kui klikime CreditHistory rea peale, avame/sulgeme detailvaate
+    const handleHistoryRowClick = (id) => {
+        if (openHistoryRow === id) {
+            setOpenHistoryRow(null);
+        } else {
+            setOpenHistoryRow(id);
+        }
+    };
+
     const role = localStorage.getItem('role');
 
     // Lisamise funktsiooni võib kasutada ainult, kui kasutaja roll on affiliate või trainer
@@ -105,6 +117,8 @@ const CreditView = ({ user, affiliateId }) => {
             <Typography variant="h5" gutterBottom>
                 Credit
             </Typography>
+
+            {/* Kui pole üldse credits, näita "Add Credit" vormi */}
             {credits.length === 0 && canAddCredit && (
                 <Paper sx={{ mb: 4, p: 2 }}>
                     <Typography variant="h6">Add Credit</Typography>
@@ -126,6 +140,8 @@ const CreditView = ({ user, affiliateId }) => {
                     </Box>
                 </Paper>
             )}
+
+            {/* Credits-tabel */}
             <Paper sx={{ mb: 4 }}>
                 <Table>
                     <TableHead>
@@ -139,7 +155,7 @@ const CreditView = ({ user, affiliateId }) => {
                         {credits.map((credit) => (
                             <React.Fragment key={credit.id}>
                                 <TableRow>
-                                    <TableCell>{credit.credit}€</TableCell>
+                                    <TableCell>{credit.credit} €</TableCell>
                                     <TableCell>{credit.affiliate?.name}</TableCell>
                                     {canAddCredit && (
                                         <TableCell>
@@ -180,9 +196,8 @@ const CreditView = ({ user, affiliateId }) => {
                     </TableBody>
                 </Table>
             </Paper>
-            {/* kui credits = [], siis kuvatakse siin add credit form, mis kuvatakse siis kui credit on olemas koos oma funktsionaalsusega */}
 
-
+            {/* Credit History tabel */}
             <Typography variant="h6" gutterBottom>
                 Credit History
             </Typography>
@@ -191,27 +206,59 @@ const CreditView = ({ user, affiliateId }) => {
                     <TableHead>
                         <TableRow>
                             <TableCell>Date</TableCell>
-                            <TableCell>Payment Ref</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Amount</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {creditHistory.map((entry) => (
-                            <TableRow key={entry.id}>
-                                <TableCell>
-                                    {new Date(entry.createdAt).toLocaleDateString('et-EE', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric'
-                                    })}
-                                </TableCell>
-                                <TableCell>{entry.paymentRef}</TableCell>
-                                <TableCell>{entry.description}</TableCell>
-                                <TableCell>
-                                    {entry.decrease ? '-' : '+'}{entry.creditAmount}€
-                                </TableCell>
-                            </TableRow>
+                            <React.Fragment key={entry.id}>
+                                {/* Peamine rida */}
+                                <TableRow
+                                    hover
+                                    onClick={() => handleHistoryRowClick(entry.id)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <TableCell>
+                                        {new Date(entry.createdAt).toLocaleDateString('et-EE', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric'
+                                        })}
+                                    </TableCell>
+                                    <TableCell>{entry.description}</TableCell>
+                                    <TableCell>
+                                        {entry.decrease ? '-' : '+'}{entry.amount}€
+                                    </TableCell>
+                                </TableRow>
+
+                                {/* Kui rida on avatud => Näitame detailset vaadet */}
+                                {openHistoryRow === entry.id && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} sx={{ bgcolor: '#f5f5f5' }}>
+                                            <Box sx={{ p: 1 }}>
+                                                <Typography variant="subtitle2">
+                                                    Details:
+                                                </Typography>
+                                                <Typography variant="body2">ID: {entry.id}</Typography>
+                                                <Typography variant="body2">Invoice Number: {entry.invoiceNumber}</Typography>
+                                                <Typography variant="body2">Status: {entry.status}</Typography>
+                                                <Typography variant="body2">Type: {entry.type}</Typography>
+                                                <Typography variant="body2">isCredit: {String(entry.isCredit)}</Typography>
+                                                <Typography variant="body2">decrease: {String(entry.decrease)}</Typography>
+                                                <Typography variant="body2">Affiliate ID: {entry.affiliateId}</Typography>
+                                                <Typography variant="body2">Credit ID: {entry.creditId}</Typography>
+                                                {/* ... Kui tahad kuvada ka planId, memberId, jms ... */}
+                                                <Typography variant="body2">Plan ID: {entry.planId}</Typography>
+                                                <Typography variant="body2">Member ID: {entry.memberId}</Typography>
+
+                                                {/* Kui sul on seal veel välju, võid neid lisada */}
+                                                {/* <pre>{JSON.stringify(entry, null, 2)}</pre> */}
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </React.Fragment>
                         ))}
                     </TableBody>
                 </Table>

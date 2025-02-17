@@ -22,6 +22,7 @@ import ChangePassword from '../components/ChangePassword';
 import ProfileView from '../components/ProfileView';
 import CreditView from '../components/CreditView';
 import UserContracts from '../components/UserContracts'; // <-- Importime komponendi
+import Transactions from "../components/Transactions";
 
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../api/profileApi';
 import { uploadProfilePicture } from '../api/logoApi';
@@ -29,14 +30,16 @@ import { getUserContracts } from '../api/contractApi';
 
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
+    { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
+    { id: 'change-password', label: 'Change Password', component: ChangePassword },
     { id: 'statistics', label: 'Statistics', component: Statistics },
     { id: 'purchase-history', label: 'Purchase History', component: PurchaseHistory },
     { id: 'active-plans', label: 'Active Plans', component: ActivePlans },
-    { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
-    { id: 'change-password', label: 'Change Password', component: ChangePassword },
+
     { id: 'credit', label: 'Credit', component: CreditView },
     // UUS menüüelement
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
+    { id: 'transactions', label: 'Transactions', component: Transactions },
 ];
 
 export default function MyProfile() {

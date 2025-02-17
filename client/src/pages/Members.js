@@ -32,6 +32,7 @@ import PurchaseHistory from "../components/PurchaseHistory";
 import ActivePlans from "../components/ActivePlans";
 import CreditView from "../components/CreditView";
 import UserContracts from "../components/UserContracts";
+import Transactions from "../components/Transactions";
 
 export default function Members() {
     // Vasaku paneeli olek: liikmete nimekiri, otsing jne.
@@ -56,6 +57,7 @@ export default function Members() {
         { id: "active-plans", label: "Active Plans", component: ActivePlans },
         { id: "credit", label: "Credit", component: CreditView },
         { id: "contracts", label: "Contracts", component: UserContracts },
+        { id: "transactions", label: "Transactions", component: Transactions },
     ];
 
     // Laadime esmalt omaniku affiliateId väärtuse

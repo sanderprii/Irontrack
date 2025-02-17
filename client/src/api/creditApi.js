@@ -53,3 +53,21 @@ export const getCreditHistory = async (affiliateId, userId) => {
         console.error("Error fetching credit history:", error);
     }
 }
+
+export const getUserTransactions = async (affiliateId, userId) => {
+
+    const token = localStorage.getItem("token");
+
+    try {
+        const response = await fetch(`${BASE_URL}/credit/transactions?affiliateId=${affiliateId}&userId=${userId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching user transactions:", error);
+    }
+}

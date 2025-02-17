@@ -47,7 +47,7 @@ const getCreditHistory = async (req, res) => {
         let history
 
         if (role === 'regular') {
-            history = await prisma.creditTransaction.findMany({
+            history = await prisma.transactions.findMany({
                 where: {userId},
                 include: {
                     affiliate: true
@@ -56,7 +56,7 @@ const getCreditHistory = async (req, res) => {
             });
         } else {
 
-            history = await prisma.creditTransaction.findMany({
+            history = await prisma.transactions.findMany({
                 where: {userId, affiliateId},
                 include: {
                     affiliate: true
@@ -114,15 +114,18 @@ let creditAccount;
         const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
 
 
-        const responseOK = await prisma.creditTransaction.create({
+        const responseOK = await prisma.transactions.create({
             data: {
-                userId,
-                affiliateId,
-                creditAmount: amount,
-
+                userId: userId,
+                affiliateId: affiliateId,
+                amount,
+                isCredit: true,
                 description,
-                paymentRef: invoicenumberDateandTime,
-                creditId: creditId
+                invoiceNumber: invoicenumberDateandTime,
+                creditId: creditId,
+                status: "success",
+                decrease: false
+
             }
         });
 
@@ -133,8 +136,44 @@ let creditAccount;
     }
 }
 
+const getUserTransactions = async (req, res) => {
+    try {
+        const { userId, affiliateId } = req.query;
+
+        // Kontrollime, et userId on olemas
+        if (!userId) {
+            return res.status(400).json({ error: "userId is required." });
+        }
+
+        // Koostame where tingimuse
+        const whereClause = {
+            userId: parseInt(userId, 10),
+        };
+
+
+        // Kui affiliateId on antud, lisame ka selle
+        if (parseInt(affiliateId) > 0) {
+            whereClause.affiliateId = parseInt(affiliateId, 10);
+        }
+
+        // Pärime andmebaasist
+        const transactions = await prisma.transactions.findMany({
+            where: whereClause,
+            orderBy: {
+                createdAt: "desc", // sort kahanevas järjekorras
+            },
+        });
+
+        res.json(transactions);
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
+};
+
 module.exports = {
     getUserCredits,
     getCreditHistory,
-    addCredit
+    addCredit,
+    getUserTransactions
 };

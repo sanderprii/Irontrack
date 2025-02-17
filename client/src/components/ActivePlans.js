@@ -112,14 +112,16 @@ export default function ActivePlans({ userId, affiliateId }) {
         setEditRowId(null);
         loadUserActivePlans();
     };
-
+  const role = localStorage.getItem('role');
     return (
         <Card sx={{ bgcolor: "background.paper", border: 'none', p: 2 }}>
             <Typography variant="h5" sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
                 Active Plans
+                {role === 'owner' && (
                 <Button variant="contained" onClick={handleOpenModal}>
                     Add Plan
                 </Button>
+                )}
             </Typography>
 
             {plans.length === 0 ? (
@@ -133,7 +135,9 @@ export default function ActivePlans({ userId, affiliateId }) {
                             <TableCell>End Date</TableCell>
                             <TableCell>Sessions Left</TableCell>
                             <TableCell>Price</TableCell>
+                            {role === 'owner' && (
                             <TableCell>Edit</TableCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -177,11 +181,13 @@ export default function ActivePlans({ userId, affiliateId }) {
                                         <TableCell>{new Date(p.endDate).toLocaleDateString()}</TableCell>
                                         <TableCell>{p.sessionsLeft}</TableCell>
                                         <TableCell>{p.price} €</TableCell>
+                                        {role === 'owner' && (
                                         <TableCell>
                                             <Button variant="text" onClick={() => handleEdit(p)}>
                                                 Edit
                                             </Button>
                                         </TableCell>
+                                        )}
                                     </>
                                 )}
                             </TableRow>

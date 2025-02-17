@@ -6,7 +6,7 @@ const ensureAuthenticated = require("../middlewares/ensureAuthenticatedJWT");
 const {
     getUserCredits,
     addCredit,
-    getCreditHistory
+    getCreditHistory, getUserTransactions
 } = require('../controllers/creditController');
 
 // API endpointid
@@ -18,5 +18,7 @@ router.post('/credit', addCredit);
 
 // GET /credit/history?affiliateId=...&userId=...
 router.get('/credit/history', getCreditHistory);
+router.get('/credit/transactions', getUserTransactions);
+
 
 module.exports = router;

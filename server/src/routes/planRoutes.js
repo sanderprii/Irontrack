@@ -9,5 +9,9 @@ router.put("/plans/:id", ensureAuthenticated,  planController.updatePlan);
 router.delete("/plans/:id", ensureAuthenticated, planController.deletePlan);
 router.post("/plans/buy-plan/:affiliateId", ensureAuthenticated, planController.buyPlan);
 router.get("/plans/credit/:affiliateId", ensureAuthenticated, planController.getUserCredit);
+// PUT: uuendab olemasolevat plaani
+router.put("/plans/user/:id", ensureAuthenticated, planController.updateUserPlan);
 
+// POST: määrab kasutajale plaani (salvestub UserPlan tabelisse)
+router.post("/plans/assign", ensureAuthenticated, planController.assignPlanToUser);
 module.exports = router;

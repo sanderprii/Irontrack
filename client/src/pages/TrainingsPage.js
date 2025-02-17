@@ -318,9 +318,9 @@ export default function TrainingsPage() {
             </Typography>
 
             {/* --- FORM for creating new training --- */}
-            <Box component="form" onSubmit={handleSubmitTraining} sx={{ mb: 4 }}>
+            <Box component="form" onSubmit={handleSubmitTraining} sx={{ mb: 4, backgroundColor: "background.paper" }}>
                 <FormControl fullWidth sx={{ mb: 2, backgroundColor: "background.paper" }}>
-                    <InputLabel id="training-type-label">Training Type</InputLabel>
+                    <InputLabel id="training-type-label" sx={{ backgroundColor: "background.paper" }}>Training Type</InputLabel>
                     <Select
                         labelId="training-type-label"
                         value={trainingType}
@@ -329,11 +329,11 @@ export default function TrainingsPage() {
                         sx={{ backgroundColor: "background.paper" }}
 
                     >
-                        <MenuItem value="">-- Select Training Type --</MenuItem>
-                        <MenuItem value="WOD">WOD</MenuItem>
-                        <MenuItem value="Weightlifting">Weightlifting</MenuItem>
-                        <MenuItem value="Cardio">Cardio</MenuItem>
-                        <MenuItem value="Other">Other</MenuItem>
+                        <MenuItem value="" sx={{ backgroundColor: "background.paper" }}>-- Select Training Type --</MenuItem>
+                        <MenuItem value="WOD" sx={{ backgroundColor: "background.paper" }}>WOD</MenuItem>
+                        <MenuItem value="Weightlifting" sx={{ backgroundColor: "background.paper" }}>Weightlifting</MenuItem>
+                        <MenuItem value="Cardio" sx={{ backgroundColor: "background.paper" }}>Cardio</MenuItem>
+                        <MenuItem value="Other" sx={{ backgroundColor: "background.paper" }}>Other</MenuItem>
                     </Select>
                 </FormControl>
 

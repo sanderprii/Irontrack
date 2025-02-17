@@ -40,12 +40,44 @@ export default function AffiliateContracts({affiliateId}) {
         // Tagastab affiliate lepingud, arvestades search ja sort
         const data = await getContracts(search, sortBy, sortOrder, affiliateId);
         if (Array.isArray(data)) {
-            setContracts(data);
+            let sortedData = [...data];
+
+            // Kui otsing on aktiivne, too vastavad nimed ette
+            if (search.length > 0 && sortBy === "fullName") {
+                sortedData.sort((a, b) => {
+                    const nameA = a.user.fullName.toLowerCase();
+                    const nameB = b.user.fullName.toLowerCase();
+                    const searchTerm = search.toLowerCase();
+
+                    // Kontrollime, kas nimi sisaldab otsitud terminit
+                    const startsWithA = nameA.startsWith(searchTerm) ? -1 : 1;
+                    const startsWithB = nameB.startsWith(searchTerm) ? -1 : 1;
+
+                    // Kui mõlemad algavad otsinguterminiga, sorteeri tähestikuliselt
+                    if (nameA.includes(searchTerm) && nameB.includes(searchTerm)) {
+                        return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+                    }
+
+                    // Too nimed, mis algavad otsinguterminiga, ettepoole
+                    return startsWithA - startsWithB;
+                });
+            }
+
+            setContracts(sortedData);
         }
     };
 
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
+
+
+
+        if (search.length > 0) {
+            setSortBy("fullName"); // Kui on midagi sisestatud, sorteeri täisnime järgi
+        } else {
+            setSortBy("createdAt"); // Kui otsing on tühi, kasuta vaikimisi sortimist
+        }
+
     };
 
     const handleSort = (field) => {
@@ -119,6 +151,7 @@ export default function AffiliateContracts({affiliateId}) {
                 <TextField
                     label="Search by user fullName"
                     value={search}
+
                     onChange={handleSearchChange}
                     size="small"
                 />

@@ -230,7 +230,7 @@ export default function HomePage() {
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
                     Sign up today and see how easy gym management can be.
                 </Typography>
-                <Button variant="contained" size="large" color="primary">
+                <Button variant="contained" size="large" color="primary" onClick={() => navigate("/register")}>
                     Create My Account
                 </Button>
             </Container>

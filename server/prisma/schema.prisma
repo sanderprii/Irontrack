@@ -240,6 +240,7 @@ model Plan {
   price          Float
   additionalData String?
   sessions       Int
+  active         Boolean        @default(true)
   ownerId        Int
   owner          User           @relation(fields: [ownerId], references: [id])
   transactions   transactions[]

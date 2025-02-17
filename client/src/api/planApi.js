@@ -106,3 +106,43 @@ return data
         // kuva error kasutajale
     }
 }
+
+export const updateUserPlan = async (planId, planData) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/plans/user/${planId}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(planData),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error updating plan:", error);
+        return null;
+    }
+};
+
+/**
+ * Määrab kasutajale (UserPlan tabelisse) valitud plaani.
+ * planId: number, userId: number
+ */
+export const assignPlanToUser = async (planId, userId, affiliateId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/plans/assign`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ planId, userId, affiliateId }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error assigning plan to user:", error);
+        return null;
+    }
+};

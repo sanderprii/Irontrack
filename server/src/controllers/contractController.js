@@ -15,30 +15,25 @@ exports.getAllContracts = async (req, res) => {
 
         const { search = '', sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-        // Otsime contractiga seotud userId -> see eeldab, et
-        // sul on kuskil mujal seos, et saaks useri fullName kätte.
-        // NB! Kuna Prisma seos on defineerimata, peame tegema workaroundi
-        // või eeldama, et userId = ... ja me otsime useri teisest tabelist
-        // join'iga (or lisapäring).
-        // Siin on lihtsustatud: toome *kõik* Contract read, kus affiliateId = ...
-        // Kui tahad leida fullName, pead fetchima eraldi User-tabelist.
-
         let orderBy = {};
-        orderBy[sortBy] = sortOrder; // nt { createdAt: 'desc' }
+
+        // Kui kasutaja soovib sorteerida täisnime järgi
+        if (sortBy === 'fullName') {
+            orderBy = {
+                user: { fullName: sortOrder }, // Kasutab Prisma nested orderBy
+            };
+        } else {
+            orderBy[sortBy] = sortOrder; // Vaikimisi sorteerimine
+        }
 
         const contracts = await prisma.contract.findMany({
             where: {
-                affiliateId,
-                // search userFullName => eeldame, et teed
-                // eraldi joini vms. Lühidalt:
-                // see on pigem keerulisem kui otsime user tabelist.
-                // Lihtsustatud variant: otsime contractType vms.
+                affiliateId: affiliateId,
             },
             include: {
-                user: {select: {fullName: true}},
-
+                user: { select: { fullName: true } },
             },
-            orderBy: orderBy,
+            orderBy: orderBy, // Siin toimub õige sorteerimine
         });
 
         res.json(contracts);

@@ -107,20 +107,20 @@ const buyPlan = async (req, res) => {
 
     try {
         // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
-        const plan = await prisma.plan.findUnique({ where: { id: parseInt(planData.id) } });
+        const plan = await prisma.plan.findUnique({where: {id: parseInt(planData.id)}});
         if (!plan) {
-            return res.status(404).json({ error: "Plan not found." });
+            return res.status(404).json({error: "Plan not found."});
         }
         const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: { members: true }
+            where: {id: userId},
+            include: {members: true}
         });
         if (!user) {
-            return res.status(404).json({ error: "User not found." });
+            return res.status(404).json({error: "User not found."});
         }
-        const affiliate = await prisma.affiliate.findUnique({ where: { id: affiliateId } });
+        const affiliate = await prisma.affiliate.findUnique({where: {id: affiliateId}});
         if (!affiliate) {
-            return res.status(404).json({ error: "Affiliate not found." });
+            return res.status(404).json({error: "Affiliate not found."});
         }
         const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
 
@@ -137,7 +137,7 @@ const buyPlan = async (req, res) => {
             }
 
             const getMember = await prisma.members.findFirst({
-                where: { userId: userId, affiliateId: affiliateId }
+                where: {userId: userId, affiliateId: affiliateId}
             });
 
             // Krediidi kasutamine ja krediidi tehingu loomine, kui rakendatav krediit on suurem kui 0
@@ -149,12 +149,12 @@ const buyPlan = async (req, res) => {
                             affiliateId: affiliateId,
                         },
                     },
-                    data: { credit: { decrement: appliedCredit } }
+                    data: {credit: {decrement: appliedCredit}}
                 });
 
                 const credit = await prisma.credit.findUnique({
-                    where: { userId_affiliateId: { userId: userId, affiliateId: affiliateId } },
-                    select: { id: true }
+                    where: {userId_affiliateId: {userId: userId, affiliateId: affiliateId}},
+                    select: {id: true}
                 });
 
                 await prisma.creditTransaction.create({
@@ -202,15 +202,15 @@ const buyPlan = async (req, res) => {
 
             // Kasutaja uue affiliate'i lisamine
             await prisma.user.update({
-                where: { id: userId },
-                data: { homeAffiliate: affiliateId }
+                where: {id: userId},
+                data: {homeAffiliate: affiliateId}
             });
         });
 
-        res.status(201).json({ message: "Transaction successful!" });
+        res.status(201).json({message: "Transaction successful!"});
     } catch (error) {
         console.error("Error buying plan:", error);
-        res.status(500).json({ error: "Failed to buy plan." });
+        res.status(500).json({error: "Failed to buy plan."});
     }
 };
 
@@ -234,5 +234,116 @@ const getUserCredit = async (req, res) => {
     }
 };
 
+const assignPlanToUser = async (req, res) => {
+    try {
+        const {userId, planId, affiliateId} = req.body;
 
-module.exports = {getPlans, createPlan, updatePlan, deletePlan, buyPlan, getUserCredit};
+        console.log('affiliateId', affiliateId)
+        // Leia plaan, mille userile määrame
+        const plan = await prisma.plan.findUnique({
+            where: {id: planId},
+        });
+        if (!plan) {
+            return res.status(404).json({error: "Plan not found"});
+        }
+
+        const user = await prisma.user.findUnique({
+            where: {id: userId},
+            include: {members: true}
+        });
+
+        const affiliate = await prisma.affiliate.findUnique({where: {id: affiliateId}});
+        if (!affiliate) {
+            return res.status(404).json({error: "Affiliate not found."});
+        }
+        const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+
+
+        // Arvutame kehtivusaja lõppkuupäeva
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + plan.validityDays);
+
+        // Loome kirje UserPlan tabelisse
+        const userPlan = await prisma.userPlan.create({
+            data: {
+                userId: userId,
+                affiliateId: affiliateId, // vmt affiliate id
+                planId: plan.id,
+                planName: plan.name,
+                validityDays: plan.validityDays,
+                price: plan.price,
+                endDate: endDate,
+                sessionsLeft: plan.sessions,
+            },
+        });
+        await prisma.$transaction(async (prisma) => {
+            // Liige loomine, kui puudub
+            if (!user.members[0]) {
+                await prisma.members.create({
+                    data: {
+                        userId: userId,
+                        affiliateId: affiliateId,
+                    }
+                });
+            }
+
+            const getMember = await prisma.members.findFirst({
+                where: {userId: userId, affiliateId: affiliateId}
+            });
+            // Transaktsiooni loomine
+            await prisma.transactions.create({
+                data: {
+                    userId: userId,
+                    amount: plan.price,
+                    invoiceNumber: invoicenumberDateandTime,
+                    description: `Plan purchase: ${plan.name}, by: ${user.email}, from: ${affiliate.name}`,
+                    type: 'debit',
+                    affiliateId: affiliateId,
+                    planId: plan.id,
+                    memberId: parseInt(getMember.id),
+                    status: "success"
+                }
+            });
+        });
+
+        res.status(201).json(userPlan);
+    } catch (error) {
+        console.error("Error assigning plan to user:", error);
+        res.status(500).json({error: "Failed to assign plan to user."});
+    }
+};
+
+
+const updateUserPlan = async (req, res) => {
+    try {
+        const planId = parseInt(req.params.id);
+        const {sessionsLeft, endDate} = req.body;
+        console.log('endDate', endDate)
+        const updatedPlan = await prisma.userPlan.update({
+            where: {id: planId},
+            data: {
+
+
+                endDate: new Date(endDate),
+                sessionsLeft,
+
+            },
+        });
+
+        res.json(updatedPlan);
+    } catch (error) {
+        console.error("Error updating plan:", error);
+        res.status(500).json({error: "Failed to update plan."});
+    }
+};
+
+module.exports = {
+    getPlans,
+    createPlan,
+    updatePlan,
+    deletePlan,
+    buyPlan,
+    getUserCredit,
+    assignPlanToUser,
+    updateUserPlan
+};

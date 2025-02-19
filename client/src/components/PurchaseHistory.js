@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Table, TableHead, TableRow, TableCell, TableBody, Typography, Card, CardContent } from '@mui/material';
 
-export default function PurchaseHistory({ userId }) {
+export default function PurchaseHistory({ userId, affiliateId }) {
     const [purchases, setPurchases] = useState([]); // ✅ Algseis on tühi massiiv
 
     const token = localStorage.getItem('token');
     const API_URL = process.env.REACT_APP_API_URL
     useEffect(() => {
 
-        fetch(`${API_URL}/user/user-purchase-history?userId=${userId}`, {
+        fetch(`${API_URL}/user/user-purchase-history?userId=${userId}&affiliateId=${affiliateId}`, {
             headers: { Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json' },
         })

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
-
+import Box from '@mui/material/Box';
 // ✅ Impordi AppTheme
 import AppTheme from './shared-theme/AppTheme';
 
@@ -37,6 +37,13 @@ function App() {
         <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
             <CssBaseline />
             <ResponsiveNavbar />
+            <Box
+                sx={{
+                    // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
+                    // jätame ekraani alla tühja ruumi
+                    pb:'56px',
+                }}
+            >
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<AboutPage />} />
@@ -62,6 +69,7 @@ function App() {
                 {/* ✅ Lisa MarketingPage uue marsruudina */}
 
             </Routes>
+            </Box>
         </AppTheme>
     );
 }

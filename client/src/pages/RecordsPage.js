@@ -14,7 +14,8 @@ import {
     Alert,
     Grid,
     Card,
-    CardContent
+    CardContent,
+    CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -27,7 +28,6 @@ const StyledContainer = styled(Container)(({ theme }) => ({
     flexDirection: "column",
     alignItems: "center",
     gap: theme.spacing(4),
-
 }));
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -56,7 +56,12 @@ export default function RecordsPage() {
     const [recordScore, setRecordScore] = useState('');
     const [recordWeight, setRecordWeight] = useState('');
     const [recordTime, setRecordTime] = useState('');
+
+    // Uus: otsingusisendi olek
+    const [searchQuery, setSearchQuery] = useState('');
+
     const API_URL = process.env.REACT_APP_API_URL
+
     useEffect(() => {
         loadRecords();
     }, [recordType]);
@@ -66,7 +71,6 @@ export default function RecordsPage() {
             setError('');
             setLoading(true);
             const token = localStorage.getItem('token');
-            const API_URL = process.env.REACT_APP_API_URL
             const response = await fetch(`${API_URL}/records?type=${recordType}`, {
                 method: 'GET',
                 headers: {
@@ -92,6 +96,7 @@ export default function RecordsPage() {
     const handleRecordTypeChange = (event, newType) => {
         if (newType) {
             setRecordType(newType);
+            setSearchQuery(''); // tühjenda otsinguväli, kui tüüp muutub
         }
     };
 
@@ -119,6 +124,7 @@ export default function RecordsPage() {
                 date: recordDate,
             };
 
+            // Sõltuvalt tüübist lisame õige välja
             if (recordType === 'WOD') {
                 payload.score = recordScore;
             } else if (recordType === 'Weightlifting') {
@@ -148,8 +154,8 @@ export default function RecordsPage() {
 
     const handleDeleteRecord = async (recordId) => {
         try {
-            const confirm = window.confirm('Do you want to delete this record?');
-            if (!confirm) return;
+            const confirmDelete = window.confirm('Do you want to delete this record?');
+            if (!confirmDelete) return;
 
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/records/${recordId}`, {
@@ -169,6 +175,17 @@ export default function RecordsPage() {
         }
     };
 
+    // Filtreerime otsingupäringu põhjal
+    const filteredRecords = records.filter((rec) => {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        return (
+            rec.name.toLowerCase().includes(lowerCaseQuery) ||
+            (recordType === 'WOD' && rec.score?.toString().toLowerCase().includes(lowerCaseQuery)) ||
+            (recordType === 'Weightlifting' && rec.weight?.toString().toLowerCase().includes(lowerCaseQuery)) ||
+            (recordType === 'Cardio' && rec.time?.toString().toLowerCase().includes(lowerCaseQuery))
+        );
+    });
+
     return (
         <AppTheme>
             <StyledContainer maxWidth={false}>
@@ -178,25 +195,59 @@ export default function RecordsPage() {
 
                 {error && <Alert severity="error">{error}</Alert>}
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                {/* Laadimise indikaator (spinner) */}
+                {loading && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 3,
+                        flexWrap: 'wrap', // reageerib kitsamal ekraanil
+                        gap: 2
+                    }}
+                >
                     <ToggleButtonGroup
                         color="primary"
                         value={recordType}
                         exclusive
                         onChange={handleRecordTypeChange}
+
                     >
                         <ToggleButton value="WOD">WOD</ToggleButton>
                         <ToggleButton value="Weightlifting">Weightlifting</ToggleButton>
                         <ToggleButton value="Cardio">Cardio</ToggleButton>
                     </ToggleButtonGroup>
 
+                    <TextField
+                        label="Search"
+                        variant="outlined"
+                        size="small"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name, score, etc."
+                        sx={{ maxWidth: 200 }}
+                    />
+
                     <Button variant="contained" onClick={handleOpenAddRecord}>
                         Add Record
                     </Button>
                 </Box>
 
+                {/* Näitame, kui filtreeritud kirjeid ei leidu */}
+                {!loading && filteredRecords.length === 0 && (
+                    <Typography variant="body1" sx={{ mt: 2 }}>
+                        No records found.
+                    </Typography>
+                )}
+
                 <Grid container spacing={2} sx={{ justifyContent: "center" }}>
-                    {records.map((rec) => {
+                    {filteredRecords.map((rec) => {
                         let displayText = '';
                         if (recordType === 'WOD') {
                             displayText = `Score: ${rec.score}`;
@@ -208,7 +259,10 @@ export default function RecordsPage() {
 
                         return (
                             <Grid item key={rec.id}>
-                                <StyledCard sx={{ bgcolor: "background.paper"}} onClick={() => handleDeleteRecord(rec.id)}>
+                                <StyledCard
+                                    sx={{ bgcolor: "background.paper"}}
+                                    onClick={() => handleDeleteRecord(rec.id)}
+                                >
                                     <CardContent>
                                         <Typography variant="subtitle1" fontWeight="bold">
                                             {rec.name}
@@ -224,11 +278,55 @@ export default function RecordsPage() {
                 <Dialog open={addModalOpen} onClose={handleCloseAddRecord}>
                     <DialogTitle>Add Record</DialogTitle>
                     <DialogContent>
-                        <TextField label="Name" value={recordName} onChange={(e) => setRecordName(e.target.value)} fullWidth sx={{ mb: 2 }} />
-                        <TextField label="Date" type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} fullWidth sx={{ mb: 2 }} InputLabelProps={{ shrink: true }} />
-                        {recordType === 'WOD' && <TextField label="Score" value={recordScore} onChange={(e) => setRecordScore(e.target.value)} fullWidth sx={{ mb: 2 }} />}
-                        {recordType === 'Weightlifting' && <TextField label="Weight (kg)" type="number" value={recordWeight} onChange={(e) => setRecordWeight(e.target.value)} fullWidth sx={{ mb: 2 }} />}
-                        {recordType === 'Cardio' && <TextField label="Time (mm:ss)" value={recordTime} onChange={(e) => setRecordTime(e.target.value)} fullWidth sx={{ mb: 2 }} />}
+                        <TextField
+                            label="Name"
+                            value={recordName}
+                            onChange={(e) => setRecordName(e.target.value)}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                            placeholder="Enter name/title"
+                        />
+                        <TextField
+                            label="Date"
+                            type="date"
+                            value={recordDate}
+                            onChange={(e) => setRecordDate(e.target.value)}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                            InputLabelProps={{ shrink: true }}
+                            helperText="Select date for this record"
+                        />
+                        {recordType === 'WOD' && (
+                            <TextField
+                                label="Score"
+                                value={recordScore}
+                                onChange={(e) => setRecordScore(e.target.value)}
+                                fullWidth
+                                sx={{ mb: 2 }}
+                                placeholder="e.g. number of rounds, reps, etc."
+                            />
+                        )}
+                        {recordType === 'Weightlifting' && (
+                            <TextField
+                                label="Weight (kg)"
+                                type="number"
+                                value={recordWeight}
+                                onChange={(e) => setRecordWeight(e.target.value)}
+                                fullWidth
+                                sx={{ mb: 2 }}
+                                placeholder="Enter weight in kg"
+                            />
+                        )}
+                        {recordType === 'Cardio' && (
+                            <TextField
+                                label="Time (mm:ss)"
+                                value={recordTime}
+                                onChange={(e) => setRecordTime(e.target.value)}
+                                fullWidth
+                                sx={{ mb: 2 }}
+                                placeholder="mm:ss"
+                            />
+                        )}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleCloseAddRecord}>Cancel</Button>

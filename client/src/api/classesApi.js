@@ -156,11 +156,16 @@ export const getClassAttendees = async (classId) => {
 
 export const checkInAttendee = async (classId, userId) => {
     try {
+        console.log("URL:", `${API_URL}/class-attendees/check-in`);
+
         const token = localStorage.getItem("token");
 
         const response = await fetch(`${API_URL}/class-attendees/check-in`, {
             method: "PATCH",
-            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({ classId, userId })
         });
 

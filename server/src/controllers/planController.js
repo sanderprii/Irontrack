@@ -157,17 +157,7 @@ const buyPlan = async (req, res) => {
                     select: {id: true}
                 });
 
-                await prisma.creditTransaction.create({
-                    data: {
-                        userId: userId,
-                        affiliateId: affiliateId,
-                        creditAmount: appliedCredit,
-                        decrease: true,
-                        creditId: credit.id,
-                        paymentRef: invoicenumberDateandTime,
-                        description: `Plan purchase: ${planData.name}, by: ${user.email}, from: ${affiliate.name}`,
-                    }
-                });
+
             }
 
             // Transaktsiooni loomine

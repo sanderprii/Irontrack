@@ -40,12 +40,23 @@ exports.getVisitHistory = async (req, res) => {
 // Purchase history
 exports.getPurchaseHistory = async (req, res) => {
     const userId = req.query.userId;
+    const affiliateId = req.query.affiliateId;
     try {
-        const plans = await prisma.userPlan.findMany({
-            where: { userId: parseInt(userId) },
-            orderBy: { id: 'desc' }
-        });
-        res.json(plans);
+
+        if(!isNaN(affiliateId)) {
+            const purchases = await prisma.userPlan.findMany({
+                where: { userId: parseInt(userId), affiliateId: parseInt(affiliateId) },
+                orderBy: { id: 'desc' }
+            });
+            res.json(purchases);
+        } else {
+
+            const plans = await prisma.userPlan.findMany({
+                where: {userId: parseInt(userId)},
+                orderBy: {id: 'desc'}
+            });
+            res.json(plans);
+        }
     } catch (error) {
         console.error('Error fetching user plans:', error);
         res.status(500).json({ error: 'Failed to fetch user plans.' });

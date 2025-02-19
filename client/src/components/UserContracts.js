@@ -16,7 +16,7 @@ import { getUserContracts, acceptContract } from '../api/contractApi';
 import ContractTermsModal from './ContractTermsModal';
 import {sendMessage} from "../api/messageApi";
 
-export default function UserContracts({ user }) {
+export default function UserContracts({ user, affiliateId }) {
     const [contracts, setContracts] = useState([]);
     const [expandedRows, setExpandedRows] = useState({});
     const [acceptCheckbox, setAcceptCheckbox] = useState({}); // iga lepingu jaoks hoiab kas checked v mitte
@@ -32,7 +32,7 @@ export default function UserContracts({ user }) {
     }, [user]);
 
     const loadContracts = async () => {
-        const data = await getUserContracts(user.id);
+        const data = await getUserContracts(user.id, affiliateId);
         if (Array.isArray(data)) {
             setContracts(data);
         }

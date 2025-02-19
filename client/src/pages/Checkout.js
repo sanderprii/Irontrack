@@ -67,6 +67,7 @@ export default function Checkout(props) {
     const [affiliateCredit, setAffiliateCredit] = useState(0);
 
     useEffect(() => {
+
         getUserCredit(affiliateInfo.id)
             .then((data) => {
                 setAffiliateCredit(data.credit);

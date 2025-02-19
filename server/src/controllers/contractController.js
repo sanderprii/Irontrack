@@ -10,10 +10,9 @@ const prisma = new PrismaClient();
  */
 exports.getAllContracts = async (req, res) => {
     try {
-        const { affiliateId } = parseInt(req.query); // Eeldame, et auth middleware paneb req.user sisse.
-        // Või loe affiliateId muul moel, kui roll on affiliate.
 
-        const { search = '', sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+        const { search = '', sortBy = 'createdAt', sortOrder = 'desc', affiliateId } = req.query;
 
         let orderBy = {};
 
@@ -28,7 +27,7 @@ exports.getAllContracts = async (req, res) => {
 
         const contracts = await prisma.contract.findMany({
             where: {
-                affiliateId: affiliateId,
+                affiliateId: parseInt(affiliateId),
             },
             include: {
                 user: { select: { fullName: true } },
@@ -172,9 +171,10 @@ exports.createContractTemplate = async (req, res) => {
  */
 exports.getLatestContractTemplate = async (req, res) => {
     try {
-        const { affiliateId } = parseInt(req.query);
+        const { affiliateId } = req.query;
+        console.log(affiliateId);
         const template = await prisma.contractTemplate.findFirst({
-            where: { affiliateId },
+            where: { affiliateId: parseInt(affiliateId) },
             orderBy: { createdAt: 'desc' },
         });
         res.json(template || null);
@@ -187,22 +187,40 @@ exports.getLatestContractTemplate = async (req, res) => {
 exports.getUserContracts = async (req, res) => {
     try {
         const userId = parseInt(req.params.userId, 10);
+        const affiliateId = req.query.affiliateId || '';
         if (!userId) {
             return res.status(400).json({ error: 'Invalid userId' });
         }
 
-        // Toome contractid koos vajaliku infoga
-        const contracts = await prisma.contract.findMany({
-            where: { userId },
-            include: {
-                logs: true,     // kui tahad logs'id
-                signed: true,   // kui tahad SignedContract ridu
-        affiliate: {select: {name: true}}, // kui tahad affiliate infot
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+        if(!isNaN(affiliateId)){
+            const affiliateIds = parseInt(affiliateId, 10);
 
-        res.json(contracts);
+            const contracts = await prisma.contract.findMany({
+                where: { userId, affiliateId: affiliateIds },
+                include: {
+                    logs: true,     // kui tahad logs'id
+                    signed: true,   // kui tahad SignedContract ridu
+                    affiliate: {select: {name: true}}, // kui tahad affiliate infot
+                },
+                orderBy: { createdAt: 'desc' },
+            });
+            res.json(contracts);
+
+        } else {
+
+            // Toome contractid koos vajaliku infoga
+            const contracts = await prisma.contract.findMany({
+                where: {userId},
+                include: {
+                    logs: true,     // kui tahad logs'id
+                    signed: true,   // kui tahad SignedContract ridu
+                    affiliate: {select: {name: true}}, // kui tahad affiliate infot
+                },
+                orderBy: {createdAt: 'desc'},
+            });
+            res.json(contracts);
+        }
+
     } catch (error) {
         console.error('Error getUserContracts:', error);
         res.status(500).json({ error: 'Failed to fetch user contracts' });

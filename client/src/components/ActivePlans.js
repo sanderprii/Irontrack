@@ -27,7 +27,7 @@ export default function ActivePlans({ userId, affiliateId }) {
 
     // Laeme kasutaja aktiivsed plaanid
     const loadUserActivePlans = () => {
-        fetch(`${API_URL}/user/user-purchase-history?userId=${userId}`, {
+        fetch(`${API_URL}/user/user-purchase-history?userId=${userId}&affiliateId=${affiliateId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -53,6 +53,7 @@ export default function ActivePlans({ userId, affiliateId }) {
         // Eeldame, et getPlans() tagastab KÕIK plaanid, aga tavaliselt on need ownerId järgi piiritletud
         // kui su backend tekitab role=owner => whereClause.ownerId.
         // Vaatad, kas see sobib su loogikaga.
+
         getPlans().then((allPlans) => {
             // Filtreerime välja need, mis kuuluvad antud affiliate'ile (ownerId == affiliate's owner?)
             // Või kui plaanil endal on ownerId = userId, see sõltub Sinu loogikast

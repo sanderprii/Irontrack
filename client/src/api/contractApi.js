@@ -2,6 +2,8 @@ const API_BASE = process.env.REACT_APP_API_URL;
 
 export const getContracts = async (search = '', sortBy = 'createdAt', sortOrder = 'desc', affiliateId) => {
     const token = localStorage.getItem('token');
+
+
     try {
         const resp = await fetch(
             `${API_BASE}/contracts?search=${search}&sortBy=${sortBy}&sortOrder=${sortOrder}&affiliateId=${affiliateId}`,
@@ -113,10 +115,10 @@ export const getLatestContractTemplate = async (affiliateId) => {
 };
 
 // GET user contracts
-export const getUserContracts = async (userId) => {
+export const getUserContracts = async (userId, affiliateId) => {
     const token = localStorage.getItem('token');
     try {
-        const resp = await fetch(`${API_BASE}/contracts/user/${userId}`, {
+        const resp = await fetch(`${API_BASE}/contracts/user/${userId}?affiliateId=${affiliateId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

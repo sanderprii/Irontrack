@@ -262,12 +262,13 @@ const getClassAttendees = async (req, res) => {
 };
 
 const checkInAttendee = async (req, res) => {
+    console.log('jõuab siia')
     const {classId, userId} = req.body;
     if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required."});
-
+console.log(classId, userId)
     try {
         await prisma.classAttendee.updateMany({
-            where: {classId, userId},
+            where: {classId: parseInt(classId), userId: parseInt(userId)},
             data: {checkIn: true}
         });
 

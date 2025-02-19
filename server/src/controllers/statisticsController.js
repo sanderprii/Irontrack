@@ -1,4 +1,4 @@
-// server/src/controllers/statisticsController.js
+    // server/src/controllers/statisticsController.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 

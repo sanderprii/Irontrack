@@ -13,8 +13,7 @@ exports.getRecords = async (req, res) => {
             orderBy: { date: 'desc' },
         });
 
-        // Varem gruppisid recordid name kaupa, et saaks "latestRecords".
-        // Taasskeem sama loogikat:
+        // Tagastame iga name kohta ainult viimase
         const latestRecords = [];
         const namesSet = new Set();
 
@@ -48,7 +47,6 @@ exports.getRecordsByName = async (req, res) => {
                 score: true,
                 weight: true,
                 time: true,
-                // Lisa teised väljad, kui vaja
             },
         });
 
@@ -70,7 +68,7 @@ exports.createRecord = async (req, res) => {
             type,
             name,
             date: new Date(date),
-            userId, // see on kõige tähtsam – seob kirje kasutajaga
+            userId,
             score: score || null,
             weight: weight ? parseFloat(weight) : null,
             time: time || null,

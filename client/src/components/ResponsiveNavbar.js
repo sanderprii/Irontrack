@@ -159,6 +159,9 @@ export default function AppAppBar() {
     // --------------------------------
     // JSX struktuur
     // --------------------------------
+
+
+
     return (
         <>
             {/* Ülemine AppBar - alati nähtav, kuid menüünupud on nähtavad ainult desktopis */}
@@ -180,13 +183,13 @@ export default function AppAppBar() {
                                     src="/favicon.png"
                                     alt="App Logo"
                                     style={{ height: '40px', cursor: 'pointer' }}
-                                    onClick={() => navigate('/')}
+                                    onClick={() => navigate(role === 'regular' ? '/training-diary' : role ==='affiliate' ? '/affiliate-owner' : '/')}
                                 />
                             </Box>
 
                             {/* Paremal: Logout-nupp */}
                             {isLoggedIn && (
-                                <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 1 }}>
+                                <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 3 }}>
                                     <LogoutIcon />
                                 </IconButton>
                             )}
@@ -198,7 +201,7 @@ export default function AppAppBar() {
                                 src="/logo2.png"
                                 alt="Irontrack Logo"
                                 style={{ height: '50px', cursor: 'pointer' }}
-                                onClick={() => navigate('/')}
+                                onClick={() => navigate(role === 'regular' ? '/training-diary' : role ==='affiliate' ? '/affiliate-owner' : '/')}
                             />
 
 
@@ -251,7 +254,7 @@ export default function AppAppBar() {
 
                         {/* Desktop menüü (Right) - Log Out jt nupud */}
 
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+                        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
                             {rightLinks.map((link) =>
                                 link.action ? (
                                     <Button
@@ -280,7 +283,7 @@ export default function AppAppBar() {
                                 <IconButton
                                     color="primary"
                                     onClick={() => logout(navigate)}
-                                    sx={{ mr: 3 }}
+
                                 >
                                     <LogoutIcon />
                                 </IconButton>

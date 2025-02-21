@@ -20,6 +20,8 @@ import {
 import { styled } from '@mui/material/styles';
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import AppTheme from "../shared-theme/AppTheme";
+// ==== Lisatud ====
+import RecordModal from "../components/RecordModal";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
     pt: { xs: 4, sm: 12 },
@@ -37,8 +39,8 @@ const StyledCard = styled(Card)(({ theme }) => ({
     alignItems: "center",
     textAlign: "center",
     transition: "0.3s",
-    width: "125px", // 2x väiksem kui plaanide puhul
-    height: "75px", // 2x väiksem kui plaanide puhul
+    width: "125px",
+    height: "75px",
     cursor: "pointer",
     "&:hover": {
         boxShadow: theme.shadows[5],
@@ -60,7 +62,11 @@ export default function RecordsPage() {
     // Uus: otsingusisendi olek
     const [searchQuery, setSearchQuery] = useState('');
 
-    const API_URL = process.env.REACT_APP_API_URL
+    // Uus: valitud kaardile klõpsamise modaal
+    const [selectedRecord, setSelectedRecord] = useState(null);
+    const [recordModalOpen, setRecordModalOpen] = useState(false);
+
+    const API_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         loadRecords();
@@ -96,7 +102,7 @@ export default function RecordsPage() {
     const handleRecordTypeChange = (event, newType) => {
         if (newType) {
             setRecordType(newType);
-            setSearchQuery(''); // tühjenda otsinguväli, kui tüüp muutub
+            setSearchQuery(''); // tühjenda otsing, kui tüüp muutub
         }
     };
 
@@ -124,7 +130,7 @@ export default function RecordsPage() {
                 date: recordDate,
             };
 
-            // Sõltuvalt tüübist lisame õige välja
+            // vastavalt tüübile
             if (recordType === 'WOD') {
                 payload.score = recordScore;
             } else if (recordType === 'Weightlifting') {
@@ -152,30 +158,18 @@ export default function RecordsPage() {
         }
     };
 
-    const handleDeleteRecord = async (recordId) => {
-        try {
-            const confirmDelete = window.confirm('Do you want to delete this record?');
-            if (!confirmDelete) return;
-
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/records/${recordId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) {
-                const resData = await response.json();
-                throw new Error(resData.error || 'Failed to delete record');
-            }
-            loadRecords();
-        } catch (err) {
-            setError(err.message);
-        }
+    // Kaardile klõps -> avame RecordModal
+    const handleOpenRecordModal = (record) => {
+        setSelectedRecord(record);
+        setRecordModalOpen(true);
     };
 
-    // Filtreerime otsingupäringu põhjal
+    const handleCloseRecordModal = () => {
+        setRecordModalOpen(false);
+        setSelectedRecord(null);
+    };
+
+    // Otsing
     const filteredRecords = records.filter((rec) => {
         const lowerCaseQuery = searchQuery.toLowerCase();
         return (
@@ -195,7 +189,7 @@ export default function RecordsPage() {
 
                 {error && <Alert severity="error">{error}</Alert>}
 
-                {/* Laadimise indikaator (spinner) */}
+                {/* Spinner */}
                 {loading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                         <CircularProgress />
@@ -208,7 +202,7 @@ export default function RecordsPage() {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         mb: 3,
-                        flexWrap: 'wrap', // reageerib kitsamal ekraanil
+                        flexWrap: 'wrap',
                         gap: 2
                     }}
                 >
@@ -217,7 +211,6 @@ export default function RecordsPage() {
                         value={recordType}
                         exclusive
                         onChange={handleRecordTypeChange}
-
                     >
                         <ToggleButton value="WOD">WOD</ToggleButton>
                         <ToggleButton value="Weightlifting">Weightlifting</ToggleButton>
@@ -239,7 +232,6 @@ export default function RecordsPage() {
                     </Button>
                 </Box>
 
-                {/* Näitame, kui filtreeritud kirjeid ei leidu */}
                 {!loading && filteredRecords.length === 0 && (
                     <Typography variant="body1" sx={{ mt: 2 }}>
                         No records found.
@@ -261,7 +253,7 @@ export default function RecordsPage() {
                             <Grid item key={rec.id}>
                                 <StyledCard
                                     sx={{ bgcolor: "background.paper"}}
-                                    onClick={() => handleDeleteRecord(rec.id)}
+                                    onClick={() => handleOpenRecordModal(rec)}
                                 >
                                     <CardContent>
                                         <Typography variant="subtitle1" fontWeight="bold">
@@ -333,6 +325,16 @@ export default function RecordsPage() {
                         <Button variant="contained" onClick={handleSaveRecord}>Save</Button>
                     </DialogActions>
                 </Dialog>
+
+                {/* Modaal, mis näitab täpsemalt kõikide tulemuste graafikut */}
+                {selectedRecord && (
+                    <RecordModal
+                        open={recordModalOpen}
+                        onClose={handleCloseRecordModal}
+                        recordType={recordType}
+                        recordName={selectedRecord.name}
+                    />
+                )}
             </StyledContainer>
         </AppTheme>
     );

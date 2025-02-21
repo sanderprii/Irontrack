@@ -231,7 +231,7 @@ export default function MyProfile() {
                 sx={{
                     flexGrow: 1,
                     p: { xs: 0, sm: 0, md: 3 },
-                    backgroundColor: 'background.paper',
+                    backgroundColor: 'background.default',
                 }}
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>

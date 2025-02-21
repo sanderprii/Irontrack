@@ -87,7 +87,7 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
     const role = localStorage.getItem("role");
 
     return (
-        <Card sx={{maxWidth: 600, mx: 'auto', boxShadow: 3, borderRadius: 3, backgroundColor: 'background.paper'}}>
+
             <CardContent sx={{textAlign: 'center', p: 3}}>
                 {role === "regular" ? (
                     <>
@@ -320,7 +320,7 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                     </>
                 )}
         </CardContent>
-</Card>
+
 )
     ;
 }

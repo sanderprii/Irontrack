@@ -36,13 +36,13 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-    pt: { xs: 4, sm: 12 },
-    pb: { xs: 8, sm: 16 },
+    pt: { xs: 1, sm: 12 },
+    pb: { xs: 1, sm: 16 },
     position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: theme.spacing(4),
+    gap: theme.spacing(1),
     backgroundColor: theme.palette.background.default,
 }));
 
@@ -214,13 +214,15 @@ const RegisterTrainingPage = () => {
                 {/* Affiliate Info */}
                 {selectedAffiliate && (
                     <Box
-                        mt={4}
+                        mt={1}
                         sx={{
                             border: "1px solid #ddd",
                             borderRadius: "12px",
                             p: 3,
                             backgroundColor: (theme) => theme.palette.background.paper,
                             boxShadow: (theme) => theme.shadows[1],
+                            maxWidth: '1000px',
+                            width: "100%",
                         }}
                     >
                         {/* Pealkiri koos ikooniga */}
@@ -335,12 +337,12 @@ const RegisterTrainingPage = () => {
                     </Box>
                 )}
                 {plans.length > 0 && (
-                    <Box mt={4} sx={{ width: "100%", textAlign: "center" }}>
+                    <Box mt={4} sx={{  width: "100%", textAlign: "center" }}>
                         <Typography variant="h5">Affiliate Plans</Typography>
                         <Grid
                             container
-                            spacing={3}
-                            sx={{ alignItems: "center", justifyContent: "center", width: "100%" }}
+                            spacing={0}
+                            sx={{ alignItems: "center", justifyContent: "center", width: "100%", m: 0, pl: '0' }}
                         >
                             {plans.map((plan) => {
                                 const validUntil = getValidUntil(plan.id, userPlans);

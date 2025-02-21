@@ -172,7 +172,7 @@ exports.createContractTemplate = async (req, res) => {
 exports.getLatestContractTemplate = async (req, res) => {
     try {
         const { affiliateId } = req.query;
-        console.log(affiliateId);
+
         const template = await prisma.contractTemplate.findFirst({
             where: { affiliateId: parseInt(affiliateId) },
             orderBy: { createdAt: 'desc' },

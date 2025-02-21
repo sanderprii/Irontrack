@@ -203,7 +203,7 @@ export default function ClassModal({
                 alert("Please select a plan first!");
                 return;
             }
-            await registerForClass(cls.id, selectedPlanId);
+            await registerForClass(cls.id, selectedPlanId, cls.affiliateId);
             // Kui õnnestub, uuendame osalejate nimekirja
             await fetchAttendees();
 

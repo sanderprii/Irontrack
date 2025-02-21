@@ -95,7 +95,7 @@ export default function SendMessage({ affiliate }) {
             }
 
             const responseData = await sendMessage(payload);
-            console.log('✅ Email sent:', responseData);
+
             setStatus('Email saadetud edukalt!');
             // Tühjendame väljad
             setSubject('');

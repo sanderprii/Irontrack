@@ -245,3 +245,77 @@ exports.deleteUserNote = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+
+exports.getUserAttendees = async (req, res) => {
+    try {
+        const { userId, affiliateId } = req.query;
+
+        // Eeldame, et userId on vajalik (kui see puudub, võiks ka veateate visata)
+        if (!userId) {
+            return res.status(400).json({ error: 'userId is required.' });
+        }
+
+        // Alustame "filters" objektiga
+        const filters = {
+            userId: parseInt(userId, 10),
+            checkIn: true
+        };
+
+        // Kui affiliateId on olemas ja EI OLE string 'undefined', siis parsimine
+        // NB! typeof affiliateId === 'string' => saame parseInt teha
+        if (affiliateId !== undefined && affiliateId !== 'undefined') {
+            const numericAffiliateId = parseInt(affiliateId, 10);
+            // lisa, kui see on arv
+            if (!isNaN(numericAffiliateId)) {
+                filters.affiliateId = numericAffiliateId;
+            }
+        }
+
+        // Nüüd teeme päringu, lisades filters
+        const userAttendees = await prisma.classAttendee.findMany({
+            where: filters,
+            select: {
+                id: true,
+                classId: true,
+                userId: true,
+                classSchedule: {
+                    select: {
+                        id: true,
+                        trainingName: true,
+                        time: true,
+                        trainingType: true,
+                        wodName: true,
+                        wodType: true,
+                        description: true,
+                        trainer: true,
+                    },
+                },
+            },
+        });
+
+        // Leaderboard entry'd
+        const userClassLeaderboard = await prisma.classLeaderboard.findMany({
+            where: {
+                classId: { in: userAttendees.map((a) => a.classId) },
+                userId: parseInt(userId, 10),
+            },
+        });
+
+        // Liidame leaderboard info
+        const combinedData = userAttendees.map((attendee) => {
+            const lbEntries = userClassLeaderboard.filter(
+                (lb) => lb.classId === attendee.classId
+            );
+            return {
+                ...attendee,
+                leaderboard: lbEntries,
+            };
+        });
+
+        res.json(combinedData);
+
+    } catch (error) {
+        console.error('Error fetching user attendees:', error);
+        res.status(500).json({ error: 'Server error fetching user attendees.' });
+    }
+};

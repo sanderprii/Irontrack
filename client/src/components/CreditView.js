@@ -114,7 +114,7 @@ const CreditView = ({ user, affiliateId }) => {
 
     return (
         <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom sx={{ml: 2}}>
                 Credit
             </Typography>
 
@@ -198,7 +198,7 @@ const CreditView = ({ user, affiliateId }) => {
             </Paper>
 
             {/* Credit History tabel */}
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ml: 2}}>
                 Credit History
             </Typography>
             <Paper>

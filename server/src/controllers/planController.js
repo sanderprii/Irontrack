@@ -228,7 +228,7 @@ const assignPlanToUser = async (req, res) => {
     try {
         const {userId, planId, affiliateId} = req.body;
 
-        console.log('affiliateId', affiliateId)
+
         // Leia plaan, mille userile määrame
         const plan = await prisma.plan.findUnique({
             where: {id: planId},
@@ -308,7 +308,7 @@ const updateUserPlan = async (req, res) => {
     try {
         const planId = parseInt(req.params.id);
         const {sessionsLeft, endDate} = req.body;
-        console.log('endDate', endDate)
+
         const updatedPlan = await prisma.userPlan.update({
             where: {id: planId},
             data: {

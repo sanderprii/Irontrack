@@ -50,7 +50,7 @@ const Transactions = ({ user, affiliateId }) => {
 
     return (
         <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom sx={{ml: 2}}>
                 Transactions
             </Typography>
             <Paper>

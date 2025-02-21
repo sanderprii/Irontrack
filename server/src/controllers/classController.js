@@ -262,10 +262,10 @@ const getClassAttendees = async (req, res) => {
 };
 
 const checkInAttendee = async (req, res) => {
-    console.log('jõuab siia')
+
     const {classId, userId} = req.body;
     if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required."});
-console.log(classId, userId)
+
     try {
         await prisma.classAttendee.updateMany({
             where: {classId: parseInt(classId), userId: parseInt(userId)},
@@ -312,7 +312,7 @@ const getClassAttendeesCount = async (req, res) => {
 
 // ✅ Kasutaja registreerumine klassi
 const registerForClass = async (req, res) => {
-    const {classId, planId} = req.body;
+    const {classId, planId, affiliateId} = req.body;
     const userId = req.user?.id;
 
     try {
@@ -330,7 +330,8 @@ const registerForClass = async (req, res) => {
                 userId,
                 classId,
                 checkIn: false,
-                userPlanId: planId
+                userPlanId: planId,
+                affiliateId: parseInt(affiliateId)
             },
         });
 

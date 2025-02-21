@@ -265,10 +265,10 @@ model Affiliate {
   transactions  transactions[]
   credit        Credit[]
 
-  message       Message[]
-  messageGroups MessageGroup[]
-  contract      Contract[]
-
+  message           Message[]
+  messageGroups     MessageGroup[]
+  contract          Contract[]
+  classAttendee     ClassAttendee[]
   contractTemplates ContractTemplate[]
   signedContracts   SignedContract[]
   contractLogs      ContractLogs[]
@@ -294,6 +294,8 @@ model ClassAttendee {
   userPlanId    Int
   createdAt     DateTime      @default(now())
   checkIn       Boolean       @default(false)
+  affiliateId   Int
+  affiliate     Affiliate     @relation(fields: [affiliateId], references: [id])
 
   @@unique([classId, userId]) // vältimaks duplikaatregistratsioone
 }

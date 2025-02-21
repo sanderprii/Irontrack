@@ -109,3 +109,19 @@ export async function deleteUserNote(userId, noteId) {
         throw error;
     }
 }
+
+export async function getUserAttendees(affiliateId, userId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/user/attendees?affiliateId=${affiliateId}&userId=${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.ok ? await response.json() : [];
+    } catch (error) {
+        console.error('Error fetching attendees:', error);
+        return [];
+    }
+}

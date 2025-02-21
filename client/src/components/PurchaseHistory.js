@@ -29,7 +29,7 @@ export default function PurchaseHistory({ userId, affiliateId }) {
     return (
         <Card sx={{ backgroundColor: "background.paper", border: 'none', p: 0 }}>
             <CardContent>
-                <Typography variant="h6">Products</Typography>
+                <Typography variant="h6" sx={{ml: 2}}>Products</Typography>
                 {purchases.length > 0 ? ( // ✅ Kontrollime, kas on vähemalt üks ost
                     <Table>
                         <TableHead>

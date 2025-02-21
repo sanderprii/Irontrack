@@ -33,6 +33,7 @@ import ActivePlans from "../components/ActivePlans";
 import CreditView from "../components/CreditView";
 import UserContracts from "../components/UserContracts";
 import Transactions from "../components/Transactions";
+import VisitHistory from "../components/VisitHistory";
 
 export default function Members() {
     // Vasaku paneeli olek: liikmete nimekiri, otsing jne.
@@ -54,6 +55,7 @@ export default function Members() {
         { id: "profile", label: "Profile", component: ProfileView },
         { id: "statistics", label: "Statistics", component: Statistics },
         { id: "purchase-history", label: "Purchase History", component: PurchaseHistory },
+        { id: "visit-history", label: "Visit History", component: VisitHistory },
         { id: "active-plans", label: "Active Plans", component: ActivePlans },
         { id: "credit", label: "Credit", component: CreditView },
         { id: "contracts", label: "Contracts", component: UserContracts },

@@ -31,4 +31,6 @@ router.post('/notes/:userId/notes', ensureAuthenticatedJWT, userController.addUs
 
 router.delete('/notes/:userId/notes/:noteId', ensureAuthenticatedJWT, userController.deleteUserNote);
 
+router.get('/attendees', ensureAuthenticatedJWT, userController.getUserAttendees);
+
 module.exports = router;

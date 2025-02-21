@@ -156,7 +156,7 @@ export const getClassAttendees = async (classId) => {
 
 export const checkInAttendee = async (classId, userId) => {
     try {
-        console.log("URL:", `${API_URL}/class-attendees/check-in`);
+
 
         const token = localStorage.getItem("token");
 
@@ -191,7 +191,7 @@ export const deleteAttendee = async (classId, userId) => {
     }
 };
 
-export const registerForClass = async (classId, planId) => {
+export const registerForClass = async (classId, planId, affiliateId) => {
     try {
         const token = localStorage.getItem("token");
 
@@ -203,7 +203,8 @@ export const registerForClass = async (classId, planId) => {
             },
             body: JSON.stringify({
                 classId,
-                planId
+                planId,
+                affiliateId
             }),
         });
 

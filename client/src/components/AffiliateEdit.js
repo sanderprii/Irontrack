@@ -69,6 +69,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
                 <TextField label="Phone" name="phone" fullWidth margin="normal" value={form.phone} onChange={handleChange} />
                 <TextField label="IBAN" name="iban" fullWidth margin="normal" value={form.iban} onChange={handleChange} />
                 <TextField label="Bank Name" name="bankName" fullWidth margin="normal" value={form.bankName} onChange={handleChange} />
+                <TextField label="Payment Holiday Fee" name="paymentHolidayFee" fullWidth margin="normal" value={form.paymentHolidayFee} onChange={handleChange} />
 
                 <Typography variant="h6" sx={{ mt: 2 }}>Search Trainers</Typography>
                 <TextField label="Search" fullWidth value={trainerSearch} onChange={handleTrainerSearch} />

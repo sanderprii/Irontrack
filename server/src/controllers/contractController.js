@@ -31,6 +31,7 @@ exports.getAllContracts = async (req, res) => {
             },
             include: {
                 user: { select: { fullName: true } },
+                paymentHolidays: true,
             },
             orderBy: orderBy, // Siin toimub õige sorteerimine
         });
@@ -93,7 +94,7 @@ exports.getContractById = async (req, res) => {
     try {
         const { id } = req.params;
         const contract = await prisma.contract.findUnique({
-            where: { id },
+            where: { id: parseInt(id) },
 
         });
         if (!contract) {
@@ -115,7 +116,7 @@ exports.updateContract = async (req, res) => {
         const { status, acceptedAt, contractType, content } = req.body;
 
         const updatedContract = await prisma.contract.update({
-            where: { id },
+            where: { id: parseInt(id) },
             data: {
                 status,
                 acceptedAt,
@@ -201,6 +202,7 @@ exports.getUserContracts = async (req, res) => {
                     logs: true,     // kui tahad logs'id
                     signed: true,   // kui tahad SignedContract ridu
                     affiliate: {select: {name: true}}, // kui tahad affiliate infot
+                    paymentHolidays: true,
                 },
                 orderBy: { createdAt: 'desc' },
             });
@@ -215,6 +217,7 @@ exports.getUserContracts = async (req, res) => {
                     logs: true,     // kui tahad logs'id
                     signed: true,   // kui tahad SignedContract ridu
                     affiliate: {select: {name: true}}, // kui tahad affiliate infot
+                    paymentHolidays: true,
                 },
                 orderBy: {createdAt: 'desc'},
             });
@@ -241,7 +244,7 @@ exports.acceptContract = async (req, res) => {
 
         // Uuendame Contract staatust
         const updatedContract = await prisma.contract.update({
-            where: { id: contractId },
+            where: { id: parseInt(contractId) },
             data: {
                 status: 'accepted',
                 acceptedAt: new Date(),
@@ -251,7 +254,7 @@ exports.acceptContract = async (req, res) => {
         // Lisa logi
         await prisma.contractLogs.create({
             data: {
-                contractId: contractId,
+                contractId: parseInt(contractId),
                 userId: userId,
                 affiliateId: affiliateId,
                 action: 'User accepted the contract',
@@ -300,3 +303,73 @@ exports.getContractTermsById = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch contract terms' });
     }
 };
+
+exports.createPaymentHoliday = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        const {
+            userId,
+            affiliateId,
+            fromDate,
+            toDate,
+            reason,
+        } = req.body;
+
+        // Kontrollime, kas contractId ja userId on kehtivad
+        const contractInt = parseInt(contractId, 10);
+        const userInt = parseInt(userId, 10);
+        const affInt = parseInt(affiliateId, 10);
+
+        // Otsi leping andmebaasist, et saada affiliate info
+        const contract = await prisma.contract.findUnique({
+            where: { id: contractInt },
+            include: {
+                affiliate: true, // et saada affiliate.email
+            },
+        });
+
+        if (!contract) {
+            return res.status(404).json({ error: 'Contract not found' });
+        }
+
+        // Loo PaymentHoliday kirje
+        const newPh = await prisma.paymentHoliday.create({
+            data: {
+                contractId: contractInt,
+                userId: userInt,
+                affiliateId: affInt,
+                fromDate: new Date(fromDate),
+                toDate: toDate ? new Date(toDate) : null,
+                reason: reason || '',
+                accepted: 'pending',
+                // monthlyFee, accepted, jne, kui vajad
+            },
+        });
+
+
+
+        return res.json({ success: true, paymentHoliday: newPh });
+    } catch (error) {
+        console.error('Error creating payment holiday:', error);
+        return res.status(500).json({ error: 'Failed to create payment holiday' });
+    }
+};
+
+exports.updatePaymentHoliday = async (req, res) => {
+    try {
+        const { phId } = req.params;
+        const { accepted } = req.body;
+
+        const updatedPh = await prisma.paymentHoliday.update({
+            where: { id: parseInt(phId) },
+            data: {
+                accepted,
+            },
+        });
+
+        return res.json({ success: true, paymentHoliday: updatedPh });
+    } catch (error) {
+        console.error('Error updating payment holiday:', error);
+        return res.status(500).json({ error: 'Failed to update payment holiday' });
+    }
+}

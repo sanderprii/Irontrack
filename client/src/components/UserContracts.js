@@ -11,19 +11,37 @@ import {
     Checkbox,
     Paper,
     Button,
+    Modal,
+    TextField,
+    IconButton
 } from '@mui/material';
-import { getUserContracts, acceptContract } from '../api/contractApi';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
+import {
+    getUserContracts,
+    acceptContract,
+    createPaymentHoliday,
+    updatePaymentHoliday
+} from '../api/contractApi'; // <-- API import
 import ContractTermsModal from './ContractTermsModal';
-import {sendMessage} from "../api/messageApi";
+import { sendMessage } from "../api/messageApi";
 
 export default function UserContracts({ user, affiliateId }) {
     const [contracts, setContracts] = useState([]);
     const [expandedRows, setExpandedRows] = useState({});
-    const [acceptCheckbox, setAcceptCheckbox] = useState({}); // iga lepingu jaoks hoiab kas checked v mitte
+    const [acceptCheckbox, setAcceptCheckbox] = useState({});
     const [termsModalOpen, setTermsModalOpen] = useState(false);
     const [selectedContractTermsId, setSelectedContractTermsId] = useState(null);
 
-
+    // Payment Holiday Modal state
+    const [phModalOpen, setPhModalOpen] = useState(false);
+    const [phContract, setPhContract] = useState(null);
+    const [phData, setPhData] = useState({
+        fromDate: '',
+        toDate: '',
+        reason: '',
+    });
 
     useEffect(() => {
         if (user?.id) {
@@ -47,25 +65,79 @@ export default function UserContracts({ user, affiliateId }) {
     };
 
     const handleAccept = async (contract) => {
-        // Eeldame, et sul on contract.affiliateId, user.id, mingid termsId
-        // NB! Kui sul on ContractTerms, defineeri see contract objekti sees (nt contract.termsId).
-        // Näitena eeldame fix-lahendust contractTermsId=1
         const payload = {
             userId: user.id,
             affiliateId: contract.affiliateId,
             acceptType: 'checkbox',
-            contractTermsId: 1,
+            contractTermsId: 1, // või mingi sobiv ID
         };
         await acceptContract(contract.id, payload);
-
         await loadContracts();
     };
 
     const openTerms = (contract) => {
-        // Kui sul on contract.termsId, kasuta seda
-        const termsType = 'contract'
-        setSelectedContractTermsId(termsType);
+        setSelectedContractTermsId('contract'); // siia reaalne contractTermsId, kui sul on
         setTermsModalOpen(true);
+    };
+
+    // Avab Payment Holiday modali ja salvestab state-sse lepingu, mille jaoks andmeid kogume
+    const handleOpenPhModal = (contract) => {
+        setPhContract(contract);
+        setPhModalOpen(true);
+    };
+
+    // Sulgeb Payment Holiday modali
+    const handleClosePhModal = () => {
+        setPhModalOpen(false);
+        setPhContract(null);
+        setPhData({ fromDate: '', toDate: '', reason: '' });
+    };
+
+    // Väljade muutmise handler
+    const handlePhDataChange = (e) => {
+        const { name, value } = e.target;
+        setPhData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // "Save" nupp modalis
+    const handlePhSave = async () => {
+        if (!phContract) return;
+
+        // Kutsume API-d
+        const payload = {
+            contractId: phContract.id,
+            userId: user.id,
+            affiliateId: phContract.affiliateId,
+            fromDate: phData.fromDate,
+            toDate: phData.toDate,
+            reason: phData.reason,
+        };
+
+        const result = await createPaymentHoliday(payload);
+        if (result && result.success) {
+            alert('Payment holiday request created successfully!');
+        } else {
+            alert('Error creating payment holiday request!');
+        }
+
+        handleClosePhModal();
+        await loadContracts();
+    };
+
+    // PaymentHoliday uuendamise handler (kui affiliate klikkab Approved/Declined)
+    const handleUpdatePhStatus = async (phId, newStatus) => {
+        try {
+            const result = await updatePaymentHoliday(phId, { accepted: newStatus });
+            if (result && result.success) {
+                alert(`Payment holiday set to "${newStatus}" successfully!`);
+                await loadContracts();
+            } else {
+                alert('Error updating payment holiday status!');
+            }
+        } catch (error) {
+            console.error('Error updating payment holiday:', error);
+            alert('Error updating payment holiday!');
+        }
     };
 
     const role = localStorage.getItem('role');
@@ -82,10 +154,10 @@ export default function UserContracts({ user, affiliateId }) {
                     <Table>
                         <TableHead>
                             <TableRow>
+                                <TableCell>ID</TableCell>
                                 <TableCell>Date</TableCell>
                                 <TableCell>Affiliate Name</TableCell>
                                 <TableCell>Status</TableCell>
-
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -99,12 +171,12 @@ export default function UserContracts({ user, affiliateId }) {
                                             onClick={() => toggleRow(contract.id)}
                                             sx={{ cursor: 'pointer' }}
                                         >
+                                            <TableCell>{contract.id}</TableCell>
                                             <TableCell>
                                                 {new Date(contract.createdAt).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>{contract.affiliate.name}</TableCell>
                                             <TableCell>{contract.status}</TableCell>
-
                                         </TableRow>
 
                                         <TableRow>
@@ -112,6 +184,77 @@ export default function UserContracts({ user, affiliateId }) {
                                                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                                                     <Box m={2}>
                                                         <Typography variant="subtitle1" fontWeight="bold">
+                                                            Payment Holidays
+                                                        </Typography>
+
+                                                        <Table>
+                                                            <TableHead>
+                                                                <TableRow>
+                                                                    <TableCell>From Date</TableCell>
+                                                                    <TableCell>To Date</TableCell>
+                                                                    <TableCell>Reason</TableCell>
+                                                                    <TableCell>Accepted</TableCell>
+                                                                    <TableCell />
+                                                                </TableRow>
+                                                            </TableHead>
+                                                            <TableBody>
+                                                                {contract.paymentHolidays.map((ph) => (
+                                                                    <TableRow key={ph.id}>
+                                                                        <TableCell>
+                                                                            {new Date(ph.fromDate).toLocaleDateString()}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {ph.toDate
+                                                                                ? new Date(ph.toDate).toLocaleDateString()
+                                                                                : '-'}
+                                                                        </TableCell>
+                                                                        <TableCell>{ph.reason}</TableCell>
+                                                                        <TableCell>{ph.accepted}</TableCell>
+                                                                        <TableCell>
+                                                                            {/* Kui role===affiliate ja ph.accepted==='pending',
+                                                                                siis kuvame rohelise & punase nupu */}
+                                                                            {role === 'affiliate' && ph.accepted === 'pending' && (
+                                                                                <Box>
+                                                                                    <IconButton
+                                                                                        color="success"
+                                                                                        onClick={() =>
+                                                                                            handleUpdatePhStatus(ph.id, 'approved')
+                                                                                        }
+                                                                                    >
+                                                                                        <CheckIcon />
+                                                                                    </IconButton>
+                                                                                    <IconButton
+                                                                                        color="error"
+                                                                                        onClick={() =>
+                                                                                            handleUpdatePhStatus(ph.id, 'declined')
+                                                                                        }
+                                                                                    >
+                                                                                        <CloseIcon />
+                                                                                    </IconButton>
+                                                                                </Box>
+                                                                            )}
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+
+                                                        {/* PaymentHoliday nupp (Request) — kui leping on accepted ja kasutaja on 'regular' */}
+                                                        {contract.status === 'accepted' && role === 'regular' && (
+                                                            <Button
+                                                                variant="contained"
+                                                                color="warning"
+                                                                sx={{ mt: 2 }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleOpenPhModal(contract);
+                                                                }}
+                                                            >
+                                                                Request Payment Holiday
+                                                            </Button>
+                                                        )}
+
+                                                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2 }}>
                                                             Contract Content
                                                         </Typography>
                                                         <Box
@@ -126,7 +269,6 @@ export default function UserContracts({ user, affiliateId }) {
                                                             {contract.content}
                                                         </Box>
 
-                                                        {/* Näide makseinfo kuvamiseks */}
                                                         <Box mt={2}>
                                                             <Typography>
                                                                 <strong>Payment Type:</strong> {contract.paymentType}
@@ -135,54 +277,55 @@ export default function UserContracts({ user, affiliateId }) {
                                                                 <strong>Payment Amount:</strong> {contract.paymentAmount}
                                                             </Typography>
                                                             <Typography>
-                                                                <strong>Payment Interval:</strong>{' '}
-                                                                {contract.paymentInterval}
+                                                                <strong>Payment Interval:</strong> {contract.paymentInterval}
                                                             </Typography>
                                                             <Typography>
                                                                 <strong>Payment Day:</strong> {contract.paymentDay}
                                                             </Typography>
                                                         </Box>
 
-                                                            {isSent && role === "regular" && (
-                                                                <Box display="flex" flexDirection="column" gap={1}>
-                                                                    <Box display="flex" alignItems="center" gap={1}>
-                                                                        <Checkbox
-                                                                            checked={!!acceptCheckbox[contract.id]}
-                                                                            onClick={(e) => e.stopPropagation()}
-                                                                            onChange={(e) =>
-                                                                                handleCheckboxChange(
-                                                                                    contract.id,
-                                                                                    e.target.checked
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <Typography>I have read and understand Terms and Conditions</Typography>
-                                                                        <Button
-                                                                            variant="outlined"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                openTerms(contract);
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            Open Terms
-                                                                        </Button>
-                                                                    </Box>
-
+                                                        {/* Kui staatus on "Waiting for acceptance", näita checkboxi ja "Accept Contract" nuppu */}
+                                                        {isSent && role === 'regular' && (
+                                                            <Box display="flex" flexDirection="column" gap={1} mt={2}>
+                                                                <Box display="flex" alignItems="center" gap={1}>
+                                                                    <Checkbox
+                                                                        checked={!!acceptCheckbox[contract.id]}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        onChange={(e) =>
+                                                                            handleCheckboxChange(
+                                                                                contract.id,
+                                                                                e.target.checked
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                    <Typography>
+                                                                        I have read and understand Terms and Conditions
+                                                                    </Typography>
                                                                     <Button
-                                                                        variant="contained"
-                                                                        color="success"
-                                                                        disabled={!acceptCheckbox[contract.id]}
+                                                                        variant="outlined"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            handleAccept(contract);
+                                                                            openTerms(contract);
                                                                         }}
+                                                                        size="small"
                                                                     >
-                                                                        Accept Contract
+                                                                        Open Terms
                                                                     </Button>
                                                                 </Box>
-                                                            )}
 
+                                                                <Button
+                                                                    variant="contained"
+                                                                    color="success"
+                                                                    disabled={!acceptCheckbox[contract.id]}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleAccept(contract);
+                                                                    }}
+                                                                >
+                                                                    Accept Contract
+                                                                </Button>
+                                                            </Box>
+                                                        )}
                                                     </Box>
                                                 </Collapse>
                                             </TableCell>
@@ -203,6 +346,68 @@ export default function UserContracts({ user, affiliateId }) {
                     termsId={selectedContractTermsId}
                 />
             )}
+
+            {/* PaymentHoliday Modal */}
+            <Modal open={phModalOpen} onClose={handleClosePhModal}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        bgcolor: '#fff',
+                        p: 4,
+                        borderRadius: 2,
+                        minWidth: 300,
+                    }}
+                >
+                    <Typography variant="h6" mb={2}>
+                        Request Payment Holiday
+                    </Typography>
+                    <TextField
+                        label="From Date"
+                        type="date"
+                        name="fromDate"
+                        value={phData.fromDate}
+                        onChange={handlePhDataChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                    <TextField
+                        label="To Date"
+                        type="date"
+                        name="toDate"
+                        value={phData.toDate}
+                        onChange={handlePhDataChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                    <TextField
+                        label="Reason"
+                        name="reason"
+                        multiline
+                        rows={3}
+                        value={phData.reason}
+                        onChange={handlePhDataChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <Box display="flex" justifyContent="flex-end" gap={2}>
+                        <Button onClick={handleClosePhModal} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button variant="contained" onClick={handlePhSave}>
+                            Save
+                        </Button>
+                    </Box>
+                </Box>
+            </Modal>
         </Box>
     );
 }

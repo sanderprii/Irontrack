@@ -154,6 +154,14 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                         </Box>
                     </CardContent>
                 </Card>
+
+                <Card sx={{ mt: 2, bgcolor: 'background.paper' }}>
+                    <CardContent>
+                        <Typography variant="h6">Payment Holiday fee: {affiliate.paymentHolidayFee}€</Typography>
+
+                    </CardContent>
+                </Card>
+
             </Grid>
 
 

@@ -37,8 +37,8 @@ model User {
   messageGroups   UserMessageGroup[]
   contract        Contract[]
   signedContracts SignedContract[]
-
-  contractLogs ContractLogs[]
+  paymentHolidays PaymentHoliday[]
+  contractLogs    ContractLogs[]
 }
 
 model Message {
@@ -53,7 +53,7 @@ model Message {
 }
 
 model Contract {
-  id              String           @id @default(uuid())
+  id              Int              @id @default(autoincrement())
   affiliateId     Int
   userId          Int
   contractType    String?
@@ -71,11 +71,12 @@ model Contract {
   user            User             @relation(fields: [userId], references: [id])
   signed          SignedContract[]
   logs            ContractLogs[]
+  paymentHolidays PaymentHoliday[]
 }
 
 model ContractLogs {
   id          Int       @id @default(autoincrement())
-  contractId  String
+  contractId  Int
   userId      Int
   affiliateId Int
   action      String
@@ -87,7 +88,7 @@ model ContractLogs {
 
 model SignedContract {
   id              Int    @id @default(autoincrement())
-  contractId      String
+  contractId      Int
   userId          Int
   affiliateId     Int
   acceptType      String
@@ -247,24 +248,25 @@ model UserPlan {
 }
 
 model Affiliate {
-  id            Int                @id @default(autoincrement())
-  name          String
-  address       String
-  trainingType  String
-  email         String?
-  phone         String?
-  iban          String?
-  bankName      String?
-  ownerId       Int
-  logo          String?
-  owner         User               @relation(fields: [ownerId], references: [id])
-  trainers      AffiliateTrainer[]
-  ClassSchedule ClassSchedule[]
-  members       Members[]
-  todayWOD      todayWOD[]
-  transactions  transactions[]
-  credit        Credit[]
-
+  id                Int                @id @default(autoincrement())
+  name              String
+  address           String
+  trainingType      String
+  email             String?
+  phone             String?
+  iban              String?
+  bankName          String?
+  ownerId           Int
+  logo              String?
+  paymentHolidayFee Float?
+  owner             User               @relation(fields: [ownerId], references: [id])
+  trainers          AffiliateTrainer[]
+  ClassSchedule     ClassSchedule[]
+  members           Members[]
+  todayWOD          todayWOD[]
+  transactions      transactions[]
+  credit            Credit[]
+  paymentHoliday    PaymentHoliday[]
   message           Message[]
   messageGroups     MessageGroup[]
   contract          Contract[]
@@ -358,4 +360,22 @@ model transactions {
   memberId      Int?
   member        Members?  @relation(fields: [memberId], references: [id])
   credit        Credit?   @relation(fields: [creditId], references: [id])
+}
+
+model PaymentHoliday {
+  id          Int       @id @default(autoincrement())
+  contractId  Int
+  contract    Contract  @relation(fields: [contractId], references: [id])
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  affiliateId Int
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+
+  fromDate DateTime
+
+  toDate     DateTime?
+  reason     String?
+  monthlyFee Float     @default(0.0)
+  accepted   String    @default("pending") // pending, accepted, declined
+  createdAt  DateTime  @default(now())
 }

@@ -162,3 +162,37 @@ export const getContractTermsById = async (termsType) => {
         console.error('Error getContractTermsById:', error);
     }
 };
+
+export const createPaymentHoliday = async (payload) => {
+    const token = localStorage.getItem('token');
+    try {
+        const resp = await fetch(`${API_BASE}/contracts/${payload.contractId}/payment-holiday`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+        });
+        return await resp.json();
+    } catch (error) {
+        console.error('Error createPaymentHoliday:', error);
+    }
+}
+
+export const updatePaymentHoliday = async (phId, payload) => {
+    const token = localStorage.getItem('token');
+    try {
+        const resp = await fetch(`${API_BASE}/contracts/${phId}/update-payment-holiday`, {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+        });
+        return await resp.json();
+    } catch (error) {
+        console.error('Error updatePaymentHoliday:', error);
+    }
+}

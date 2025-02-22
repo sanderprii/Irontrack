@@ -32,4 +32,8 @@ router.put('/:contractId/accept', contractController.acceptContract);
 // GET contract terms (eraldi päring, kui tahad popupis lepingu terms sisu)
 router.get('/terms/:termsId', contractController.getContractTermsById);
 
+router.post('/:contractId/payment-holiday', contractController.createPaymentHoliday);
+
+router.put('/:phId/update-payment-holiday', contractController.updatePaymentHoliday);
+
 module.exports = router;

@@ -11,12 +11,15 @@ import {
     TextField,
     Collapse,
     Paper,
-    Grid,
+    Grid, IconButton,
 } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {getContracts, deleteContract, updateContract} from '../api/contractApi';
 import CreateContract from './CreateContract';
 import AddDefaultContractModal from './AddDefaultContractModal';
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import {updatePaymentHoliday} from "../api/contractApi";
 
 export default function AffiliateContracts({affiliateId}) {
     const [contracts, setContracts] = useState([]);
@@ -124,6 +127,24 @@ export default function AffiliateContracts({affiliateId}) {
         setOpenRows((prev) => ({...prev, [id]: !prev[id]}));
     };
 
+    // PaymentHoliday uuendamise handler (kui affiliate klikkab Approved/Declined)
+    const handleUpdatePhStatus = async (phId, newStatus) => {
+        try {
+            const result = await updatePaymentHoliday(phId, { accepted: newStatus });
+            if (result && result.success) {
+                alert(`Payment holiday set to "${newStatus}" successfully!`);
+                await loadContracts();
+            } else {
+                alert('Error updating payment holiday status!');
+            }
+        } catch (error) {
+            console.error('Error updating payment holiday:', error);
+            alert('Error updating payment holiday!');
+        }
+    };
+
+
+
     return (
         <Box>
             {/* Pealkiri + nupud */}
@@ -228,6 +249,64 @@ export default function AffiliateContracts({affiliateId}) {
                                                         backgroundColor: '#fafafa',
                                                     }}
                                                 >
+
+                                                    <Typography variant="subtitle1" fontWeight="bold">
+                                                        Payment Holidays
+                                                    </Typography>
+
+                                                    <Table>
+                                                        <TableHead>
+                                                            <TableRow>
+                                                                <TableCell>From Date</TableCell>
+                                                                <TableCell>To Date</TableCell>
+                                                                <TableCell>Reason</TableCell>
+                                                                <TableCell>Accepted</TableCell>
+                                                                <TableCell />
+                                                            </TableRow>
+                                                        </TableHead>
+                                                        <TableBody>
+                                                            {contract.paymentHolidays.map((ph) => (
+                                                                <TableRow key={ph.id}>
+                                                                    <TableCell>
+                                                                        {new Date(ph.fromDate).toLocaleDateString()}
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        {ph.toDate
+                                                                            ? new Date(ph.toDate).toLocaleDateString()
+                                                                            : '-'}
+                                                                    </TableCell>
+                                                                    <TableCell>{ph.reason}</TableCell>
+                                                                    <TableCell>{ph.accepted}</TableCell>
+                                                                    <TableCell>
+
+                                                                        {ph.accepted === 'pending' && (
+                                                                            <Box>
+                                                                                <IconButton
+                                                                                    color="success"
+                                                                                    onClick={() =>
+                                                                                        handleUpdatePhStatus(ph.id, 'approved')
+                                                                                    }
+                                                                                >
+                                                                                    <CheckIcon />
+                                                                                </IconButton>
+                                                                                <IconButton
+                                                                                    color="error"
+                                                                                    onClick={() =>
+                                                                                        handleUpdatePhStatus(ph.id, 'declined')
+                                                                                    }
+                                                                                >
+                                                                                    <CloseIcon />
+                                                                                </IconButton>
+                                                                            </Box>
+                                                                        )}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+
+
+
                                                     <Typography variant="h6" sx={{mb: 2}}>
                                                         Contract Details
                                                     </Typography>

@@ -159,8 +159,15 @@ export default function ClassModal({
             // Filtreeri välja plaanid, mille endDate + 5 päeva on möödas
             const filteredPlans = plans.filter(plan => {
                 const planEndDate = new Date(plan.endDate).getTime();
+                let expiryTime = 0;
+                if (plan.contractId !== null) {
+console.log("5 days added to plan end date");
                 const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 päeva millisekundites
-                const expiryTime = planEndDate + fiveDaysInMs;
+                expiryTime = planEndDate + fiveDaysInMs;
+            } else {
+                    console.log("null")
+                expiryTime = planEndDate;
+                }
                 return Date.now() < expiryTime;
             });
 

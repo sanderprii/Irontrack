@@ -65,10 +65,10 @@ export const deletePlan = async (planId) => {
     }
 };
 
-export const buyPlan = async (planData, affiliateId, appliedCredit) => {
+export const buyPlan = async (planData, affiliateId, appliedCredit, contract) => {
     try {
 
-        const data = { planData, appliedCredit };
+        const data = { planData, appliedCredit, contract };
         const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/plans/buy-plan/${affiliateId}`, {
             method: "POST",

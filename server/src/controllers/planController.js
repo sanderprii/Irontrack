@@ -104,6 +104,7 @@ const buyPlan = async (req, res) => {
     const appliedCredit = parseInt(req.body.appliedCredit);
     const affiliateId = parseInt(req.params.affiliateId);
     const userId = parseInt(req.user?.id);
+    const contract = req.body.contract;
 
     try {
         // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
@@ -123,6 +124,13 @@ const buyPlan = async (req, res) => {
             return res.status(404).json({error: "Affiliate not found."});
         }
         const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+
+        let contractId = null;
+
+        if (contract && contract.id) {
+            contractId = contract.id;
+
+        }
 
         // Transaktsioon, mis sisaldab kõiki andmebaasi kirjutavaid operatsioone
         await prisma.$transaction(async (prisma) => {
@@ -187,6 +195,7 @@ const buyPlan = async (req, res) => {
                     validityDays: planData.validityDays,
                     sessionsLeft: planData.sessions,
                     planName: planData.name,
+                    contractId: parseInt(contractId)
                 }
             });
 

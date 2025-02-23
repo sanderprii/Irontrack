@@ -108,9 +108,7 @@ export default function AppAppBar() {
                 { name: 'Plans', to: '/plans' },
                 { name: 'Messages', to: '/messages' },
             ];
-            rightLinks = [
-                { name: 'Log Out', action: () => logout(navigate) },
-            ];
+
         } else if (role === 'trainer') {
             leftLinks = [{ name: 'Trainer Page', to: '/trainer' }];
             rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
@@ -295,48 +293,7 @@ export default function AppAppBar() {
                 Hetkel peidame hoopis, kuna kasutame alumist nav'i.
                 Kui soovid, võid taastada. */}
                         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-                            {/* Kui ikkagi tahad kasutada Drawer'it ka, saad siia lisada.
-                  Jätan siia koodinäite kommentaaridesse.
-              */}
-                            {/* <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
-                <MenuIcon />
-              </IconButton>
-              <Drawer anchor="top" open={open} onClose={toggleDrawer(false)}>
-                <Box sx={{ p: 2, backgroundColor: 'background.default' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <IconButton onClick={toggleDrawer(false)}>
-                      <CloseRoundedIcon />
-                    </IconButton>
-                  </Box>
-                  {leftLinks.map((link) => (
-                    <MenuItem key={link.name} onClick={toggleDrawer(false)}>
-                      {link.action ? (
-                        <Button onClick={link.action} color="inherit" fullWidth>
-                          {link.name}
-                        </Button>
-                      ) : (
-                        <Button component={Link} to={link.to} color="inherit" fullWidth>
-                          {link.name}
-                        </Button>
-                      )}
-                    </MenuItem>
-                  ))}
-                  <Divider sx={{ my: 1 }} />
-                  {rightLinks.map((link) => (
-                    <MenuItem key={link.name} onClick={toggleDrawer(false)}>
-                      {link.action ? (
-                        <Button onClick={link.action} color="inherit" fullWidth>
-                          {link.name}
-                        </Button>
-                      ) : (
-                        <Button component={Link} to={link.to} color="inherit" fullWidth>
-                          {link.name}
-                        </Button>
-                      )}
-                    </MenuItem>
-                  ))}
-                </Box>
-              </Drawer> */}
+
                         </Box>
                     </StyledToolbar>
 

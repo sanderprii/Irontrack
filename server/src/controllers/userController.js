@@ -194,6 +194,7 @@ exports.getUserPlansByAffiliate = async (req, res) => {
                 purchasedAt: true,
                 endDate: true,
                 sessionsLeft: true,
+                contractId: true,
 
             },
         });

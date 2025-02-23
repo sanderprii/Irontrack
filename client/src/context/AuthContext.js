@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
 
         // suuna avalehele (või kuhu vaja)
         if (navigate) {
-            navigate('/HomePage');
+            navigate('/');
         }
     };
 

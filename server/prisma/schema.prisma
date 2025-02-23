@@ -72,6 +72,7 @@ model Contract {
   signed          SignedContract[]
   logs            ContractLogs[]
   paymentHolidays PaymentHoliday[]
+  userPlan        UserPlan[]
 }
 
 model ContractLogs {
@@ -233,16 +234,17 @@ model Plan {
 }
 
 model UserPlan {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
-
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id])
+  contractId   Int?
+  contract     Contract? @relation(fields: [contractId], references: [id])
   affiliateId  Int
   planId       Int // kui tahad viidata Plan.id-le
   planName     String
   validityDays Int
   price        Float
-  purchasedAt  DateTime @default(now())
+  purchasedAt  DateTime  @default(now())
   endDate      DateTime
   sessionsLeft Int
 }

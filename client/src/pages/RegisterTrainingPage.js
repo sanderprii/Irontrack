@@ -150,7 +150,8 @@ const RegisterTrainingPage = () => {
             state: {
                 affiliate: selectedAffiliate, // kui vajad tervet affiliate objekti
                  // kui vajad ainult affiliate.id
-                plan: plan
+                plan: plan,
+                contract: false,
             }
         });
     };

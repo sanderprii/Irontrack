@@ -46,6 +46,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     planName={planData.name}
                     planPrice={planData.price}
                     appliedCredit={appliedCredit}
+
                 />
             );
         default:
@@ -60,6 +61,7 @@ export default function Checkout(props) {
     const affiliate = location.state?.affiliate;
     const [affiliateInfo] = useState(affiliate || {});
     const [planData] = useState(plan || {});
+    const contract = location.state?.contract;
 
     // Uus seisund: kasutaja poolt rakendatav krediit (näiteks 0 kuni availableCredit)
     const [appliedCredit, setAppliedCredit] = useState(0);
@@ -79,8 +81,8 @@ export default function Checkout(props) {
 
     const handlePlaceOrder = async () => {
         try {
-            // Näiteks fetch() või axios() abil andmed edastada
-            const response = await buyPlan(planData, affiliateInfo.id, appliedCredit);
+
+            const response = await buyPlan(planData, affiliateInfo.id, appliedCredit, contract);
             if (!response.ok) {
                 throw new Error('Failed to save plan');
             }

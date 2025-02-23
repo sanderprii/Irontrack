@@ -240,8 +240,8 @@ const getClassAttendees = async (req, res) => {
         });
 
         // võta iga attendee kohta usernote userId järgi
-         const userNotes = await prisma.userNote.findMany({
-             where: {userId: parseInt(attendees.map(att => att.userId))}
+        const userNotes = await prisma.userNote.findMany({
+            where: {userId: parseInt(attendees.map(att => att.userId))}
         });
 
 
@@ -251,7 +251,6 @@ const getClassAttendees = async (req, res) => {
             checkIn: att.checkIn,
             // pane terve usernote sisse. ühel useril võib olla mitu usernote
             userNotes: userNotes
-
 
 
         })));
@@ -312,35 +311,53 @@ const getClassAttendeesCount = async (req, res) => {
 
 // ✅ Kasutaja registreerumine klassi
 const registerForClass = async (req, res) => {
-    const {classId, planId, affiliateId} = req.body;
+    const {classId, planId, affiliateId, freeClass} = req.body;
     const userId = req.user?.id;
 
+    console.log("freeClass (type):", freeClass, typeof freeClass);
     try {
-        const plan = await prisma.userPlan.findUnique({
-            where: {id: planId},
-        });
 
-        if (!plan || plan.sessionsLeft <= 0) {
-            return res.status(400).json({error: "Invalid or expired plan"});
+        if (freeClass) {
+            await prisma.classAttendee.create({
+                data: {
+
+                    checkIn: false,
+
+                    userPlanId: 0,
+                    classSchedule: {connect: {id: classId}},
+                    user: {connect: {id: userId}},
+                    affiliate: {connect: {id: parseInt(affiliateId)}}
+                },
+            });
+            return res.status(200).json({message: "Successfully registered!"});
+        } else {
+
+            const plan = await prisma.userPlan.findUnique({
+                where: {id: planId},
+            });
+
+            if (!plan || plan.sessionsLeft <= 0) {
+                return res.status(400).json({error: "Invalid or expired plan"});
+            }
+
+
+            await prisma.classAttendee.create({
+                data: {
+                    userId,
+                    classId,
+                    checkIn: false,
+                    userPlanId: planId,
+                    affiliateId: parseInt(affiliateId)
+                },
+            });
+
+            await prisma.userPlan.update({
+                where: {id: planId},
+                data: {sessionsLeft: plan.sessionsLeft - 1},
+            });
+            res.status(200).json({message: "Successfully registered!"});
         }
 
-
-        await prisma.classAttendee.create({
-            data: {
-                userId,
-                classId,
-                checkIn: false,
-                userPlanId: planId,
-                affiliateId: parseInt(affiliateId)
-            },
-        });
-
-        await prisma.userPlan.update({
-            where: {id: planId},
-            data: {sessionsLeft: plan.sessionsLeft - 1},
-        });
-
-        res.status(200).json({message: "Successfully registered!"});
     } catch (error) {
         console.error("❌ Error registering for class:", error);
         res.status(500).json({error: "Failed to register for class."});
@@ -349,7 +366,7 @@ const registerForClass = async (req, res) => {
 
 // ✅ Kasutaja registreeringu tühistamine
 const cancelRegistration = async (req, res) => {
-    const {classId} = req.body;
+    const {classId, freeClass} = req.body;
     const userId = req.user.id;
 
     try {
@@ -363,13 +380,13 @@ const cancelRegistration = async (req, res) => {
         await prisma.classAttendee.delete({
             where: {id: registration.id},
         });
-
-        // Tagasta sessioon kasutajale tagasi
-        await prisma.userPlan.update({
-            where: {id: registration.userPlanId},
-            data: {sessionsLeft: {increment: 1}},
-        });
-
+        if (!freeClass) {
+            // Tagasta sessioon kasutajale tagasi
+            await prisma.userPlan.update({
+                where: {id: registration.userPlanId},
+                data: {sessionsLeft: {increment: 1}},
+            });
+        }
         res.status(200).json({message: "Registration cancelled successfully!"});
     } catch (error) {
         console.error("❌ Error canceling registration:", error);
@@ -480,7 +497,6 @@ const updateClassScore = async (req, res) => {
         res.status(500).json({error: "Failed to update class score"});
     }
 };
-
 
 
 module.exports = {

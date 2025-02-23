@@ -207,26 +207,30 @@ export default function ClassModal({
     // ✅ Registreerimise funktsioon
     const handleRegister = async () => {
         try {
-            if (!selectedPlanId) {
-                alert("Please select a plan first!");
-                return;
+            if (!cls.freeClass) {
+
+                if (!selectedPlanId) {
+                    alert("Please select a plan first!");
+                    return;
+                }
             }
-            await registerForClass(cls.id, selectedPlanId, cls.affiliateId);
+            await registerForClass(cls.id, selectedPlanId, cls.affiliateId, cls.freeClass);
             // Kui õnnestub, uuendame osalejate nimekirja
             await fetchAttendees();
 
             // Uuendame peal vaadet, kui vaja (attendeesCount, vms)
             await refreshClasses();
-        } catch (error) {
+        } catch
+            (error) {
             console.error("Error registering for class:", error);
             alert(error.message || "Registration failed");
         }
     };
 
-    // ✅ Tühista registreerimise funktsioon
+// ✅ Tühista registreerimise funktsioon
     const handleCancelRegistration = async () => {
         try {
-            await cancelRegistration(cls.id);
+            await cancelRegistration(cls.id, cls.freeClass);
             await fetchAttendees();
 
             await refreshClasses();
@@ -366,7 +370,7 @@ export default function ClassModal({
                         ) : (
                             // ✅ Kui kasutaja EI OLE registreeritud, näitame plaanide dropdowni + Register-nuppu
                             <>
-                                {userPlans && userPlans.length > 0 && cls.canRegister === true  ? (
+                                {userPlans && userPlans.length > 0 && cls.canRegister === true && cls.freeClass === false ? (
                                     <Box display="flex" alignItems="center" gap={2}>
                                         <FormControl sx={{minWidth: 120}}>
                                             <InputLabel id="plan-select-label">Select Plan</InputLabel>
@@ -393,6 +397,19 @@ export default function ClassModal({
                                         </Button>
                                     </Box>
                                 ) : (
+
+                                    <>
+                                        {cls.canRegister === true && cls.freeClass === true ? (
+                                            <Button
+                                                variant="contained"
+                                                color="success"
+                                                disabled={isClassOver}
+                                                onClick={handleRegister}
+                                            >
+                                                Register
+                                            </Button>
+                                        ) : (
+
                                     // ✅ Kui plaane pole
                                     <Typography color="red">
                                         You have no valid plans.{" "}
@@ -404,6 +421,8 @@ export default function ClassModal({
                                             Buy Plans
                                         </Button>
                                     </Typography>
+                                        )}
+                                    </>
                                 )}
                             </>
                         )}

@@ -18,6 +18,8 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
         wodName: "",
         wodType: "For Time", // Default väärtus
         description: "",
+        canRegister: true,
+        freeClass: false,
     });
 
     useEffect(() => {
@@ -36,6 +38,8 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 wodName: selectedClass.wodName || "",
                 wodType: selectedClass.wodType || "For Time",
                 description: selectedClass.description || "",
+                canRegister: selectedClass.canRegister || true,
+                freeClass: selectedClass.freeClass || false,
             });
         } else {
 
@@ -51,6 +55,8 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 wodName: "",
                 wodType: "For Time",
                 description: "",
+                canRegister: true,
+                freeClass: false,
             });
         }
     }, [selectedClass]);
@@ -210,7 +216,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 />
 
                 {/* Repeat Weekly Radio Buttons */}
-                <FormControl component="fieldset" margin="dense">
+                <FormControl component="fieldset" margin="dense" fullWidth>
                     <FormLabel component="legend">Repeat Weekly?</FormLabel>
                     <RadioGroup
                         row
@@ -222,6 +228,33 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                         <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                 </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Can user register for class?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="canRegister"
+                        value={trainingData.canRegister.toString()}
+                        onChange={(e) => setTrainingData({ ...trainingData, canRegister: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Is this class free?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="freeClass"
+                        value={trainingData.freeClass.toString()}
+                        onChange={(e) => setTrainingData({ ...trainingData, freeClass: e.target.value === "false" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
             </DialogContent>
 
             <DialogActions>

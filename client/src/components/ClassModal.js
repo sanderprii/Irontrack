@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
     Dialog,
     DialogTitle,
@@ -43,8 +43,8 @@ import {
     cancelRegistration,
     checkUserEnrollment,
 } from "../api/classesApi";
-import { getUserPlansByAffiliate } from "../api/profileApi";
-import { getMemberInfo } from "../api/membersApi";
+import {getUserPlansByAffiliate} from "../api/profileApi";
+import {getMemberInfo} from "../api/membersApi";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 
 export default function ClassModal({
@@ -55,7 +55,7 @@ export default function ClassModal({
                                        onDelete,
                                        refreshClasses,
                                        attendeesCount,
-    props
+                                       props
                                    }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
     const [userRole, setUserRole] = useState(null);
@@ -161,14 +161,15 @@ export default function ClassModal({
                 const planEndDate = new Date(plan.endDate).getTime();
                 let expiryTime = 0;
                 if (plan.contractId !== null) {
-console.log("5 days added to plan end date");
-                const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 päeva millisekundites
-                expiryTime = planEndDate + fiveDaysInMs;
-            } else {
-                    console.log("null")
-                expiryTime = planEndDate;
+
+                    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 päeva millisekundites
+                    expiryTime = planEndDate + fiveDaysInMs;
+
+                } else {
+
+                    expiryTime = planEndDate;
                 }
-                return Date.now() < expiryTime;
+                return new Date(cls.time).getTime() < expiryTime;
             });
 
             setUserPlans(filteredPlans);
@@ -239,7 +240,7 @@ console.log("5 days added to plan end date");
     const handleCheckIn = async (userId) => {
         await checkInAttendee(cls.id, userId);
         setAttendees((prev) =>
-            prev.map((a) => (a.userId === userId ? { ...a, checkIn: true } : a))
+            prev.map((a) => (a.userId === userId ? {...a, checkIn: true} : a))
         );
     };
 
@@ -272,21 +273,20 @@ console.log("5 days added to plan end date");
         }
     }
 
-   const isClassOver = new Date(cls.time) < new Date();
+    const isClassOver = new Date(cls.time) < new Date();
 
-
-
+    console.log("cls.canRegister:", cls.canRegister, "Tüüp:", typeof cls.canRegister);
     return (
-        <Dialog  open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
-                sx={{ textAlign: "center", fontSize: "1.8rem", fontWeight: "bold" }}
+                sx={{textAlign: "center", fontSize: "1.8rem", fontWeight: "bold"}}
             >
                 {cls.trainingName}
             </DialogTitle>
 
             <DialogContent>
                 {/* Põhiinfo sektsioon */}
-                <Grid container spacing={3} sx={{ paddingY: 2 }}>
+                <Grid container spacing={3} sx={{paddingY: 2}}>
                     {/* Vasak veerg */}
                     <Grid item xs={12} md={6}>
                         <Box
@@ -298,7 +298,7 @@ console.log("5 days added to plan end date");
                         >
                             <Typography
                                 variant="h6"
-                                sx={{ fontWeight: "bold", marginBottom: 1 }}
+                                sx={{fontWeight: "bold", marginBottom: 1}}
                             >
                                 Class Details
                             </Typography>
@@ -330,17 +330,17 @@ console.log("5 days added to plan end date");
                         >
                             <Typography
                                 variant="h6"
-                                sx={{ fontWeight: "bold", marginBottom: 1 }}
+                                sx={{fontWeight: "bold", marginBottom: 1}}
                             >
                                 Workout Info
                             </Typography>
-                            <Typography sx={{ fontWeight: "bold", color: "text.primary" }}>
+                            <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
                                 <strong>🔥{cls.wodName || "None"}</strong>
                             </Typography>
-                            <Typography  sx={{ color: "secondary.main", mb: 1, fontStyle: "italic" }}>
+                            <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                 <strong>{cls.wodType || "None"}</strong>
                             </Typography>
-                            <Typography sx={{ color: "text.secondary", whiteSpace: "pre-line" }} >
+                            <Typography sx={{color: "text.secondary", whiteSpace: "pre-line"}}>
                                 <strong></strong>{" "}
                                 {cls.description || "No description available"}
                             </Typography>
@@ -348,7 +348,7 @@ console.log("5 days added to plan end date");
                     </Grid>
                 </Grid>
 
-                <Divider sx={{ marginY: 2 }} />
+                <Divider sx={{marginY: 2}}/>
 
                 {/* Register / Cancel sektsioon ainult REGULAR kasutajale */}
                 {userRole === "regular" && (
@@ -366,9 +366,9 @@ console.log("5 days added to plan end date");
                         ) : (
                             // ✅ Kui kasutaja EI OLE registreeritud, näitame plaanide dropdowni + Register-nuppu
                             <>
-                                {userPlans && userPlans.length > 0 ? (
+                                {userPlans && userPlans.length > 0 && cls.canRegister === true  ? (
                                     <Box display="flex" alignItems="center" gap={2}>
-                                        <FormControl sx={{ minWidth: 120 }}>
+                                        <FormControl sx={{minWidth: 120}}>
                                             <InputLabel id="plan-select-label">Select Plan</InputLabel>
                                             <Select
                                                 labelId="plan-select-label"
@@ -413,113 +413,113 @@ console.log("5 days added to plan end date");
                 {/* Osalejate sektsioon */}
                 {(userRole === "affiliate" || userRole === "trainer") && (
                     <>
-                <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>
-                    Attendees
-                </Typography>
-                <List>
-                    {attendees?.length > 0 ? (
-                        attendees.map((attendee) => (
-                            <ListItem
-                                key={attendee.userId}
-                                sx={{
-                                    border: "2px solid #ddd",
-                                    borderRadius: "8px",
-                                    padding: "12px",
-                                    marginBottom: "8px",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                }}
-                            >
-                                {/* Full Name */}
-                                <ListItemText
-                                    primary={
-                                        <Box display="flex" alignItems="center" gap={1}>
-                                            <Typography
-                                                variant="h6"
-                                                sx={{
-                                                    fontWeight: "bold",
-                                                    textTransform: "uppercase",
-                                                    cursor: "pointer",
-                                                    color: "blue",
-                                                    "&:hover": { textDecoration: "underline" },
-                                                }}
-                                                onClick={() => handleOpenProfile(attendee.userId)}
-                                            >
-                                                {attendee.fullName}
-                                            </Typography>
-
-                                            {attendee.userNotes?.map((note, index) =>
-                                                note.flag ? (
-                                                    <FlagIcon
-
-                                                        key={index}
-                                                        style={{ fill: getFlagColor(note.flag) }}
-                                                    />
-                                                ) : null
-                                            )}
-                                        </Box>
-                                    }
-                                />
-
-                                {/* Nupud (check-in & kustuta) on nähtavad nt treenerile, adminile vms,
-                    kui soovid, piira rolli. */}
-                                <ListItemSecondaryAction
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "10px",
-                                    }}
-                                >
-                                    <IconButton
-                                        onClick={() => handleCheckIn(attendee.userId)}
-                                        disabled={attendee.checkIn}
+                        <Typography variant="h6" sx={{fontWeight: "bold", marginBottom: 1}}>
+                            Attendees
+                        </Typography>
+                        <List>
+                            {attendees?.length > 0 ? (
+                                attendees.map((attendee) => (
+                                    <ListItem
+                                        key={attendee.userId}
                                         sx={{
-                                            backgroundColor: attendee.checkIn ? "green" : "#ddd",
-                                            color: attendee.checkIn ? "white" : "black",
-                                            borderRadius: "50%",
-                                            "&:hover": {
-                                                backgroundColor: attendee.checkIn ? "darkgreen" : "#bbb",
-                                            },
-                                            "&.Mui-disabled": {
-                                                backgroundColor: "green",
-                                                color: "white",
-                                            },
-                                        }}
-                                    >
-                                        <CheckCircleIcon />
-                                    </IconButton>
-
-                                    <IconButton
-                                        onClick={() => handleDelete(attendee.userId)}
-                                        sx={{
-                                            border: "2px solid red",
+                                            border: "2px solid #ddd",
                                             borderRadius: "8px",
-                                            padding: "5px",
+                                            padding: "12px",
+                                            marginBottom: "8px",
                                             display: "flex",
+                                            justifyContent: "space-between",
                                             alignItems: "center",
-                                            justifyContent: "center",
                                         }}
                                     >
-                                        <DeleteIcon sx={{ color: "red" }} />
-                                    </IconButton>
-                                </ListItemSecondaryAction>
-                            </ListItem>
-                        ))
-                    ) : (
-                        <Typography>No attendees</Typography>
-                    )}
-                </List>
-</>
-            )}
-                {userRole === "regular" &&  (
+                                        {/* Full Name */}
+                                        <ListItemText
+                                            primary={
+                                                <Box display="flex" alignItems="center" gap={1}>
+                                                    <Typography
+                                                        variant="h6"
+                                                        sx={{
+                                                            fontWeight: "bold",
+                                                            textTransform: "uppercase",
+                                                            cursor: "pointer",
+                                                            color: "blue",
+                                                            "&:hover": {textDecoration: "underline"},
+                                                        }}
+                                                        onClick={() => handleOpenProfile(attendee.userId)}
+                                                    >
+                                                        {attendee.fullName}
+                                                    </Typography>
+
+                                                    {attendee.userNotes?.map((note, index) =>
+                                                        note.flag ? (
+                                                            <FlagIcon
+
+                                                                key={index}
+                                                                style={{fill: getFlagColor(note.flag)}}
+                                                            />
+                                                        ) : null
+                                                    )}
+                                                </Box>
+                                            }
+                                        />
+
+                                        {/* Nupud (check-in & kustuta) on nähtavad nt treenerile, adminile vms,
+                    kui soovid, piira rolli. */}
+                                        <ListItemSecondaryAction
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "10px",
+                                            }}
+                                        >
+                                            <IconButton
+                                                onClick={() => handleCheckIn(attendee.userId)}
+                                                disabled={attendee.checkIn}
+                                                sx={{
+                                                    backgroundColor: attendee.checkIn ? "green" : "#ddd",
+                                                    color: attendee.checkIn ? "white" : "black",
+                                                    borderRadius: "50%",
+                                                    "&:hover": {
+                                                        backgroundColor: attendee.checkIn ? "darkgreen" : "#bbb",
+                                                    },
+                                                    "&.Mui-disabled": {
+                                                        backgroundColor: "green",
+                                                        color: "white",
+                                                    },
+                                                }}
+                                            >
+                                                <CheckCircleIcon/>
+                                            </IconButton>
+
+                                            <IconButton
+                                                onClick={() => handleDelete(attendee.userId)}
+                                                sx={{
+                                                    border: "2px solid red",
+                                                    borderRadius: "8px",
+                                                    padding: "5px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                }}
+                                            >
+                                                <DeleteIcon sx={{color: "red"}}/>
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))
+                            ) : (
+                                <Typography>No attendees</Typography>
+                            )}
+                        </List>
+                    </>
+                )}
+                {userRole === "regular" && (
                     <Box mb={2}>
                         {!showScoreForm && (
                             <Button
                                 variant="contained"
                                 color="primary"
                                 onClick={() => setShowScoreForm(true)}
-                                sx={{ mr: 2 }}
+                                sx={{mr: 2}}
                             >
                                 {hasScore ? "Edit Score" : "Add Score"}
                             </Button>
@@ -535,7 +535,7 @@ console.log("5 days added to plan end date");
                                     p: 2,
                                 }}
                             >
-                                <Typography variant="h6" sx={{ mb: 2 }}>
+                                <Typography variant="h6" sx={{mb: 2}}>
                                     {hasScore ? "Edit Your Score" : "Add Your Score"}
                                 </Typography>
 
@@ -544,11 +544,11 @@ console.log("5 days added to plan end date");
                                     row
                                     value={scoreType}
                                     onChange={(e) => setScoreType(e.target.value)}
-                                    sx={{ mb: 2 }}
+                                    sx={{mb: 2}}
                                 >
-                                    <FormControlLabel value="rx" control={<Radio />} label="RX" />
-                                    <FormControlLabel value="sc" control={<Radio />} label="Scaled" />
-                                    <FormControlLabel value="beg" control={<Radio />} label="Beginner" />
+                                    <FormControlLabel value="rx" control={<Radio/>} label="RX"/>
+                                    <FormControlLabel value="sc" control={<Radio/>} label="Scaled"/>
+                                    <FormControlLabel value="beg" control={<Radio/>} label="Beginner"/>
                                 </RadioGroup>
 
                                 {/* Tekstiväli skoori jaoks */}
@@ -558,7 +558,7 @@ console.log("5 days added to plan end date");
                                     value={scoreValue}
                                     onChange={(e) => setScoreValue(e.target.value)}
                                     fullWidth
-                                    sx={{ mb: 2 }}
+                                    sx={{mb: 2}}
                                 />
 
                                 {/* SAVE + CANCEL nupud */}
@@ -567,7 +567,7 @@ console.log("5 days added to plan end date");
                                         variant="contained"
                                         color="success"
                                         onClick={handleSaveScore}
-                                        sx={{ mr: 2 }}
+                                        sx={{mr: 2}}
                                     >
                                         Save
                                     </Button>
@@ -585,7 +585,7 @@ console.log("5 days added to plan end date");
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ justifyContent: "space-between", padding: "16px" }}>
+            <DialogActions sx={{justifyContent: "space-between", padding: "16px"}}>
                 <Button onClick={() => setLeaderboardOpen(true)} color="primary" variant="outlined">
                     Leaderboard
                 </Button>

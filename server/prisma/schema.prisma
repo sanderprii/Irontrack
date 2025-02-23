@@ -214,7 +214,7 @@ model ClassSchedule {
   wodName        String?
   wodType        String?
   description    String?
-  canRegister    Boolean            @default(false)
+  canRegister    Boolean            @default(true)
   freeClass      Boolean            @default(false)
   attendees      ClassAttendee[]
   leaderboard    ClassLeaderboard[]

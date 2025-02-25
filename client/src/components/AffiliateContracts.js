@@ -12,6 +12,12 @@ import {
     Collapse,
     Paper,
     Grid, IconButton,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+
 } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {getContracts, deleteContract, updateContract} from '../api/contractApi';
@@ -33,6 +39,11 @@ export default function AffiliateContracts({affiliateId}) {
     // Modali state
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [defaultModalOpen, setDefaultModalOpen] = useState(false);
+
+    // Lisame oleku dialoogi ja endDate haldamiseks
+    const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
+    const [newEndDate, setNewEndDate] = useState("");
+    const [contractToDeactivate, setContractToDeactivate] = useState(null);
 
     useEffect(() => {
         loadContracts();
@@ -111,7 +122,7 @@ export default function AffiliateContracts({affiliateId}) {
 
     const handleUpdate = async (contract) => {
         // Kui leping on juba 'sent', ei uuenda
-        if (contract.status === 'Waiting for acceptance') {
+        if (contract.status === 'Waiting for acceptance' || contract.status === 'accepted') {
             alert('Contract is already sent');
             return;
         }
@@ -120,7 +131,7 @@ export default function AffiliateContracts({affiliateId}) {
             status: 'Waiting for acceptance',
         };
         await updateContract(contract.id, payload);
-        loadContracts();
+        await loadContracts();
     };
 
     const toggleRow = (id) => {
@@ -144,6 +155,40 @@ export default function AffiliateContracts({affiliateId}) {
     };
 
 
+
+
+    // Funktsioon dialoogi avamiseks
+    const handleOpenDeactivateDialog = (contract) => {
+        setContractToDeactivate(contract);
+        setOpenDeactivateDialog(true);
+    };
+
+    // Funktsioon dialoogi sulgemiseks ja deaktiveerimiseks
+    const handleConfirmDeactivate = () => {
+        if (newEndDate && contractToDeactivate) {
+            handleDeActivate({ ...contractToDeactivate, endDate: newEndDate, affiliateId });
+        }
+        setOpenDeactivateDialog(false);
+        setNewEndDate(""); // Lähtestame sisestatud väärtuse
+        setContractToDeactivate(null);
+    };
+
+    // Funktsioon dialoogi tühistamiseks
+    const handleCancelDeactivate = () => {
+        setOpenDeactivateDialog(false);
+        setNewEndDate("");
+        setContractToDeactivate(null);
+    };
+
+    const handleDeActivate = async (contractData) => {
+        const payload = {
+            affiliateId: contractData.affiliateId,
+            userId: contractData.userId,
+            endDate: contractData.endDate, // Võtame endDate otse objektist
+        };
+        await updateContract(contractData.id, payload);
+        await loadContracts();
+    };
 
     return (
         <Box>
@@ -222,6 +267,9 @@ export default function AffiliateContracts({affiliateId}) {
                                             {contract.status}
                                         </TableCell>
                                         <TableCell>
+
+                                            { contract.status === 'draft' ? (
+
                                             <Button
                                                 variant="outlined"
                                                 color="primary"
@@ -233,6 +281,22 @@ export default function AffiliateContracts({affiliateId}) {
                                             >
                                                 Send
                                             </Button>
+                                                ) : (
+
+                                            <Button
+                                                variant="outlined"
+                                                color="secondary"
+                                                size="small"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm('Are you sure you want to deactivate this contract?')) {
+                                                        handleOpenDeactivateDialog(contract);
+                                                    }
+                                                }}
+                                            >
+                                                Change End Date
+                                            </Button>
+                                        )}
 
                                         </TableCell>
                                     </TableRow>
@@ -380,6 +444,39 @@ export default function AffiliateContracts({affiliateId}) {
                     </TableBody>
                 </Table>
             </Paper>
+
+            <Dialog
+                open={openDeactivateDialog}
+                onClose={handleCancelDeactivate}
+                aria-labelledby="deactivate-dialog-title"
+            >
+                <DialogTitle id="deactivate-dialog-title">Set New End Date</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter the new end date for the contract deactivation.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="New End Date"
+                        type="date"
+                        fullWidth
+                        value={newEndDate}
+                        onChange={(e) => setNewEndDate(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelDeactivate} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDeactivate} color="primary" disabled={!newEndDate}>
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Modal: Add Contract */}
             {createModalOpen && (

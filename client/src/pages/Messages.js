@@ -1,5 +1,5 @@
 // src/pages/message.js
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
     Container,
     Drawer,
@@ -15,17 +15,20 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
+import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
 // Kolm alamkomponenti, mille teed eraldi failides:
 import SendMessage from '../components/SendMessage';
 import SentMessage from '../components/SentMessage';
 import GroupsMessage from '../components/GroupsMessage';
-import { useEffect } from 'react';
-import { getAffiliate } from '../api/affiliateApi';
+import {useEffect} from 'react';
+import {getAffiliate} from '../api/affiliateApi';
 
 const menuItems = [
-    { id: 'send-message', label: 'Send Message (+)', component: SendMessage },
-    { id: 'sent-messages', label: 'Sent Messages', component: SentMessage },
-    { id: 'groups', label: 'Groups', component: GroupsMessage },
+    {id: 'send-message', label: 'Send Message (+)', component: SendMessage},
+    {id: 'sent-messages', label: 'Sent Messages', component: SentMessage},
+    {id: 'groups', label: 'Groups', component: GroupsMessage},
 ];
 
 // Näide: kui tahad, et vaikimisi oleks “sent-messages” avatud
@@ -34,6 +37,8 @@ export default function MessagePage() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [affiliate, setAffiliate] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchAffiliate = async () => {
@@ -55,107 +60,141 @@ export default function MessagePage() {
 
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
-        setDrawerOpen(false);
+        setMenuOpen(false);
     };
 
     return (
         <Container
             maxWidth={false}
             sx={{
-                mt: 4,
-                px: { xs: 0, sm: 0, md: 4 },
+
+                px: {xs: 0, sm: 0, md: 4},
                 display: 'flex',
+                flexDirection: 'column',
                 backgroundColor: 'background.default',
-                pt: 2,
+
             }}
         >
-            {/* Desktopi küljeriba */}
-            <Drawer
-                variant="permanent"
-                sx={{
-                    display: { xs: 'none', md: 'block' },
-                    width: 240,
-                    flexShrink: 0,
-                    position: 'relative !important',
-                }}
-                PaperProps={{
-                    sx: {
-                        position: 'relative',
-                    },
-                }}
-            >
-                <Box sx={{ width: 220, p: 2 }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem
-                                button
-                                key={item.id}
-                                onClick={() => handleMenuClick(item.id)}
-                            >
-                                <ListItemText primary={item.label} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Drawer>
 
-            {/* Mobiilne menüü nupp */}
-            <IconButton
-                onClick={() => setDrawerOpen(true)}
+            {/* Mobile Menu Button */}
+
+
+            <Paper
                 sx={{
-                    display: { md: 'none' },
-                    position: 'fixed',
-                    top: 64,
-                    right: 30,
+                    position: 'static',
+                    top: 45,
+                    left: 0,
+                    right: 0,
                     zIndex: 1300,
+
+                    display: {xs: 'block', md: 'none'},
                 }}
             >
-                <MenuIcon />
-            </IconButton>
+                <BottomNavigation
+                    showLabels
+                    value={activeComponent}
+                    onChange={(event, newValue) => {
+                        setActiveComponent(newValue);
+                        setMenuOpen(false);
+                    }}
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                        height: 40,
+                    }}
+                >
+                    <BottomNavigationAction
+                        label="Menu"
+                        icon={<ArrowDropDownIcon/>}
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        sx={{
+                            transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                        }}
+                    />
+                </BottomNavigation>
 
-            {/* Mobiilne Drawer */}
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                sx={{ display: { xs: 'block', md: 'none' } }}
-            >
-                <Toolbar />
-                <Box sx={{ width: 240, p: 2 }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem
-                                button
-                                key={item.id}
-                                onClick={() => handleMenuClick(item.id)}
-                            >
-                                <ListItemText primary={item.label} />
-                            </ListItem>
-                        ))}
-                    </List>
+                {menuOpen && (
+                    <Box
+                        sx={{
+                            backgroundColor: 'background.paper',
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            maxHeight: '500px',
+                            overflowY: 'auto',
+                        }}
+                    >
+                        <List>
+                            {menuItems.map((item) => (
+                                <ListItem
+                                    button
+                                    key={item.id}
+                                    onClick={() => handleMenuClick(item.id)}
+                                >
+
+                                    <ListItemText primary={item.label}/>
+
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Box>
+                )}
+            </Paper>
+            <Box sx={{display: "flex", flexGrow: 1}}>
+                {/* Desktopi küljeriba */}
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        display: {xs: 'none', md: 'block'},
+                        width: 240,
+
+                        flexShrink: 0,
+                        position: 'relative !important',
+                    }}
+                    PaperProps={{
+                        sx: {
+                            position: 'relative',
+                        },
+                    }}
+                >
+                    <Box sx={{width: 220, p: 2}}>
+                        <List>
+                            {menuItems.map((item) => (
+                                <ListItem
+                                    button
+                                    key={item.id}
+                                    onClick={() => handleMenuClick(item.id)}
+                                >
+                                    <ListItemText primary={item.label}/>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Box>
+                </Drawer>
+
+
+                {/* Põhisisu */}
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        p: {xs: 0, sm: 0, md: 3},
+                        backgroundColor: 'background.paper',
+                    }}
+                >
+                    <Card sx={{backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2}}>
+                        {isLoading ? (
+                            <Box sx={{display: 'flex', justifyContent: 'center', my: 5}}>
+                                <CircularProgress/>
+                            </Box>
+                        ) : (
+                            <CardContent>
+                                {/* Aktiivne alamkomponent saab affiliate propsina */}
+                                <ActiveComponent affiliate={affiliate.affiliate.id}/>
+                            </CardContent>
+                        )}
+                    </Card>
                 </Box>
-            </Drawer>
-
-            {/* Põhisisu */}
-            <Box
-                sx={{
-                    flexGrow: 1,
-                    p: { xs: 0, sm: 0, md: 3 },
-                    backgroundColor: 'background.paper',
-                }}
-            >
-                <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>
-                    {isLoading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
-                            <CircularProgress />
-                        </Box>
-                    ) : (
-                        <CardContent>
-                            {/* Aktiivne alamkomponent saab affiliate propsina */}
-                            <ActiveComponent affiliate={affiliate.affiliate.id} />
-                        </CardContent>
-                    )}
-                </Card>
             </Box>
         </Container>
 

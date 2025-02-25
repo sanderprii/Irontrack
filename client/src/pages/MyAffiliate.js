@@ -22,6 +22,9 @@ import AffiliateView from '../components/AffiliateView';
 import FinanceView from '../components/FinanceView';
 import AffiliateContracts from '../components/AffiliateContracts';
 
+import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
 const menuItems = [
     { id: 'my-affiliate', label: 'My Affiliate', component: AffiliateView },
     { id: 'finance', label: 'Finance', component: FinanceView },
@@ -34,6 +37,7 @@ export default function MyAffiliate() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeComponent, setActiveComponent] = useState('my-affiliate', 'finance', 'contracts');
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
 
@@ -54,6 +58,7 @@ export default function MyAffiliate() {
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
         setDrawerOpen(false);
+        setMenuOpen(false);
     };
 
     const handleUpdateAffiliate = async (updatedAffiliate) => {
@@ -71,7 +76,71 @@ export default function MyAffiliate() {
         menuItems.find((item) => item.id === activeComponent)?.component || AffiliateView;
 
     return (
-        <Container maxWidth={false} sx={{ mt: 4, display: 'flex' }}>
+        <Container maxWidth={false} sx={{ display: 'flex', flexDirection: 'column' }}>
+
+            <Paper
+                sx={{
+                    position: 'static',
+                    top: 45,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1300,
+
+                    display: { xs: 'block', md: 'none' },
+                }}
+            >
+                <BottomNavigation
+                    showLabels
+                    value={activeComponent}
+                    onChange={(event, newValue) => {
+                        setActiveComponent(newValue);
+                        setMenuOpen(false);
+                    }}
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                        height: 40,
+                    }}
+                >
+                    <BottomNavigationAction
+                        label="Menu"
+                        icon={<ArrowDropDownIcon />}
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        sx={{
+                            transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                        }}
+                    />
+                </BottomNavigation>
+
+                {menuOpen && (
+                    <Box
+                        sx={{
+                            backgroundColor: 'background.paper',
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            maxHeight: '500px',
+                            overflowY: 'auto',
+                        }}
+                    >
+                        <List>
+                            {menuItems.map((item) => (
+                                <ListItem
+                                    button
+                                    key={item.id}
+                                    onClick={() => handleMenuClick(item.id)}
+                                >
+
+                                    <ListItemText primary={item.label} />
+
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Box>
+                )}
+            </Paper>
+            <Box sx={{ display: "flex", flexGrow: 1 }}>
             {/* Sidebar Navigation */}
             <Drawer
                 variant="permanent"
@@ -102,37 +171,6 @@ export default function MyAffiliate() {
                 </Box>
             </Drawer>
 
-            {/* Mobile Menu Button */}
-            <IconButton
-                onClick={() => setDrawerOpen(true)}
-                sx={{
-                    display: { md: 'none' },
-                    position: 'fixed',
-                    top: 64,
-                    right: 30,
-                    zIndex: 1300,
-                }}
-            >
-                <MenuIcon />
-            </IconButton>
-
-            {/* Mobile Drawer */}
-            <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-                <Toolbar />
-                <Box sx={{ width: 240, p: 2 }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem
-                                button
-                                key={item.id}
-                                onClick={() => handleMenuClick(item.id)}
-                            >
-                                <ListItemText primary={item.label} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Drawer>
 
             {/* Main Content */}
             <Box sx={{ flexGrow: 1, pt: 2 }}>
@@ -154,6 +192,7 @@ export default function MyAffiliate() {
                     </CardContent>
                 </Card>
             </Box>
+        </Box>
         </Container>
     );
 }

@@ -15,7 +15,7 @@ router.post('/', contractController.createContract);
 router.get('/:id', contractController.getContractById);
 
 // PUT /contracts/:id
-router.put('/:id', contractController.updateContract);
+router.patch('/:id', contractController.updateContract);
 
 // DELETE /contracts/:id
 router.delete('/:id', contractController.deleteContract);

@@ -12,13 +12,11 @@ import {
     Avatar,
     Box,
     Button,
-    Chip,
     CircularProgress,
     Drawer,
-    IconButton,
-    Toolbar,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
+import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import {
     getMembers,
     getMemberInfo,
@@ -36,21 +34,17 @@ import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
 
 export default function Members() {
-    // Vasaku paneeli olek: liikmete nimekiri, otsing jne.
     const [members, setMembers] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [ownerAffiliateId, setOwnerAffiliateId] = useState(null);
 
-    // Paremal kuvatava valitud kasutaja info ja aktiivne vaade
+    const [menuOpen, setMenuOpen] = useState(false);
+
     const [selectedMember, setSelectedMember] = useState(null);
     const [activeComponent, setActiveComponent] = useState("profile");
     const [isLoadingMember, setIsLoadingMember] = useState(false);
 
-    // Mobiilivaate jaoks Drawer olek
-    const [drawerOpen, setDrawerOpen] = useState(false);
-
-    // Menüü valikud valitud kasutaja profiilivaate jaoks
     const menuItems = [
         { id: "profile", label: "Profile", component: ProfileView },
         { id: "statistics", label: "Statistics", component: Statistics },
@@ -62,7 +56,6 @@ export default function Members() {
         { id: "transactions", label: "Transactions", component: Transactions },
     ];
 
-    // Laadime esmalt omaniku affiliateId väärtuse
     useEffect(() => {
         async function fetchOwnerAffiliateId() {
             try {
@@ -79,7 +72,6 @@ export default function Members() {
         fetchOwnerAffiliateId();
     }, []);
 
-    // Kui omaniku affiliateId on saadaval, laadime liikmete nimekirja
     useEffect(() => {
         if (ownerAffiliateId) {
             async function fetchMembers() {
@@ -94,7 +86,6 @@ export default function Members() {
         }
     }, [ownerAffiliateId]);
 
-    // Otsingufunktsionaalsus: kui otsingusõne on pikem kui 2 tähte, laadime otsingutulemused
     useEffect(() => {
         const fetchSearchResults = async () => {
             if (searchQuery.length > 2) {
@@ -107,234 +98,244 @@ export default function Members() {
         fetchSearchResults();
     }, [searchQuery]);
 
-    // Kui klõpsata liikmele, laadime tema detailandmed ning lähtestame aktiivse vaate "Profile"
     const handleMemberClick = async (member) => {
         setIsLoadingMember(true);
         try {
-            // Kasuta member.userId, kui see on olemas; muidu member.user.id, kui struktuur on selline:
-            // member: { userId, user: { id, fullName, ... } }
             const userId = member.userId || (member.user && member.user.id) || member.id;
             const response = await getMemberInfo(userId);
-
             setSelectedMember(response || {});
             setActiveComponent("profile");
         } catch (error) {
             console.error("❌ Error fetching member info:", error);
         }
         setIsLoadingMember(false);
-        setDrawerOpen(false); // Sulge mobiilivaate Drawer
+        setMenuOpen(false);
     };
 
-    // Menüü klõpsu käitlemine – aktiveerib vastava komponendi
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
+        setMenuOpen(false);
     };
 
     const handleAddMember = async (userId) => {
         try {
             await addMember(userId, ownerAffiliateId);
-            // Värskenda liikmete nimekirja
             const response = await getMembers(ownerAffiliateId);
             setMembers(Array.isArray(response) ? response : []);
         } catch (error) {
             console.error("❌ Error adding member:", error);
         }
-    }
+    };
 
-
-    // Valime aktiivse komponendi menüü valikute hulgast; vaikimisi ProfileView
     const ActiveComponent =
-        menuItems.find((item) => item.id === activeComponent)?.component ||
-        ProfileView;
+        menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
 
     return (
-        <Container maxWidth={false} sx={{ mt: 4, display: "flex" }}>
-            {/* Vasak paneel: Liikmete nimekiri ja otsing (desktop vaade) */}
-            <Box
-                sx={{
-                    width: { xs: 300, md: 300 },
-                    borderRight: "1px solid #ccc",
-                    p: 2,
-                    display: { xs: "none", md: "block" },
-                }}
-            >
-                <Typography variant="h5" sx={{ mb: 2 }}>
-                    Members
-                </Typography>
-                <TextField
-                    fullWidth
-                    label="Search by name"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    margin="normal"
-                />
-                {searchQuery.length > 2 && (
-                    <List>
-                        {searchResults.length > 0 ? (
-                            searchResults.map((user) => (
-                                <ListItem
-                                    key={user.id}
-                                    button
-                                    onClick={() =>
-                                        handleMemberClick({ ...user, userId: user.id })
-                                    }
-                                >
-                                    <ListItemText primary={user.fullName || user.username} />
-                                </ListItem>
-                            ))
-                        ) : (
-                            <Typography variant="body2">No users found.</Typography>
-                        )}
-                    </List>
-                )}
-                <List>
-                    {members.length > 0 ? (
-                        members.map((member) => (
-                            <ListItem
-                                key={member.userId}
-                                button
-                                onClick={() =>
-                                    // Edastame member objekti, kus kasutaja andmed on member.user ja ID on member.userId
-                                    handleMemberClick({ ...member.user, userId: member.userId })
-                                }
-                            >
-                                <ListItemText primary={member.user.fullName} />
-                            </ListItem>
-                        ))
-                    ) : (
-                        <Typography variant="body2">No members found.</Typography>
-                    )}
-                </List>
-            </Box>
-
-            {/* Mobiilivaate jaoks: nupp ja Drawer, mis kuvab liikmete nimekirja ja otsingu */}
-            <IconButton
-                onClick={() => setDrawerOpen(true)}
+        <Container maxWidth={false} sx={{ display: "flex", flexDirection: "column" }}>
+            {/* Mobiilne menüüriba navbari all, lehe täislaiuses */}
+            <Paper
                 sx={{
                     display: { xs: "block", md: "none" },
-                    position: "fixed",
-                    top: 64,
-                    left: 16,
-                    zIndex: 1300,
+                    position: "static",
+                    top: 56, // Kohanda vastavalt oma navbari kõrgusele (nt 64px)
+                    zIndex: 1100,
+                    width: "100%",
+                    left: 0,
+                    right: 0,
                 }}
             >
-                <MenuIcon />
-            </IconButton>
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                sx={{ display: { xs: "block", md: "none" } }}
-            >
-                <Box sx={{ width: 300, p: 2 }}>
-                    <Typography variant="h5" sx={{ mb: 2 }}>
-                        Members
-                    </Typography>
-                    <TextField
-                        fullWidth
-                        label="Search by name"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        margin="normal"
+                <BottomNavigation
+                    showLabels
+                    sx={{
+                        backgroundColor: "background.paper",
+                        borderTop: "1px solid",
+                        borderColor: "divider",
+                        height: 40,
+                    }}
+                >
+                    <BottomNavigationAction
+                        label="Members"
+                        icon={<ArrowDropDownIcon />}
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        sx={{
+                            transform: menuOpen ? "rotate(180deg)" : "rotate(0deg)",
+                            transition: "transform 0.2s",
+                        }}
                     />
-                    {searchQuery.length > 2 && (
+                </BottomNavigation>
+
+                {menuOpen && (
+                    <Box
+                        sx={{
+                            backgroundColor: "background.paper",
+                            borderTop: "1px solid",
+                            borderColor: "divider",
+                            maxHeight: "500px",
+                            overflowY: "auto",
+                            p: 2,
+                            width: "100%",
+                        }}
+                    >
+                        <TextField
+                            fullWidth
+                            label="Search by name"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            margin="normal"
+                        />
+                        {searchQuery.length > 2 && (
+                            <List>
+                                {searchResults.length > 0 ? (
+                                    searchResults.map((user) => (
+                                        <ListItem
+                                            key={user.id}
+                                            button
+                                            onClick={() => handleMemberClick({ ...user, userId: user.id })}
+                                        >
+                                            <ListItemText primary={user.fullName || user.username} />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    <Typography variant="body2">No users found.</Typography>
+                                )}
+                            </List>
+                        )}
                         <List>
-                            {searchResults.length > 0 ? (
-                                searchResults.map((user) => (
+                            {members.length > 0 ? (
+                                members.map((member) => (
                                     <ListItem
-                                        key={user.id}
+                                        key={member.userId}
                                         button
-                                        onClick={() =>
-                                            handleMemberClick({ ...user, userId: user.id })
-                                        }
+                                        onClick={() => handleMemberClick({ ...member.user, userId: member.userId })}
                                     >
-                                        <ListItemText primary={user.fullName || user.username} />
+                                        <ListItemText primary={member.user.fullName} />
                                     </ListItem>
                                 ))
                             ) : (
-                                <Typography variant="body2">No users found.</Typography>
+                                <Typography variant="body2">No members found.</Typography>
                             )}
                         </List>
-                    )}
-                    <List>
-                        {members.length > 0 ? (
-                            members.map((member) => (
-                                <ListItem
-                                    key={member.userId}
-                                    button
-                                    onClick={() =>
-                                        handleMemberClick({ ...member.user, userId: member.userId })
-                                    }
-                                >
-                                    <ListItemText primary={member.user.fullName} />
-                                </ListItem>
-                            ))
-                        ) : (
-                            <Typography variant="body2">No members found.</Typography>
-                        )}
-                    </List>
-                </Box>
-            </Drawer>
-
-            {/* Parempoolne paneel: valitud kasutaja profiil ja menüü vaated */}
-            <Box sx={{ flexGrow: 1, p: { xs: 0, md: 3 }}}>
-                {isLoadingMember ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
                     </Box>
-                ) : selectedMember ? (
-                    <Card>
-                        <CardContent>
-                            <Grid container spacing={2}>
-                                {/* Vasak külgriba: kasutaja info ja menüü */}
-                                <Grid item xs={12} md={3}>
-                                    <Box sx={{ textAlign: "center" }}>
-                                        <Avatar
-                                            src={
-                                                selectedMember.logo ||
-                                                "https://via.placeholder.com/120"
-                                            }
-                                            sx={{ width: 100, height: 100, margin: "auto" }}
-                                        />
-                                        <Typography variant="h6" sx={{ mt: 2 }}>
-                                            {selectedMember.fullName}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {selectedMember.role || "Member"}
-                                        </Typography>
-
-                                        <Button onClick={() => handleAddMember(selectedMember.id)}>Add member</Button>
-
-
-                                    </Box>
-                                    <List>
-                                        {menuItems.map((item) => (
-                                            <ListItem
-                                                button
-                                                key={item.id}
-                                                selected={activeComponent === item.id}
-                                                onClick={() => handleMenuClick(item.id)}
-                                            >
-                                                <ListItemText primary={item.label} />
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                </Grid>
-
-                                {/* Põhiosa: aktiivne vaade */}
-                                <Grid item xs={12} md={9}>
-                                    <ActiveComponent
-                                        user={selectedMember}
-                                        userId={selectedMember.id}
-                                        affiliateId={ownerAffiliateId}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Typography variant="h6">Select a member to view details.</Typography>
                 )}
+            </Paper>
+
+            {/* Põhisisu: Desktopil vasakul Drawer, paremal komponendid */}
+            <Box sx={{ display: "flex", flexGrow: 1 }}>
+                {/* Vasak paneel: Liikmete nimekiri ja otsing (desktop vaade) */}
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        display: { xs: "none", md: "block" },
+                        width: 300,
+                        flexShrink: 0,
+                        position: "relative !important",
+                    }}
+                    PaperProps={{
+                        sx: { position: "relative" },
+                    }}
+                >
+                    <Box sx={{ width: 300, p: 2 }}>
+                        <Typography variant="h5" sx={{ mb: 2 }}>
+                            Members
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            label="Search by name"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            margin="normal"
+                        />
+                        {searchQuery.length > 2 && (
+                            <List>
+                                {searchResults.length > 0 ? (
+                                    searchResults.map((user) => (
+                                        <ListItem
+                                            key={user.id}
+                                            button
+                                            onClick={() => handleMemberClick({ ...user, userId: user.id })}
+                                        >
+                                            <ListItemText primary={user.fullName || user.username} />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    <Typography variant="body2">No users found.</Typography>
+                                )}
+                            </List>
+                        )}
+                        <List>
+                            {members.length > 0 ? (
+                                members.map((member) => (
+                                    <ListItem
+                                        key={member.userId}
+                                        button
+                                        onClick={() => handleMemberClick({ ...member.user, userId: member.userId })}
+                                    >
+                                        <ListItemText primary={member.user.fullName} />
+                                    </ListItem>
+                                ))
+                            ) : (
+                                <Typography variant="body2">No members found.</Typography>
+                            )}
+                        </List>
+                    </Box>
+                </Drawer>
+
+                {/* Parempoolne paneel: valitud kasutaja profiil ja menüü vaated */}
+                <Box sx={{ flexGrow: 1, p: { xs: 0, md: 3 } }}>
+                    {isLoadingMember ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : selectedMember ? (
+                        <Card>
+                            <CardContent>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} md={3}>
+                                        <Box sx={{ textAlign: "center" }}>
+                                            <Avatar
+                                                src={
+                                                    selectedMember.logo ||
+                                                    "https://via.placeholder.com/120"
+                                                }
+                                                sx={{ width: 100, height: 100, margin: "auto" }}
+                                            />
+                                            <Typography variant="h6" sx={{ mt: 2 }}>
+                                                {selectedMember.fullName}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {selectedMember.role || "Member"}
+                                            </Typography>
+                                            <Button onClick={() => handleAddMember(selectedMember.id)}>
+                                                Add member
+                                            </Button>
+                                        </Box>
+                                        <List>
+                                            {menuItems.map((item) => (
+                                                <ListItem
+                                                    button
+                                                    key={item.id}
+                                                    selected={activeComponent === item.id}
+                                                    onClick={() => handleMenuClick(item.id)}
+                                                >
+                                                    <ListItemText primary={item.label} />
+                                                </ListItem>
+                                            ))}
+                                        </List>
+                                    </Grid>
+                                    <Grid item xs={12} md={9}>
+                                        <ActiveComponent
+                                            user={selectedMember}
+                                            userId={selectedMember.id}
+                                            affiliateId={ownerAffiliateId}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Typography variant="h6">Select a member to view details.</Typography>
+                    )}
+                </Box>
             </Box>
         </Container>
     );

@@ -55,7 +55,7 @@ export const updateContract = async (contractId, payload) => {
     const token = localStorage.getItem('token');
     try {
         const resp = await fetch(`${API_BASE}/contracts/${contractId}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'

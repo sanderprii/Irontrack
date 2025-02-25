@@ -113,24 +113,46 @@ exports.getContractById = async (req, res) => {
 exports.updateContract = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, acceptedAt, contractType, content } = req.body;
+        const { status, acceptedAt, contractType, content, endDate, affiliateId, userId } = req.body;
 
+        // Loome dünaamilise data objekti, mis sisaldab ainult olemasolevaid välju
+        const data = {};
+
+        if (status !== undefined) data.status = status;
+        if (acceptedAt !== undefined) data.acceptedAt = acceptedAt;
+        if (contractType !== undefined) data.contractType = contractType;
+        if (content !== undefined) data.content = content;
+        if (endDate !== undefined) data.validUntil = new Date(endDate); // validUntil vastendatakse endDate'ile
+
+        // Kui ühtegi välja pole määratud, tagasta veateade
+        if (Object.keys(data).length === 0) {
+            return res.status(400).json({ error: 'No fields provided to update' });
+        }
+
+        // Uuenda leping ainult olemasolevate väljadega
         const updatedContract = await prisma.contract.update({
             where: { id: parseInt(id) },
-            data: {
-                status,
-                acceptedAt,
-                contractType,
-                content,
-            },
+            data,
         });
+
+        // Lisa logi, kui affiliateId ja userId on olemas
+        if (affiliateId && userId) {
+            await prisma.contractLogs.create({
+                data: {
+                    contractId: parseInt(id),
+                    affiliateId: parseInt(affiliateId),
+                    userId: parseInt(userId),
+                    action: 'Contract updated',
+                },
+            });
+        }
+
         res.json(updatedContract);
     } catch (error) {
         console.error('Error updating contract:', error);
         res.status(500).json({ error: 'Failed to update contract' });
     }
 };
-
 /**
  * Lepingute kustutamine
  */
@@ -264,7 +286,7 @@ exports.acceptContract = async (req, res) => {
         // Lisa SignedContract
         await prisma.signedContract.create({
             data: {
-                contractId: contractId,
+                contractId: parseInt(contractId),
                 userId: userId,
                 affiliateId: affiliateId,
                 acceptType: acceptType || 'checkbox',

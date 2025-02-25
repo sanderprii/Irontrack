@@ -14,6 +14,9 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
+import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
 import Statistics from '../components/Statistics';
 import PurchaseHistory from '../components/PurchaseHistory';
 import ActivePlans from '../components/ActivePlans';
@@ -48,7 +51,7 @@ const menuItems = [
 export default function MyProfile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-
+    const [menuOpen, setMenuOpen] = useState(false);
     const [activeComponent, setActiveComponent] = useState('my-profile');
     const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -92,6 +95,7 @@ export default function MyProfile() {
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
         setDrawerOpen(false);
+        setMenuOpen(false);
     };
 
     const handleUploadProfilePicture = async (file) => {
@@ -180,19 +184,79 @@ export default function MyProfile() {
                 </Box>
             </Drawer>
 
-            {/* Mobile Menu Button */}
-            <IconButton
-                onClick={() => setDrawerOpen(true)}
+            {/* Mobiilne menüüriba allapoole suunatud noolega */}
+            <Paper
                 sx={{
-                    display: { md: 'none' },
                     position: 'fixed',
-                    top: 64,
-                    right: 30,
+                    top: 45,
+                    left: 0,
+                    right: 0,
                     zIndex: 1300,
+
+                    display: { xs: 'block', md: 'none' },
                 }}
             >
-                <MenuIcon />
-            </IconButton>
+                <BottomNavigation
+                    showLabels
+                    value={activeComponent}
+                    onChange={(event, newValue) => {
+                        setActiveComponent(newValue);
+                        setMenuOpen(false);
+                    }}
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                        height: 40,
+                    }}
+                >
+                    <BottomNavigationAction
+                        label="Menu"
+                        icon={<ArrowDropDownIcon />}
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        sx={{
+                            transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                        }}
+                    />
+                </BottomNavigation>
+
+                {menuOpen && (
+                    <Box
+                        sx={{
+                            backgroundColor: 'background.paper',
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            maxHeight: '500px',
+                            overflowY: 'auto',
+                        }}
+                    >
+                        <List>
+                            {menuItems.map((item) => (
+                                <ListItem
+                                    button
+                                    key={item.id}
+                                    onClick={() => handleMenuClick(item.id)}
+                                >
+                                    <ListItemText
+                                        primary={
+                                            item.id === 'user-contracts' && sentCount > 0
+                                                ? `${item.label} (${sentCount})`
+                                                : item.label
+                                        }
+                                        sx={{
+                                            color:
+                                                item.id === 'user-contracts' && sentCount > 0
+                                                    ? 'red'
+                                                    : 'inherit',
+                                        }}
+                                    />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Box>
+                )}
+            </Paper>
 
             {/* Mobile Drawer */}
             <Drawer

@@ -20,6 +20,7 @@ import MuiCard from '@mui/material/Card';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import ContractTermsModal from './ContractTermsModal';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -70,6 +71,10 @@ export default function JoinUsForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [termsModalOpen, setTermsModalOpen] = useState(false);
+    const [ termstId, setTermsId] = useState('');
 
     // Kontrollboole ja errormessage'id
     const [isAffiliateOwner, setIsAffiliateOwner] = useState(false);
@@ -138,6 +143,11 @@ export default function JoinUsForm() {
             setConfirmPasswordErrorMessage('');
         }
 
+        if (!acceptedTerms) {
+            setError('You must accept the terms and conditions');
+            isValid = false;
+        }
+
         return isValid;
     };
 
@@ -162,7 +172,8 @@ export default function JoinUsForm() {
                     address,
                     email,
                     password,
-                    affiliateOwner: isAffiliateOwner
+                    affiliateOwner: isAffiliateOwner,
+                    isAcceptedTerms: acceptedTerms
                 }),
             });
 
@@ -178,6 +189,11 @@ export default function JoinUsForm() {
             console.error(err);
             setError('Server error, please try again later.');
         }
+    };
+
+    const openTerms = (contract) => {
+        setTermsId('register')
+        setTermsModalOpen(true);
     };
 
     return (
@@ -332,7 +348,32 @@ export default function JoinUsForm() {
                             label="Are you an Affiliate Owner?"
                         />
 
-                        <Button type="submit" fullWidth variant="contained">
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Checkbox
+                                checked={acceptedTerms}
+                                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                            />
+                            <Typography>
+                                I have read and understand Terms and Conditions
+                            </Typography>
+                            <Button
+                                variant="outlined"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    openTerms();
+                                }}
+                                size="small"
+                            >
+                                Open Terms
+                            </Button>
+                        </Box>
+
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            disabled={!acceptedTerms}
+                        >
                             Join Us
                         </Button>
                     </Box>
@@ -357,6 +398,11 @@ export default function JoinUsForm() {
                         </Typography>
                     </Box>
                 </Card>
+                <ContractTermsModal
+                    open={termsModalOpen}
+                    onClose={() => setTermsModalOpen(false)}
+                    termsId={termstId}
+                />
             </SignUpContainer>
         </AppTheme>
     );

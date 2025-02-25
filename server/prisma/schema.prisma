@@ -18,6 +18,7 @@ model User {
   records          Record[]
   trainings        Training[]
   monthlyGoal      Int?
+  isAcceptedTerms  Boolean            @default(false)
   phone            String?
   address          String?
   logo             String?

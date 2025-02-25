@@ -31,6 +31,7 @@ exports.register = async (req, res) => {
                 phone,
                 address,
                 affiliateOwner: affiliateOwner || false,
+                isAcceptedTerms: true,
             },
         });
 

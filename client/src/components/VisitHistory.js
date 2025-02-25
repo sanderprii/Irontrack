@@ -121,7 +121,9 @@ export default function VisitHistory({user, affiliateId}) {
                                                     <Typography variant="body2">
                                                         <strong>Name:</strong> {att.classSchedule?.trainingName}
                                                     </Typography>
-
+                                                    <Typography variant="body2" sx={{mb: 2}}>
+                                                        <strong>Trainer:</strong> {att.classSchedule?.trainer}
+                                                    </Typography>
                                                     {hasDescription && (
                                                         <>
                                                             <Typography variant="body2">
@@ -135,9 +137,7 @@ export default function VisitHistory({user, affiliateId}) {
                                                             </Typography>
                                                         </>
                                                     )}
-                                                    <Typography variant="body2" sx={{mb: 2}}>
-                                                        <strong>Trainer:</strong> {att.classSchedule?.trainer}
-                                                    </Typography>
+
 
                                                     {/* Leaderboard tulemused (kui on) */}
                                                     {hasLeaderboard && (

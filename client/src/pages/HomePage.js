@@ -239,7 +239,7 @@ export default function HomePage() {
             <Box sx={{ backgroundColor: "#333", color: "#fff", py: 3 }}>
                 <Container>
                     <Typography variant="body2" align="center">
-                        © {new Date().getFullYear()} MyGymSoftware | All rights reserved.
+                        © {new Date().getFullYear()} Irontrack OÜ | All rights reserved.
                     </Typography>
                 </Container>
             </Box>

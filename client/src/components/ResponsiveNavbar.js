@@ -186,10 +186,16 @@ export default function AppAppBar() {
                             </Box>
 
                             {/* Paremal: Logout-nupp */}
-                            {isLoggedIn && (
-                                <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 3 }}>
+                            {isLoggedIn ? (
+                                <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 1 }}>
                                     <LogoutIcon />
                                 </IconButton>
+
+                            ) : (
+                                <IconButton color="primary" onClick={() => navigate('/login')} sx={{ mr: 1 }}>
+                                    <PersonIcon />
+                                </IconButton>
+
                             )}
                         </Box>
 

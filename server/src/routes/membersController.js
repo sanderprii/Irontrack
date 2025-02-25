@@ -70,6 +70,7 @@ const role = req.query.userRole;
             address: user.address,
             isMember: userPlans.length > 0,
             userNotes: user.userNotes,
+            isAcceptedTerms: user.isAcceptedTerms,
             plans: userPlans.map((plan) => ({
                 planName: plan.planName,
                 endDate: plan.endDate,

@@ -185,6 +185,33 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                                     <strong></strong> {user.address}
                                 </Typography>
                             </Box>
+
+                            <Box sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                mb: 1,
+                                width: '100%',
+                                height: '20px',
+                                backgroundColor: user.isAcceptedTerms ? 'success.light' : 'error.light',
+                                borderRadius: '4px',
+                                px: 1
+                            }}>
+                                <Box
+                                    sx={{
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: user.isAcceptedTerms ? 'success.main' : 'error.main'
+                                    }}
+                                />
+                                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                                    <strong>{user.isAcceptedTerms ? "Accepted Terms" : "Terms not accepted"}</strong>
+                                </Typography>
+                            </Box>
+
+
+
                         </Stack>
                         <CardContent sx={{ marginTop: 2 }}>
                             <Box

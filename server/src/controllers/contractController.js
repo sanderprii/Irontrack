@@ -285,11 +285,11 @@ exports.acceptContract = async (req, res) => {
  */
 exports.getContractTermsById = async (req, res) => {
     try {
-        const termsType = req.params.termsType;
+        const termsType = req.params;
 
 
         const foundTerms = await prisma.contractTerms.findFirst({
-            where: { type: termsType },
+            where: { type: termsType.termsId },
 
         });
 

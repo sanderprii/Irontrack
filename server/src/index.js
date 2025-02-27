@@ -28,6 +28,7 @@ const logoRoutes = require('./routes/logoRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const groupsRoutes = require('./routes/groupsRoutes');
 const contractRoutes = require('./routes/contractRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -35,9 +36,10 @@ app.set('trust proxy', 1);
 
 const allowedOrigins = [
     'http://localhost:3000',
-    'https://www.sanderprii.me',
-    'https://www.sanderprii.me/api',
-    'https://sanderprii.me',
+    'https://www.irontrack.ee',
+    'https://www.irontrack.ee/api',
+    'https://irontrack.ee',
+    'http://localhost:5000',
 ];
 
 app.use(cors({
@@ -84,7 +86,7 @@ app.use('/api', creditRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/messagegroups', groupsRoutes);
 app.use('/api/contracts', contractRoutes);
-
+app.use('/api', paymentRoutes);
 // Lihtne test endpoint
 app.get('/api', (req, res) => {
     res.json({ message: 'Tere tulemast meie API-sse!' });

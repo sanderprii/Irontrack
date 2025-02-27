@@ -83,6 +83,8 @@ INSERT INTO _prisma_migrations VALUES('8d90360c-7247-4753-a2de-24a264baae42','c3
 INSERT INTO _prisma_migrations VALUES('630ca4aa-e009-4054-8b18-28f36bb38d0e','a41c476de9628dd6246de247368a9cc45935728ccd607fe8f4dd5a7aeb3a6c44',1740340925712,'20250223200205_contract_id',NULL,NULL,1740340925539,1);
 INSERT INTO _prisma_migrations VALUES('46061709-64a8-4669-8650-f143a53f634b','c3fecd8c04f1dedfc709f758a884b7f0288a1ce381f0f05d67daaca99ed15010',1740343141610,'20250223203901_add_canregister',NULL,NULL,1740343141431,1);
 INSERT INTO _prisma_migrations VALUES('a50e5e09-0dff-48cc-9b49-fc00e94666d8','e9f9bfc26944bf2cfd8401a0e0f6e12e2788fcebc03f8aed46f0dfcd4a1218ae',1740477946011,'20250225100545_add_terms',NULL,NULL,1740477945819,1);
+INSERT INTO _prisma_migrations VALUES('e0587f0d-4bac-4c76-95ea-2812f6643809','7ab894313a97b6eb1b765bd353253cd76be37bd926bee8e6a75f256473c140d5',1740643195128,'20250227075954_add_af_id',NULL,NULL,1740643194926,1);
+INSERT INTO _prisma_migrations VALUES('be29adcc-dbc0-4c2e-bd98-9058b58cf61d','cee312e181f4a9761abe8d204941751882b6583523c27d53201b3d581d109492',1740649734313,'20250227094854_add_apitables',NULL,NULL,1740649734229,1);
 CREATE TABLE IF NOT EXISTS "Training" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT NOT NULL,
@@ -402,7 +404,7 @@ CREATE TABLE IF NOT EXISTS "Credit" (
     CONSTRAINT "Credit_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Credit_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Credit VALUES(1,5,1064.0,10);
+INSERT INTO Credit VALUES(1,5,414.0,10);
 INSERT INTO Credit VALUES(2,1,1023.0,10);
 INSERT INTO Credit VALUES(3,10,100.0,10);
 INSERT INTO Credit VALUES(4,8,111.0,10);
@@ -424,9 +426,9 @@ INSERT INTO Members VALUES(1,10,1,0,0,0,NULL,1);
 INSERT INTO Members VALUES(4,10,10,0,0,0,NULL,1);
 INSERT INTO Members VALUES(5,10,5,0,0,0,NULL,1);
 INSERT INTO Members VALUES(6,10,2,0,0,0,NULL,1);
-INSERT INTO Members VALUES(7,10,9,0,0,0,NULL,1);
-INSERT INTO Members VALUES(8,10,8,0,0,0,NULL,1);
+INSERT INTO Members VALUES(8,10,7,0,0,0,NULL,1);
 INSERT INTO Members VALUES(9,1,5,0,0,0,NULL,1);
+INSERT INTO Members VALUES(10,10,9,0,0,0,NULL,1);
 CREATE TABLE IF NOT EXISTS "UserNote" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "userId" INTEGER NOT NULL,
@@ -435,7 +437,6 @@ CREATE TABLE IF NOT EXISTS "UserNote" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "UserNote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO UserNote VALUES(4,5,'oke','red',1739188997467);
 INSERT INTO UserNote VALUES(5,5,'niijanaa','yellow',1739437785188);
 INSERT INTO UserNote VALUES(6,5,'asd','green',1739444590191);
 CREATE TABLE IF NOT EXISTS "UserMessageGroup" (
@@ -485,6 +486,12 @@ INSERT INTO Message VALUES(19,10,0,'asdfadsfadf','allMembers',replace('546\nt\nh
 INSERT INTO Message VALUES(20,10,0,'dsfsdf','allMembers',replace('sdfsd\nf\nsdf\nsd\nf\nsdf\nsdf','\n',char(10)),1739308199490);
 INSERT INTO Message VALUES(21,10,0,'asd','allMembers',replace('asd\nas\nda\nsd\nasd\nasd','\n',char(10)),1739308238133);
 INSERT INTO Message VALUES(22,10,0,'tere','allMembers',replace('adfdasd\nasd\na\nsda\nsd\nas\nd\nas','\n',char(10)),1739778958046);
+INSERT INTO Message VALUES(23,10,0,'tere','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740553808090);
+INSERT INTO Message VALUES(24,10,0,'Jõudu','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740554221803);
+INSERT INTO Message VALUES(25,10,0,'tere','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740554439170);
+INSERT INTO Message VALUES(26,10,0,'asd','allMembers','asd',1740571919973);
+INSERT INTO Message VALUES(27,10,0,'dfgh','allMembers','dfgh',1740575635313);
+INSERT INTO Message VALUES(28,10,0,'jfgh','allMembers','jfghjf',1740575815097);
 CREATE TABLE IF NOT EXISTS "ContractTemplate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "affiliateId" INTEGER NOT NULL,
@@ -523,42 +530,25 @@ CREATE TABLE IF NOT EXISTS "transactions" (
     CONSTRAINT "transactions_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "Members" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "transactions_creditId_fkey" FOREIGN KEY ("creditId") REFERENCES "Credit" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO transactions VALUES(4,5,222.0,'106952','Plan purchaseUnlimitedbyc@c.cfromCrossfit Tartu',1738241481847,'success','debit',10,5,NULL,0,0,3);
-INSERT INTO transactions VALUES(5,5,100.0,'916706','Plan purchaseUNLIMITED FOR A YEARbyc@c.cfromCrossfit Tartu',1738241599426,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(6,5,100.0,'48939','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from:Crossfit Tartu',1738392803759,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(7,5,100.0,'408561','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from:Crossfit Tartu',1738413828434,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(8,5,100.0,'418368','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from:Crossfit Tartu',1738414414841,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(9,5,100.0,'283248','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from:Crossfit Tartu',1738414470170,'success','debit',10,6,NULL,1,0,4);
-INSERT INTO transactions VALUES(10,5,100.0,'20250203182500','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from:Crossfit Tartu',1738607100444,'success','debit',10,6,NULL,1,0,4);
-INSERT INTO transactions VALUES(11,5,100.0,'20250203182846','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from: Crossfit Tartu',1738607326803,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(12,5,100.0,'20250203184434','Plan purchase: UNLIMITED FOR A YEAR, by: c@c.c, from: Crossfit Tartu',1738608274272,'success','debit',10,6,NULL,0,0,4);
-INSERT INTO transactions VALUES(13,5,30.0,'20250206081810','Plan purchase: 10 sessions, by: c@c.c, from: Crossfit Tartu',1738829890552,'success','debit',10,7,NULL,0,1,4);
-INSERT INTO transactions VALUES(14,1,100.0,'20250210083520','Plan purchase: UNLIMITED FOR A YEAR, by: a@a.a, from: Crossfit Tartu',1739176520345,'success','debit',10,6,NULL,0,0,1);
-INSERT INTO transactions VALUES(15,5,90.0,'20250217160339','Plan purchase: 10 sessions, by: c@c.c, from: Crossfit Tartu',1739808219049,'success','debit',10,1,NULL,0,0,5);
-INSERT INTO transactions VALUES(16,5,90.0,'20250217160446','Plan purchase: Unlimited Month, by: c@c.c, from: Crossfit Tartu',1739808286208,'success','debit',10,2,NULL,0,0,5);
-INSERT INTO transactions VALUES(17,10,90.0,'20250217174847','Plan purchase: 10 sessions, by: prii.sander@gmail.com, from: Crossfit Tartu',1739814527882,'success','debit',10,1,NULL,0,0,4);
-INSERT INTO transactions VALUES(18,5,12.0,'20250217182154','12',1739816514532,'success',NULL,10,NULL,1,1,0,NULL);
-INSERT INTO transactions VALUES(19,5,12.0,'20250217184353','12',1739817834000,'success',NULL,10,NULL,1,1,1,NULL);
-INSERT INTO transactions VALUES(20,5,12.0,'20250217184440','1222',1739817880493,'success',NULL,10,NULL,1,1,0,NULL);
-INSERT INTO transactions VALUES(21,5,12.0,'20250219104431','12',1739961871830,'success',NULL,1,NULL,6,1,0,NULL);
-INSERT INTO transactions VALUES(22,5,99.0,'20250219142202','Plan purchase: Unlimited, by: c@c.c, from: cft2',1739974922382,'success','debit',1,1,NULL,0,1,9);
-INSERT INTO transactions VALUES(23,5,99.0,'20250219154234','Plan purchase: Unlimited, by: c@c.c, from: cft2',1739979754071,'success','debit',1,1,NULL,0,1,9);
-INSERT INTO transactions VALUES(24,5,99.0,'20250223202241','Plan purchase: Crossfit Tartu, by: c@c.c, from: Crossfit Tartu',1740342161224,'success','debit',10,2,NULL,0,1,5);
-INSERT INTO transactions VALUES(25,5,99.0,'20250223202459','Plan purchase: Crossfit Tartu, by: c@c.c, from: Crossfit Tartu',1740342299364,'success','debit',10,2,NULL,0,1,5);
-INSERT INTO transactions VALUES(26,5,99.0,'20250225100114','Plan purchase: Crossfit Tartu, by: c@c.c, from: Crossfit Tartu',1740477674490,'success','debit',10,2,NULL,0,1,5);
-CREATE TABLE IF NOT EXISTS "Plan" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" TEXT NOT NULL,
-    "validityDays" INTEGER NOT NULL,
-    "price" REAL NOT NULL,
-    "additionalData" TEXT,
-    "sessions" INTEGER NOT NULL,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "ownerId" INTEGER NOT NULL,
-    CONSTRAINT "Plan_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
-INSERT INTO "Plan" VALUES(1,'Unlimited',99,99.0,'',9999,1,2);
-INSERT INTO "Plan" VALUES(2,'Crossfit Tartu',99,99.0,'',9999,1,6);
+INSERT INTO transactions VALUES(61,5,50.0,'20250227091914','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740647954504,'success','credit',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(62,5,50.0,'20250227091948','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 25€',1740647988822,'success','mixed',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(63,5,50.0,'20250227092017','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740648017796,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(64,5,50.0,'20250227092048','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740648048202,'success','credit',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(65,5,50.0,'20250227092611','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740648371614,'success','credit',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(66,5,50.0,'20250227092645','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 1€',1740648405713,'success','mixed',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(67,5,50.0,'20250227092923','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740648563710,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(68,5,50.0,'20250227093656','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740649016914,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(69,5,50.0,'20250227093758','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740649078502,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(70,5,50.0,'20250227094236','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740649356872,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(71,5,50.0,'20250227094541','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740649541291,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(72,5,50.0,'20250227095439','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740650079742,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(73,5,50.0,'20250227095954','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740650394933,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(74,5,50.0,'20250227100558','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740650814215,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(75,5,50.0,'20250227100934','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740651048678,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(76,5,50.0,'20250227102209','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740651729356,'success','credit',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(77,5,50.0,'20250227102250','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740651770924,'success','credit',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(78,5,50.0,'20250227102634','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740652009517,'success','montonio',10,1,NULL,0,1,5);
+INSERT INTO transactions VALUES(79,5,50.0,'20250227102634','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740652131292,'success','montonio',10,1,NULL,0,1,5);
 CREATE TABLE IF NOT EXISTS "ClassAttendee" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "classId" INTEGER NOT NULL,
@@ -593,7 +583,8 @@ CREATE TABLE IF NOT EXISTS "Contract" (
     CONSTRAINT "Contract_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Contract_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Contract VALUES(1,10,5,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'credit',90.0,'month',1,1740787200000,1,'accepted',1740224424645,1740224695349);
+INSERT INTO Contract VALUES(1,10,5,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'credit',90.0,'month',1,1740355200000,1,'accepted',1740224424645,1740499904792);
+INSERT INTO Contract VALUES(2,10,10,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'credit',9.0,'month',1,1740700800000,1,'Waiting for acceptance',1740500524545,NULL);
 CREATE TABLE IF NOT EXISTS "ContractLogs" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "contractId" INTEGER NOT NULL,
@@ -609,6 +600,13 @@ INSERT INTO ContractLogs VALUES(2,'2ea5fccc-69e4-4d14-b2ae-217c0e5d5d67',5,10,'U
 INSERT INTO ContractLogs VALUES(3,'2ea5fccc-69e4-4d14-b2ae-217c0e5d5d67',5,10,'User accepted the contract',1739463769361);
 INSERT INTO ContractLogs VALUES(4,'485515e2-6ff6-473e-84e1-8c94afd92274',5,10,'User accepted the contract',1739468167345);
 INSERT INTO ContractLogs VALUES(5,'62d87236-7374-479f-9a7c-19479c9f798c',5,10,'User accepted the contract',1739777877058);
+INSERT INTO ContractLogs VALUES(6,1,5,10,'User accepted the contract',1740499756919);
+INSERT INTO ContractLogs VALUES(7,1,5,10,'User accepted the contract',1740499904827);
+INSERT INTO ContractLogs VALUES(8,1,5,10,'Contract updated',1740502220122);
+INSERT INTO ContractLogs VALUES(9,1,5,10,'Contract updated',1740509208140);
+INSERT INTO ContractLogs VALUES(10,1,5,10,'Contract updated',1740552256908);
+INSERT INTO ContractLogs VALUES(11,1,5,10,'Contract updated',1740552282355);
+INSERT INTO ContractLogs VALUES(12,2,10,10,'change end date',1740552463083);
 CREATE TABLE IF NOT EXISTS "SignedContract" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "contractId" INTEGER NOT NULL,
@@ -657,8 +655,8 @@ CREATE TABLE IF NOT EXISTS "UserPlan" (
     CONSTRAINT "UserPlan_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "UserPlan_contractId_fkey" FOREIGN KEY ("contractId") REFERENCES "Contract" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO UserPlan VALUES(2,5,1,10,2,'Crossfit Tartu',99,99.0,1740342299366,1740255899366,9998);
-INSERT INTO UserPlan VALUES(3,5,NULL,10,2,'Crossfit Tartu',99,99.0,1740477674491,1749031274491,9999);
+INSERT INTO UserPlan VALUES(55,5,NULL,10,1,'Unlimited',99,50.0,1740652009519,1749205609519,9999);
+INSERT INTO UserPlan VALUES(56,5,NULL,10,1,'Unlimited',99,50.0,1740652131293,1749205731293,9999);
 CREATE TABLE IF NOT EXISTS "ClassSchedule" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "trainingType" TEXT,
@@ -1932,11 +1930,33 @@ INSERT INTO User VALUES(1,'a@a.a','$2b$10$ITNZmTGLWeI0OUBcg0Z6c.ytApjxuHPumMZZHw
 INSERT INTO User VALUES(2,'b@b.b','$2b$10$24nnApK0B94jywcxhNxqe.5qbq2BX7jcdcmTMNX5xUUDvGtQCu.ja','asd',1,1737553951494,NULL,0,NULL,NULL,NULL,NULL);
 INSERT INTO User VALUES(5,'c@c.c','$2b$10$OgnssFdOCtXb./TgYkMcNOM.8NFZbUThigIN.LWdg.zUpJCWe8aPG','Mati Testija2',0,1738004558172,NULL,1,'55656565','asdasd','data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCADIAMgDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAABQACAwQGBwEI/8QAORAAAgEDAwIEBAIIBwEBAAAAAQIDAAQRBRIhBjETIkFRFDJhcQeBIzNCUmKRobEVJHLB0eHxNEP/xAAZAQADAQEBAAAAAAAAAAAAAAABAgMEAAX/xAAiEQACAgICAwEBAQEAAAAAAAAAAQIRAyESMSJBUQRCEzL/2gAMAwEAAhEDEQA/AO33WlW0MHh+EuCMZr5t64tRaa/cIny7s19FdRakQuxDyRziuCddKZdSLep71nycVJJGrGm42wFYQ+JtzXWelH2WyKewFc101NoWuidOuPAUUq7GfRuLVgAMVNcSYXIoXZSkHFEZAJIjnvRaAmYjqnUIgGSQjNDui0VrxmA4OK863s/OrL33Ve6Dh/Shm7Dipx2ysno2Go2oksGUITke1cX19DBeyovGDX0DOVEP0xXDeslRtduNmNpb0ppxp2LCVqgh0pCPhAzDk80zqOZodvh8U3Q7jwIgmeAK9vZkuZSjYzUZRTdsonqjQdHo0kau3Y1pdThX4ZhjuKz3TMqRQogPY4rT3TCSDA9qRRQaqjl+rxLFcHIoJJHm4GB3rSdURlJWIrP2p/SBmNc17M+dBnTvEjUHHFG7W55wc5qrpcYkWicNhhs4qUVZTCqRL4hK5AqvK2T270Yt7UFQoXmldaS2wsg5p6KumZ6a0DgsvBoDcxPFOd2RzWpVHikdJB/OqWpwK6BuMg1ySXYkoRoz2rWwkt93riszb6eu4lRzmtPqkm2Mj0FULA70LADJq2JuiaWgJcR7fKfQ0qsalhLjZ60qsmKztlzctO7E/lXPOsYB4wYd66AIzg4FYbq5SHGfehJ7GitGZtsggV0bpm3VoE39yK56mAATW66XvP0CKRyOxorsD6NlFGFOB2p7zbVPNQxOzDBPJqx8MpTzEk1WvhKzGdS5mk57VN00fCYqOKm1y22SEdwaj0mM+KoHrUaqRa/E019cObQhT6VyjV4CdTfJzk811ua3Bt8euK5jra7NSkDdwa7Jdhx1RZsbENFkDnFA9ZSSzuCecGtnoq7oB9qBdWW+9sAUjXsNlPpzU28URnPfg1020zJbr6nFct0G08K6QsPrXVtOZfhwR7UFVju6Mh1hb5hdgORWIt0LHByDmuj9QgTBlHcms5FYrFN5lxmllH0JKPIsaLuUqCK10G3YOOaDWUCjsKIu5SI470qhQ8UkgraMviAUWMash96F9JQrPHJcS+Zg20D2rR3VuqxeIo2nPIrQsXjZJ5FyoxGtQCNyxGBWZvw2xtvbvW71q2EkZBH2rMva8EEdqhx3RZ7Rhb85Q5yao2TbcBa0GsWaoXIHegtrHtcmqJUhGCryNn1AkgnJpUS2CTUkA9TSp+VE6O0pauGwRxWI69tTFEHx611doV9qwX4jQg6fuA7MK6aGgzlyBjWv6XRn2qoJNZ5IQBmug/h7aI1u0zAEk4rkBoO29tJtBNW2LIvmXNFlhAUccV61uGByKflROkYLV3Z5SW4xVfTXKTKwo91NaKtu0iDBFVOmLVZjvYA4OKS9la0E5LsC3LEHt7Vy3qKVpNSZvc12qezQw428Yrk/WVoltq6hRhSwP9a7I22dBaNP01p0j2SNjGRQ/qbT3jkUsPKa3mgRILKPAGNoql1PbpJDyOc0GvGwp+VHOHtzBGrr3FavS5ibZce1QahaA2EmB2UmoNDuA0CL64qfTKnk4Z7x1bnBqpfW8zlTDGzkH9kUTlTN7nHfFa7S7SMRrhRTxROXRkdOtpUQGVGUn3FW7i2cx9j/ACrXz2inuoqOK3BOCBin4i3oEdKJLbeINp2sc4IrQ3kzNAQVwB6VYs7cAfLgVZe1DDkVdK40Z3JKVmQvZS0fmU/mKDypkE+9bi/slKEFRis3d2ZjRsDgVnePizTHJyWjA66vmYVngnJxWi1vPxTih0NtuyfWkGaA9tEf8SRuTzSonaQ7dRj4/apUWJR3PdkGsb17Hu0qXHpzWtDVmusBv02cfw10ugwWzk3i5GK6B+HF0Ph5Ym9GyK5uWxKw+tazoScrqJUHgr2og9nYo3DIK9ZwAao27ExinsxxRsRw2A+qJCbSQD1FD+j5tu9T75q9ryloW4rN9P3QivShOM0l7LVo6PNLmGuU/iAha48VfTFdIWUPD3zxWN6rsTco+2jJgivRo+lL3xtLgbPJUVLrTNKVUe9AOlpPhbKOJuCoxWh3rM4NBO1QWqdg+S3Mtsy47jFD9M0trYnPNalIgF7V6sK+1Fxs7kApbQ5DY5oxpszIoB9Kn+FDmrMNnyM0yixZSRZQmUCrMVuBzTYYwgqYyYFaIwrszSl8JlG0YFP3YFU/FJPevS521S0ToZeSZ4JoRdhShqe7lO6qjHcOazZHbNEPFGD16xPjM4HrQ+OPYnI5raapbh1IxWZvYfDBrO+y6doAxri+X/VSqwEHjhsc0qYRnWqzvVP/AMM3+k1os8UE15PFhdAM5FGXQ0Fs4vJC3iMR70X6SuDBrEYb9rir97pbRqcL2oBGJ7TUVkCHAPpSxdnS0zudlIGiGKsd6ynT+rLNEoJwcdjWoglVlHIox2Bop6jAZI2AGeKxsuiXMd540Rxj0rou1XFMeBCO1FxOU/RkoL6aBdk6kEVaidLsc0TvdPSVT5eaoQae0EmVzil4sN+x401O68VLFC0Jq2gcAcUO6h1qz0O08a+cbiPLGCNzf9UeAG7CsTMwqzGhNcP1r8WriBnWBIodwyi7uR+eKAJ+K+oLdjx5rjweGLIxO339f9qrGBOU0tWfTcSD1FT7gorj2n/iXJb29tdPIt5p8jKjMVxImfXI749jz7V0iw1S21S0S5sZ1mhbsyn+/tVYyQkkwpJOPSoWmPvVck0gCTRBospKa9km8tRquBTHFEBSupDuzUIlOKkuk4qoO9Zcqp2O3odIvid6HXdgJfSi0QqXYM9qnVi8mZOTRgOQOaVat41x2pUeJ3JnpmxVSceITVmOA+pqcQCjTfZp5UBnsVk4Zc5qrNoML4/RjvWmEYFehRmu4o7mZ2DQ0hbcgwavRxSRDGTRNiAKgk5yAK7j8FcmyBLsocMaspch/WqMlm0j5FWbazKe9NGMmLddlxTup4iGe1epERVhENWUBHP4QsipEzsOFGTiuR69b3fVM0g06APqcp3q036u1iBKjPuTg8V2SRQ0ToezAisxptqulJfrGnMuGB9B9KE1tfBoPT+nBtR/CHV5py97qdqzk+zdqJad+EtjbMst5e3ErDusflB/OurXcrSNkrkD1FVwx42rms8s0ukzTH88O2itonTekLYizWzjUYwGYZPH1NU+gUk0TqK60shWtnfCOuRnPIBH055o5DKwnTOFJ4Az3q2LVDfQSlAkgkVs/UVWDtEckUmabYKlSMU2IhsFSCD2IqcVoMzGlcCoWFWGPFQMa44p3KcUNIKtzRmXkGh80YzmpZI2ikehseac0hXvXiECvJRuBxWeqEaGPcDFKq7xnJpUts4L7himNJ7UNW7Le9SoxbkU6dmlxLRkNeByTxUcYJPNW44xjtTRg2LpEaozd6mSLnmpVFSxx5NWUEhHIYqAdhUqJn0qVIvepgoUVRIm2RKgFJiBTnYCoGbNEAyR+aDzz2txbS3CSCSGNWLFDngA0XZeazSWzWep3dvKB8DcR7Yxx82WY/3qGWTVfDRhipJ72jkms/iFqkEvhWmm2UCFtqieUs59vKvYn61oLbWbrVuk5dRs5EguApXaq5IYd8Zold6Bp8ztsVYkJyzDjJ96uaVp1ra2cAt9vwshYgHnI7ZrLfKkka0uN2zkGk2Ws6lfpLNPc3hY7maW7IKEHttx3+3FdyszM2gqtyd9zCuck8uB6E++KFQixhvGWJUjb+EcN+dEbbdcM8cOXLDAX3p1Ntk3jSRoOmQE0eAJ8gLbftuJFFg9Q2MHgWkUZChlXnb2z61NitcFUUjHkfKbkMd+KiLVI+KibFMKMdqry1O2KglHFKxolYmvd+BUcgYZqHeSSKzS0GSskduaVRHnNKpbEHQQZWrsMW2oYVYHkVcjJ9q1RgkWlOySNPpVmNPpUcX1q5FgVRIm2eRxe9WFQCvAyivHkAFP0J2PLAVFJJUbSZNMJ96DYUhM5NNpUx2IoDD2PFUr20S7aFnZlaJtykf2qxvqNnGaWSTVMaLcXaMJrsJeSa2yUUkgkccVly0SgLb3FxCieXYkbMOOPauh9SWsZMdxnazHaT6UG/wm8vgYkcQnbuUsPmH09689wam0ejDInBNge1aeRozHbSC3HztKQv8AIf8AlaTp39HqUTZ8oaqD2jWFv/mmYqON319j7VeiHgGFs4YgMVx8vtVEqabJyaaaRvNtLbWN0fXJV1TVoW8yRSqyj6MucUdOuRGNGKCPccDc3etimmrMEoOLovyDmoitL4q3dAROoP1BxSwxXIBI9xTAIZKiyalkzULHHNBjIY61WkQLk1JJI2e3FRsdy88VKex0iIEAHNKqt1JtHFKszDws1KWw9qkW1xVhcCpN4r0EiDZWEWKR4qZ5FAqnK/NccevIR61C0zGk2Suc1XBO6gMkWPEPrS8WoWavA2PSuOLAkOKY8tRGSnxReMTzhV7mgHoQcEUmKRANLnJ7IO5/4pzzQ2yYjQNJ7tzihGpXDsYnz5iSc0snQY3IvapFHqNoLeHanmABJ4Ddjk1V1jbbaZHDfiOSePasTKccD9qpNP8ABjttlyrMjKSMHBznIrPahePfTGQAFcBQN3IAqOSVb9stjjevSJzeSSSu02yQScOCMqw+1O1VAk0ci58Jl4z7ihsTHsQePQ1fu2+L0pY921omBz6gHg4qafJNMq1xaaKVoEgW/vW//Vhk++1cf80yO48a5hjYkR2yh5j/ABnkIP55P5U2Rt8HkUeBH5UX95h/sD/M15Y26xkK7ZWPzyH99z/3TJ1oRq3YdhmfarnKs3yqfT6/ertpIysW8RiPXLYBoMsxLO57gYH3NX4pAuAT271WMiMoh6KaOcbXGG9GFQToUcqe4qvBLkjso9B61dn86Rv6kYNWe0SWnRXwuO1VbhCQcVZlBUZFV3kyMGpSKoE3MDPkAmlV3AUnNKoNIrbNXjA71C7kV74u4cVEzZrZZmSI5ZGFRNISKnfkVBIoxxQGo9VjinAVCpP1qZRxXIDG4HrXjBadjmmEeauOoYUz2NT3DfDWaAfM3mb8+1NRdzqoPc4qLV5gZnQnykbftQ6VndugbJPn86q3Lb2VfamBiVwe6nBp7AF1b6VFuyyVFkE/Cgeq9qD3I8EtLtIU8kgZAolNcCOEhe5oWXklO0HikyU9D47WwD1NqlzYWiTWdo0yMu8yLkhBnGTj35+nFAY+o9ZklikRC0ULRx3FvFEdzl+x98emPsfWi/UdhqCR3FtaPcvDcqzgpyIzgZUjvjjI/MV70rp/wtn4kkjTPMAZJTwXI+UfQDufc/aqR4Rjfsk/9JTr0aXJe2Epga3QLlY2IJH8qhIMccaHux3NUsEpYeG+ChOa9mG5y3tmpcr2i3GtMGXmqRWdu8ksscSqXkaSQ4VFXjcaDaf+Iug3F4lpY3M19dMDtjtoi7HAycFsAngmg2sqdV0bVIGXyPZHDMwAJw74Huc7a5h0DqljZanoTeMIJEuCLkPEGMgYjDBj2wCR3GACec1fBjU+zN+jK8dJHaIPxa6eVrcmLUFS4k8NHaNeecEnz5xn1rrW/FoM91bFfH3VdnYQu1/pTQNHHI0D25uFZoGTgFMHzRNwVI7ZIPufrDR7j43R7a5XlJYo3H3ZQa0Sgo9EMeRzeyzNcDaeKHzyNLkR8VcaMNkHtVZ8RNwMms8kaUyhI0icMaVPuh4jj60qhKkyilo1TuEXIphcsBgVGgYryaUblcqR/OtVkaJ1HHNNkC4qPe3rSY5rrOIlJ34p/iFWxjivcADJ714zdjjmuOHs4xTQwPeo2znJpu/niuOLMDKs6MTwvJoVqZPxEit6GiESGeURj9pSP6UEvnlLEsfOBtIbs2Pr6Glm6Q0VbKW8iQ/xcfnU75EaEe1BxdFdREUiuniDK7hxkdwD27f2oyDuiXH2qCdlmqKU252xk1PCnhp25qdIvfvT9qxgvJ2HNdx9ncircXHwcQc/rpDwPYVDeRoshaMBVfzcfWgt7em81Qc+QNgCjV3gogH7K4P2qcndlYri0ULqbwYy1MXUhLbzKq7pgh2qO7HFSNg5Ru4/qKh8BA4kjADfSpqTRVxTRX0vSIotKt47pIy7Rr4u71OOQf7UrDp/pWwIxY6TGR2zFGSP6VLe2lvfoFu48kdnXgihzaHNbKZLJxPGOSoGHA+3rVlka6RB4k/+may1tdEldDD8ESvZQqAf2rUNEIrDagAAIxjjiuf6GROoVlDKe+RkGtBZm6gu4orRgdPZWE8Tt+rOAUZPzyCO1WxZeS2iGXFxeglvINVJ5lDEFcmrvG00Pnw0mQOaaQqKVzI2Rg4pV7NbyPKGyce1Kss8dsElZpmDAeU05FbcCe1REtwV71LAXIJftWw4sqykYI5pZTPIFV9+HBB4p7EGjYKFKBnIrz0z2rxzhe9RY3Lya6zhSEk5GKYzbRnFerGAPmpruQMHkVxxd0pwfGkJ5VcAUHv2BuHYZUE57VetyUtrh/lIXg1mbjVpEY740ce4ODU8mRRSTKY8cpNtEGsx74G8OQLIPMrAdj6GloeoreWx3YWeM7ZEz8rf8e1Dr3VUfIMDg/cUQ6KsIr2PUrgxhJnZFV88jANQi+UqiWcXGNyCqygd6G6vdHw2VTU85MLNHIMODgihGoHhmajKWqBGO7A1qf8AOJnuWzWqjTxbtiThFTmstYqZNQU+gNae/mFnpU0p+dhxU4lJMpXOSp2EMRyCPUVXjnIAYfn9KB9OatvaW1uDkglom+nqv+9GpQCdydz3HvUpaZaO0WFuExzT0lCkNG2GHYihEuVO9Tx7VUkvGi+1cpHOIfhuVi1Bp0wqy/rEHA3/ALw+/r9aNaPMZrmbHbGa58b9mfg89q33TMRj0hblgS0zkD7D/vNaMTcpGfMlGIVkcLx3NAtVnuI5cxrwKKylj5sUPkEsl0u7GyqzIQK+mX9xOXWSPaw96VeXMyw3hWN13kdgaVZ+VhlBt6NjsZgOKdjK4U/lSpVtJjANq1ZtygXHGaVKuOZE+S54GBTVdc4pUq4BG0gEnn7e9etsJ70qVEA3UpRDpVwynsK57PdKxPNKlWD9T8keh+RLi2DJJQx4Pc10Xoq3MGjhmGDK5b8u1KlR/MvMX9TqBL1LYmaD4mEfpI/mA9R71j9VbFrG374pUqtmVSI4XaK2gw77kEipOs7rEIgU8UqVS/kr/Rj7G2IJc5BHIIo1b3/IWX5u33pUqnJWVi6CMDxzZ4GK8m0+G4jbZ83rSpUsVY09AsabDZzRmeQ4dsf6R710bS4/CtmtlO6JQJIj6Ef+UqVasC2Y87botzxlovLgUHvbGWaNjHMyHHcUqVWkkySdAP8AwJolDGVnlY5ZjSpUqlSHtn//2Q==',10);
 INSERT INTO User VALUES(6,'d@d.d','$2b$10$whhsYiO2RmqdX99TCazAkOJjnDi7iIEZRK72a/BXc7hzwcVX1CiDe','asd',1,1738046044319,NULL,0,NULL,NULL,NULL,NULL);
-INSERT INTO User VALUES(7,'f@f.f','$2b$10$J0CTr.RA0/WPqaBm4E1pOOeP4ASDzuLqSloyQUbvn1nfh96kVzxfS','asd',0,1738745068793,NULL,0,NULL,NULL,NULL,NULL);
+INSERT INTO User VALUES(7,'sander.prii@vikk.ee','$2b$10$J0CTr.RA0/WPqaBm4E1pOOeP4ASDzuLqSloyQUbvn1nfh96kVzxfS','asd',0,1738745068793,NULL,0,NULL,NULL,NULL,NULL);
 INSERT INTO User VALUES(8,'s@s.e','$2b$10$GlB3m88fuxnqTb6bG9Ns7.OFrXrJoW8aWg2ADpJwrWMTGWbxbp2Em','asd',0,1738751263465,NULL,0,NULL,NULL,NULL,NULL);
 INSERT INTO User VALUES(9,'g@g.g','$2b$10$5jVQiXQcJjNJ26v.qI7ZaOvvWW.Cb2Mtr00NpitjDeMRQEzuZWPHi','asd',0,1738751962995,NULL,0,NULL,NULL,NULL,NULL);
 INSERT INTO User VALUES(10,'prii.sander@gmail.com','$2b$10$zsd9.nL10T10EKojrqliqe5K7LY/DnbDZFmfx3JejJqAuC6SVVrIC','Kati Testija',0,1738831102031,NULL,0,'533256456','lehe 10,asdas',NULL,NULL);
 INSERT INTO User VALUES(11,'l@l.l','$2b$10$Yzg0ZS6l6IR8ollK8EAgVeKNqe5bCD27ivpg1TKqtiEm0xR1gaabC','g@g.g',0,1740479619109,NULL,1,'546546546','',NULL,NULL);
+CREATE TABLE IF NOT EXISTS "Plan" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "validityDays" INTEGER NOT NULL,
+    "price" REAL NOT NULL,
+    "additionalData" TEXT,
+    "sessions" INTEGER NOT NULL,
+    "affiliateId" INTEGER NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "ownerId" INTEGER NOT NULL,
+    CONSTRAINT "Plan_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Plan_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "Plan" VALUES(1,'Unlimited',99,50.0,'',9999,10,1,6);
+CREATE TABLE IF NOT EXISTS "AffiliateApiKeys" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "affiliateId" INTEGER NOT NULL,
+    "accessKey" TEXT NOT NULL,
+    "secretKey" TEXT NOT NULL,
+    CONSTRAINT "AffiliateApiKeys_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO AffiliateApiKeys VALUES(1,10,'26268941-938c-4a62-a17a-58f407f070b9','KvXci3X93Tb9r1K/PlQkHhSAQ3b5ZzisYG3n4yu7bASq');
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('Affiliate',10);
 INSERT INTO sqlite_sequence VALUES('Training',9);
@@ -1946,23 +1966,24 @@ INSERT INTO sqlite_sequence VALUES('Record',18);
 INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',10);
 INSERT INTO sqlite_sequence VALUES('todayWOD',13);
 INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',10);
-INSERT INTO sqlite_sequence VALUES('Members',9);
+INSERT INTO sqlite_sequence VALUES('Members',10);
 INSERT INTO sqlite_sequence VALUES('Credit',6);
 INSERT INTO sqlite_sequence VALUES('UserNote',6);
 INSERT INTO sqlite_sequence VALUES('MessageGroup',4);
 INSERT INTO sqlite_sequence VALUES('UserMessageGroup',3);
-INSERT INTO sqlite_sequence VALUES('Message',22);
-INSERT INTO sqlite_sequence VALUES('ContractLogs',5);
+INSERT INTO sqlite_sequence VALUES('Message',28);
+INSERT INTO sqlite_sequence VALUES('ContractLogs',12);
 INSERT INTO sqlite_sequence VALUES('SignedContract',4);
 INSERT INTO sqlite_sequence VALUES('ContractTerms',2);
-INSERT INTO sqlite_sequence VALUES('transactions',26);
-INSERT INTO sqlite_sequence VALUES('Plan',2);
+INSERT INTO sqlite_sequence VALUES('transactions',79);
 INSERT INTO sqlite_sequence VALUES('ClassAttendee',7);
-INSERT INTO sqlite_sequence VALUES('Contract',1);
+INSERT INTO sqlite_sequence VALUES('Contract',2);
 INSERT INTO sqlite_sequence VALUES('PaymentHoliday',1);
-INSERT INTO sqlite_sequence VALUES('UserPlan',3);
+INSERT INTO sqlite_sequence VALUES('UserPlan',56);
 INSERT INTO sqlite_sequence VALUES('ClassSchedule',2776);
 INSERT INTO sqlite_sequence VALUES('User',11);
+INSERT INTO sqlite_sequence VALUES('Plan',1);
+INSERT INTO sqlite_sequence VALUES('AffiliateApiKeys',1);
 CREATE UNIQUE INDEX "defaultWOD_name_key" ON "defaultWOD"("name");
 CREATE UNIQUE INDEX "AffiliateTrainer_affiliateId_trainerId_key" ON "AffiliateTrainer"("affiliateId", "trainerId");
 CREATE UNIQUE INDEX "Members_userId_affiliateId_key" ON "Members"("userId", "affiliateId");

@@ -65,12 +65,12 @@ export const deletePlan = async (planId) => {
     }
 };
 
-export const buyPlan = async (planData, affiliateId, appliedCredit, contract) => {
+export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference) => {
     try {
 
-        const data = { planData, appliedCredit, contract };
+        const data = { planData, currentAppliedCredit, contract, currentMerchantReference };
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/plans/buy-plan/${affiliateId}`, {
+        const response = await fetch(`${API_URL}/plans/buy-plan/${currentAffiliateId}`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json" },
@@ -144,5 +144,73 @@ export const assignPlanToUser = async (planId, userId, affiliateId) => {
     } catch (error) {
         console.error("Error assigning plan to user:", error);
         return null;
+    }
+};
+
+// In planApi.js or similar file
+export const createMontonioPayment = async (
+    planData,
+    affiliateId,
+    appliedCredit,
+    contract,
+    returnUrl, userData
+) => {
+    const finalAmount = Math.max(planData.price - appliedCredit, 0);
+
+    // Only proceed with payment if there's an amount to pay
+    if (finalAmount === 0) {
+        return { is_fully_credited: true };
+    }
+const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_URL}/payments/montonio`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                amount: finalAmount.toFixed(2),
+                orderId: planData.id || Date.now(),
+                description: planData.name,
+                userData: userData,
+                affiliateId,
+                appliedCredit,
+                contractId: contract?.id,
+
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Payment creation failed');
+        }
+
+        return {
+            payment_url: data.paymentUrl,
+            order_uuid: data.orderUuid
+        };
+    } catch (error) {
+        console.error('Error creating payment:', error);
+        throw error;
+    }
+};
+export const checkPaymentStatus = async (orderToken) => {
+    try {
+
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/payments/montonio/status?token=${orderToken}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            }
+        });
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error checking payment status:', error);
+        throw error;
     }
 };

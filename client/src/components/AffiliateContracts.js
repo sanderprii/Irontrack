@@ -185,6 +185,8 @@ export default function AffiliateContracts({affiliateId}) {
             affiliateId: contractData.affiliateId,
             userId: contractData.userId,
             endDate: contractData.endDate, // Võtame endDate otse objektist
+            action: 'change end date',
+
         };
         await updateContract(contractData.id, payload);
         await loadContracts();
@@ -289,7 +291,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                 size="small"
                                                 onClick={async (e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm('Are you sure you want to deactivate this contract?')) {
+                                                    if (window.confirm('Are you sure you want to change end date on this contract?')) {
                                                         handleOpenDeactivateDialog(contract);
                                                     }
                                                 }}

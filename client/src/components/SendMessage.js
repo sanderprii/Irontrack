@@ -17,7 +17,7 @@ import { getGroups } from '../api/groupsApi';
 import TextareaAutosize from "@mui/material/TextareaAutosize";     // Toob kõik grupid
 // NB! Kontrolli, et teed õiget importi, vastavalt sinu failistruktuurile
 
-export default function SendMessage({ affiliate }) {
+export default function SendMessage({ affiliate, affiliateEmail }) {
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [recipientType, setRecipientType] = useState('user'); // 'user' või 'group'
@@ -85,6 +85,7 @@ export default function SendMessage({ affiliate }) {
                 subject,
                 body,
                 recipientType,
+                affiliateEmail,
             };
 
             if (recipientType === 'user') {

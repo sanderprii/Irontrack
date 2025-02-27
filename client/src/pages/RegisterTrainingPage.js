@@ -30,6 +30,8 @@ import {
     checkHomeAffiliate
 } from "../api/getClassesApi";
 
+import {getUserProfile} from "../api/profileApi";
+
 import {getUserPlansByAffiliate} from "../api/profileApi";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -144,14 +146,19 @@ const RegisterTrainingPage = () => {
         }
     };
 
-    const handleBuyPlan = (plan) => {
+    const handleBuyPlan = async (plan) => {
         // NB! Siin edastame affiliateId ja plan-objekti state kaudu
+
+        const userData = await getUserProfile();
+
+
         navigate("/checkout", {
             state: {
                 affiliate: selectedAffiliate, // kui vajad tervet affiliate objekti
                  // kui vajad ainult affiliate.id
                 plan: plan,
                 contract: false,
+                userData: userData,
             }
         });
     };

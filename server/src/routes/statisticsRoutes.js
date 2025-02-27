@@ -6,6 +6,6 @@ const ensureAuthenticatedJWT = require('../middlewares/ensureAuthenticatedJWT');
 // GET /api/statistics
 router.get('/', ensureAuthenticatedJWT, statisticsController.getStatistics);
 
-
+router.get('/all', statisticsController.getAllStatistics);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import {
     Container,
     Typography,
@@ -15,7 +15,7 @@ import {
     CircularProgress,
     Drawer,
 } from "@mui/material";
-import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import {
     getMembers,
@@ -46,14 +46,14 @@ export default function Members() {
     const [isLoadingMember, setIsLoadingMember] = useState(false);
 
     const menuItems = [
-        { id: "profile", label: "Profile", component: ProfileView },
-        { id: "statistics", label: "Statistics", component: Statistics },
-        { id: "purchase-history", label: "Purchase History", component: PurchaseHistory },
-        { id: "visit-history", label: "Visit History", component: VisitHistory },
-        { id: "active-plans", label: "Active Plans", component: ActivePlans },
-        { id: "credit", label: "Credit", component: CreditView },
-        { id: "contracts", label: "Contracts", component: UserContracts },
-        { id: "transactions", label: "Transactions", component: Transactions },
+        {id: "profile", label: "Profile", component: ProfileView},
+        {id: "statistics", label: "Statistics", component: Statistics},
+        {id: "purchase-history", label: "Purchase History", component: PurchaseHistory},
+        {id: "visit-history", label: "Visit History", component: VisitHistory},
+        {id: "active-plans", label: "Active Plans", component: ActivePlans},
+        {id: "credit", label: "Credit", component: CreditView},
+        {id: "contracts", label: "Contracts", component: UserContracts},
+        {id: "transactions", label: "Transactions", component: Transactions},
     ];
 
     useEffect(() => {
@@ -69,6 +69,7 @@ export default function Members() {
                 console.error("❌ Error fetching affiliateId:", error);
             }
         }
+
         fetchOwnerAffiliateId();
     }, []);
 
@@ -82,6 +83,7 @@ export default function Members() {
                     console.error("❌ Error fetching members:", error);
                 }
             }
+
             fetchMembers();
         }
     }, [ownerAffiliateId]);
@@ -102,7 +104,7 @@ export default function Members() {
         setIsLoadingMember(true);
         try {
             const userId = member.userId || (member.user && member.user.id) || member.id;
-            const response = await getMemberInfo(userId);
+            const response = await getMemberInfo(userId, ownerAffiliateId);
             setSelectedMember(response || {});
             setActiveComponent("profile");
         } catch (error) {
@@ -131,11 +133,11 @@ export default function Members() {
         menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
 
     return (
-        <Container maxWidth={false} sx={{ display: "flex", flexDirection: "column" }}>
+        <Container maxWidth={false} sx={{display: "flex", flexDirection: "column"}}>
             {/* Mobiilne menüüriba navbari all, lehe täislaiuses */}
             <Paper
                 sx={{
-                    display: { xs: "block", md: "none" },
+                    display: {xs: "block", md: "none"},
                     position: "static",
                     top: 56, // Kohanda vastavalt oma navbari kõrgusele (nt 64px)
                     zIndex: 1100,
@@ -155,7 +157,7 @@ export default function Members() {
                 >
                     <BottomNavigationAction
                         label="Members"
-                        icon={<ArrowDropDownIcon />}
+                        icon={<ArrowDropDownIcon/>}
                         onClick={() => setMenuOpen(!menuOpen)}
                         sx={{
                             transform: menuOpen ? "rotate(180deg)" : "rotate(0deg)",
@@ -190,9 +192,9 @@ export default function Members() {
                                         <ListItem
                                             key={user.id}
                                             button
-                                            onClick={() => handleMemberClick({ ...user, userId: user.id })}
+                                            onClick={() => handleMemberClick({...user, userId: user.id})}
                                         >
-                                            <ListItemText primary={user.fullName || user.username} />
+                                            <ListItemText primary={user.fullName || user.username}/>
                                         </ListItem>
                                     ))
                                 ) : (
@@ -206,9 +208,9 @@ export default function Members() {
                                     <ListItem
                                         key={member.userId}
                                         button
-                                        onClick={() => handleMemberClick({ ...member.user, userId: member.userId })}
+                                        onClick={() => handleMemberClick({...member.user, userId: member.userId})}
                                     >
-                                        <ListItemText primary={member.user.fullName} />
+                                        <ListItemText primary={member.user.fullName}/>
                                     </ListItem>
                                 ))
                             ) : (
@@ -220,22 +222,22 @@ export default function Members() {
             </Paper>
 
             {/* Põhisisu: Desktopil vasakul Drawer, paremal komponendid */}
-            <Box sx={{ display: "flex", flexGrow: 1 }}>
+            <Box sx={{display: "flex", flexGrow: 1}}>
                 {/* Vasak paneel: Liikmete nimekiri ja otsing (desktop vaade) */}
                 <Drawer
                     variant="permanent"
                     sx={{
-                        display: { xs: "none", md: "block" },
+                        display: {xs: "none", md: "block"},
                         width: 300,
                         flexShrink: 0,
                         position: "relative !important",
                     }}
                     PaperProps={{
-                        sx: { position: "relative" },
+                        sx: {position: "relative"},
                     }}
                 >
-                    <Box sx={{ width: 300, p: 2 }}>
-                        <Typography variant="h5" sx={{ mb: 2 }}>
+                    <Box sx={{width: 300, p: 2}}>
+                        <Typography variant="h5" sx={{mb: 2}}>
                             Members
                         </Typography>
                         <TextField
@@ -252,9 +254,9 @@ export default function Members() {
                                         <ListItem
                                             key={user.id}
                                             button
-                                            onClick={() => handleMemberClick({ ...user, userId: user.id })}
+                                            onClick={() => handleMemberClick({...user, userId: user.id})}
                                         >
-                                            <ListItemText primary={user.fullName || user.username} />
+                                            <ListItemText primary={user.fullName || user.username}/>
                                         </ListItem>
                                     ))
                                 ) : (
@@ -268,9 +270,9 @@ export default function Members() {
                                     <ListItem
                                         key={member.userId}
                                         button
-                                        onClick={() => handleMemberClick({ ...member.user, userId: member.userId })}
+                                        onClick={() => handleMemberClick({...member.user, userId: member.userId})}
                                     >
-                                        <ListItemText primary={member.user.fullName} />
+                                        <ListItemText primary={member.user.fullName}/>
                                     </ListItem>
                                 ))
                             ) : (
@@ -281,33 +283,37 @@ export default function Members() {
                 </Drawer>
 
                 {/* Parempoolne paneel: valitud kasutaja profiil ja menüü vaated */}
-                <Box sx={{ flexGrow: 1, p: { xs: 0, md: 3 } }}>
+                <Box sx={{flexGrow: 1, p: {xs: 0, md: 3}}}>
                     {isLoadingMember ? (
-                        <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                            <CircularProgress />
+                        <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                            <CircularProgress/>
                         </Box>
                     ) : selectedMember ? (
                         <Card>
                             <CardContent>
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={3}>
-                                        <Box sx={{ textAlign: "center" }}>
+                                        <Box sx={{textAlign: "center"}}>
                                             <Avatar
                                                 src={
                                                     selectedMember.logo ||
                                                     "https://via.placeholder.com/120"
                                                 }
-                                                sx={{ width: 100, height: 100, margin: "auto" }}
+                                                sx={{width: 100, height: 100, margin: "auto"}}
                                             />
-                                            <Typography variant="h6" sx={{ mt: 2 }}>
+                                            <Typography variant="h6" sx={{mt: 2}}>
                                                 {selectedMember.fullName}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
                                                 {selectedMember.role || "Member"}
                                             </Typography>
-                                            <Button onClick={() => handleAddMember(selectedMember.id)}>
-                                                Add member
-                                            </Button>
+
+                                            {!selectedMember.isMember && (
+
+                                                <Button onClick={() => handleAddMember(selectedMember.id)}>
+                                                    Add member
+                                                </Button>
+                                            )}
                                         </Box>
                                         <List>
                                             {menuItems.map((item) => (
@@ -317,7 +323,7 @@ export default function Members() {
                                                     selected={activeComponent === item.id}
                                                     onClick={() => handleMenuClick(item.id)}
                                                 >
-                                                    <ListItemText primary={item.label} />
+                                                    <ListItemText primary={item.label}/>
                                                 </ListItem>
                                             ))}
                                         </List>

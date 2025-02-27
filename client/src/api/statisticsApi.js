@@ -18,3 +18,20 @@ export async function getStatistics(params = {}) {
         return null;
     }
 }
+
+export async function getAllStatistics () {
+    try {
+
+        const response = await fetch('/api/statistics/all', {
+            method: 'GET',
+
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch statistics');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Error fetching statistics:', error);
+        return null;
+    }
+}

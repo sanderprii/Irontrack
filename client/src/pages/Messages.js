@@ -190,7 +190,8 @@ export default function MessagePage() {
                         ) : (
                             <CardContent>
                                 {/* Aktiivne alamkomponent saab affiliate propsina */}
-                                <ActiveComponent affiliate={affiliate.affiliate.id}/>
+                                <ActiveComponent affiliate={affiliate.affiliate.id}
+                                affiliateEmail={affiliate.affiliate.email}/>
                             </CardContent>
                         )}
                     </Card>

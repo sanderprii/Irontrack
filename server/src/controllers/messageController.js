@@ -12,7 +12,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendMessage = async (req, res) => {
         try {
-            let {recipientType, groupName, senderId, recipientId, subject, body} = req.body;
+            let {recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail} = req.body;
 
             const htmlContent = `
 <html>
@@ -33,6 +33,8 @@ const sendMessage = async (req, res) => {
       }
       .content {
         padding: 20px;
+        justify-content: center;
+        align-items: center;
       }
       .footer {
         background: #f4f4f4;
@@ -83,8 +85,11 @@ const sendMessage = async (req, res) => {
                 // 3. Valmista SendGrid sõnum
                 const msg = {
                     to: recipientEmail,
-                    from: "noreply@sanderprii.me", // PEAB olema SendGridis verifitseeritud domeen/aadress
-                    subject: subject,
+                    from: {
+                        email: "noreply@irontrack.ee",
+                        name: "IronTrack",
+                    },
+                   subject: subject,
                     text: body,
                     html: `<p style="white-space: pre-wrap;">${body}</p>`,
                 };
@@ -109,7 +114,11 @@ const sendMessage = async (req, res) => {
                 for (const member of groupMembers) {
                     const msg = {
                         to: member.user.email,
-                        from: "noreply@sanderprii.me",
+                        from: {
+                            email: "noreply@irontrack.ee",
+                            name: "IronTrack",
+                        },
+                        replyTo: affiliateEmail,
                         subject: subject,
                         text: body,
                         html: `<p style="white-space: pre-wrap;">${body}</p>`,
@@ -128,8 +137,11 @@ const sendMessage = async (req, res) => {
                 for (const member of affiliateMembers) {
                     const msg = {
                         to: member.user.email,
-                        from: "noreply@sanderprii.me",
-
+                        from: {
+                            email: "noreply@irontrack.ee",
+                            name: "IronTrack",
+                        },
+                        replyTo: affiliateEmail,
                         subject: subject,
                         text: body, // tekstiline versioon
                         html: htmlContent,

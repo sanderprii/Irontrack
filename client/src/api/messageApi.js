@@ -2,7 +2,7 @@
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Funktsioon e-kirja saatmiseks
-export const sendMessage = async ({ recipientType, groupName, senderId, recipientId, subject, body }) => {
+export const sendMessage = async ({ recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail }) => {
     try {
         // Kui sul on vaja tokenit localStoragest, saad selle siit kätte
         const token = localStorage.getItem('token');
@@ -21,6 +21,7 @@ export const sendMessage = async ({ recipientType, groupName, senderId, recipien
                 recipientId,
                 subject,
                 body,
+                affiliateEmail,
             }),
         });
 

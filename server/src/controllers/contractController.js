@@ -113,7 +113,7 @@ exports.getContractById = async (req, res) => {
 exports.updateContract = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, acceptedAt, contractType, content, endDate, affiliateId, userId } = req.body;
+        const { status, acceptedAt, contractType, content, endDate, affiliateId, userId, action } = req.body;
 
         // Loome dünaamilise data objekti, mis sisaldab ainult olemasolevaid välju
         const data = {};
@@ -142,7 +142,7 @@ exports.updateContract = async (req, res) => {
                     contractId: parseInt(id),
                     affiliateId: parseInt(affiliateId),
                     userId: parseInt(userId),
-                    action: 'Contract updated',
+                    action,
                 },
             });
         }

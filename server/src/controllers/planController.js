@@ -30,6 +30,11 @@ const createPlan = async (req, res) => {
     const {name, validityDays, price, additionalData, sessions} = req.body;
 
     try {
+        const affiliateId = await prisma.affiliate.findFirst({
+            where: {ownerId: ownerId}
+        });
+
+
         const newPlan = await prisma.plan.create({
             data: {
                 name,
@@ -37,7 +42,8 @@ const createPlan = async (req, res) => {
                 price: parseFloat(price),
                 additionalData,
                 sessions: parseInt(sessions),
-                ownerId
+                ownerId,
+                affiliateId: affiliateId.id
             }
         });
 
@@ -101,10 +107,15 @@ const deletePlan = async (req, res) => {
 
 const buyPlan = async (req, res) => {
     const planData = req.body.planData;
-    const appliedCredit = parseInt(req.body.appliedCredit);
-    const affiliateId = parseInt(req.params.affiliateId);
+    const appliedCredit = parseInt(req.body.currentAppliedCredit);
+    const affiliateId = parseInt(req.params.affiliateId) || parseInt(req.body.planData.affiliateId);
     const userId = parseInt(req.user?.id);
     const contract = req.body.contract;
+    let merchantReference = req.body.currentMerchantReference;
+
+
+
+
 
     try {
         // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
@@ -123,7 +134,7 @@ const buyPlan = async (req, res) => {
         if (!affiliate) {
             return res.status(404).json({error: "Affiliate not found."});
         }
-        const invoicenumberDateandTime = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+
 
         let contractId = null;
 
@@ -167,19 +178,43 @@ const buyPlan = async (req, res) => {
 
 
             }
+            let paymentType = '';
+            if(appliedCredit === 0){
+                paymentType = 'montonio';
+
+            } else if (appliedCredit > 0 && appliedCredit < planData.price){
+                paymentType = 'mixed';
+            } else if (appliedCredit === planData.price){
+                paymentType = 'credit';
+            }
+
+            if(appliedCredit === planData.price){
+                merchantReference = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+            }
 
             // Transaktsiooni loomine
-            await prisma.transactions.create({
+            const transaction = await prisma.transactions.create({
                 data: {
-                    userId: userId,
+
                     amount: planData.price,
-                    invoiceNumber: invoicenumberDateandTime,
-                    description: `Plan purchase: ${planData.name}, by: ${user.email}, from: ${affiliate.name}`,
-                    type: 'debit',
-                    affiliateId: affiliateId,
-                    planId: planData.id,
-                    memberId: parseInt(getMember.id),
-                    status: "success"
+                    invoiceNumber: merchantReference,
+                    description: `Plan purchase: ${planData.name}, by: ${user.email}, from: ${affiliate.name}, paid by credit: ${appliedCredit}€`,
+                    type: paymentType,
+
+
+                    status: "success",
+                    user: {
+                        connect: {id: userId}
+                    },
+                    affiliate: {
+                        connect: {id: affiliateId}
+                    },
+                    plan: {
+                        connect: {id: planData.id}
+                    },
+                    member: {
+                        connect: {id: parseInt(getMember.id)}
+                    }
                 }
             });
 
@@ -204,9 +239,12 @@ const buyPlan = async (req, res) => {
                 where: {id: userId},
                 data: {homeAffiliate: affiliateId}
             });
+
+            res.json(transaction)
+
         });
 
-        res.status(201).json({message: "Transaction successful!"});
+
     } catch (error) {
         console.error("Error buying plan:", error);
         res.status(500).json({error: "Failed to buy plan."});

@@ -1,11 +1,12 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import {
     Box,
     Container,
     Typography,
     Button,
     Grid,
-    Paper
+    Paper,
+    Stack,
 } from "@mui/material";
 
 import { useNavigate} from "react-router-dom";
@@ -18,8 +19,8 @@ import SavingsIcon from "@mui/icons-material/Savings";
 import PeopleIcon from "@mui/icons-material/People";
 import DescriptionIcon from "@mui/icons-material/Description";
 
-
-
+import { getAllStatistics } from "../api/statisticsApi";
+import CountUp from 'react-countup';
 
 const carouselImages = [
     "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -30,10 +31,86 @@ const carouselImages = [
 const iconBackgroundColor = "#E6F0FF";
 const iconColor = "#0072E5"; // sinine ikoon
 
+
+// Siin on numbrikasti komponent
+const FlipCounter = ({ value, label, duration = 2.5 }) => {
+    return (
+        <Box sx={{ textAlign: 'center' }}>
+            <Paper
+                elevation={3}
+                sx={{
+                    p: 2,
+                    backgroundColor: '#333',
+                    color: 'white',
+                    borderRadius: 2,
+                    width: '100%',
+                    maxWidth: 220,
+                    mx: 'auto',
+                    mb: 1,
+                    overflow: 'hidden',
+                    position: 'relative'
+                }}
+            >
+                <Box
+                    sx={{
+                        fontSize: { xs: '2.5rem', md: '3.5rem' },
+                        fontWeight: 'bold',
+                        textShadow: '0 3px 5px rgba(0,0,0,0.5)',
+                        fontFamily: 'monospace',
+                        padding: '0.5rem 0',
+                    }}
+                >
+                    <CountUp
+                        end={value}
+                        duration={duration}
+                        separator=","
+                        delay={0.3}
+                    />
+                </Box>
+            </Paper>
+            <Typography
+                variant="h6"
+                sx={{
+                    fontWeight: 'bold',
+                    color: '#333'
+                }}
+            >
+                {label}
+            </Typography>
+        </Box>
+    );
+};
+
+
 export default function HomePage() {
     // React Slick seaded (lihtne näide)
-
+    const [stats, setStats] = useState({
+        users: 0,
+        trainings: 0,
+        records: 0
+    });
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+
+    useEffect(() => {
+        const fetchStatistics = async () => {
+            try {
+                const data = await getAllStatistics();
+                setStats({
+                    users: data.users || 0,
+                    trainings: data.trainings || 0,
+                    records: data.records || 0
+                });
+                setLoading(false);
+            } catch (error) {
+                console.error("Failed to fetch statistics:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchStatistics();
+    }, []);
 
     const settings = {
         dots: true,
@@ -54,7 +131,7 @@ export default function HomePage() {
                         <div key={i}>
                             <Box
                                 sx={{
-                                    minHeight: "80vh",
+                                    minHeight: "50vh",
                                     background: `url(${imgSrc}) center center / cover no-repeat`,
                                     display: "flex",
                                     alignItems: "center",
@@ -96,6 +173,23 @@ export default function HomePage() {
                         </div>
                     ))}
                 </Slider>
+            </Box>
+
+            {/* STATISTIKA SEKTSIOON - UUS */}
+            <Box sx={{ backgroundColor: '#f5f5f5', py: 6 }}>
+                <Container>
+                    <Grid container spacing={4} justifyContent="center">
+                        <Grid item xs={12} sm={4}>
+                            <FlipCounter value={stats.users} label="Users" />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FlipCounter value={stats.trainings} label="Trainings" />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FlipCounter value={stats.records} label="Records" />
+                        </Grid>
+                    </Grid>
+                </Container>
             </Box>
 
             <Box>

@@ -171,3 +171,30 @@ exports.getStatistics = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+
+
+exports.getAllStatistics = async (req, res) => {
+    // võta kogu kasutajate arv, treeningute arv, mille time on tänasest möödas, rekordite arv
+    try {
+        const userCount = await prisma.user.count();
+
+        const pastTrainings = await prisma.classSchedule.count({
+            where: {
+                time: {
+                    lt: new Date(),
+                },
+            },
+        });
+        const recordCount = await prisma.record.count();
+
+        res.json({
+            users: userCount,
+
+            trainings: pastTrainings,
+            records: recordCount,
+        });
+    } catch (err) {
+        console.error("❌ Error in getAllStatistics:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+}

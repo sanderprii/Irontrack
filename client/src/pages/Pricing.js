@@ -335,7 +335,7 @@ export default function Pricing() {
             <Box sx={{ backgroundColor: "#333", color: "#fff", py: 3 }}>
                 <Container>
                     <Typography variant="body2" align="center">
-                        © {new Date().getFullYear()} YourCrossFitApp. All rights reserved.
+                        © {new Date().getFullYear()} Irontrack OÜ | All rights reserved.
                     </Typography>
                 </Container>
             </Box>

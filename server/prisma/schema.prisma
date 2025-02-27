@@ -228,6 +228,8 @@ model Plan {
   price          Float
   additionalData String?
   sessions       Int
+  affiliateId    Int
+  affiliate      Affiliate      @relation(fields: [affiliateId], references: [id])
   active         Boolean        @default(true)
   ownerId        Int
   owner          User           @relation(fields: [ownerId], references: [id])
@@ -277,6 +279,16 @@ model Affiliate {
   contractTemplates ContractTemplate[]
   signedContracts   SignedContract[]
   contractLogs      ContractLogs[]
+  plans             Plan[]
+  affiliateApiKeys  AffiliateApiKeys[]
+}
+
+model AffiliateApiKeys {
+  id          Int       @id @default(autoincrement())
+  affiliateId Int
+  accessKey   String
+  secretKey   String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
 model AffiliateTrainer {

@@ -13,7 +13,7 @@ import {
     Button,
     Modal,
     TextField,
-    IconButton
+    IconButton, DialogTitle, DialogContent, DialogContentText, DialogActions, Dialog
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,7 +22,8 @@ import {
     getUserContracts,
     acceptContract,
     createPaymentHoliday,
-    updatePaymentHoliday
+    updatePaymentHoliday,
+    updateContract,
 } from '../api/contractApi'; // <-- API import
 import ContractTermsModal from './ContractTermsModal';
 import { sendMessage } from "../api/messageApi";
@@ -42,6 +43,11 @@ export default function UserContracts({ user, affiliateId }) {
         toDate: '',
         reason: '',
     });
+
+    // Lisame oleku dialoogi ja endDate haldamiseks
+    const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
+    const [newEndDate, setNewEndDate] = useState("");
+    const [contractToDeactivate, setContractToDeactivate] = useState(null);
 
     useEffect(() => {
         if (user?.id) {
@@ -140,7 +146,45 @@ export default function UserContracts({ user, affiliateId }) {
         }
     };
 
+    // Funktsioon dialoogi avamiseks
+    const handleOpenDeactivateDialog = (contract) => {
+        setContractToDeactivate(contract);
+        setOpenDeactivateDialog(true);
+    };
+
+    // Funktsioon dialoogi sulgemiseks ja deaktiveerimiseks
+    const handleConfirmDeactivate = () => {
+        if (newEndDate && contractToDeactivate) {
+            handleDeActivate({ ...contractToDeactivate, endDate: newEndDate, affiliateId });
+        }
+        setOpenDeactivateDialog(false);
+        setNewEndDate(""); // Lähtestame sisestatud väärtuse
+        setContractToDeactivate(null);
+    };
+
+    // Funktsioon dialoogi tühistamiseks
+    const handleCancelDeactivate = () => {
+        setOpenDeactivateDialog(false);
+        setNewEndDate("");
+        setContractToDeactivate(null);
+    };
+
+    const handleDeActivate = async (contractData) => {
+        const payload = {
+            affiliateId: contractData.affiliateId,
+            userId: contractData.userId,
+            endDate: contractData.endDate, // Võtame endDate otse objektist
+            action: 'change end date',
+        };
+        await updateContract(contractData.id, payload);
+        await loadContracts();
+    };
+
+
+
     const role = localStorage.getItem('role');
+
+
 
     return (
         <Box>
@@ -158,6 +202,7 @@ export default function UserContracts({ user, affiliateId }) {
                                 <TableCell>Date</TableCell>
                                 <TableCell>Affiliate Name</TableCell>
                                 <TableCell>Status</TableCell>
+                                <TableCell> </TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -177,6 +222,25 @@ export default function UserContracts({ user, affiliateId }) {
                                             </TableCell>
                                             <TableCell>{contract.affiliate.name}</TableCell>
                                             <TableCell>{contract.status}</TableCell>
+                                            <TableCell>
+                                                { contract.status === 'accepted' && role === 'affiliate' && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="secondary"
+                                                        size='small'
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm('Are you sure you want to change end date on this contract?')) {
+                                                                handleOpenDeactivateDialog(contract);
+                                                            }
+
+                                                        }
+                                                        }
+                                                    >
+                                                        End Date
+                                                    </Button>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
 
                                         <TableRow>
@@ -408,6 +472,40 @@ export default function UserContracts({ user, affiliateId }) {
                     </Box>
                 </Box>
             </Modal>
+
+            <Dialog
+                open={openDeactivateDialog}
+                onClose={handleCancelDeactivate}
+                aria-labelledby="deactivate-dialog-title"
+            >
+                <DialogTitle id="deactivate-dialog-title">Set New End Date</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter the new end date for the contract deactivation.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="New End Date"
+                        type="date"
+                        fullWidth
+                        value={newEndDate}
+                        onChange={(e) => setNewEndDate(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelDeactivate} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDeactivate} color="primary" disabled={!newEndDate}>
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
         </Box>
     );
 }

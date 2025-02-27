@@ -108,6 +108,7 @@ router.get("/affiliate-plans", ensureAuthenticated, async (req, res) => {
                 price: true,
                 sessions: true,
                 additionalData: true,
+                affiliateId: true,
             },
         });
 

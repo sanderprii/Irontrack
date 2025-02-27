@@ -20,7 +20,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 
 // Hero sektsiooni pildi stiil
 const HeroSection = styled("div")(({ theme }) => ({
-    minHeight: "60vh",
+    minHeight: "50vh",
     background: `url("https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D") center center/cover no-repeat`,
     display: "flex",
     alignItems: "center",
@@ -244,7 +244,7 @@ export default function AboutPage() {
             <Box sx={{ backgroundColor: "#333", color: "#fff", py: 3 }}>
                 <Container>
                     <Typography variant="body2" align="center">
-                        © {new Date().getFullYear()} YourCrossFitApp. All rights reserved.
+                        © {new Date().getFullYear()} Irontrack OÜ | All rights reserved.
                     </Typography>
                 </Container>
             </Box>

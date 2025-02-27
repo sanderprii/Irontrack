@@ -1,221 +1,198 @@
 import * as React from 'react';
-import {useState, useEffect} from 'react';
-import Alert from '@mui/material/Alert';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import MuiCard from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import CardContent from '@mui/material/CardContent';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import OutlinedInput from '@mui/material/OutlinedInput';
+import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Slider from '@mui/material/Slider';
 import Button from '@mui/material/Button';
-import {styled} from '@mui/material/styles';
-import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
-// Muudame esimese variandi väärtuse "credit" nimele, et vastata krediidi funktsionaalsusele
-import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import PropTypes from 'prop-types';
 
-const Card = styled(MuiCard)(({theme, selected}) => ({
-    border: '1px solid',
-    borderColor: (theme.vars || theme).palette.divider,
-    width: '100%',
-    '&:hover': {
-        background:
-            'linear-gradient(to bottom right, hsla(210, 100%, 97%, 0.5) 25%, hsla(210, 100%, 90%, 0.3) 100%)',
-        borderColor: 'primary.light',
-        boxShadow: '0px 2px 8px hsla(0, 0%, 0%, 0.1)',
-    },
-    ...(selected && {
-        borderColor: (theme.vars || theme).palette.primary.light,
-    }),
-}));
+export default function PaymentForm({ affiliateCredit, appliedCredit, setAppliedCredit, planPrice }) {
+    const [paymentMethod, setPaymentMethod] = useState(affiliateCredit > 0 ? 'credit' : 'montonio');
+    const [creditInput, setCreditInput] = useState('0');
+    const [errorMessage, setErrorMessage] = useState('');
 
-const PaymentContainer = styled('div')(({theme}) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: theme.spacing(3),
-    borderRadius: theme.shape.borderRadius,
-    border: '1px solid',
-    borderColor: (theme.vars || theme).palette.divider,
-    background:
-        'linear-gradient(to bottom right, hsla(220, 35%, 97%, 0.3) 25%, hsla(220, 20%, 88%, 0.3) 100%)',
-}));
+    // Maksimaalse kasutatava krediidi arvutamine
+    const maxApplicableCredit = Math.min(affiliateCredit, planPrice);
 
-const FormGrid = styled('div')(() => ({
-    display: 'flex',
-    flexDirection: 'column',
-}));
-
-export default function PaymentForm({planPrice, affiliateCredit, appliedCredit, setAppliedCredit}) {
-    const [paymentType, setPaymentType] = useState('credit'); // vaikimisi "credit"
-    const [useCredit, setUseCredit] = useState(false);
-    const [creditInput, setCreditInput] = useState(affiliateCredit);
-
-    // Kui affiliati krediidiväärtus muutub, uuendame eeltäite
+    // Uuenda sisestusvälja, kui appliedCredit muutub
     useEffect(() => {
-        setCreditInput(planPrice);
-    }, [planPrice]);
+        setCreditInput(appliedCredit.toString());
+    }, [appliedCredit]);
 
-    const handlePaymentTypeChange = (event) => {
-        setPaymentType(event.target.value);
+    const handlePaymentMethodChange = (event) => {
+        const method = event.target.value;
+        setPaymentMethod(method);
+
+        if (method === 'credit') {
+            // Kui valitakse krediidiga maksmine, siis rakendame maksimaalse krediidi
+            setAppliedCredit(maxApplicableCredit);
+            setCreditInput(maxApplicableCredit.toString());
+        }
     };
 
-    const handleCheckboxChange = (event) => {
-        setUseCredit(event.target.checked);
-        if (!event.target.checked) {
-            // Kui checkbox eemaldatakse, tühistame rakendatud krediidi
-            setAppliedCredit(0);
-        }
+    const handleCreditSliderChange = (event, newValue) => {
+        setAppliedCredit(newValue);
+        setCreditInput(newValue.toString());
     };
 
     const handleCreditInputChange = (event) => {
         const value = event.target.value;
-        // Võid lisada täiendavat valideerimist (näiteks lubada ainult numbreid)
         setCreditInput(value);
+
+        // Valideeri sisestus
+        if (value === '') {
+            setErrorMessage('');
+            return;
+        }
+
+        const numValue = Number(value);
+        if (isNaN(numValue)) {
+            setErrorMessage('Palun sisesta number');
+        } else if (numValue < 0) {
+            setErrorMessage('Krediit ei saa olla negatiivne');
+        } else if (numValue > affiliateCredit) {
+            setErrorMessage(`Maksimaalne saadaolev krediit on ${affiliateCredit}€`);
+        } else if (numValue > planPrice) {
+            setErrorMessage(`Maksimaalne krediit saab olla ${planPrice}€`);
+        } else {
+            setErrorMessage('');
+        }
     };
 
-    const handleApplyCredit = () => {
-        const value = Number(creditInput);
-        // Kontrolli, et sisestatud summa ei ületaks saadaolevat krediiti
-        if (value > planPrice) {
-            alert('You cannot apply more than the plan price.');
-            return;
-        }
+    // Rakenda sisestatud krediit kohe
+    const applyCredit = () => {
+        if (creditInput === '' || errorMessage) return;
 
-        if (value > affiliateCredit) {
-            alert('You cannot apply more than your available credit.');
-            return;
+        const numValue = Number(creditInput);
+        if (!isNaN(numValue) && numValue >= 0 && numValue <= maxApplicableCredit) {
+            // Kasuta täpset väärtust
+            setAppliedCredit(numValue);
         }
-        // Rakenda krediit – edastame väärtuse ülemisele komponendile
-        setAppliedCredit(value);
+    };
+
+    // Nupu lisamiseks maksimaalsele krediidile
+    const applyMax = () => {
+        const maxValue = Math.min(affiliateCredit, planPrice);
+        setCreditInput(maxValue.toString());
+        setAppliedCredit(maxValue);
+        setErrorMessage('');
     };
 
     return (
-        <Stack spacing={{xs: 3, sm: 6}}>
-            <FormControl component="fieldset" fullWidth>
-                <RadioGroup
-                    aria-label="Payment options"
-                    name="paymentType"
-                    value={paymentType}
-                    onChange={handlePaymentTypeChange}
-                    sx={{
-                        display: 'flex',
-                        flexDirection: {xs: 'column', sm: 'row'},
-                        gap: 2,
-                    }}
-                >
-                    <Card selected={paymentType === 'credit'}>
-                        <CardActionArea onClick={() => setPaymentType('credit')}>
-                            <CardContent sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                <CreditCardRoundedIcon
-                                    fontSize="small"
-                                    sx={{
-                                        color: paymentType === 'credit' ? 'primary.main' : 'grey.400',
-                                    }}
-                                />
-                                <Typography sx={{fontWeight: 'medium'}}>Credit</Typography>
-                            </CardContent>
-                        </CardActionArea>
-                    </Card>
-                    <Card selected={paymentType === 'bankTransfer'}>
-                        <CardActionArea onClick={() => setPaymentType('bankTransfer')}>
-                            <CardContent sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                <AccountBalanceRoundedIcon
-                                    fontSize="small"
-                                    sx={{
-                                        color: paymentType === 'bankTransfer' ? 'primary.main' : 'grey.400',
-                                    }}
-                                />
-                                <Typography sx={{fontWeight: 'medium'}}>Bank account</Typography>
-                            </CardContent>
-                        </CardActionArea>
-                    </Card>
-                </RadioGroup>
-            </FormControl>
+        <React.Fragment>
+            <Typography variant="h6" gutterBottom>
+                Payment method
+            </Typography>
 
-            {paymentType === 'credit' && (
-                <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-                    <PaymentContainer>
-                        <Box sx={{mb: 2}}>
-                            <Typography variant="subtitle2">
-                                Available Credit: {affiliateCredit}€
-                            </Typography>
-                        </Box>
+            {affiliateCredit > 0 && (
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                        Your available credit: {affiliateCredit}€
+                    </Typography>
 
+                    <RadioGroup
+                        value={paymentMethod}
+                        onChange={handlePaymentMethodChange}
+                    >
                         <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={useCredit}
-                                    onChange={handleCheckboxChange}
-                                    name="useCredit"
-                                />
-                            }
-                            label="Use credit on purchase"
+                            value="credit"
+                            control={<Radio />}
+                            label={maxApplicableCredit >= planPrice ? "Pay fully with credit" : "Use credit partially"}
                         />
 
-                        {useCredit && (
-                            <Box sx={{mt: 2, display: 'flex', flexDirection: 'column', gap: 1}}>
-                                <TextField
-                                    label="Credit Amount"
-                                    type="number"
-                                    value={creditInput}
-                                    onChange={handleCreditInputChange}
-                                    InputProps={{inputProps: {min: 0, max: planPrice}}}
+                        {maxApplicableCredit < planPrice && paymentMethod === 'credit' && (
+                            <Box sx={{ ml: 4, mt: 1, mb: 2, width: '90%' }}>
+                                <Typography gutterBottom>
+                                    Apply credit: {appliedCredit}€
+                                </Typography>
+                                <Slider
+                                    value={appliedCredit}
+                                    onChange={handleCreditSliderChange}
+                                    aria-labelledby="credit-slider"
+                                    valueLabelDisplay="auto"
+                                    step={1}
+                                    min={0}
+                                    max={maxApplicableCredit}
+                                    disabled={paymentMethod !== 'credit'}
                                 />
-                                <Button variant="contained" onClick={handleApplyCredit}>
-                                    Apply
-                                </Button>
+                                <Typography variant="body2" color="text.secondary">
+                                    Remaining to pay: {(planPrice - appliedCredit).toFixed(2)}€
+                                </Typography>
                             </Box>
                         )}
-                    </PaymentContainer>
+
+                        <FormControlLabel
+                            value="montonio"
+                            control={<Radio />}
+                            label="Montonio (Bank payments, credit cards)"
+                        />
+
+                        {paymentMethod === 'montonio' && affiliateCredit > 0 && (
+                            <Box sx={{ ml: 4, mt: 1, mb: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1 }}>
+                                    <TextField
+                                        label="Apply credit"
+                                        value={creditInput}
+                                        onChange={handleCreditInputChange}
+                                        error={!!errorMessage}
+                                        helperText={errorMessage || `Available: ${affiliateCredit}€`}
+                                        size="small"
+                                        type="number"
+                                        inputProps={{
+                                            min: 0,
+                                            max: maxApplicableCredit,
+                                            step: "any"
+                                        }}
+                                        sx={{ width: '150px' }}
+                                    />
+                                    <Button
+                                        variant="outlined"
+                                        onClick={applyCredit}
+                                        disabled={!!errorMessage || creditInput === '' || Number(creditInput) === appliedCredit+0.01}
+                                    >
+                                        Apply
+                                    </Button>
+                                    <Button
+                                        variant="text"
+                                        onClick={applyMax}
+                                        size="small"
+                                    >
+                                        Max
+                                    </Button>
+                                </Box>
+
+                                {appliedCredit > 0 && (
+                                    <Typography variant="body2" color="text.secondary">
+                                        Credit applied: {appliedCredit}€ (Remaining to pay: {(planPrice - appliedCredit).toFixed(2)}€)
+                                    </Typography>
+                                )}
+                            </Box>
+                        )}
+                    </RadioGroup>
                 </Box>
             )}
 
-            {paymentType === 'bankTransfer' && (
-                <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-                    <Alert severity="warning" icon={<WarningRoundedIcon/>}>
-                        Your order will be processed once we receive the funds.
-                    </Alert>
-                    <Typography variant="subtitle1" sx={{fontWeight: 'medium'}}>
-                        Bank account
-                    </Typography>
-                    <Typography variant="body1" gutterBottom>
-                        Please transfer the payment to the bank account details shown below.
-                    </Typography>
-                    <Box sx={{display: 'flex', gap: 1}}>
-                        <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                            Bank:
-                        </Typography>
-                        <Typography variant="body1" sx={{fontWeight: 'medium'}}>
-                            Mastercredit
-                        </Typography>
-                    </Box>
-                    <Box sx={{display: 'flex', gap: 1}}>
-                        <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                            Account number:
-                        </Typography>
-                        <Typography variant="body1" sx={{fontWeight: 'medium'}}>
-                            123456789
-                        </Typography>
-                    </Box>
-                    <Box sx={{display: 'flex', gap: 1}}>
-                        <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                            Routing number:
-                        </Typography>
-                        <Typography variant="body1" sx={{fontWeight: 'medium'}}>
-                            987654321
-                        </Typography>
-                    </Box>
-                </Box>
+            {!affiliateCredit && (
+                <Typography>
+                    You'll be redirected to Montonio to complete your payment.
+                </Typography>
             )}
-        </Stack>
+        </React.Fragment>
     );
 }
+
+PaymentForm.propTypes = {
+    affiliateCredit: PropTypes.number,
+    appliedCredit: PropTypes.number,
+    setAppliedCredit: PropTypes.func.isRequired,
+    planPrice: PropTypes.number.isRequired,
+};
+
+PaymentForm.defaultProps = {
+    affiliateCredit: 0,
+    appliedCredit: 0,
+};

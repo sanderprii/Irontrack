@@ -17,5 +17,5 @@ if (!affiliateController.getMyAffiliate || !affiliateController.createOrUpdateAf
 router.get("/my-affiliate", ensureAuthenticated, affiliateController.getMyAffiliate);
 router.get("/search-users", ensureAuthenticated, affiliateController.searchUsers);
 router.put("/affiliate", ensureAuthenticated, affiliateController.createOrUpdateAffiliate);
-
+router.get("/affiliateById", ensureAuthenticated, affiliateController.getAffiliateById);
 module.exports = router;

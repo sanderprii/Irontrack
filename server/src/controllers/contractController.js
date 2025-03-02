@@ -332,8 +332,7 @@ exports.createPaymentHoliday = async (req, res) => {
         const {
             userId,
             affiliateId,
-            fromDate,
-            toDate,
+            month,
             reason,
         } = req.body;
 
@@ -360,8 +359,7 @@ exports.createPaymentHoliday = async (req, res) => {
                 contractId: contractInt,
                 userId: userInt,
                 affiliateId: affInt,
-                fromDate: new Date(fromDate),
-                toDate: toDate ? new Date(toDate) : null,
+                month: month,
                 reason: reason || '',
                 accepted: 'pending',
                 // monthlyFee, accepted, jne, kui vajad

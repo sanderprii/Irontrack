@@ -62,7 +62,7 @@ const createMontonioPayment = async (req, res) => {
         // Montonio requires this to be a public URL, not localhost
         // For production, this should be your actual server URL
         // For testing, you can use a service like ngrok to expose your local server
-        const notificationUrl = "https://webhook.site/your-webhook-id"; // Replace with your webhook URL for testing
+        const notificationUrl = "https://90e5-213-184-42-139.ngrok-free.app/api/payments/montonio-webhook"; // Replace with your webhook URL for testing
 
         // Create the payment data object
         const paymentData = {
@@ -112,7 +112,8 @@ const createMontonioPayment = async (req, res) => {
         const token = jwt.sign(
             paymentData,
             affiliateSecretKey,
-            { algorithm: 'HS256' }
+            { algorithm: 'HS256' },
+            affiliateId,
         );
 
         // Send request to Montonio
@@ -151,77 +152,126 @@ const createMontonioPayment = async (req, res) => {
 /**
  * Handle Montonio webhook notifications
  */
+// Part of paymentController.js - Handling payment holidays in webhook
 const handleMontonioWebhook = async (req, res) => {
     try {
         const { orderToken } = req.body;
 
         if (!orderToken) {
+            console.log('No order token provided');
             return res.status(400).json({ success: false, message: 'No order token provided' });
         }
 
-        // Verify the token
-        const decodedToken = jwt.verify(orderToken, affiliateSecretKey);
+        // Proovi kõigepealt dekodeerida ilma kinnitamiseta, et saada uuid
+        let decodedToken;
+        try {
+            decodedToken = jwt.decode(orderToken);
 
-        // Extract order information
-        const {
-            uuid,
-            accessKey,
-            merchantReference,
-            paymentStatus,
-            grandTotal,
-            currency,
-            senderIban,
-            senderName
-        } = decodedToken;
+            if (!decodedToken || !decodedToken.uuid) {
+                return res.status(400).json({ success: false, message: 'Invalid token format' });
+            }
 
-        // Verify this is a legitimate request
-        if (accessKey !== affiliateAccessKey) {
-            console.error('Invalid access key in webhook');
-            return res.status(401).json({ success: false, message: 'Invalid access key' });
-        }
+            const paymentLinkUuid = decodedToken.paymentLinkUuid;
 
-        console.log(`Payment status update: ${paymentStatus} for order ${merchantReference}`);
+            // Otsi paymentMetadata tabelist vajalikud andmed
+            const paymentMetadata = await prisma.$queryRaw`
+                SELECT * FROM paymentMetadata WHERE montonioUuid = ${paymentLinkUuid}
+            `;
 
-        // Extract the orderId from the merchantReference
-        const orderIdMatch = merchantReference.match(/order-(\d+)-\d+/);
-        const orderId = orderIdMatch ? orderIdMatch[1] : null;
+            if (!paymentMetadata || paymentMetadata.length === 0) {
+                console.error(`No payment metadata found for UUID ${paymentLinkUuid}`);
+                return res.status(404).json({ success: false, message: 'Payment metadata not found' });
+            }
 
-        if (!orderId) {
-            console.error('Could not extract order ID from merchant reference:', merchantReference);
-            return res.status(400).json({ success: false, message: 'Invalid merchant reference format' });
-        }
+            const { transactionId, contractId, affiliateId, isPaymentHoliday } = paymentMetadata[0];
 
-        // Update the order status in your database based on paymentStatus
-        // This is where you'd implement your database update logic
-        if (paymentStatus === 'PAID') {
-            // Mark the order as paid in your database
-            // await updateOrderStatus(orderId, 'paid');
-            console.log(`Order ${orderId} marked as paid`);
-        } else if (paymentStatus === 'VOIDED') {
-            // Mark the order as voided/cancelled in your database
-            // await updateOrderStatus(orderId, 'cancelled');
-            console.log(`Order ${orderId} marked as voided`);
-        } else if (paymentStatus === 'REFUNDED') {
-            // Mark the order as refunded in your database
-            // await updateOrderStatus(orderId, 'refunded');
-            console.log(`Order ${orderId} marked as refunded`);
-        } else if (paymentStatus === 'ABANDONED') {
-            // Mark the order as abandoned in your database
-            // await updateOrderStatus(orderId, 'abandoned');
-            console.log(`Order ${orderId} marked as abandoned`);
+            // Leia API võtmed affiliateId järgi
+            const apiKeys = await prisma.affiliateApiKeys.findFirst({
+                where: { affiliateId: affiliateId }
+            });
+
+            if (!apiKeys) {
+                console.error(`API keys not found for affiliate ${affiliateId}`);
+                return res.status(404).json({ success: false, message: 'API keys not found' });
+            }
+
+            // Seadista globaalsed muutujad
+            affiliateSecretKey = apiKeys.secretKey;
+            affiliateAccessKey = apiKeys.accessKey;
+
+            // Verifitseeri token kasutades leitud võtit
+            decodedToken = jwt.verify(orderToken, affiliateSecretKey);
+
+            // Extract order information
+            const {
+                paymentStatus,
+                merchantReference,
+                grandTotal,
+                currency,
+                senderIban,
+                senderName
+            } = decodedToken;
+
+            // Uuenda vastavalt makse staatusele
+            if (paymentStatus === 'PAID') {
+                // 1. Uuenda tehingu olek
+                await prisma.transactions.update({
+                    where: { id: transactionId },
+                    data: { status: 'success' }
+                });
+
+                // 2. Kui EI OLE payment holiday, siis uuenda userPlan
+                if (!isPaymentHoliday) {
+                    // Leia lepinguga seotud kasutaja plaan
+                    const userPlan = await prisma.userPlan.findFirst({
+                        where: { contractId: contractId }
+                    });
+
+                    if (userPlan) {
+                        console.log(`Found user plan ID: ${userPlan.id}`);
+
+                        // Arvuta uus lõppkuupäev (lisa üks kuu)
+                        let newEndDate = new Date(userPlan.endDate);
+                        newEndDate.setMonth(newEndDate.getMonth() + 1);
+
+                        console.log(`Updating user plan end date from ${userPlan.endDate} to ${newEndDate}`);
+
+                        // Uuenda kasutaja plaani kehtivust
+                        await prisma.userPlan.update({
+                            where: { id: userPlan.id },
+                            data: { endDate: newEndDate }
+                        });
+
+                        console.log(`Successfully updated UserPlan ${userPlan.id} end date to ${newEndDate}`);
+                    } else {
+                        console.error(`UserPlan not found for contract ${contractId}`);
+                    }
+                } else {
+                    console.log(`Payment holiday for contract ${contractId} - not updating UserPlan`);
+                }
+            } else if (paymentStatus === 'VOIDED' || paymentStatus === 'ABANDONED') {
+                console.log(`Marking transaction ${transactionId} as cancelled`);
+
+                // Märgi tehing tühistatuks
+                await prisma.transactions.update({
+                    where: { id: transactionId },
+                    data: { status: 'cancelled' }
+                });
+            }
+
+        } catch (error) {
+            console.error('Error processing webhook token:', error);
+            return res.status(401).json({ success: false, message: 'Error processing token' });
         }
 
         // Always respond with 200 OK to acknowledge receipt of the webhook
         return res.status(200).json({
             success: true,
-            message: `Successfully processed ${paymentStatus} payment status for order ${orderId}`
+            message: `Successfully processed webhook`
         });
-
     } catch (error) {
         console.error('Error processing Montonio webhook:', error);
-
         // Still return a 200 status to prevent Montonio from retrying
-        // but log the error for debugging
         return res.status(200).json({
             success: false,
             message: 'Error processing webhook but acknowledged',
@@ -229,7 +279,6 @@ const handleMontonioWebhook = async (req, res) => {
         });
     }
 };
-
 /**
  * Handle return from Montonio payment page
  */
@@ -294,6 +343,8 @@ const checkPaymentStatus = async (req, res) => {
         });
     }
 };
+
+
 
 module.exports = {
     createMontonioPayment,

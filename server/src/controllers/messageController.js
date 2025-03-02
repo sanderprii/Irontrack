@@ -259,9 +259,81 @@ const getSentMessages = async (req, res) => {
     }
 };
 
+
+ const sendMessageToAffiliate = async (req, res) => {
+        try {
+            const {senderEmail, affiliateEmail, subject, body} = req.body;
+            const htmlContent = `
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* Näiteks inline CSS, mis on vajalik e-kirja kujundamiseks */
+      .email-container {
+        max-width: 600px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+      }
+      .header {
+        background: #4CAF50;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      .content {
+        padding: 20px;
+        justify-content: center;
+        align-items: center;
+      }
+      .footer {
+        background: #f4f4f4;
+        color: #555;
+        padding: 10px;
+        text-align: center;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <h1>${subject}</h1>
+      </div>
+      <div class="content">
+        <p style="white-space: pre-wrap;">${body}</p>
+      </div>
+      <div class="footer">
+        <p>See on automaatne teade, palun ära vasta sellele.</p>
+      </div>
+    </div>
+  </body>
+</html>
+`;
+
+            const msg = {
+                to: affiliateEmail,
+                from: {
+                    email: 'noreply@irontrack.ee',
+                    name: "IronTrack",
+                },
+                replyTo: senderEmail,
+                subject: subject,
+                text: body,
+                html: htmlContent,
+            };
+
+            await sgMail.send(msg);
+
+            res.status(200).json({message: "Email sent successfully"});
+        } catch (error) {
+            console.error("Error sending email to affiliate:", error);
+            res.status(500).json({error: "Failed to send email to affiliate"});
+        }
+ }
 module.exports = {
     // eelnevalt defined sendMessage, getAllMessages, ...
     sendMessage,
     getAllMessages,
-    getSentMessages, // <-- ekspordime
+    getSentMessages,
+    sendMessageToAffiliate// <-- ekspordime
 };

@@ -56,3 +56,31 @@ export const getSentMessages = async (affiliate) => {
         throw error;
     }
 };
+
+export const sendMessageToAffiliate = async (senderEmail, affiliateEmail, subject, body) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/messages/send-to-affiliate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                affiliateEmail,
+                senderEmail,
+                subject,
+                body,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to send message to affiliate');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('sendMessageToAffiliate error:', error);
+        throw error;
+    }
+}

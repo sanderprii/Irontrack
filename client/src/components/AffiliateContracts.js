@@ -230,6 +230,7 @@ export default function AffiliateContracts({affiliateId}) {
                 <Table>
                     <TableHead>
                         <TableRow>
+                            <TableCell>ID</TableCell>
                             <TableCell onClick={() => handleSort('createdAt')}>
                                 Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '▲' : '▼')}
                             </TableCell>
@@ -256,7 +257,7 @@ export default function AffiliateContracts({affiliateId}) {
                                         sx={{cursor: 'pointer'}}
                                         onClick={() => toggleRow(contract.id)}
                                     >
-
+                                        <TableCell>{contract.id}</TableCell>
                                         <TableCell>
                                             {new Date(contract.createdAt).toLocaleDateString()}
                                         </TableCell>
@@ -323,8 +324,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                     <Table>
                                                         <TableHead>
                                                             <TableRow>
-                                                                <TableCell>From Date</TableCell>
-                                                                <TableCell>To Date</TableCell>
+                                                                <TableCell>Month</TableCell>
                                                                 <TableCell>Reason</TableCell>
                                                                 <TableCell>Accepted</TableCell>
                                                                 <TableCell />
@@ -333,14 +333,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                         <TableBody>
                                                             {contract.paymentHolidays.map((ph) => (
                                                                 <TableRow key={ph.id}>
-                                                                    <TableCell>
-                                                                        {new Date(ph.fromDate).toLocaleDateString()}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        {ph.toDate
-                                                                            ? new Date(ph.toDate).toLocaleDateString()
-                                                                            : '-'}
-                                                                    </TableCell>
+                                                                    <TableCell>{ph.month}</TableCell>
                                                                     <TableCell>{ph.reason}</TableCell>
                                                                     <TableCell>{ph.accepted}</TableCell>
                                                                     <TableCell>

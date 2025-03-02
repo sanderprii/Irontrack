@@ -191,5 +191,32 @@ const affiliateId = parseInt(id)
     }
 };
 
+const getAffiliateById = async (req, res) => {
+    try {
+
+        const affiliateId = parseInt(req.query.id);
+
+
+
+        if (!affiliateId) {
+            return res.status(400).json({ error: "Affiliate ID is required" });
+        }
+
+        const affiliate = await prisma.affiliate.findFirst({
+            where: { id: affiliateId},
+
+        });
+
+        if (!affiliate) {
+            return res.status(404).json({ error: "Affiliate not found" });
+        }
+
+        res.json(affiliate);
+    } catch (error) {
+        console.error("❌ Error fetching affiliate:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
 // ✅ Kasuta `module.exports`, mitte `exports`
-module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate };
+module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate, getAffiliateById };

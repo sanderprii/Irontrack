@@ -386,11 +386,21 @@ model PaymentHoliday {
   affiliateId Int
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 
-  fromDate DateTime
-
-  toDate     DateTime?
+  month      String
   reason     String?
-  monthlyFee Float     @default(0.0)
-  accepted   String    @default("pending") // pending, accepted, declined
-  createdAt  DateTime  @default(now())
+  monthlyFee Float    @default(0.0)
+  accepted   String   @default("pending") // pending, accepted, declined
+  createdAt  DateTime @default(now())
+}
+
+model paymentMetadata {
+  id               Int      @id @default(autoincrement())
+  transactionId    Int
+  montonioUuid     String
+  contractId       Int
+  affiliateId      Int
+  isPaymentHoliday Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@unique([montonioUuid, contractId])
 }

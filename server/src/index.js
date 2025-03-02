@@ -30,6 +30,8 @@ const groupsRoutes = require('./routes/groupsRoutes');
 const contractRoutes = require('./routes/contractRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
+const { startScheduler } = require('./schedulers/contractChecker');
+
 const app = express();
 app.set('trust proxy', 1);
 
@@ -117,4 +119,6 @@ checkDatabase();
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server käivitunud pordil ${PORT}`);
+
+    startScheduler();
 });

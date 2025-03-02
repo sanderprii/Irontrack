@@ -11,5 +11,5 @@ const ensureAuthenticated = require("../middlewares/ensureAuthenticatedJWT");
 router.post('/send', ensureAuthenticated, messageController.sendMessage);
 router.get("/", ensureAuthenticated, messageController.getAllMessages);
 router.get('/sent', ensureAuthenticated, messageController.getSentMessages);
-
+router.post('/send-to-affiliate', ensureAuthenticated, messageController.sendMessageToAffiliate);
 module.exports = router;

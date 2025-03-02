@@ -81,3 +81,26 @@ export const searchTrainers = async (query) => {
     }
 };
 
+export const getAffiliateById = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(`${API_URL}/affiliateById?id=${id}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching affiliate: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching affiliate data:", error);
+        return null;
+    }
+}
+

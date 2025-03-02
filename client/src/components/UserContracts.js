@@ -25,8 +25,10 @@ import {
     updatePaymentHoliday,
     updateContract,
 } from '../api/contractApi'; // <-- API import
+import { getAffiliateById} from "../api/affiliateApi";
 import ContractTermsModal from './ContractTermsModal';
-import { sendMessage } from "../api/messageApi";
+import { sendMessageToAffiliate } from "../api/messageApi";
+import MenuItem from "@mui/material/MenuItem";
 
 export default function UserContracts({ user, affiliateId }) {
     const [contracts, setContracts] = useState([]);
@@ -114,14 +116,23 @@ export default function UserContracts({ user, affiliateId }) {
             contractId: phContract.id,
             userId: user.id,
             affiliateId: phContract.affiliateId,
-            fromDate: phData.fromDate,
-            toDate: phData.toDate,
+            month: phData.month,
             reason: phData.reason,
         };
 
         const result = await createPaymentHoliday(payload);
         if (result && result.success) {
             alert('Payment holiday request created successfully!');
+            const getAffiliateData = await getAffiliateById(phContract.affiliateId);
+
+
+
+            const subject = 'Payment Holiday Request';
+            const body = `You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}.`;
+            const senderEmail = user.email;
+
+            const affiliateEmail = getAffiliateData.email;
+            await sendMessageToAffiliate(senderEmail, affiliateEmail, subject, body)
         } else {
             alert('Error creating payment holiday request!');
         }
@@ -137,6 +148,7 @@ export default function UserContracts({ user, affiliateId }) {
             if (result && result.success) {
                 alert(`Payment holiday set to "${newStatus}" successfully!`);
                 await loadContracts();
+
             } else {
                 alert('Error updating payment holiday status!');
             }
@@ -254,8 +266,8 @@ export default function UserContracts({ user, affiliateId }) {
                                                         <Table>
                                                             <TableHead>
                                                                 <TableRow>
-                                                                    <TableCell>From Date</TableCell>
-                                                                    <TableCell>To Date</TableCell>
+                                                                    <TableCell>Month</TableCell>
+
                                                                     <TableCell>Reason</TableCell>
                                                                     <TableCell>Accepted</TableCell>
                                                                     <TableCell />
@@ -264,14 +276,7 @@ export default function UserContracts({ user, affiliateId }) {
                                                             <TableBody>
                                                                 {contract.paymentHolidays.map((ph) => (
                                                                     <TableRow key={ph.id}>
-                                                                        <TableCell>
-                                                                            {new Date(ph.fromDate).toLocaleDateString()}
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            {ph.toDate
-                                                                                ? new Date(ph.toDate).toLocaleDateString()
-                                                                                : '-'}
-                                                                        </TableCell>
+                                                                        <TableCell>{ph.month}</TableCell>
                                                                         <TableCell>{ph.reason}</TableCell>
                                                                         <TableCell>{ph.accepted}</TableCell>
                                                                         <TableCell>
@@ -428,30 +433,29 @@ export default function UserContracts({ user, affiliateId }) {
                     <Typography variant="h6" mb={2}>
                         Request Payment Holiday
                     </Typography>
+                    {/* select valikud MUI komponendiga january to december */}
                     <TextField
-                        label="From Date"
-                        type="date"
-                        name="fromDate"
-                        value={phData.fromDate}
+                        select
+                        label="Month"
+                        name="month"
+                        value={phData.month || ''}
                         onChange={handlePhDataChange}
                         fullWidth
                         sx={{ mb: 2 }}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-                    <TextField
-                        label="To Date"
-                        type="date"
-                        name="toDate"
-                        value={phData.toDate}
-                        onChange={handlePhDataChange}
-                        fullWidth
-                        sx={{ mb: 2 }}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
+                    >
+                        <MenuItem value="January">January</MenuItem>
+                        <MenuItem value="February">February</MenuItem>
+                        <MenuItem value="March">March</MenuItem>
+                        <MenuItem value="April">April</MenuItem>
+                        <MenuItem value="May">May</MenuItem>
+                        <MenuItem value="June">June</MenuItem>
+                        <MenuItem value="July">July</MenuItem>
+                        <MenuItem value="August">August</MenuItem>
+                        <MenuItem value="September">September</MenuItem>
+                        <MenuItem value="October">October</MenuItem>
+                        <MenuItem value="November">November</MenuItem>
+                        <MenuItem value="December">December</MenuItem>
+                    </TextField>
                     <TextField
                         label="Reason"
                         name="reason"

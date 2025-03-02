@@ -114,15 +114,15 @@ const buyPlan = async (req, res) => {
     let merchantReference = req.body.currentMerchantReference;
 
 
-
-
-
     try {
-        // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
-        const plan = await prisma.plan.findUnique({where: {id: parseInt(planData.id)}});
-        if (!plan) {
-            return res.status(404).json({error: "Plan not found."});
-        }
+
+
+            // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
+            const plan = await prisma.plan.findUnique({where: {id: parseInt(planData.id)}});
+            if (!plan) {
+                return res.status(404).json({error: "Plan not found."});
+            }
+
         const user = await prisma.user.findUnique({
             where: {id: userId},
             include: {members: true}
@@ -223,7 +223,7 @@ const buyPlan = async (req, res) => {
                 data: {
                     userId: userId,
                     affiliateId: affiliateId,
-                    planId: planData.id,
+                    planId: planData.id || 0,
                     purchasedAt: new Date(),
                     endDate: new Date(new Date().getTime() + planData.validityDays * 24 * 60 * 60 * 1000),
                     price: planData.price,

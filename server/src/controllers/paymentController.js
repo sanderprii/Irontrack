@@ -5,6 +5,8 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const NOTIFICATION_URL = process.env.NOTIFICATION_URL;
+
 // Environment variables
 
 const MERCHANT_NAME = process.env.MERCHANT_NAME;
@@ -22,21 +24,44 @@ let affiliateAccessKey = '';
 const createMontonioPayment = async (req, res) => {
     try {
         // Extract and validate payment data
-        const {  amount, orderId, description, userData, affiliateId, appliedCredit, contractId } = req.body;
-        const userEmail = userData.email;
-        const userPhone = userData.phone;
-        const userFullName = userData.fullName;
+        const { amount, orderId, description, userData, affiliateId, appliedCredit, contractId } = req.body;
+        const userEmail = userData?.email || '';
+        const userPhone = userData?.phone || '';
+        const userFullName = userData?.fullName || '';
+
+        if (!affiliateId) {
+            return res.status(400).json({
+                success: false,
+                message: "AffiliateId is required"
+            });
+        }
+
+        const parsedAffiliateId = parseInt(affiliateId);
+        if (isNaN(parsedAffiliateId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid affiliateId format - must be a number"
+            });
+        }
+
+
 
         const affiliateApiKeys = await prisma.affiliateApiKeys.findFirst({
             where: {
-                affiliateId: parseInt(affiliateId)
+                affiliateId: parsedAffiliateId
             }
         });
 
+        if (!affiliateApiKeys) {
+            console.error(`API keys not found for affiliate ID ${parsedAffiliateId}`);
+            return res.status(404).json({
+                success: false,
+                message: "Payment configuration not found for this affiliate"
+            });
+        }
+
         affiliateAccessKey = affiliateApiKeys.accessKey;
         affiliateSecretKey = affiliateApiKeys.secretKey;
-
-
 
         // Ensure amount is a valid number
         const parsedAmount = parseFloat(amount);
@@ -59,15 +84,17 @@ const createMontonioPayment = async (req, res) => {
         const formattedAmount = parsedAmount.toFixed(2);
 
         // Create a fully qualified notification URL
-        // Montonio requires this to be a public URL, not localhost
-        // For production, this should be your actual server URL
-        // For testing, you can use a service like ngrok to expose your local server
-        const notificationUrl = "https://90e5-213-184-42-139.ngrok-free.app/api/payments/montonio-webhook"; // Replace with your webhook URL for testing
+        const notificationUrl = `${NOTIFICATION_URL}/api/payments/montonio-webhook`;
+
+        // Loome unique merchantReference, mis sisaldab ka lepingu ID-d kui see on olemas
+        const merchantReference = contractId
+            ? `contract-${contractId}-${new Date().getTime()}`
+            : new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
 
         // Create the payment data object
         const paymentData = {
             accessKey: affiliateAccessKey,
-            merchantReference: new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14),
+            merchantReference: merchantReference,
             returnUrl: `${process.env.FRONTEND_URL}/checkout`,
             notificationUrl: notificationUrl,
             currency: "EUR",
@@ -106,14 +133,11 @@ const createMontonioPayment = async (req, res) => {
             exp: Math.floor(Date.now() / 1000) + 10 * 60
         };
 
-
-
         // Generate JWT token
         const token = jwt.sign(
             paymentData,
             affiliateSecretKey,
-            { algorithm: 'HS256' },
-            affiliateId,
+            { algorithm: 'HS256' }
         );
 
         // Send request to Montonio
@@ -121,8 +145,43 @@ const createMontonioPayment = async (req, res) => {
             data: token
         });
 
-        // Handle success
-        console.log("Montonio payment created successfully");
+
+
+        // Kui tegemist on lepingumaksega (contractId on olemas), siis loome paymentMetadata kirje
+        if (contractId) {
+            try {
+                // Loome transaktsiooni kirje
+                const transaction = await prisma.transactions.create({
+                    data: {
+                        userId: userData.id,
+                        affiliateId: parsedAffiliateId,
+                        amount: parsedAmount,
+                        invoiceNumber: merchantReference,
+                        description: `Contract payment: ${description || 'Contract Payment'}`,
+                        type: 'contract',
+                        status: 'pending'
+                    }
+                });
+
+
+
+                // Salvestame payment metadata
+                await prisma.paymentMetadata.create({
+                    data: {
+                        transactionId: transaction.id,
+                        montonioUuid: response.data.uuid,
+                        contractId: parseInt(contractId),
+                        affiliateId: parsedAffiliateId,
+                        isPaymentHoliday: false
+                    }
+                });
+
+
+            } catch (dbError) {
+                console.error("Error creating payment metadata:", dbError);
+                // Isegi kui metadata kirjutamine ebaõnnestub, laseme maksel jätkuda
+            }
+        }
 
         // Return payment URL to redirect the customer
         return res.status(200).json({
@@ -159,7 +218,7 @@ const handleMontonioWebhook = async (req, res) => {
 
         if (!orderToken) {
             console.log('No order token provided');
-            return res.status(400).json({ success: false, message: 'No order token provided' });
+            return res.status(200).json({ success: false, message: 'No order token provided' });
         }
 
         // Proovi kõigepealt dekodeerida ilma kinnitamiseta, et saada uuid
@@ -168,22 +227,56 @@ const handleMontonioWebhook = async (req, res) => {
             decodedToken = jwt.decode(orderToken);
 
             if (!decodedToken || !decodedToken.uuid) {
-                return res.status(400).json({ success: false, message: 'Invalid token format' });
+                console.log('Invalid token format or missing UUID');
+                return res.status(200).json({ success: false, message: 'Invalid token format' });
             }
 
-            const paymentLinkUuid = decodedToken.paymentLinkUuid;
+            // Kasuta uuid-d paymentLinkUuid asemel
+            const orderUuid = decodedToken.uuid;  // UUID on otseselt decodedToken.uuid-s, mitte paymentLinkUuid-s
+            console.log(`Processing webhook for order UUID: ${orderUuid}`);
 
-            // Otsi paymentMetadata tabelist vajalikud andmed
-            const paymentMetadata = await prisma.$queryRaw`
-                SELECT * FROM paymentMetadata WHERE montonioUuid = ${paymentLinkUuid}
-            `;
+            // Lepingu maksete jaoks otsime paymentMetadata
+            const paymentMetadata = await prisma.paymentMetadata.findFirst({
+                where: { montonioUuid: orderUuid }
+            });
 
-            if (!paymentMetadata || paymentMetadata.length === 0) {
-                console.error(`No payment metadata found for UUID ${paymentLinkUuid}`);
-                return res.status(404).json({ success: false, message: 'Payment metadata not found' });
+            // Kui metadata puudub, ei pruugi see olla leping vaid tavalise paketi ost
+            if (!paymentMetadata) {
+                console.log(`No payment metadata found for UUID ${orderUuid}, processing as regular payment`);
+
+                // Leia AffiliateApiKeys, kui võimalik
+                // Vajalik token verifitseerimiseks
+                const apiKeys = await prisma.affiliateApiKeys.findFirst();
+                if (apiKeys) {
+                    affiliateSecretKey = apiKeys.secretKey;
+                    affiliateAccessKey = apiKeys.accessKey;
+                } else {
+                    console.log('No affiliate API keys found, cannot verify token');
+                    return res.status(200).json({ success: false, message: 'Cannot verify payment without API keys' });
+                }
+
+                try {
+                    // Verifitseeri token
+                    decodedToken = jwt.verify(orderToken, affiliateSecretKey);
+
+                    // Töötleme tavalise makse, mille andmeid ei olegi paymentMetadata tabelis
+                    const { paymentStatus, merchantReference } = decodedToken;
+                    console.log(`Regular payment status: ${paymentStatus}, reference: ${merchantReference}`);
+
+                    // Vastame edukalt - checkout.js hoolitseb tegeliku ostu eest
+                    return res.status(200).json({
+                        success: true,
+                        message: `Successfully processed regular payment webhook`
+                    });
+                } catch (verifyError) {
+                    console.error('Error verifying token:', verifyError);
+                    return res.status(200).json({ success: false, message: 'Error verifying token' });
+                }
             }
 
-            const { transactionId, contractId, affiliateId, isPaymentHoliday } = paymentMetadata[0];
+            // Kui leidsime metadata, töötleme lepingumakse
+            const { transactionId, contractId, affiliateId, isPaymentHoliday } = paymentMetadata;
+
 
             // Leia API võtmed affiliateId järgi
             const apiKeys = await prisma.affiliateApiKeys.findFirst({
@@ -192,7 +285,7 @@ const handleMontonioWebhook = async (req, res) => {
 
             if (!apiKeys) {
                 console.error(`API keys not found for affiliate ${affiliateId}`);
-                return res.status(404).json({ success: false, message: 'API keys not found' });
+                return res.status(200).json({ success: false, message: 'API keys not found' });
             }
 
             // Seadista globaalsed muutujad
@@ -200,25 +293,35 @@ const handleMontonioWebhook = async (req, res) => {
             affiliateAccessKey = apiKeys.accessKey;
 
             // Verifitseeri token kasutades leitud võtit
-            decodedToken = jwt.verify(orderToken, affiliateSecretKey);
+            try {
+                decodedToken = jwt.verify(orderToken, affiliateSecretKey);
+            } catch (verifyError) {
+                console.error('Error verifying token with affiliate key:', verifyError);
+                return res.status(200).json({ success: false, message: 'Error verifying token with affiliate key' });
+            }
 
             // Extract order information
             const {
                 paymentStatus,
                 merchantReference,
                 grandTotal,
-                currency,
-                senderIban,
-                senderName
+                currency
             } = decodedToken;
+
+
 
             // Uuenda vastavalt makse staatusele
             if (paymentStatus === 'PAID') {
                 // 1. Uuenda tehingu olek
-                await prisma.transactions.update({
-                    where: { id: transactionId },
-                    data: { status: 'success' }
-                });
+                try {
+                    await prisma.transactions.update({
+                        where: { id: transactionId },
+                        data: { status: 'success' }
+                    });
+
+                } catch (updateError) {
+                    console.error(`Error updating transaction: ${updateError.message}`);
+                }
 
                 // 2. Kui EI OLE payment holiday, siis uuenda userPlan
                 if (!isPaymentHoliday) {
@@ -228,13 +331,13 @@ const handleMontonioWebhook = async (req, res) => {
                     });
 
                     if (userPlan) {
-                        console.log(`Found user plan ID: ${userPlan.id}`);
+
 
                         // Arvuta uus lõppkuupäev (lisa üks kuu)
                         let newEndDate = new Date(userPlan.endDate);
                         newEndDate.setMonth(newEndDate.getMonth() + 1);
 
-                        console.log(`Updating user plan end date from ${userPlan.endDate} to ${newEndDate}`);
+
 
                         // Uuenda kasutaja plaani kehtivust
                         await prisma.userPlan.update({
@@ -242,7 +345,7 @@ const handleMontonioWebhook = async (req, res) => {
                             data: { endDate: newEndDate }
                         });
 
-                        console.log(`Successfully updated UserPlan ${userPlan.id} end date to ${newEndDate}`);
+
                     } else {
                         console.error(`UserPlan not found for contract ${contractId}`);
                     }
@@ -253,15 +356,21 @@ const handleMontonioWebhook = async (req, res) => {
                 console.log(`Marking transaction ${transactionId} as cancelled`);
 
                 // Märgi tehing tühistatuks
-                await prisma.transactions.update({
-                    where: { id: transactionId },
-                    data: { status: 'cancelled' }
-                });
+                try {
+                    await prisma.transactions.update({
+                        where: { id: transactionId },
+                        data: { status: 'cancelled' }
+                    });
+                    console.log(`Updated transaction ${transactionId} status to cancelled`);
+                } catch (updateError) {
+                    console.error(`Error updating transaction: ${updateError.message}`);
+                }
             }
 
         } catch (error) {
             console.error('Error processing webhook token:', error);
-            return res.status(401).json({ success: false, message: 'Error processing token' });
+            // Always return 200 to prevent Montonio from retrying
+            return res.status(200).json({ success: false, message: 'Error processing token' });
         }
 
         // Always respond with 200 OK to acknowledge receipt of the webhook

@@ -131,20 +131,30 @@ export const getUserContracts = async (userId, affiliateId) => {
 };
 
 // Accept contract
-export const acceptContract = async (contractId, payload) => {
-    const token = localStorage.getItem('token');
+export const acceptContract = async (contractId, data) => {
     try {
-        const resp = await fetch(`${API_BASE}/contracts/${contractId}/accept`, {
+        const response = await fetch(`/api/contracts/${contractId}/accept`, {
             method: 'PUT',
             headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(data)
         });
-        return await resp.json();
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            // Kontrollime kas on tegemist maksmata lepinguga
+            if (errorData.requiresPayment) {
+                return { requiresPayment: true };
+            }
+            throw new Error(errorData.error || 'Failed to accept contract');
+        }
+
+        return await response.json();
     } catch (error) {
-        console.error('Error acceptContract:', error);
+        console.error('Error accepting contract:', error);
+        throw error;
     }
 };
 

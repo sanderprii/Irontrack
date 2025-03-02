@@ -33,13 +33,13 @@ model User {
   classLeaderboard ClassLeaderboard[]
   members          Members[]
   transactions     transactions[]
-
-  userNotes       UserNote[]
-  messageGroups   UserMessageGroup[]
-  contract        Contract[]
-  signedContracts SignedContract[]
-  paymentHolidays PaymentHoliday[]
-  contractLogs    ContractLogs[]
+  waitlist         Waitlist[]
+  userNotes        UserNote[]
+  messageGroups    UserMessageGroup[]
+  contract         Contract[]
+  signedContracts  SignedContract[]
+  paymentHolidays  PaymentHoliday[]
+  contractLogs     ContractLogs[]
 }
 
 model Message {
@@ -54,9 +54,10 @@ model Message {
 }
 
 model Contract {
-  id              Int              @id @default(autoincrement())
-  affiliateId     Int
-  userId          Int
+  id          Int @id @default(autoincrement())
+  affiliateId Int
+  userId      Int
+
   contractType    String?
   content         String
   paymentType     String?
@@ -219,6 +220,7 @@ model ClassSchedule {
   freeClass      Boolean            @default(false)
   attendees      ClassAttendee[]
   leaderboard    ClassLeaderboard[]
+  waitlist       Waitlist[]
 }
 
 model Plan {
@@ -237,19 +239,20 @@ model Plan {
 }
 
 model UserPlan {
-  id           Int       @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   userId       Int
-  user         User      @relation(fields: [userId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
   contractId   Int?
-  contract     Contract? @relation(fields: [contractId], references: [id])
+  contract     Contract?  @relation(fields: [contractId], references: [id])
   affiliateId  Int
   planId       Int // kui tahad viidata Plan.id-le
   planName     String
   validityDays Int
   price        Float
-  purchasedAt  DateTime  @default(now())
+  purchasedAt  DateTime   @default(now())
   endDate      DateTime
   sessionsLeft Int
+  waitlist     Waitlist[]
 }
 
 model Affiliate {
@@ -403,4 +406,17 @@ model paymentMetadata {
   createdAt        DateTime @default(now())
 
   @@unique([montonioUuid, contractId])
+}
+
+model Waitlist {
+  id            Int           @id @default(autoincrement())
+  classId       Int
+  classSchedule ClassSchedule @relation(fields: [classId], references: [id])
+  userId        Int
+  userPlanId    Int
+  userPlan      UserPlan      @relation(fields: [userPlanId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@unique([classId, userId]) // vältimaks duplikaatregistratsioone
 }

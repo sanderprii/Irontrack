@@ -24,5 +24,8 @@ router.get("/classes/leaderboard/check", ensureAuthenticated, checkClassScore);
 router.post("/classes/leaderboard/add", ensureAuthenticated, addClassScore);
 router.put("/classes/leaderboard/update", ensureAuthenticated, updateClassScore);
 
+router.get("/classes/waitlist", ensureAuthenticated, classController.getWaitlist);
+router.post("/classes/waitlist", ensureAuthenticated, classController.createWaitlist);
+router.delete("/classes/waitlist/remove", ensureAuthenticated, classController.deleteWaitlist);
 
 module.exports = router;

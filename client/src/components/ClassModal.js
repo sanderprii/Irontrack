@@ -42,8 +42,11 @@ import {
     registerForClass,
     cancelRegistration,
     checkUserEnrollment,
+    getWaitlist,
+    createWaitlist,
+    deleteWaitlist,
 } from "../api/classesApi";
-import {getUserPlansByAffiliate} from "../api/profileApi";
+import {getUserPlansByAffiliate, getUserProfile} from "../api/profileApi";
 import {getMemberInfo} from "../api/membersApi";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 
@@ -63,7 +66,7 @@ export default function ClassModal({
     const [selectedUser, setSelectedUser] = useState(null);
     const [isProfileOpen, setProfileOpen] = useState(false);
 
-    // 👉 Registreerimiseks vajalikud uued state'id
+    // 👉 Registreerimiseks ja waitlistile vajalikud state'id
     const [userPlans, setUserPlans] = useState([]); // Hoiustab kasutaja plaane
     const [selectedPlanId, setSelectedPlanId] = useState(null); // Kasutaja valitud plaani ID
 
@@ -75,17 +78,35 @@ export default function ClassModal({
     // Aitame tuvastada, kas kasutaja on *juba* registreerunud sellesse klassi
     const [isRegistered, setIsRegistered] = useState(false);
 
+    // Uued waitlisti jaoks vajalikud state'id
+    const [isInWaitlist, setIsInWaitlist] = useState(false);
+    const [isClassFull, setIsClassFull] = useState(false);
+    const [waitlistEntries, setWaitlistEntries] = useState([]);
+
     useEffect(() => {
         const role = localStorage.getItem("role");
         setUserRole(role);
     }, []);
+
+    // Kontrollime, kas klass on täis
+    useEffect(() => {
+        if (cls && typeof attendeesCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
+            setIsClassFull(attendeesCount >= cls.memberCapacity);
+        }
+    }, [cls, attendeesCount, isInWaitlist]);
 
     // Kui modal avatakse ja meil on olemas klassi ID, toome klassi osalejad
     // ja uurime, kas kasutaja on nende hulgas.
     useEffect(() => {
         if (!cls || !cls.id) return;
         fetchAttendees();
-    }, [cls]);
+        if (userRole === "regular") {
+            checkWaitlistStatus();
+        }
+        if (userRole === "affiliate" || userRole === "trainer") {
+            fetchWaitlistEntries();
+        }
+    }, [cls, open, userRole]);
 
     useEffect(() => {
         if (cls && cls.id && userRole === "regular" && open) {
@@ -99,6 +120,52 @@ export default function ClassModal({
             loadUserPlans(cls.affiliateId);
         }
     }, [open, userRole, cls]);
+
+    // Kontrollime, kas kasutaja on juba waitlistis
+    async function checkWaitlistStatus() {
+        try {
+            if (!cls || !cls.id) return;
+
+            const waitlist = await getWaitlist(cls.id);
+            const user = await getUserProfile();
+            const userId = user.id;
+
+            console.log("Checking waitlist status:", {
+                userId,
+                waitlist,
+                classId: cls.id
+            });
+
+            if (waitlist && waitlist.length > 0) {
+                // Use explicit type conversion to ensure correct comparison
+                const userInWaitlist = waitlist.some(item => {
+                    const itemUserId = typeof item.userId === 'string' ? parseInt(item.userId) : item.userId;
+                    return itemUserId === userId;
+                });
+
+                console.log("User in waitlist:", userInWaitlist);
+                setIsInWaitlist(userInWaitlist);
+            } else {
+                setIsInWaitlist(false);
+            }
+        } catch (error) {
+            console.error("Error checking waitlist status:", error);
+            setIsInWaitlist(false);
+        }
+    }
+
+    // Toome waitlisti sissekanded admini/treeneri vaates
+    async function fetchWaitlistEntries() {
+        try {
+            if (!cls || !cls.id) return;
+
+            const waitlist = await getWaitlist(cls.id);
+            setWaitlistEntries(waitlist || []);
+        } catch (error) {
+            console.error("Error fetching waitlist entries:", error);
+            setWaitlistEntries([]);
+        }
+    }
 
     // 3) LAEME KASUTAJA SCORE, et teha kindlaks, kas on juba sisestatud
     async function fetchUserScore(classId) {
@@ -151,7 +218,6 @@ export default function ClassModal({
         }
     }
 
-
     async function loadUserPlans(affiliateId) {
         try {
             const plans = await getUserPlansByAffiliate(affiliateId);
@@ -161,12 +227,9 @@ export default function ClassModal({
                 const planEndDate = new Date(plan.endDate).getTime();
                 let expiryTime = 0;
                 if (plan.contractId !== null) {
-
                     const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 päeva millisekundites
                     expiryTime = planEndDate + fiveDaysInMs;
-
                 } else {
-
                     expiryTime = planEndDate;
                 }
                 return new Date(cls.time).getTime() < expiryTime;
@@ -183,14 +246,16 @@ export default function ClassModal({
         }
     }
 
-
     async function fetchAttendees() {
         try {
             await checkIfCurrentUserIsRegistered();
             const data = await getClassAttendees(cls.id);
             setAttendees(data || []);
 
-
+            // Pärast attendees uuendamist kontrolli uuesti waitlist staatust
+            if (userRole === "regular") {
+                await checkWaitlistStatus();
+            }
         } catch (error) {
             console.error("Error fetching attendees:", error);
             setAttendees([]);
@@ -199,16 +264,13 @@ export default function ClassModal({
 
     async function checkIfCurrentUserIsRegistered() {
         const response = await checkUserEnrollment(cls.id);
-
         setIsRegistered(response.enrolled);
-
     }
 
     // ✅ Registreerimise funktsioon
     const handleRegister = async () => {
         try {
             if (!cls.freeClass) {
-
                 if (!selectedPlanId) {
                     alert("Please select a plan first!");
                     return;
@@ -220,38 +282,92 @@ export default function ClassModal({
 
             // Uuendame peal vaadet, kui vaja (attendeesCount, vms)
             await refreshClasses();
-        } catch
-            (error) {
+        } catch (error) {
             console.error("Error registering for class:", error);
             alert(error.message || "Registration failed");
         }
     };
 
-// ✅ Tühista registreerimise funktsioon
+    // ✅ Tühista registreerimise funktsioon
     const handleCancelRegistration = async () => {
         try {
             await cancelRegistration(cls.id, cls.freeClass);
             await fetchAttendees();
-
+            if (userRole === "affiliate" || userRole === "trainer") {
+                // Refresh waitlist after cancellation to reflect changes
+                await fetchWaitlistEntries();
+            }
             await refreshClasses();
-
         } catch (error) {
             console.error("Error canceling registration:", error);
             alert(error.message || "Cancellation failed");
         }
     };
 
+    // ✅ Lisa ootejärjekorda
+    const handleAddToWaitlist = async () => {
+        try {
+            // Require plan selection for paid classes
+            if (!cls.freeClass) {
+                if (!selectedPlanId) {
+                    alert("Please select a plan first!");
+                    return;
+                }
+            }
+
+            await createWaitlist(cls.id, selectedPlanId);
+
+            // Force re-check waitlist status
+            await checkWaitlistStatus();
+
+            alert("You have been added to the waitlist!");
+        } catch (error) {
+            console.error("Error adding to waitlist:", error);
+            alert(error.message || "Failed to add to waitlist");
+        }
+    };
+
+    // ✅ Eemalda ootejärjekorrast
+    const handleRemoveFromWaitlist = async () => {
+        try {
+            await deleteWaitlist(cls.id);
+
+            // Force re-check waitlist status
+            await checkWaitlistStatus();
+
+            alert("You have been removed from the waitlist");
+        } catch (error) {
+            console.error("Error removing from waitlist:", error);
+            alert(error.message || "Failed to remove from waitlist");
+        }
+    };
+
     const handleCheckIn = async (userId) => {
-        await checkInAttendee(cls.id, userId);
-        setAttendees((prev) =>
-            prev.map((a) => (a.userId === userId ? {...a, checkIn: true} : a))
-        );
+        try {
+            await checkInAttendee(cls.id, userId);
+            setAttendees(prev =>
+                prev.map(a => (a.userId === userId ? {...a, checkIn: true} : a))
+            );
+        } catch (error) {
+            console.error("Error checking in attendee:", error);
+            alert("Failed to check in attendee");
+        }
     };
 
     const handleDelete = async (userId) => {
-        await deleteAttendee(cls.id, userId);
-        setAttendees((prev) => prev.filter((a) => a.userId !== userId));
-        refreshClasses();
+        try {
+            await deleteAttendee(cls.id, userId);
+            setAttendees(prev => prev.filter(a => a.userId !== userId));
+            await refreshClasses();
+
+            // Also check waitlist after deletion - someone might have been auto-registered
+            if (userRole === "affiliate" || userRole === "trainer") {
+                await fetchWaitlistEntries();
+            }
+        } catch (error) {
+            console.error("Error deleting attendee:", error);
+            alert("Failed to delete attendee");
+        }
     };
 
     const handleOpenProfile = async (userId) => {
@@ -263,10 +379,10 @@ export default function ClassModal({
             console.error("❌ Error fetching user profile:", error);
         }
     };
+
     if (!cls) return null;
 
     function getFlagColor(flag) {
-
         switch (flag) {
             case "red":
                 return "#ff0000";
@@ -279,7 +395,6 @@ export default function ClassModal({
 
     const isClassOver = new Date(cls.time) < new Date();
 
-    console.log("cls.canRegister:", cls.canRegister, "Tüüp:", typeof cls.canRegister);
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
@@ -320,6 +435,16 @@ export default function ClassModal({
                                 <strong>👥 Capacity:</strong> {attendeesCount} /{" "}
                                 {cls.memberCapacity}
                             </Typography>
+                            {isClassFull && !isRegistered && !isInWaitlist && (
+                                <Typography color="error" sx={{mt: 1, fontWeight: "bold"}}>
+                                    This class is full. You can join the waitlist.
+                                </Typography>
+                            )}
+                            {isInWaitlist && (
+                                <Typography color="primary" sx={{mt: 1, fontWeight: "bold"}}>
+                                    You are on the waitlist for this class.
+                                </Typography>
+                            )}
                         </Box>
                     </Grid>
 
@@ -354,7 +479,7 @@ export default function ClassModal({
 
                 <Divider sx={{marginY: 2}}/>
 
-                {/* Register / Cancel sektsioon ainult REGULAR kasutajale */}
+                {/* Register / Cancel / Waitlist sektsioon ainult REGULAR kasutajale */}
                 {userRole === "regular" && (
                     <Box mb={2}>
                         {isRegistered ? (
@@ -367,8 +492,72 @@ export default function ClassModal({
                             >
                                 Cancel Registration
                             </Button>
+                        ) : isInWaitlist ? (
+                            // ✅ Kui kasutaja on ootejärjekorras, näitame nuppu ootejärjekorrast eemaldamiseks
+                            <Button
+                                variant="contained"
+                                color="warning"
+                                disabled={isClassOver}
+                                onClick={handleRemoveFromWaitlist}
+                            >
+                                Remove from Waitlist
+                            </Button>
+                        ) : isClassFull ? (
+                            // ✅ Kui klass on täis ja kasutaja pole ootejärjekorras
+                            <>
+                                {cls.freeClass ? (
+                                    // For free classes, no plan selection needed
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={isClassOver}
+                                        onClick={handleAddToWaitlist}
+                                    >
+                                        Join Waitlist
+                                    </Button>
+                                ) : userPlans && userPlans.length > 0 ? (
+                                    // For paid classes with available plans
+                                    <Box display="flex" alignItems="center" gap={2}>
+                                        <FormControl sx={{minWidth: 120}}>
+                                            <InputLabel id="plan-select-label">Select Plan</InputLabel>
+                                            <Select
+                                                labelId="plan-select-label"
+                                                value={selectedPlanId || ""}
+                                                label="Select Plan"
+                                                onChange={(e) => setSelectedPlanId(e.target.value)}
+                                            >
+                                                {userPlans.map((plan) => (
+                                                    <MenuItem key={plan.id} value={plan.id}>
+                                                        {plan.planName} (Sessions left: {plan.sessionsLeft})
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={isClassOver}
+                                            onClick={handleAddToWaitlist}
+                                        >
+                                            Join Waitlist
+                                        </Button>
+                                    </Box>
+                                ) : (
+                                    // If no plans available
+                                    <Typography color="red">
+                                        You have no valid plans.{" "}
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => alert("Go to buy plans page!")}
+                                        >
+                                            Buy Plans
+                                        </Button>
+                                    </Typography>
+                                )}
+                            </>
                         ) : (
-                            // ✅ Kui kasutaja EI OLE registreeritud, näitame plaanide dropdowni + Register-nuppu
+                            // ✅ Kui kasutaja EI OLE registreeritud ja klass pole täis
                             <>
                                 {userPlans && userPlans.length > 0 && cls.canRegister === true && cls.freeClass === false ? (
                                     <Box display="flex" alignItems="center" gap={2}>
@@ -382,7 +571,7 @@ export default function ClassModal({
                                             >
                                                 {userPlans.map((plan) => (
                                                     <MenuItem key={plan.id} value={plan.id}>
-                                                        {plan.name} (Sessions left: {plan.sessionsLeft})
+                                                        {plan.planName} (Sessions left: {plan.sessionsLeft})
                                                     </MenuItem>
                                                 ))}
                                             </Select>
@@ -397,7 +586,6 @@ export default function ClassModal({
                                         </Button>
                                     </Box>
                                 ) : (
-
                                     <>
                                         {cls.canRegister === true && cls.freeClass === true ? (
                                             <Button
@@ -409,18 +597,17 @@ export default function ClassModal({
                                                 Register
                                             </Button>
                                         ) : (
-
-                                    // ✅ Kui plaane pole
-                                    <Typography color="red">
-                                        You have no valid plans.{" "}
-                                        <Button
-                                            variant="outlined"
-                                            color="primary"
-                                            onClick={() => alert("Go to buy plans page!")}
-                                        >
-                                            Buy Plans
-                                        </Button>
-                                    </Typography>
+                                            // ✅ Kui plaane pole
+                                            <Typography color="red">
+                                                You have no valid plans.{" "}
+                                                <Button
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    onClick={() => alert("Go to buy plans page!")}
+                                                >
+                                                    Buy Plans
+                                                </Button>
+                                            </Typography>
                                         )}
                                     </>
                                 )}
@@ -471,7 +658,6 @@ export default function ClassModal({
                                                     {attendee.userNotes?.map((note, index) =>
                                                         note.flag ? (
                                                             <FlagIcon
-
                                                                 key={index}
                                                                 style={{fill: getFlagColor(note.flag)}}
                                                             />
@@ -481,8 +667,7 @@ export default function ClassModal({
                                             }
                                         />
 
-                                        {/* Nupud (check-in & kustuta) on nähtavad nt treenerile, adminile vms,
-                    kui soovid, piira rolli. */}
+                                        {/* Nupud (check-in & kustuta) on nähtavad nt treenerile, adminile vms */}
                                         <ListItemSecondaryAction
                                             sx={{
                                                 display: "flex",
@@ -529,8 +714,61 @@ export default function ClassModal({
                                 <Typography>No attendees</Typography>
                             )}
                         </List>
+
+                        {/* Waitlist Section for admins and trainers */}
+                        <Typography variant="h6" sx={{fontWeight: "bold", marginTop: 3, marginBottom: 1}}>
+                            Waitlist ({waitlistEntries.length})
+                        </Typography>
+                        {waitlistEntries.length > 0 ? (
+                            <List>
+                                {waitlistEntries.map((entry, index) => (
+                                    <ListItem
+                                        key={entry.id}
+                                        sx={{
+                                            border: "2px solid #f0f0f0",
+                                            borderRadius: "8px",
+                                            padding: "12px",
+                                            marginBottom: "8px",
+                                            backgroundColor: "#f9f9f9"
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={
+                                                <Box display="flex" alignItems="center" gap={1}>
+                                                    <Typography
+                                                        sx={{
+                                                            fontWeight: "bold",
+                                                            cursor: "pointer",
+                                                            color: "blue",
+                                                            "&:hover": {textDecoration: "underline"}
+                                                        }}
+                                                        onClick={() => handleOpenProfile(entry.userId)}
+                                                    >
+                                                        {entry.user.fullName}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                            secondary={
+                                                <>
+                                                    <Typography variant="caption">
+                                                        Added to waitlist: {new Date(entry.createdAt).toLocaleString()}
+                                                    </Typography>
+                                                    <br />
+                                                    <Typography variant="caption">
+                                                        Plan: {entry.userPlan?.planName || "Free Class"}
+                                                    </Typography>
+                                                </>
+                                            }
+                                        />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        ) : (
+                            <Typography>No one is on the waitlist</Typography>
+                        )}
                     </>
                 )}
+
                 {userRole === "regular" && (
                     <Box mb={2}>
                         {!showScoreForm && (

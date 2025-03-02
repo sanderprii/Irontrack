@@ -29,6 +29,7 @@ import { getAffiliateById} from "../api/affiliateApi";
 import ContractTermsModal from './ContractTermsModal';
 import { sendMessageToAffiliate } from "../api/messageApi";
 import MenuItem from "@mui/material/MenuItem";
+import {useNavigate} from "react-router-dom";
 
 export default function UserContracts({ user, affiliateId }) {
     const [contracts, setContracts] = useState([]);
@@ -45,6 +46,8 @@ export default function UserContracts({ user, affiliateId }) {
         toDate: '',
         reason: '',
     });
+
+    const navigate = useNavigate();
 
     // Lisame oleku dialoogi ja endDate haldamiseks
     const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
@@ -73,14 +76,47 @@ export default function UserContracts({ user, affiliateId }) {
     };
 
     const handleAccept = async (contract) => {
-        const payload = {
-            userId: user.id,
-            affiliateId: contract.affiliateId,
-            acceptType: 'checkbox',
-            contractTermsId: 1, // või mingi sobiv ID
-        };
-        await acceptContract(contract.id, payload);
-        await loadContracts();
+        // Kontrollime, et affiliateId on olemas ja õiges formaadis
+        let parsedAffiliateId = affiliateId;
+        if (!parsedAffiliateId && contract && contract.affiliateId) {
+            parsedAffiliateId = contract.affiliateId;
+        }
+
+        if (!parsedAffiliateId) {
+            alert('Puudub affiliateId! Palun võtke ühendust administraatoriga.');
+            return;
+        }
+
+        // Veendume, et affiliateId on number
+        parsedAffiliateId = parseInt(parsedAffiliateId);
+
+        if (isNaN(parsedAffiliateId)) {
+            alert('AffiliateId pole korrektses formaadis! Palun võtke ühendust administraatoriga.');
+            return;
+        }
+
+        console.log("Navigating to checkout with affiliateId:", parsedAffiliateId);
+
+        // Suuname kasutaja checkout lehele lepingu andmetega
+        navigate('/checkout', {
+            state: {
+                contract: contract,
+                plan: {
+                    id: 'contract-payment', // Spetsiaalne identifikaator lepingu maksete jaoks
+                    name: `${contract.paymentType || 'Monthly'} Contract Payment`,
+                    price: contract.paymentAmount,
+                    affiliateId: parsedAffiliateId, // Kasuta parsitud ID-d
+                    validityDays: 30, // Standardne 30-päevane kehtivus esimesele maksele
+                    sessions: 999, // Piisavalt suur arv, et kasutaja saaks käia nii palju kui tahab
+                },
+                affiliate: {
+                    id: parsedAffiliateId,
+                    name: contract.affiliate?.name || 'Affiliate'
+                },
+                userData: user,
+                isContractPayment: true
+            }
+        });
     };
 
     const openTerms = (contract) => {

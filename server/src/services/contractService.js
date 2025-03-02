@@ -5,6 +5,8 @@ const { sendMessage } = require('../utils/emailService');
 
 const prisma = new PrismaClient();
 
+const NOTIFICATION_URL = process.env.NOTIFICATION_URL || 'https://api.irontrack.ee';
+
 const MONTONIO_API_URL = process.env.NODE_ENV === 'production'
     ? 'https://stargate.montonio.com/api'
     : 'https://sandbox-stargate.montonio.com/api';
@@ -22,7 +24,7 @@ async function processContractPayments() {
         const targetPaymentDay = futureDate.getDate();
 
         const currentMonth = futureDate.toLocaleString('en-US', { month: 'long' }); // Get current month as string (January, February, etc.)
-console.log('currentMonth',currentMonth);
+
 
         // Otsi lepingud, millel on maksepäev täna ja lõpptähtaeg tulevikus
         const activeContracts = await prisma.contract.findMany({
@@ -47,7 +49,7 @@ console.log('currentMonth',currentMonth);
             }
         });
 
-        console.log(`Found ${activeContracts.length} contracts for payment processing`);
+
 
         // Käi läbi kõik lepingud ja loo neile makselingid
         for (const contract of activeContracts) {
@@ -101,8 +103,8 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
         }
 
         // Kontrolli, kas BACKEND_URL on olemas, kui ei, kasuta vaikeväärtust
-        const backendUrl = process.env.BACKEND_URL || 'https://api.sinu-domain.com';
-        const notificationUrl = "https://90e5-213-184-42-139.ngrok-free.app/api/payments/montonio-webhook";
+        const backendUrl = process.env.BACKEND_URL || 'https://api.irontrack.ee';
+        const notificationUrl = `${NOTIFICATION_URL}/api/payments/montonio-webhook`;
 
         const paymentDueDate = new Date();
         paymentDueDate.setDate(contract.paymentDay);
@@ -126,7 +128,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             askAdditionalInfo: false
         };
 
-        console.log('Payment data:', paymentData); // Logi andmed silumiseks
+
 
         // Kui maksetasu on 0, siis jäta makse vahele
         if (paymentAmount <= 0) {
@@ -146,7 +148,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             data: token
         });
 
-        console.log('Payment link created:', response.data.url);
+
 
         // Registreeri makse andmebaasi kui ootel
         await recordPendingPayment(contract, response.data.uuid, isPaymentHoliday);
@@ -166,7 +168,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
 
 async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
     try {
-        console.log(`Recording pending payment for contract ${contract.id} with Montonio UUID: ${montonioUuid}`);
+
 
         // Loo uus kanne transactions tabelisse
         const transaction = await prisma.transactions.create({
@@ -216,8 +218,7 @@ async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
                 VALUES (${transaction.id}, ${montonioUuid}, ${contract.id}, ${contract.affiliateId}, ${isPaymentHoliday}, ${new Date()})
             `;
 
-            console.log(`Saved payment metadata for contract ${contract.id}, transaction ID: ${transaction.id}, Montonio UUID: ${montonioUuid}, isPaymentHoliday: ${isPaymentHoliday}`);
-        } catch (err) {
+         } catch (err) {
             console.error('Error inserting payment metadata:', err);
         }
 
@@ -286,7 +287,7 @@ async function sendPaymentEmail(contract, paymentUrl, paymentAmount, isPaymentHo
         affiliateEmail: contract.affiliate.email
     });
 
-    console.log(`Payment email sent to ${contract.user.email}`);
+
 }
 
 module.exports = {

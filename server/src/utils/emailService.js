@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendMessage = async ({ recipientType, senderId, recipientId, subject, body, affiliateEmail }) => {
+
+
+
     try {
         const htmlContent = `
       <html>

@@ -65,10 +65,10 @@ export const deletePlan = async (planId) => {
     }
 };
 
-export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference) => {
+export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment) => {
     try {
 
-        const data = { planData, currentAppliedCredit, contract, currentMerchantReference };
+        const data = { planData, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment };
         const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/plans/buy-plan/${currentAffiliateId}`, {
             method: "POST",
@@ -156,7 +156,7 @@ export const createMontonioPayment = async (
     returnUrl, userData
 ) => {
     const finalAmount = Math.max(planData.price - appliedCredit, 0);
-
+    console.log("Creating Montonio payment with affiliateId:", affiliateId);
     // Only proceed with payment if there's an amount to pay
     if (finalAmount === 0) {
         return { is_fully_credited: true };

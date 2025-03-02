@@ -262,7 +262,27 @@ exports.getUserContracts = async (req, res) => {
 exports.acceptContract = async (req, res) => {
     try {
         const { contractId } = req.params;
-        const { userId, affiliateId, acceptType, contractTermsId } = req.body;
+        const { userId, affiliateId, acceptType, contractTermsId, paymentCompleted } = req.body;
+
+        // Kui makse pole lõpetatud, saadame tagasi hoiatava teate
+        if (!paymentCompleted) {
+            return res.status(400).json({
+                error: "Payment must be completed before accepting the contract",
+                requiresPayment: true
+            });
+        }
+
+        // Leiame lepingu andmed, et saada vajalik info UserPlan jaoks
+        const contract = await prisma.contract.findUnique({
+            where: { id: parseInt(contractId) },
+            include: {
+                userPlan: true // Kontrollime, kas on juba seotud UserPlan
+            }
+        });
+
+        if (!contract) {
+            return res.status(404).json({ error: "Contract not found" });
+        }
 
         // Uuendame Contract staatust
         const updatedContract = await prisma.contract.update({
@@ -293,6 +313,30 @@ exports.acceptContract = async (req, res) => {
                 contractTermsId: contractTermsId,
             },
         });
+
+        // Kontrolli kas UserPlan on juba olemas selle lepinguga
+        // Kui ei ole, siis loome uue UserPlan
+        if (!contract.userPlan || contract.userPlan.length === 0) {
+            // Arvutame lõppkuupäeva (1 kuu alates tänasest)
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + 1);
+
+            // Loome UserPlan kirje
+            await prisma.userPlan.create({
+                data: {
+                    userId: userId,
+                    affiliateId: affiliateId,
+                    contractId: parseInt(contractId),
+                    planName: `${contract.contractType || 'Monthly'}`,
+                    validityDays: 31, // Standard 30-päevane periood
+                    price: contract.paymentAmount,
+                    purchasedAt: new Date(),
+                    endDate: endDate,
+                    sessionsLeft: 999, // Piiramatu arv sessioone (lepingupõhine)
+                    planId: 0
+                }
+            });
+        }
 
         res.json(updatedContract);
     } catch (error) {

@@ -1,4 +1,3 @@
-
 const API_URL = process.env.REACT_APP_API_URL
 
 export const getClasses = async (affiliateId, date) => {
@@ -20,7 +19,6 @@ export const getClasses = async (affiliateId, date) => {
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 6);
         endOfWeek.setHours(23, 59, 59, 999);
-
 
 
         const response = await fetch(`${API_URL}/classes?affiliateId=${affiliateId}&start=${startOfWeek.toISOString()}&end=${endOfWeek.toISOString()}`, {
@@ -46,7 +44,8 @@ export const createTraining = async (affiliateId, trainingData) => {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json" },
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
                 affiliateId, // ✅ Lisa affiliateId
                 trainingType: trainingData.trainingType || "", // ✅ Tagame, et väärtused ei ole undefined
@@ -76,7 +75,8 @@ export const updateTraining = async (classId, trainingData) => {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json" },
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(trainingData),
         });
         return await response.json();
@@ -166,7 +166,7 @@ export const checkInAttendee = async (classId, userId) => {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ classId, userId })
+            body: JSON.stringify({classId, userId})
         });
 
         return await response.json();
@@ -181,8 +181,8 @@ export const deleteAttendee = async (classId, userId) => {
 
         const response = await fetch(`${API_URL}/class-attendees`, {
             method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ classId, userId })
+            headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
+            body: JSON.stringify({classId, userId})
         });
 
         return await response.json();
@@ -317,7 +317,7 @@ export const addClassScore = async (classId, scoreType, score) => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ classId, scoreType, score }),
+            body: JSON.stringify({classId, scoreType, score}),
         });
         if (!res.ok) {
             const err = await res.json();
@@ -339,7 +339,7 @@ export const updateClassScore = async (classId, scoreType, score) => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ classId, scoreType, score }),
+            body: JSON.stringify({classId, scoreType, score}),
         });
         if (!res.ok) {
             const err = await res.json();
@@ -352,3 +352,54 @@ export const updateClassScore = async (classId, scoreType, score) => {
     }
 };
 
+export const getWaitlist = async (classId) => {
+
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/classes/waitlist?classId=${classId}`, {
+            headers: {"Authorization": `Bearer ${token}`},
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch waitlist");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error fetching waitlist:", error);
+    }
+}
+
+export const createWaitlist = async (classId, userPlanId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/classes/waitlist`, {
+            method: "POST",
+            headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
+            body: JSON.stringify({classId, userPlanId}),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to create waitlist");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error creating waitlist:", error);
+    }
+}
+
+export const deleteWaitlist = async (classId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/classes/waitlist/remove`, {
+            method: "DELETE",
+            headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
+            body: JSON.stringify({classId}),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to delete waitlist");
+        }
+        return await response.json();
+
+    } catch (error) {
+        console.error("❌ Error deleting waitlist:", error);
+    }
+}

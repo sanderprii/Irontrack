@@ -1,6 +1,8 @@
 const {PrismaClient} = require("@prisma/client");
 const prisma = new PrismaClient();
 
+const {sendMessage} = require("../utils/emailService");
+
 // Klasside info saamine
 const getClassInfo = async (req, res) => {
     const classId = parseInt(req.query.classId);
@@ -370,36 +372,151 @@ const registerForClass = async (req, res) => {
     }
 };
 
-// ✅ Kasutaja registreeringu tühistamine
+// In your classController.js file, modify your cancelRegistration function as follows:
+
 const cancelRegistration = async (req, res) => {
-    const {classId, freeClass} = req.body;
+    const { classId, freeClass } = req.body;
     const userId = req.user.id;
 
     try {
-
+        // First, find the registration outside of the transaction
         const registration = await prisma.classAttendee.findFirst({
-            where: {userId: parseInt(userId), classId: parseInt(classId)},
-
+            where: { userId: parseInt(userId), classId: parseInt(classId) },
         });
 
-
-        await prisma.classAttendee.delete({
-            where: {id: registration.id},
-        });
-        if (!freeClass) {
-            // Tagasta sessioon kasutajale tagasi
-            await prisma.userPlan.update({
-                where: {id: registration.userPlanId},
-                data: {sessionsLeft: {increment: 1}},
-            });
+        if (!registration) {
+            return res.status(404).json({ error: "Registration not found" });
         }
-        res.status(200).json({message: "Registration cancelled successfully!"});
+
+        // Initialize variables we'll need later
+        let nextPerson = null;
+        let classInfo = null;
+
+        // Start transaction with increased timeout
+        await prisma.$transaction(async (tx) => {
+            // Delete the registration
+            await tx.classAttendee.delete({
+                where: { id: registration.id },
+            });
+
+            if (!freeClass) {
+                // Return session to user
+                await tx.userPlan.update({
+                    where: { id: registration.userPlanId },
+                    data: { sessionsLeft: { increment: 1 } },
+                });
+            }
+
+            // Check if there's anyone in the waitlist
+            const waitlistEntries = await tx.waitlist.findMany({
+                where: { classId: parseInt(classId) },
+                orderBy: { createdAt: 'asc' },
+                include: {
+                    user: true,
+                    userPlan: true
+                },
+                take: 1 // Get the first (earliest) entry
+            });
+
+            if (waitlistEntries.length > 0) {
+                nextPerson = waitlistEntries[0];
+
+                // Check if their plan is still valid (for paid classes)
+                if (!freeClass && nextPerson.userPlanId > 0) {
+                    const plan = await tx.userPlan.findUnique({
+                        where: { id: nextPerson.userPlanId }
+                    });
+
+                    if (!plan || plan.sessionsLeft <= 0) {
+                        // Skip this person as their plan is no longer valid
+                        nextPerson = null;
+                        return;
+                    }
+                }
+
+                // Get class and affiliate information
+                classInfo = await tx.classSchedule.findUnique({
+                    where: { id: parseInt(classId) },
+                    include: {
+                        affiliate: true
+                    }
+                });
+
+                // Register the person from waitlist
+                await tx.classAttendee.create({
+                    data: {
+                        userId: nextPerson.userId,
+                        classId: parseInt(classId),
+                        checkIn: false,
+                        userPlanId: nextPerson.userPlanId,
+                        affiliateId: classInfo.affiliateId
+                    },
+                });
+
+                // If it's a paid class, decrease the sessions count
+                if (!freeClass && nextPerson.userPlanId > 0) {
+                    await tx.userPlan.update({
+                        where: { id: nextPerson.userPlanId },
+                        data: { sessionsLeft: { decrement: 1 } },
+                    });
+                }
+
+                // Remove the person from waitlist
+                await tx.waitlist.delete({
+                    where: {
+                        classId_userId: {
+                            classId: parseInt(classId),
+                            userId: nextPerson.userId
+                        }
+                    }
+                });
+            }
+        }, {
+            timeout: 10000 // Increase timeout to 10 seconds
+        });
+
+        // Send email notification outside of the transaction
+        if (nextPerson && classInfo) {
+            const emailData = {
+                recipientType: 'user',
+                senderId: classInfo.affiliateId,
+                recipientId: nextPerson.userId,
+                subject: `You've been registered for ${classInfo.trainingName}`,
+                body: `
+Dear ${nextPerson.user.fullName},
+
+Good news! A spot has opened up in the class "${classInfo.trainingName}" scheduled for ${new Date(classInfo.time).toLocaleString()}.
+
+You have been automatically registered for this class from the waitlist.
+
+
+Time: ${new Date(classInfo.time).toLocaleString()}
+Trainer: ${classInfo.trainer || 'N/A'}
+
+We look forward to seeing you there!
+
+IronTrack Team
+                `,
+                affiliateEmail: classInfo.affiliate.email
+            };
+
+
+
+            try {
+                // Use your sendMessage function
+                await sendMessage(emailData);
+            } catch (emailError) {
+                console.error('Error sending notification email:', emailError);
+                // Continue with success response even if email fails
+            }
+        }
+
+        res.status(200).json({ message: "Registration cancelled successfully!" });
     } catch (error) {
         console.error("❌ Error canceling registration:", error);
-        res.status(500).json({error: "Failed to cancel registration."});
+        res.status(500).json({ error: "Failed to cancel registration." });
     }
 };
-
 // ✅ Kontrolli, kas kasutaja on klassis registreeritud
 const checkUserEnrollment = async (req, res) => {
     const classId = parseInt(req.query.classId);
@@ -504,9 +621,124 @@ const updateClassScore = async (req, res) => {
     }
 };
 
+// Get waitlist for a class
+const getWaitlist = async (req, res) => {
+    const {classId} = req.query;
+
+    try {
+        const waitlist = await prisma.waitlist.findMany({
+            where: {
+                classId: parseInt(classId)
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true
+                    }
+                },
+                userPlan: true
+            },
+            orderBy: {
+                createdAt: 'asc' // Oldest first to maintain fairness
+            }
+        });
+
+        res.status(200).json(waitlist);
+    } catch (error) {
+        console.error("❌ Error getting waitlist:", error);
+        res.status(500).json({error: "Failed to get waitlist"});
+    }
+};
+
+const createWaitlist = async (req, res) => {
+    const {classId, userPlanId} = req.body;
+    const userId = req.user?.id
+    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required"});
+    try {
+        // Check if user is already in waitlist
+        const existingWaitlist = await prisma.waitlist.findUnique({
+            where: {
+                classId_userId: {
+                    classId: parseInt(classId),
+                    userId: parseInt(userId)
+                }
+            }
+        });
+
+        if (existingWaitlist) {
+            return res.status(400).json({error: "You are already in the waitlist for this class"});
+        }
+
+        // Verify that the user plan exists and belongs to this user
+        if (userPlanId) {
+            const plan = await prisma.userPlan.findFirst({
+                where: {
+                    id: parseInt(userPlanId),
+                    userId: parseInt(userId)
+                }
+            });
+
+            if (!plan) {
+                return res.status(400).json({error: "Invalid plan selected"});
+            }
+
+            if (plan.sessionsLeft <= 0) {
+                return res.status(400).json({error: "Selected plan has no sessions left"});
+            }
+        }
+
+        // Add user to waitlist
+        const waitlistEntry = await prisma.waitlist.create({
+            data: {
+                classId: parseInt(classId),
+                userId: parseInt(userId),
+                userPlanId: userPlanId ? parseInt(userPlanId) : 0, // 0 for free classes
+            }
+        });
+
+        res.status(201).json({
+            message: "Successfully added to waitlist",
+            waitlistEntry
+        });
+    } catch (error) {
+        console.error("Error adding to waitlist:", error);
+        res.status(500).json({error: "Failed to add to waitlist"});
+    }
+
+}
+
+const deleteWaitlist = async (req, res) => {
+    const {classId} = req.body;
+    const userId = req.user?.id
+    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required"});
+    try {
+        await prisma.waitlist.deleteMany({
+            where: {classId, userId}
+        });
+        res.status(200).json({message: "Successfully removed from waitlist"});
+    } catch (error) {
+        console.error("Error removing from waitlist:", error);
+        res.status(500).json({error: "Failed to remove from waitlist"});
+    }
+}
 
 module.exports = {
-    getClassInfo, getClasses, createClass, updateClass, deleteClass,
-    getClassAttendees, registerForClass, cancelRegistration, checkUserEnrollment,
-    getClassAttendeesCount, checkInAttendee, deleteAttendee, addClassScore, updateClassScore, checkClassScore,
+    getClassInfo,
+    getClasses,
+    createClass,
+    updateClass,
+    deleteClass,
+    getClassAttendees,
+    registerForClass,
+    cancelRegistration,
+    checkUserEnrollment,
+    getClassAttendeesCount,
+    checkInAttendee,
+    deleteAttendee,
+    addClassScore,
+    updateClassScore,
+    checkClassScore,
+    getWaitlist, createWaitlist, deleteWaitlist
 };

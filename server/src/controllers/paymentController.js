@@ -5,6 +5,8 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const NOTIFICATION_URL = process.env.NOTIFICATION_URL;
+
 // Environment variables
 
 const MERCHANT_NAME = process.env.MERCHANT_NAME;
@@ -62,7 +64,7 @@ const createMontonioPayment = async (req, res) => {
         // Montonio requires this to be a public URL, not localhost
         // For production, this should be your actual server URL
         // For testing, you can use a service like ngrok to expose your local server
-        const notificationUrl = "https://90e5-213-184-42-139.ngrok-free.app/api/payments/montonio-webhook"; // Replace with your webhook URL for testing
+        const notificationUrl = `${NOTIFICATION_URL}/api/payments/montonio-webhook`; // Replace with your webhook URL for testing
 
         // Create the payment data object
         const paymentData = {

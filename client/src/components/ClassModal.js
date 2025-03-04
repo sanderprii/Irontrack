@@ -395,6 +395,8 @@ export default function ClassModal({
 
     const isClassOver = new Date(cls.time) < new Date();
 
+    const role = localStorage.getItem("role");
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
@@ -435,26 +437,27 @@ export default function ClassModal({
                                 <strong>👥 Capacity:</strong> {attendeesCount} /{" "}
                                 {cls.memberCapacity}
                             </Typography>
-                            {isClassFull && !isRegistered && !isInWaitlist && (
+                            {isClassFull && !isRegistered && !isInWaitlist && role === 'regular' && (
                                 <Typography color="error" sx={{mt: 1, fontWeight: "bold"}}>
                                     This class is full. You can join the waitlist.
                                 </Typography>
                             )}
-                            {isInWaitlist && (
+                            {isInWaitlist && role === 'regular' && (
                                 <Typography color="primary" sx={{mt: 1, fontWeight: "bold"}}>
                                     You are on the waitlist for this class.
                                 </Typography>
                             )}
                         </Box>
                     </Grid>
+                    {cls.trainingType === 'WOD' || cls.trainingType === 'Weightlifting' ? (
 
-                    {/* Parem veerg */}
                     <Grid item xs={12} md={6}>
                         <Box
                             sx={{
-                                backgroundColor: "background.paper",
+                                backgroundColor: "#ccc",
                                 padding: 2,
                                 borderRadius: "8px",
+
                             }}
                         >
                             <Typography
@@ -469,12 +472,15 @@ export default function ClassModal({
                             <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                 <strong>{cls.wodType || "None"}</strong>
                             </Typography>
-                            <Typography sx={{color: "text.secondary", whiteSpace: "pre-line"}}>
+                            <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
                                 <strong></strong>{" "}
                                 {cls.description || "No description available"}
                             </Typography>
                         </Box>
                     </Grid>
+                ) : (
+                    ""
+                    )}
                 </Grid>
 
                 <Divider sx={{marginY: 2}}/>
@@ -753,7 +759,7 @@ export default function ClassModal({
                                                     <Typography variant="caption">
                                                         Added to waitlist: {new Date(entry.createdAt).toLocaleString()}
                                                     </Typography>
-                                                    <br />
+                                                    <br/>
                                                     <Typography variant="caption">
                                                         Plan: {entry.userPlan?.planName || "Free Class"}
                                                     </Typography>

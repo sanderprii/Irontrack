@@ -175,14 +175,14 @@ export const checkInAttendee = async (classId, userId) => {
     }
 };
 
-export const deleteAttendee = async (classId, userId) => {
+export const deleteAttendee = async (classId, freeClass, userId) => {
     try {
         const token = localStorage.getItem("token");
 
         const response = await fetch(`${API_URL}/class-attendees`, {
             method: "DELETE",
             headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
-            body: JSON.stringify({classId, userId})
+            body: JSON.stringify({classId, freeClass, userId})
         });
 
         return await response.json();

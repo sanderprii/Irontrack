@@ -287,18 +287,146 @@ const checkInAttendee = async (req, res) => {
 };
 
 const deleteAttendee = async (req, res) => {
-    const {classId, userId} = req.body;
-    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required."});
+    const { classId, freeClass, userId } = req.body;
+console.log('body', req.body)
 
     try {
-        await prisma.classAttendee.deleteMany({
-            where: {classId, userId}
+        // First, find the registration outside of the transaction
+        const registration = await prisma.classAttendee.findFirst({
+            where: { userId: parseInt(userId), classId: parseInt(classId) },
         });
 
-        res.json({message: "Attendee removed from class."});
+        if (!registration) {
+            return res.status(404).json({ error: "Registration not found" });
+        }
+
+        // Initialize variables we'll need later
+        let nextPerson = null;
+        let classInfo = null;
+
+        // Start transaction with increased timeout
+        await prisma.$transaction(async (tx) => {
+            // Delete the registration
+            await tx.classAttendee.delete({
+                where: { id: registration.id },
+            });
+
+            if (!freeClass) {
+                // Return session to user
+                await tx.userPlan.update({
+                    where: { id: registration.userPlanId },
+                    data: { sessionsLeft: { increment: 1 } },
+                });
+            }
+
+            // Check if there's anyone in the waitlist
+            const waitlistEntries = await tx.waitlist.findMany({
+                where: { classId: parseInt(classId) },
+                orderBy: { createdAt: 'asc' },
+                include: {
+                    user: true,
+                    userPlan: true
+                },
+                take: 1 // Get the first (earliest) entry
+            });
+
+            if (waitlistEntries.length > 0) {
+                nextPerson = waitlistEntries[0];
+
+                // Check if their plan is still valid (for paid classes)
+                if (!freeClass && nextPerson.userPlanId > 0) {
+                    const plan = await tx.userPlan.findUnique({
+                        where: { id: nextPerson.userPlanId }
+                    });
+
+                    if (!plan || plan.sessionsLeft <= 0) {
+                        // Skip this person as their plan is no longer valid
+                        nextPerson = null;
+                        return;
+                    }
+                }
+
+                // Get class and affiliate information
+                classInfo = await tx.classSchedule.findUnique({
+                    where: { id: parseInt(classId) },
+                    include: {
+                        affiliate: true
+                    }
+                });
+
+                // Register the person from waitlist
+                await tx.classAttendee.create({
+                    data: {
+                        userId: nextPerson.userId,
+                        classId: parseInt(classId),
+                        checkIn: false,
+                        userPlanId: nextPerson.userPlanId,
+                        affiliateId: classInfo.affiliateId
+                    },
+                });
+
+                // If it's a paid class, decrease the sessions count
+                if (!freeClass && nextPerson.userPlanId > 0) {
+                    await tx.userPlan.update({
+                        where: { id: nextPerson.userPlanId },
+                        data: { sessionsLeft: { decrement: 1 } },
+                    });
+                }
+
+                // Remove the person from waitlist
+                await tx.waitlist.delete({
+                    where: {
+                        classId_userId: {
+                            classId: parseInt(classId),
+                            userId: nextPerson.userId
+                        }
+                    }
+                });
+            }
+        }, {
+            timeout: 10000 // Increase timeout to 10 seconds
+        });
+
+        // Send email notification outside of the transaction
+        if (nextPerson && classInfo) {
+            const emailData = {
+                recipientType: 'user',
+                senderId: classInfo.affiliateId,
+                recipientId: nextPerson.userId,
+                subject: `You've been registered for ${classInfo.trainingName}`,
+                body: `
+Dear ${nextPerson.user.fullName},
+
+Good news! A spot has opened up in the class "${classInfo.trainingName}" scheduled for ${new Date(classInfo.time).toLocaleString()}.
+
+You have been automatically registered for this class from the waitlist.
+
+
+Time: ${new Date(classInfo.time).toLocaleString()}
+Trainer: ${classInfo.trainer || 'N/A'}
+
+We look forward to seeing you there!
+
+IronTrack Team
+                `,
+                affiliateEmail: classInfo.affiliate.email
+            };
+
+
+
+            try {
+                // Use your sendMessage function
+                await sendMessage(emailData);
+            } catch (emailError) {
+                console.error('Error sending notification email:', emailError);
+                // Continue with success response even if email fails
+            }
+        }
+
+        res.status(200).json({ message: "Registration cancelled successfully!" });
     } catch (error) {
-        console.error("❌ Error deleting attendee:", error);
-        res.status(500).json({error: "Failed to remove attendee."});
+        console.error("❌ Error canceling registration:", error);
+        res.status(500).json({ error: "Failed to cancel registration." });
     }
 };
 

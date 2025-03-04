@@ -170,13 +170,10 @@ export default function AppAppBar() {
                         {/* NAVIGATION MOBILE VIEW */}
                         <Box sx={{ width: '100%', display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'space-between' }}>
 
-                            {/* Vasakul: Teema lüliti */}
-                            <IconButton onClick={toggleTheme} color="inherit" sx={{ ml: 1 }}>
-                                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-                            </IconButton>
+
 
                             {/* Keskel: Favicon pilt */}
-                            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+                            <Box sx={{ flexGrow: 1, display: 'flex', ml: 1}}>
                                 <img
                                     src="/favicon.png"
                                     alt="App Logo"
@@ -227,9 +224,7 @@ export default function AppAppBar() {
                         {/* Desktop menüü (Left) */}
                         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, ml: 2 }}>
                             {/* Teema lüliti (Light/Dark) */}
-                            <IconButton onClick={toggleTheme} color="inherit">
-                                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-                            </IconButton>
+
                             {leftLinks.map((link) =>
                                 link.action ? (
                                     <Button

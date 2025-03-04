@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import { Routes, Route } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -34,6 +35,7 @@ function App() {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
 
     return (
+        <HelmetProvider>
         <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
             <CssBaseline />
             <ResponsiveNavbar />
@@ -71,6 +73,7 @@ function App() {
             </Routes>
             </Box>
         </AppTheme>
+        </HelmetProvider>
     );
 }
 

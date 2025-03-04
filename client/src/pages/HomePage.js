@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from "react";
+
 import {
     Box,
     Container,
@@ -14,7 +15,7 @@ import { useNavigate} from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
+import SEO from '../components/SEO';
 import SavingsIcon from "@mui/icons-material/Savings";
 import PeopleIcon from "@mui/icons-material/People";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -35,6 +36,7 @@ const iconColor = "#0072E5"; // sinine ikoon
 // Siin on numbrikasti komponent
 const FlipCounter = ({ value, label, duration = 2.5 }) => {
     return (
+
         <Box sx={{ textAlign: 'center' }}>
             <Paper
                 elevation={3}
@@ -123,6 +125,14 @@ export default function HomePage() {
     };
 
     return (
+        <>
+            <SEO
+                title="Irontrack - Gym Management Platform"
+                description="Platform for crossfit enthusiasts."
+                keywords="crossfit, gym, management, platform"
+                canonicalUrl="https://www.irontrack.ee/"
+                ogImage="https://www.irontrack.ee/images/og-image.jpg"
+            />
         <Box>
             {/* HERO KARUSSELL */}
             <Box sx={{ position: "relative" }}>
@@ -338,5 +348,6 @@ export default function HomePage() {
                 </Container>
             </Box>
         </Box>
+        </>
     );
 }

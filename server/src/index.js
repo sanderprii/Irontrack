@@ -25,7 +25,7 @@ const allowedOrigins = [
 app.use(cors({
     origin: function(origin, callback) {
         // Debug: Logi origin, et näha, mida täpselt võrreldakse
-        console.log('Origin header:', origin);
+
 
         // Kui päringu päritolu pole määratud (nt Postmani või server-to-server päringud), lase see läbi
         if (!origin) return callback(null, true);

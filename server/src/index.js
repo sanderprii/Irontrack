@@ -1,9 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const cors = require('cors');
-
+const fs = require('fs');
 const express = require('express');
 const app = express();
+app.set('trust proxy', 1);
+
 require('dotenv').config();
 
 const path = require('path');
@@ -30,7 +32,7 @@ app.use(cors({
 
         // Lisa dünaamiline localhost subdomainide kontroll
         const isLocalSubdomain = origin &&
-            origin.match(/^http:\/\/[a-z0-9-]+\.localhost:3000$/);
+            origin.match(/^https:\/\/[a-z0-9-]+\.irontrack.ee$/);
 
         if (allowedOrigins.indexOf(origin) !== -1 || isLocalSubdomain) {
             return callback(null, true);
@@ -42,27 +44,43 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }));
-
-app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  console.log('====== REQUEST DEBUG ======');
+  console.log(`Path: ${req.path}`);
+  console.log(`Hostname: ${req.hostname}`);
+  console.log(`Subdomain test:`, req.hostname.split('.'));
+  console.log(`Method: ${req.method}`);
+  console.log(`Protocol: ${req.protocol}`);
+  console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
+  console.log('==========================');
+  next();
+});
+// Lisa see enne marsruutide defineerimist
+app.use(express.static(path.join(__dirname, '../../client/build')));
 app.use(express.json());
 // Middleware to handle subdomains
+
 app.use(async (req, res, next) => {
     // Parse hostname to extract subdomain
     const hostname = req.hostname;
+    console.log("Middleware: Processing hostname:", hostname);
 
     // Skip for direct domain access but allow localhost subdomains
     if ((hostname === 'localhost' || hostname === 'irontrack.ee' || hostname === 'www.irontrack.ee') &&
         !hostname.match(/^[^.]+\.localhost$/)) {
+        console.log("Middleware: Skipping for main domain");
         return next();
     }
 
-    // Extract subdomain (assuming format is subdomain.irontrack.ee)
-    // Handles both development and production environments
+    // Extract subdomain
     const parts = hostname.split('.');
     const subdomain = parts.length > 2 ? parts[0] : null;
 
+    console.log("Middleware: Extracted subdomain:", subdomain);
+
     if (subdomain) {
         try {
+            console.log("Middleware: Looking for affiliate with subdomain:", subdomain);
             // Find affiliate by subdomain
             const affiliate = await prisma.affiliate.findFirst({
                 where: { subdomain },
@@ -77,24 +95,40 @@ app.use(async (req, res, next) => {
             });
 
             if (affiliate) {
+                console.log("Middleware: Found affiliate:", affiliate.name);
                 // Store affiliate data for use in frontend
                 res.locals.affiliate = affiliate;
 
                 // For API requests, continue to regular routing
                 if (req.path.startsWith('/api/')) {
+                    console.log("Middleware: API request, continuing to API handlers");
                     return next();
                 }
 
-                // For non-API requests to subdomains, we'll let React router handle it
-                // and serve the index.html file with our React app
-                // In production, this would be the path to your built React app
-                return res.sendFile(path.join(__dirname, '../../client/build/index.html'));
+                // Serve React app for all non-API requests
+                console.log("Middleware: Non-API request, serving React app");
+                
+                // TÄRGE KOHT: Teenuse React rakenduse index.html
+                const indexPath = path.join(__dirname, '../../client/build/index.html');
+                console.log("Middleware: Serving file from:", indexPath);
+                
+                // Kontrolli kas fail eksisteerib
+                if (fs.existsSync(indexPath)) {
+                    console.log("Middleware: File exists, serving");
+                    return res.sendFile(indexPath);
+                } else {
+                    console.log("Middleware: File does not exist!");
+                    return res.status(500).send("React build not found");
+                }
+            } else {
+                console.log("Middleware: No affiliate found for subdomain:", subdomain);
             }
         } catch (error) {
-            console.error('Error fetching affiliate from subdomain:', error);
+            console.error('Middleware: Error fetching affiliate from subdomain:', error);
         }
     }
 
+    console.log("Middleware: Continuing to next handler");
     next();
 });
 

@@ -46,7 +46,13 @@ function App() {
             <HelmetProvider>
                 <AppTheme>
                     <CssBaseline />
-                    <MarketingPage />
+                    <Box>
+                        <Routes>
+                            <Route path="/" element={<MarketingPage />} />
+                            <Route path="/classes" element={<Classes />} />
+                            {/* Lisa vajadusel teisi marsruute */}
+                        </Routes>
+                    </Box>
                 </AppTheme>
             </HelmetProvider>
         );

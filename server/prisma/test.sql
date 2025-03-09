@@ -358,6 +358,7 @@ CREATE TABLE IF NOT EXISTS "AffiliateTrainer" (
 );
 INSERT INTO AffiliateTrainer VALUES(8,1,1);
 INSERT INTO AffiliateTrainer VALUES(10,10,1);
+INSERT INTO AffiliateTrainer VALUES(11,10,5);
 CREATE TABLE IF NOT EXISTS "ClassLeaderboard" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "classId" INTEGER NOT NULL,
@@ -2064,7 +2065,7 @@ INSERT INTO sqlite_sequence VALUES('Training',10);
 INSERT INTO sqlite_sequence VALUES('Exercise',19);
 INSERT INTO sqlite_sequence VALUES('defaultWOD',395);
 INSERT INTO sqlite_sequence VALUES('Record',19);
-INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',10);
+INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',11);
 INSERT INTO sqlite_sequence VALUES('todayWOD',14);
 INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',14);
 INSERT INTO sqlite_sequence VALUES('Members',10);

@@ -2,7 +2,7 @@ const API_URL = process.env.REACT_APP_API_URL
 
 export const getClasses = async (affiliateId, date) => {
     try {
-        const token = localStorage.getItem("token");
+
 
         if (!date || isNaN(new Date(date).getTime())) {
             console.error("❌ Invalid date received, using default today.");
@@ -24,7 +24,7 @@ export const getClasses = async (affiliateId, date) => {
         const response = await fetch(`${API_URL}/classes?affiliateId=${affiliateId}&start=${startOfWeek.toISOString()}&end=${endOfWeek.toISOString()}`, {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${token}`,
+
                 "Content-Type": "application/json"
             },
         });

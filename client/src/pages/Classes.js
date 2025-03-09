@@ -371,7 +371,9 @@ export default function Classes() {
                 onEdit={handleEditClass}
                 onDelete={handleDeleteClass}
                 refreshClasses={fetchClasses}
-                attendeesCount={attendeesCount[selectedClass?.id]} />
+                attendeesCount={attendeesCount[selectedClass?.id]}
+                affiliateId={affiliateId}
+            />
         </Container>
     );
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { useNavigate } from "react-router-dom";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
@@ -12,6 +12,8 @@ import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL
 
+
+
 const HeroSection = styled(Box)(({ theme }) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.primary.contrastText,
@@ -23,6 +25,10 @@ function MarketingPage() {
     const [affiliate, setAffiliate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const navigate = useNavigate();
+
+
 
     useEffect(() => {
         const fetchAffiliateBySubdomain = async () => {
@@ -111,7 +117,18 @@ function MarketingPage() {
                     </Box>
                 </Container>
             </HeroSection>
-
+            <Box sx={{m: 2, textAlign: 'center'}}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() =>
+                        navigate("/classes", { state: { affiliate: affiliate } })
+                    }
+                    sx={{ minWidth: "120px" }}
+                >
+                    View All Classes
+                </Button>
+            </Box>
             <Container>
                 <Grid container spacing={4}>
                     {/* About Section */}
@@ -138,41 +155,34 @@ function MarketingPage() {
                         </Card>
                     </Grid>
 
-                    {/* Classes Section */}
+
+
+
+
+                    {/* Trainers Section */}
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardContent>
-                                <Typography variant="h5" component="h2" gutterBottom>
-                                    Our Classes
-                                </Typography>
-                                {affiliate.ClassSchedule && affiliate.ClassSchedule.length > 0 ? (
-                                    affiliate.ClassSchedule.slice(0, 5).map((class_) => (
-                                        <Box key={class_.id} sx={{ mb: 2 }}>
-                                            <Typography variant="subtitle1">{class_.trainingName}</Typography>
-                                            <Typography variant="body2">
-                                                {new Date(class_.time).toLocaleString()}
-                                            </Typography>
-                                        </Box>
-                                    ))
-                                ) : (
-                                    <Typography>No classes scheduled at the moment.</Typography>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    {/* Trainers Section */}
-                    <Grid item xs={12}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h5" component="h2" gutterBottom>
+                                <Typography variant="h5" component="h2" gutterBottom sx={{ textAlign: 'center' }}>
                                     Our Trainers
                                 </Typography>
-                                <Grid container spacing={2}>
+                                <Grid
+                                    container
+                                    spacing={2}
+                                    justifyContent="center" // Lisa see keskendamiseks
+                                    alignItems="center" // Ja see vertikaalseks keskendamiseks
+                                >
                                     {affiliate.trainers && affiliate.trainers.length > 0 ? (
                                         affiliate.trainers.map((trainerRel) => (
                                             <Grid item xs={12} sm={6} md={4} key={trainerRel.trainer.id}>
-                                                <Box>
+                                                <Box sx={{ textAlign: 'center' }}> {/* Lisa ka siin keskendamine */}
+                                                    <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+                                                        <img
+                                                            src={trainerRel.trainer.logo}
+                                                            alt={`${trainerRel.trainer.fullName} pic`}
+                                                            style={{ maxHeight: '120px' }}
+                                                        />
+                                                    </Box>
                                                     <Typography variant="subtitle1">
                                                         {trainerRel.trainer.fullName}
                                                     </Typography>

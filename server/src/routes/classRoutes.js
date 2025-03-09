@@ -7,7 +7,7 @@ const { checkClassScore, addClassScore, updateClassScore } = require("../control
 
 // API endpointid
 router.get("/class-info", ensureAuthenticated, classController.getClassInfo);
-router.get("/classes", ensureAuthenticated, classController.getClasses);
+router.get("/classes", classController.getClasses);
 router.post("/classes", ensureAuthenticated, classController.createClass);
 router.put("/classes/:id", ensureAuthenticated, classController.updateClass);
 router.delete("/classes/:id", ensureAuthenticated, classController.deleteClass);
@@ -20,7 +20,7 @@ router.get("/attendees/:classId", ensureAuthenticated, classController.getClassA
 router.patch("/class-attendees/check-in", ensureAuthenticated, classController.checkInAttendee);
 router.delete("/class-attendees", ensureAuthenticated, classController.deleteAttendee);
 
-router.get("/classes/leaderboard/check", ensureAuthenticated, checkClassScore);
+router.get("/classes/leaderboard/check", checkClassScore);
 router.post("/classes/leaderboard/add", ensureAuthenticated, addClassScore);
 router.put("/classes/leaderboard/update", ensureAuthenticated, updateClassScore);
 

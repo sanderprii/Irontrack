@@ -58,6 +58,7 @@ export default function ClassModal({
                                        onDelete,
                                        refreshClasses,
                                        attendeesCount,
+                                       affiliateId,
                                        props
                                    }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -372,7 +373,7 @@ export default function ClassModal({
 
     const handleOpenProfile = async (userId) => {
         try {
-            const userData = await getMemberInfo(userId, userRole);
+            const userData = await getMemberInfo(userId, affiliateId);
             setSelectedUser(userData);
             setProfileOpen(true);
         } catch (error) {
@@ -451,35 +452,35 @@ export default function ClassModal({
                     </Grid>
                     {cls.trainingType === 'WOD' || cls.trainingType === 'Weightlifting' ? (
 
-                    <Grid item xs={12} md={6}>
-                        <Box
-                            sx={{
-                                backgroundColor: "#ccc",
-                                padding: 2,
-                                borderRadius: "8px",
+                        <Grid item xs={12} md={6}>
+                            <Box
+                                sx={{
+                                    backgroundColor: "#ccc",
+                                    padding: 2,
+                                    borderRadius: "8px",
 
-                            }}
-                        >
-                            <Typography
-                                variant="h6"
-                                sx={{fontWeight: "bold", marginBottom: 1}}
+                                }}
                             >
-                                Workout Info
-                            </Typography>
-                            <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
-                                <strong>🔥{cls.wodName || "None"}</strong>
-                            </Typography>
-                            <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
-                                <strong>{cls.wodType || "None"}</strong>
-                            </Typography>
-                            <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
-                                <strong></strong>{" "}
-                                {cls.description || "No description available"}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                ) : (
-                    ""
+                                <Typography
+                                    variant="h6"
+                                    sx={{fontWeight: "bold", marginBottom: 1}}
+                                >
+                                    Workout Info
+                                </Typography>
+                                <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
+                                    <strong>🔥{cls.wodName || "None"}</strong>
+                                </Typography>
+                                <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
+                                    <strong>{cls.wodType || "None"}</strong>
+                                </Typography>
+                                <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
+                                    <strong></strong>{" "}
+                                    {cls.description || "No description available"}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    ) : (
+                        ""
                     )}
                 </Grid>
 
@@ -854,7 +855,7 @@ export default function ClassModal({
                 </Button>
 
                 {/* Ainult mitte-regular näevad Edit / Delete */}
-                {userRole !== "regular" && (
+                { (userRole === 'affiliate' || userRole === 'trainer') && (
                     <>
                         <Button onClick={() => onEdit(cls)} color="primary" variant="contained">
                             Edit

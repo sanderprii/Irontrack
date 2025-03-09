@@ -44,17 +44,7 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }));
-app.use((req, res, next) => {
-  console.log('====== REQUEST DEBUG ======');
-  console.log(`Path: ${req.path}`);
-  console.log(`Hostname: ${req.hostname}`);
-  console.log(`Subdomain test:`, req.hostname.split('.'));
-  console.log(`Method: ${req.method}`);
-  console.log(`Protocol: ${req.protocol}`);
-  console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
-  console.log('==========================');
-  next();
-});
+
 // Lisa see enne marsruutide defineerimist
 app.use(express.static(path.join(__dirname, '../../client/build')));
 app.use(express.json());
@@ -63,12 +53,12 @@ app.use(express.json());
 app.use(async (req, res, next) => {
     // Parse hostname to extract subdomain
     const hostname = req.hostname;
-    console.log("Middleware: Processing hostname:", hostname);
+
 
     // Skip for direct domain access but allow localhost subdomains
     if ((hostname === 'localhost' || hostname === 'irontrack.ee' || hostname === 'www.irontrack.ee') &&
         !hostname.match(/^[^.]+\.localhost$/)) {
-        console.log("Middleware: Skipping for main domain");
+
         return next();
     }
 
@@ -76,11 +66,11 @@ app.use(async (req, res, next) => {
     const parts = hostname.split('.');
     const subdomain = parts.length > 2 ? parts[0] : null;
 
-    console.log("Middleware: Extracted subdomain:", subdomain);
+
 
     if (subdomain) {
         try {
-            console.log("Middleware: Looking for affiliate with subdomain:", subdomain);
+
             // Find affiliate by subdomain
             const affiliate = await prisma.affiliate.findFirst({
                 where: { subdomain },
@@ -95,40 +85,40 @@ app.use(async (req, res, next) => {
             });
 
             if (affiliate) {
-                console.log("Middleware: Found affiliate:", affiliate.name);
+
                 // Store affiliate data for use in frontend
                 res.locals.affiliate = affiliate;
 
                 // For API requests, continue to regular routing
                 if (req.path.startsWith('/api/')) {
-                    console.log("Middleware: API request, continuing to API handlers");
+
                     return next();
                 }
 
                 // Serve React app for all non-API requests
-                console.log("Middleware: Non-API request, serving React app");
+
                 
                 // TÄRGE KOHT: Teenuse React rakenduse index.html
                 const indexPath = path.join(__dirname, '../../client/build/index.html');
-                console.log("Middleware: Serving file from:", indexPath);
+
                 
                 // Kontrolli kas fail eksisteerib
                 if (fs.existsSync(indexPath)) {
-                    console.log("Middleware: File exists, serving");
+
                     return res.sendFile(indexPath);
                 } else {
-                    console.log("Middleware: File does not exist!");
+
                     return res.status(500).send("React build not found");
                 }
             } else {
-                console.log("Middleware: No affiliate found for subdomain:", subdomain);
+
             }
         } catch (error) {
-            console.error('Middleware: Error fetching affiliate from subdomain:', error);
+
         }
     }
 
-    console.log("Middleware: Continuing to next handler");
+
     next();
 });
 
@@ -144,7 +134,7 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     // First try: check if subdomain was passed in query parameter
     if (req.query.subdomain) {
         subdomain = req.query.subdomain;
-        console.log('Using subdomain from query parameter:', subdomain);
+
     } else {
         // Second try: extract from hostname
         const hostname = req.hostname;
@@ -155,7 +145,7 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
             subdomain = hostname.split('.')[0];
         }
 
-        console.log('Extracted subdomain from hostname:', subdomain);
+
     }
 
     if (!subdomain || subdomain === 'www') {
@@ -163,7 +153,7 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     }
 
     try {
-        console.log('Looking for affiliate with subdomain:', subdomain);
+
         const affiliate = await prisma.affiliate.findFirst({
             where: { subdomain },
             include: {
@@ -177,11 +167,11 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
         });
 
         if (!affiliate) {
-            console.log('No affiliate found with subdomain:', subdomain);
+
             return res.status(404).json({ error: 'Affiliate not found' });
         }
 
-        console.log('Found affiliate:', affiliate.name);
+
         res.json(affiliate);
     } catch (error) {
         console.error('Error fetching affiliate from subdomain:', error);

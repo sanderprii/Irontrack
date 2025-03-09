@@ -181,6 +181,36 @@ export default function AppAppBar() {
                                     onClick={() => navigate(role === 'regular' ? '/training-diary' : role ==='affiliate' ? '/affiliate-owner' : '/')}
                                 />
                             </Box>
+                            {role === null && (
+                            <Box sx={{ display: { xs: 'flex', md: 'flex' }, gap: 1, ml: 2 }}>
+
+
+                                {leftLinks.map((link) =>
+                                    link.action ? (
+                                        <Button
+                                            key={link.name}
+                                            onClick={link.action}
+                                            variant="text"
+                                            color="info"
+                                            size="small"
+                                        >
+                                            {link.name}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            key={link.name}
+                                            component={Link}
+                                            to={link.to}
+                                            variant="text"
+                                            color="info"
+                                            size="small"
+                                        >
+                                            {link.name}
+                                        </Button>
+                                    )
+                                )}
+                            </Box>
+                            )}
 
                             {/* Paremal: Logout-nupp */}
                             {isLoggedIn ? (
@@ -223,7 +253,7 @@ export default function AppAppBar() {
                         </Box>
                         {/* Desktop menüü (Left) */}
                         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, ml: 2 }}>
-                            {/* Teema lüliti (Light/Dark) */}
+
 
                             {leftLinks.map((link) =>
                                 link.action ? (

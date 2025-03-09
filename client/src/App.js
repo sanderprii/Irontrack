@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 // ✅ Impordi AppTheme
 import AppTheme from './shared-theme/AppTheme';
-
+import { AuthContext } from './context/AuthContext';
 
 
 // Impordi muud komponendid
@@ -30,6 +30,20 @@ import Messages from "./pages/Messages";
 import Pricing from "./pages/Pricing";
 import MarketingPage from "./pages/MarketingPage";
 import Checkout from "./pages/Checkout";
+
+const HomeRedirect = () => {
+    const { isLoggedIn } = useContext(AuthContext);// Assuming you have an auth context with these values
+const userRole = localStorage.getItem("role");
+    // Redirect to training diary if logged in as regular user
+    if (isLoggedIn && userRole === 'regular') {
+        return <Navigate to="/training-diary" replace />;
+    } else if ( isLoggedIn && userRole === 'affiliate') {
+        return <Navigate to="/affiliate-owner" replace />;
+    }
+
+    // Otherwise, show the normal homepage
+    return <HomePage />;
+};
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -71,7 +85,7 @@ function App() {
                 }}
             >
             <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomeRedirect />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/trainings" element={<TrainingsPage />} />
                 <Route path="/records" element={<RecordsPage />} />

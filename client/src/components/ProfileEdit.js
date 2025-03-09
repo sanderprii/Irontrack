@@ -35,6 +35,14 @@ export default function ProfileEdit({ user, onSave, onCancel }) {
                 fullWidth
             />
             <TextField
+                label="Emergency Contact"
+                name="emergencyContact"
+                value={draft.emergencyContact || ''}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+                fullWidth
+            />
+            <TextField
                 label="Address"
                 name="address"
                 value={draft.address || ''}
@@ -52,6 +60,8 @@ export default function ProfileEdit({ user, onSave, onCancel }) {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
             />
+
+
 
             <Button variant="contained" onClick={() => onSave(draft)}>
                 Save

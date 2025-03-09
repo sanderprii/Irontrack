@@ -438,7 +438,25 @@ export const inputsCustomizations = {
       root: ({ theme }) => ({
         typography: theme.typography.caption,
         marginBottom: 12,
+
+
       }),
+
     },
   },
+  MuiInputLabel: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        // Tavaline label stiil
+      }),
+      shrink: {
+        // Muudame transformatsiooni, et tõsta labelit kõrgemale
+        transform: 'translate(5px, -16px) scale(0.85)',
+        // Võite proovida erinevaid väärtusi, näiteks:
+        // transform: 'translate(0, -16px) scale(0.75)',
+        // transform: 'translate(0, -20px) scale(0.75)',
+      }
+    }
+  }
 };
+

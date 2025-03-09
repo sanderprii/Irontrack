@@ -140,6 +140,7 @@ exports.getUser = async (req, res) => {
                 monthlyGoal: true,
                 logo: true,
                 address: true,
+                emergencyContact: true,
             }
         });
         res.json(user);

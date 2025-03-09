@@ -267,6 +267,7 @@ model Affiliate {
   ownerId           Int
   logo              String?
   paymentHolidayFee Float?
+  subdomain         String?            @unique
   owner             User               @relation(fields: [ownerId], references: [id])
   trainers          AffiliateTrainer[]
   ClassSchedule     ClassSchedule[]

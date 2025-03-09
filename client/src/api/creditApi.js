@@ -71,3 +71,19 @@ export const getUserTransactions = async (affiliateId, userId) => {
         console.error("Error fetching user transactions:", error);
     }
 }
+
+export const getAffiliateTransactions = async (affiliateId) => {
+
+    const token = localStorage.getItem("token");
+
+    try {
+        const response = await fetch(`${BASE_URL}/credit/affiliate-transactions?affiliateId=${affiliateId}`, {
+            headers: { "Authorization": `Bearer ${token}`,
+            "Content-Type": "application"}
+        });
+        return await response.json();
+        } catch (error) {
+            console.error("Error fetching affiliate transactions:", error);
+
+    }
+}

@@ -308,7 +308,7 @@ export const getUserClassScore = async (classId) => {
     }
 };
 
-export const addClassScore = async (classId, scoreType, score) => {
+export const addClassScore = async (classData, scoreType, score) => {
     try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/classes/leaderboard/add`, {
@@ -317,7 +317,7 @@ export const addClassScore = async (classId, scoreType, score) => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({classId, scoreType, score}),
+            body: JSON.stringify({classData, scoreType, score}),
         });
         if (!res.ok) {
             const err = await res.json();
@@ -330,7 +330,7 @@ export const addClassScore = async (classId, scoreType, score) => {
     }
 };
 
-export const updateClassScore = async (classId, scoreType, score) => {
+export const updateClassScore = async (classData, scoreType, score) => {
     try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/classes/leaderboard/update`, {
@@ -339,7 +339,7 @@ export const updateClassScore = async (classId, scoreType, score) => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({classId, scoreType, score}),
+            body: JSON.stringify({classData, scoreType, score}),
         });
         if (!res.ok) {
             const err = await res.json();

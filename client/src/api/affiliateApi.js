@@ -26,6 +26,32 @@ const token = localStorage.getItem("token");
         return null;
     }
 };
+
+export const getAffiliateBySubdomain = async (subdomain) => {
+
+
+
+    try {
+
+        const response = await fetch(`${API_URL}/affiliate-by-subdomain?subdomain=${subdomain}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching affiliate: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error fetching affiliate data:", error);
+        return null;
+    }
+}
+
 // Affiliate andmete uuendamine
 export const updateAffiliate = async (affiliate) => {
     try {

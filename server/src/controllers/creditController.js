@@ -171,9 +171,39 @@ const getUserTransactions = async (req, res) => {
     }
 };
 
+const getAffiliateTransactions = async (req, res) => {
+    try {
+        const { affiliateId } = req.query;
+
+        // Kontrollime, et affiliateId on olemas
+        if (!affiliateId) {
+            return res.status(400).json({ error: "affiliateId is required." });
+        }
+
+        // Pärime andmebaasist
+        const transactions = await prisma.transactions.findMany({
+            where: {
+                affiliateId: parseInt(affiliateId, 10),
+            },
+            include: {
+                user: {select: { fullName: true, email: true }},
+            },
+            orderBy: {
+                createdAt: "desc", // sort kahanevas järjekorras
+            },
+        });
+
+        res.json(transactions);
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
+}
+
 module.exports = {
     getUserCredits,
     getCreditHistory,
     addCredit,
-    getUserTransactions
+    getUserTransactions,
+    getAffiliateTransactions
 };

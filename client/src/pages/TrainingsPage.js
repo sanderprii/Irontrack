@@ -1,6 +1,6 @@
 // src/pages/TrainingsPage.js
 
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 
 // Material-UI
 import {
@@ -64,13 +64,14 @@ export default function TrainingsPage() {
             setLoadingTrainings(true);
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/trainings`, {
-                    method: 'GET',
+                method: 'GET',
 
-                    headers: {'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    }
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
 
-                });
+            });
             if (!response.ok) {
                 throw new Error('Failed to load trainings');
             }
@@ -103,8 +104,8 @@ export default function TrainingsPage() {
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_URL}/wods/search-default-wods?q=${encodeURIComponent(wodSearch.toUpperCase())}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    });
+                    headers: {Authorization: `Bearer ${token}`},
+                });
                 if (response.ok) {
                     const results = await response.json();
                     setWodSearchResults(results.slice(0, 10)); // show top 10
@@ -160,8 +161,10 @@ export default function TrainingsPage() {
             const response = await fetch(`${API_URL}/training`, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json' },
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload),
             });
             const result = await response.json();
@@ -203,7 +206,7 @@ export default function TrainingsPage() {
                 start: t.date,
                 backgroundColor: bgColor,
                 borderColor: bgColor,
-                extendedProps: { training: t },
+                extendedProps: {training: t},
             };
         });
     }
@@ -229,6 +232,7 @@ export default function TrainingsPage() {
         setIsEditing(false);
         setModalOpen(true);
     }
+
     function closeModal() {
         setModalOpen(false);
         setModalTraining(null);
@@ -238,6 +242,7 @@ export default function TrainingsPage() {
     function handleEdit() {
         setIsEditing(true);
     }
+
     async function handleSave() {
         if (!modalTraining) return;
 
@@ -247,7 +252,8 @@ export default function TrainingsPage() {
                 method: 'PUT',
                 headers: {
                     'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json' },
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(modalTraining),
             });
             if (!response.ok) {
@@ -280,7 +286,8 @@ export default function TrainingsPage() {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json' },
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(recordData),
             });
             if (!response.ok) {
@@ -306,34 +313,37 @@ export default function TrainingsPage() {
     function updateExercise(index, newValue) {
         setModalTraining((prev) => {
             const newExercises = [...(prev.exercises || [])];
-            newExercises[index] = { exerciseData: newValue };
-            return { ...prev, exercises: newExercises };
+            newExercises[index] = {exerciseData: newValue};
+            return {...prev, exercises: newExercises};
         });
     }
 
     return (
-        <Container maxWidth={false} sx={{ mt: 3 }}>
+        <Container maxWidth={false} sx={{mt: 3}}>
             <Typography variant="h4" gutterBottom>
                 Training Page
             </Typography>
 
             {/* --- FORM for creating new training --- */}
-            <Box component="form" onSubmit={handleSubmitTraining} sx={{ mb: 4, backgroundColor: "background.paper" }}>
-                <FormControl fullWidth sx={{ mb: 2, backgroundColor: "background.paper" }}>
-                    <InputLabel id="training-type-label" sx={{ backgroundColor: "background.paper" }}>Training Type</InputLabel>
+            <Box component="form" onSubmit={handleSubmitTraining} sx={{mb: 4, backgroundColor: "background.paper"}}>
+                <FormControl fullWidth sx={{mb: 2, backgroundColor: "background.paper"}}>
+                    <InputLabel id="training-type-label" sx={{backgroundColor: "background.paper"}}>Training
+                        Type</InputLabel>
                     <Select
                         labelId="training-type-label"
                         value={trainingType}
                         label="Training Type"
                         onChange={handleTrainingTypeChange}
-                        sx={{ backgroundColor: "background.paper" }}
+                        sx={{backgroundColor: "background.paper"}}
 
                     >
-                        <MenuItem value="" sx={{ backgroundColor: "background.paper" }}>-- Select Training Type --</MenuItem>
-                        <MenuItem value="WOD" sx={{ backgroundColor: "background.paper" }}>WOD</MenuItem>
-                        <MenuItem value="Weightlifting" sx={{ backgroundColor: "background.paper" }}>Weightlifting</MenuItem>
-                        <MenuItem value="Cardio" sx={{ backgroundColor: "background.paper" }}>Cardio</MenuItem>
-                        <MenuItem value="Other" sx={{ backgroundColor: "background.paper" }}>Other</MenuItem>
+                        <MenuItem value="" sx={{backgroundColor: "background.paper"}}>-- Select Training Type
+                            --</MenuItem>
+                        <MenuItem value="WOD" sx={{backgroundColor: "background.paper"}}>WOD</MenuItem>
+                        <MenuItem value="Weightlifting"
+                                  sx={{backgroundColor: "background.paper"}}>Weightlifting</MenuItem>
+                        <MenuItem value="Cardio" sx={{backgroundColor: "background.paper"}}>Cardio</MenuItem>
+                        <MenuItem value="Other" sx={{backgroundColor: "background.paper"}}>Other</MenuItem>
                     </Select>
                 </FormControl>
 
@@ -344,25 +354,25 @@ export default function TrainingsPage() {
                         label="Date"
                         value={trainingDate}
                         onChange={(e) => setTrainingDate(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ mb: 2 }}
+                        InputLabelProps={{shrink: true}}
+                        sx={{mb: 2}}
                         required
                     />
                 )}
 
                 {/* WOD stuff */}
                 {trainingType === 'WOD' && showOptions && (
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{mb: 2}}>
                         {/* Search default WODs */}
                         <TextField
                             fullWidth
                             label="Search Default WODs"
                             value={wodSearch}
                             onChange={(e) => setWodSearch(e.target.value)}
-                            sx={{ mb: 1 }}
+                            sx={{mb: 1}}
                         />
                         {wodSearchResults.length > 0 && (
-                            <List dense sx={{ border: '1px solid #ccc', maxHeight: 150, overflowY: 'auto' }}>
+                            <List dense sx={{border: '1px solid #ccc', maxHeight: 150, overflowY: 'auto'}}>
                                 {wodSearchResults.map((w) => (
                                     <ListItemButton key={w.name} onClick={() => handleSelectWod(w)}>
                                         {w.name}
@@ -376,14 +386,14 @@ export default function TrainingsPage() {
                             label="WOD Name"
                             value={wodName}
                             onChange={(e) => setWodName(e.target.value)}
-                            sx={{ mb: 1 }}
+                            sx={{mb: 1}}
                         />
 
-                        <Box sx={{ mb: 1 }}>
+                        <Box sx={{mb: 1}}>
                             <Typography>WOD Type:</Typography>
                             <div>
                                 {['For Time', 'EMOM', 'Tabata', 'AMRAP'].map((val) => (
-                                    <label key={val} style={{ marginRight: 10 }}>
+                                    <label key={val} style={{marginRight: 10}}>
                                         <input
                                             type="radio"
                                             name="wod-type"
@@ -404,7 +414,7 @@ export default function TrainingsPage() {
                             label="WOD Description"
                             value={wodDescription}
                             onChange={(e) => setWodDescription(e.target.value)}
-                            sx={{ mb: 1 }}
+                            sx={{mb: 1}}
                         />
 
                         <TextField
@@ -417,7 +427,7 @@ export default function TrainingsPage() {
 
                 {/* Weightlifting, Cardio, Other */}
                 {['Weightlifting', 'Cardio', 'Other'].includes(trainingType) && showOptions && (
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{mb: 2}}>
                         <TextField
                             fullWidth
                             multiline
@@ -437,11 +447,11 @@ export default function TrainingsPage() {
             </Box>
 
             {/* Error or loading indicator */}
-            {loadingTrainings && <CircularProgress />}
+            {loadingTrainings && <CircularProgress/>}
             {error && <Alert severity="error">{error}</Alert>}
 
             {/* FULLCALENDAR to display trainings */}
-            <Box sx={{ mb: 4 }}>
+            <Box sx={{mb: 4}}>
                 <FullCalendar
                     plugins={[dayGridPlugin]}
                     initialView="dayGridMonth"
@@ -468,8 +478,8 @@ export default function TrainingsPage() {
                                 fullWidth
                                 onChange={(e) => updateModalField('date', e.target.value)}
                                 disabled={!isEditing}
-                                sx={{ mb: 2 }}
-                                InputLabelProps={{ shrink: true }}
+                                sx={{mb: 2}}
+                                InputLabelProps={{shrink: true}}
                             />
                             {/* If WOD */}
                             {modalTraining.type === 'WOD' && (
@@ -480,7 +490,7 @@ export default function TrainingsPage() {
                                         fullWidth
                                         disabled={!isEditing}
                                         onChange={(e) => updateModalField('wodName', e.target.value)}
-                                        sx={{ mb: 2 }}
+                                        sx={{mb: 2}}
                                     />
                                     <TextField
                                         label="WOD Type"
@@ -488,7 +498,7 @@ export default function TrainingsPage() {
                                         fullWidth
                                         disabled={!isEditing}
                                         onChange={(e) => updateModalField('wodType', e.target.value)}
-                                        sx={{ mb: 2 }}
+                                        sx={{mb: 2}}
                                     />
                                     <TextField
                                         label="Score"
@@ -496,7 +506,7 @@ export default function TrainingsPage() {
                                         fullWidth
                                         disabled={!isEditing}
                                         onChange={(e) => updateModalField('score', e.target.value)}
-                                        sx={{ mb: 2 }}
+                                        sx={{mb: 2}}
                                     />
                                 </>
                             )}
@@ -507,16 +517,46 @@ export default function TrainingsPage() {
                                 <Box>
                                     <Typography>Exercises:</Typography>
                                     {modalTraining.exercises.map((ex, idx) => (
-                                        <TextField
+                                        <Box
                                             key={idx}
-                                            multiline
-                                            minRows={2}
-                                            fullWidth
-                                            disabled={!isEditing}
-                                            value={ex.exerciseData || ''}
-                                            onChange={(e) => updateExercise(idx, e.target.value)}
-                                            sx={{ mb: 2 }}
-                                        />
+                                            sx={{
+                                                mb: 2,
+                                                border: '1px solid #e0e0e0',
+                                                borderRadius: 1,
+                                                minHeight: '100px',
+                                                overflow: 'hidden' // Ensures the content stays within the box
+                                            }}
+                                        >
+                                            {isEditing ? (
+                                                <textarea
+                                                    value={ex.exerciseData || ''}
+                                                    onChange={(e) => updateExercise(idx, e.target.value)}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        minHeight: '100px',
+                                                        padding: '16px',
+                                                        border: 'none',
+                                                        resize: 'vertical',
+                                                        fontFamily: 'inherit',
+                                                        fontSize: 'inherit',
+                                                        backgroundColor: 'transparent',
+                                                        outline: 'none',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Box
+                                                    sx={{
+                                                        p: 2,
+                                                        minHeight: '100px',
+                                                        whiteSpace: 'pre-wrap'
+                                                    }}
+                                                >
+                                                    {ex.exerciseData || ''}
+                                                </Box>
+                                            )}
+                                        </Box>
                                     ))}
                                 </Box>
                             )}

@@ -86,9 +86,12 @@ const Transactions = ({ user, affiliateId }) => {
                                         <TableRow>
                                             {/* colspan = veergude arv, mis põhitabelis on */}
                                             <TableCell colSpan={3} sx={{ bgcolor: '#f5f5f5' }}>
-                                                <Box sx={{ p: 2 }}>
+                                                <Box sx={{ p: 2,
+                                                    backgroundColor: "#ccc",
+                                                    padding: 2,
+                                                    borderRadius: "8px", }}>
                                                     <Typography variant="subtitle1" gutterBottom>
-                                                        Transaction Details
+                                                        <strong>Transaction Details</strong>
                                                     </Typography>
                                                     {/* Siin kuvad KÕIK tx objektis leiduvad andmed, nt invoiceNumber, status, isCredit jne */}
                                                     <Typography variant="body2">ID: {tx.id}</Typography>
@@ -96,12 +99,11 @@ const Transactions = ({ user, affiliateId }) => {
                                                     <Typography variant="body2">Status: {tx.status}</Typography>
                                                     <Typography variant="body2">Type: {tx.type}</Typography>
                                                     <Typography variant="body2">isCredit: {String(tx.isCredit)}</Typography>
-                                                    <Typography variant="body2">decrease: {String(tx.decrease)}</Typography>
+
                                                     <Typography variant="body2">Affiliate ID: {tx.affiliateId}</Typography>
-                                                    <Typography variant="body2">Credit ID: {tx.creditId}</Typography>
+
                                                     {/* ... Kui tahad kuvada ka planId, memberId, jms ... */}
-                                                    <Typography variant="body2">Plan ID: {tx.planId}</Typography>
-                                                    <Typography variant="body2">Member ID: {tx.memberId}</Typography>
+
 
                                                     {/* Võid lisada ka JSON formaadi: */}
                                                     {/* <pre>{JSON.stringify(tx, null, 2)}</pre> */}

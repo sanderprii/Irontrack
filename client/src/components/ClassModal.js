@@ -202,10 +202,10 @@ export default function ClassModal({
             // Kas loome uue kirje või uuendame?
             if (hasScore) {
                 // Uuenda
-                await updateClassScore(cls.id, scoreType, scoreValue);
+                await updateClassScore(cls, scoreType, scoreValue);
             } else {
                 // Lisa uus
-                await addClassScore(cls.id, scoreType, scoreValue);
+                await addClassScore(cls, scoreType, scoreValue);
             }
 
             alert("Score saved successfully!");

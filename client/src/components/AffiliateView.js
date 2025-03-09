@@ -115,6 +115,14 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                                 <strong></strong> {affiliate.address}
                             </Typography>
                         </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <LocationOnIcon sx={{ color: "gray" }} />
+                            <Typography>
+                                <strong></strong> {affiliate.subdomain}
+                            </Typography>
+                        </Box>
+
                     </CardContent>
                 </Card>
 

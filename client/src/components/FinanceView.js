@@ -16,10 +16,15 @@ import {
     TableHead,
     TableRow,
     Paper,
-    Grid
+    Grid,
+    Collapse,
+    IconButton
 } from "@mui/material";
 import { getOrders, getFinanceData } from "../api/financeApi";
+import { getAffiliateTransactions } from "../api/creditApi";
 import { getOwnerAffiliateId } from "../api/membersApi";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 export default function FinanceView() {
     const [orders, setOrders] = useState([]);
@@ -27,6 +32,9 @@ export default function FinanceView() {
     const [sortBy, setSortBy] = useState("0");
     const [activeTab, setActiveTab] = useState("orders");
     const [affiliateId, setAffiliateId] = useState(null);
+    const [expandedTransactionId, setExpandedTransactionId] = useState(null);
+    const [transactions, setTransactions] = useState([]);
+    const [transactionSearchQuery, setTransactionSearchQuery] = useState("");
 
     // Finance andmed
     const [revenue, setRevenue] = useState(0);
@@ -41,11 +49,12 @@ export default function FinanceView() {
         fetchAffiliateId();
     }, []);
 
-    // 2. Kui affiliate ID olemas, toome orders & finance
+    // 2. Kui affiliate ID olemas, toome orders, finance ja transactions
     useEffect(() => {
         if (affiliateId) {
             fetchOrders();
             fetchFinance();
+            fetchTransactions();
         }
     }, [affiliateId, startDate, endDate]);
 
@@ -95,6 +104,35 @@ export default function FinanceView() {
         }
     };
 
+    const fetchTransactions = async () => {
+        if (!affiliateId) return;
+        try {
+            const response = await getAffiliateTransactions(affiliateId);
+            if (Array.isArray(response)) {
+                setTransactions(response);
+            } else {
+                console.error("❌ API ERROR: Transactions response is not an array", response);
+                setTransactions([]);
+            }
+        } catch (error) {
+            console.error("❌ Error fetching transactions:", error);
+            setTransactions([]);
+        }
+    };
+
+    // Transaction handling
+    const handleTransactionClick = (transactionId) => {
+        if (expandedTransactionId === transactionId) {
+            setExpandedTransactionId(null); // collapse if already expanded
+        } else {
+            setExpandedTransactionId(transactionId); // expand the clicked transaction
+        }
+    };
+
+    const handleTransactionSearchChange = (event) => {
+        setTransactionSearchQuery(event.target.value || "");
+    };
+
     // Otsing, sorteerimine
     const handleSearchChange = (event) => setSearchQuery(event.target.value || "");
     const handleSortChange = (event) => setSortBy(event.target.value);
@@ -119,8 +157,8 @@ export default function FinanceView() {
 
     // Filter ja sort
     const filteredOrders = (orders || []).filter(order =>
-        ((order?.user?.fullName.toLowerCase() ?? "").includes(searchQuery)) ||
-        ((order?.planName.toLowerCase() ?? "").includes(searchQuery))
+        ((order?.user?.fullName.toLowerCase() ?? "").includes(searchQuery.toLowerCase())) ||
+        ((order?.planName.toLowerCase() ?? "").includes(searchQuery.toLowerCase()))
     );
     const sortedOrders = [...filteredOrders].sort((a, b) => {
         switch (sortBy) {
@@ -135,13 +173,22 @@ export default function FinanceView() {
         }
     });
 
+    // Filter transactions
+    const filteredTransactions = (transactions || []).filter(transaction => {
+        const searchLower = transactionSearchQuery.toLowerCase();
+        return (
+            (transaction?.invoiceNumber?.toLowerCase() || "").includes(searchLower) ||
+            (transaction?.user?.fullName?.toLowerCase() || "").includes(searchLower)
+        );
+    });
+
     return (
         <Container maxWidth={false}>
             <Box textAlign="center" my={4}>
                 <Typography variant="h5" color="primary">Finance</Typography>
             </Box>
 
-            {/* Valik Orders vs Finance */}
+            {/* Valik Orders vs Finance vs Transactions */}
             <Box display="flex" justifyContent="center" mb={3}>
                 <Button
                     variant={activeTab === "orders" ? "contained" : "outlined"}
@@ -158,6 +205,14 @@ export default function FinanceView() {
                     sx={{ mx: 1 }}
                 >
                     Finance
+                </Button>
+                <Button
+                    variant={activeTab === "transactions" ? "contained" : "outlined"}
+                    color="primary"
+                    onClick={() => setActiveTab("transactions")}
+                    sx={{ mx: 1 }}
+                >
+                    Transactions
                 </Button>
             </Box>
 
@@ -251,6 +306,109 @@ export default function FinanceView() {
                     <Typography>Active Members: <strong>{activeMembers}</strong></Typography>
                     <Typography>Expired Members: <strong>{expiredMembers}</strong></Typography>
                     <Typography>Total Members: <strong>{totalMembers}</strong></Typography>
+                </Box>
+            )}
+
+            {/* Transactions Section */}
+            {activeTab === "transactions" && (
+                <Box my={3}>
+                    <Typography variant="h6">Transactions</Typography>
+                    <TextField
+                        label="Search by invoice number or user..."
+                        fullWidth
+                        onChange={handleTransactionSearchChange}
+                        margin="normal"
+                    />
+
+                    <TableContainer component={Paper} sx={{ mt: 2 }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell width="50px"></TableCell>
+                                    <TableCell>Invoice Number</TableCell>
+                                    <TableCell>User</TableCell>
+                                    <TableCell>Amount (€)</TableCell>
+                                    <TableCell>Description</TableCell>
+                                    <TableCell>Type</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell>Date</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredTransactions.map(transaction => (
+                                    <React.Fragment key={transaction.id}>
+                                        <TableRow
+                                            hover
+                                            onClick={() => handleTransactionClick(transaction.id)}
+                                            sx={{ cursor: 'pointer' }}
+                                        >
+                                            <TableCell>
+                                                <IconButton size="small">
+                                                    {expandedTransactionId === transaction.id ?
+                                                        <KeyboardArrowUpIcon /> :
+                                                        <KeyboardArrowDownIcon />
+                                                    }
+                                                </IconButton>
+                                            </TableCell>
+                                            <TableCell>{transaction.invoiceNumber}</TableCell>
+                                            <TableCell>{transaction.user?.fullName || "Unknown"}</TableCell>
+                                            <TableCell>€{transaction.amount.toFixed(2)}</TableCell>
+                                            <TableCell>{transaction.description}</TableCell>
+                                            <TableCell>{transaction.type || "N/A"}</TableCell>
+                                            <TableCell>{transaction.status || "N/A"}</TableCell>
+                                            <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
+                                        </TableRow>
+
+                                        {/* Expanded Details Row */}
+                                        <TableRow>
+                                            <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
+                                                <Collapse in={expandedTransactionId === transaction.id} timeout="auto" unmountOnExit>
+                                                    <Box sx={{ margin: 2 }}>
+                                                        <Typography variant="h6" gutterBottom component="div">
+                                                            Transaction Details
+                                                        </Typography>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={6}>
+                                                                <Typography variant="body1">
+                                                                    <strong>Invoice Number:</strong> {transaction.invoiceNumber}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>User:</strong> {transaction.user?.fullName || "Unknown"}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Amount:</strong> €{transaction.amount.toFixed(2)}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Transaction Date:</strong> {new Date(transaction.createdAt).toLocaleString()}
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid item xs={6}>
+                                                                <Typography variant="body1">
+                                                                    <strong>Description:</strong> {transaction.description}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Type:</strong> {transaction.type || "N/A"}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Status:</strong> {transaction.status || "N/A"}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Credit Operation:</strong> {transaction.isCredit ? "Yes" : "No"}
+                                                                </Typography>
+                                                                <Typography variant="body1">
+                                                                    <strong>Direction:</strong> {transaction.decrease ? "Debit" : "Credit"}
+                                                                </Typography>
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Box>
+                                                </Collapse>
+                                            </TableCell>
+                                        </TableRow>
+                                    </React.Fragment>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </Box>
             )}
         </Container>

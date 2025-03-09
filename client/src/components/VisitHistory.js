@@ -126,16 +126,27 @@ export default function VisitHistory({user, affiliateId}) {
                                                     </Typography>
                                                     {hasDescription && (
                                                         <>
-                                                            <Typography variant="body2">
-                                                                <strong>WOD Name:</strong> {att.classSchedule?.wodName}
+                                                        <Box
+                                                            sx={{
+                                                                backgroundColor: "#ccc",
+                                                                padding: 2,
+                                                                borderRadius: "8px",
+
+                                                            }}
+                                                        >
+                                                            <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
+                                                                <strong>🔥{att.classSchedule?.wodName || "None"}</strong>
                                                             </Typography>
-                                                            <Typography variant="body2">
-                                                                <strong>Type:</strong> {att.classSchedule?.wodType}
+                                                            <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
+                                                                <strong>{att.classSchedule?.wodType || "None"}</strong>
                                                             </Typography>
-                                                            <Typography variant="body2">
-                                                                <strong>Description:</strong> {att.classSchedule?.description}
+                                                            <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
+                                                                <strong></strong>{" "}
+                                                                {att.classSchedule?.description || "No description available"}
                                                             </Typography>
+                                                        </Box>
                                                         </>
+
                                                     )}
 
 
@@ -145,12 +156,14 @@ export default function VisitHistory({user, affiliateId}) {
                                                             <Typography variant="subtitle1">Your leaderboard
                                                                 result:</Typography>
                                                             {att.leaderboard.map((lb) => (
-                                                                <Box key={lb.id} sx={{ml: 2}}>
+                                                                <Box key={lb.id} sx={{ backgroundColor: "#ccc",
+                                                                    padding: 2,
+                                                                    borderRadius: "8px",}}>
                                                                     <Typography variant="body2">
                                                                         <strong>Score:</strong> {lb.score}
                                                                     </Typography>
                                                                     <Typography variant="body2">
-                                                                        <strong>{lb.scoreType}</strong> {lb.scoreType}
+                                                                        <strong>{lb.scoreType.toUpperCase()}</strong>
                                                                     </Typography>
 
 

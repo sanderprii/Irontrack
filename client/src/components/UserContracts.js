@@ -17,6 +17,9 @@ import {
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import Tooltip from '@mui/material/Tooltip';
+
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 import {
     getUserContracts,
@@ -362,18 +365,6 @@ export default function UserContracts({ user, affiliateId }) {
                                                         <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2 }}>
                                                             Contract Content
                                                         </Typography>
-                                                        <Box
-                                                            sx={{
-                                                                backgroundColor: '#f7f7f7',
-                                                                p: 2,
-                                                                borderRadius: 2,
-                                                                whiteSpace: 'pre-line',
-                                                                mt: 1,
-                                                            }}
-                                                        >
-                                                            {contract.content}
-                                                        </Box>
-
                                                         <Box mt={2}>
                                                             <Typography>
                                                                 <strong>Payment Type:</strong> {contract.paymentType}
@@ -388,6 +379,20 @@ export default function UserContracts({ user, affiliateId }) {
                                                                 <strong>Payment Day:</strong> {contract.paymentDay}
                                                             </Typography>
                                                         </Box>
+
+                                                        <Box
+                                                            sx={{
+                                                                backgroundColor: '#f7f7f7',
+                                                                p: 2,
+                                                                borderRadius: 2,
+                                                                whiteSpace: 'pre-line',
+                                                                mt: 1,
+                                                            }}
+                                                        >
+                                                            {contract.content}
+                                                        </Box>
+
+
 
                                                         {/* Kui staatus on "Waiting for acceptance", näita checkboxi ja "Accept Contract" nuppu */}
                                                         {isSent && role === 'regular' && (
@@ -469,39 +474,101 @@ export default function UserContracts({ user, affiliateId }) {
                     <Typography variant="h6" mb={2}>
                         Request Payment Holiday
                     </Typography>
-                    {/* select valikud MUI komponendiga january to december */}
-                    <TextField
-                        select
-                        label="Month"
-                        name="month"
-                        value={phData.month || ''}
-                        onChange={handlePhDataChange}
-                        fullWidth
-                        sx={{ mb: 2 }}
-                    >
-                        <MenuItem value="January">January</MenuItem>
-                        <MenuItem value="February">February</MenuItem>
-                        <MenuItem value="March">March</MenuItem>
-                        <MenuItem value="April">April</MenuItem>
-                        <MenuItem value="May">May</MenuItem>
-                        <MenuItem value="June">June</MenuItem>
-                        <MenuItem value="July">July</MenuItem>
-                        <MenuItem value="August">August</MenuItem>
-                        <MenuItem value="September">September</MenuItem>
-                        <MenuItem value="October">October</MenuItem>
-                        <MenuItem value="November">November</MenuItem>
-                        <MenuItem value="December">December</MenuItem>
-                    </TextField>
-                    <TextField
-                        label="Reason"
-                        name="reason"
-                        multiline
-                        rows={3}
-                        value={phData.reason}
-                        onChange={handlePhDataChange}
-                        fullWidth
-                        sx={{ mb: 2 }}
-                    />
+
+                    {/* Month Selector with Tooltip */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <TextField
+                            select
+                            label="Month"
+                            name="month"
+                            value={phData.month || ''}
+                            onChange={handlePhDataChange}
+                            fullWidth
+                        >
+                            <MenuItem value="January">January</MenuItem>
+                            <MenuItem value="February">February</MenuItem>
+                            <MenuItem value="March">March</MenuItem>
+                            <MenuItem value="April">April</MenuItem>
+                            <MenuItem value="May">May</MenuItem>
+                            <MenuItem value="June">June</MenuItem>
+                            <MenuItem value="July">July</MenuItem>
+                            <MenuItem value="August">August</MenuItem>
+                            <MenuItem value="September">September</MenuItem>
+                            <MenuItem value="October">October</MenuItem>
+                            <MenuItem value="November">November</MenuItem>
+                            <MenuItem value="December">December</MenuItem>
+                        </TextField>
+                        <Tooltip
+                            title="Select the month for which you want to request a payment holiday. Payment holiday start date will be same as payment day."
+                            arrow
+                            placement="right"
+                            componentsProps={{
+                                tooltip: {
+                                    sx: {
+                                        bgcolor: 'primary.main',
+                                        '& .MuiTooltip-arrow': {
+                                            color: 'primary.main',
+                                        },
+                                        boxShadow: 1,
+                                        fontSize: '0.85rem',
+                                        p: 1,
+                                        maxWidth: 220
+                                    }
+                                }
+                            }}
+                        >
+                            <IconButton
+                                color="primary"
+                                size="small"
+                                sx={{ ml: 1, mt: 1 }}
+                                aria-label="Month info"
+                            >
+                                <HelpOutlineIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+
+                    {/* Reason Field with Tooltip */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <TextField
+                            label="Reason"
+                            name="reason"
+                            multiline
+                            rows={3}
+                            value={phData.reason}
+                            onChange={handlePhDataChange}
+                            fullWidth
+                        />
+                        <Tooltip
+                            title="Please provide a detailed reason for your payment holiday request"
+                            arrow
+                            placement="right"
+                            componentsProps={{
+                                tooltip: {
+                                    sx: {
+                                        bgcolor: 'primary.main',
+                                        '& .MuiTooltip-arrow': {
+                                            color: 'primary.main',
+                                        },
+                                        boxShadow: 1,
+                                        fontSize: '0.85rem',
+                                        p: 1,
+                                        maxWidth: 220
+                                    }
+                                }
+                            }}
+                        >
+                            <IconButton
+                                color="primary"
+                                size="small"
+                                sx={{ ml: 1, mt: 1 }}
+                                aria-label="Reason info"
+                            >
+                                <HelpOutlineIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+
                     <Box display="flex" justifyContent="flex-end" gap={2}>
                         <Button onClick={handleClosePhModal} color="secondary">
                             Cancel

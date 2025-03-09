@@ -1,12 +1,162 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-
+const cors = require('cors');
 
 const express = require('express');
+const app = express();
 require('dotenv').config();
 
+const path = require('path');
 
-const cors = require('cors');
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://www.irontrack.ee',
+    'https://www.irontrack.ee/api',
+    'https://irontrack.ee',
+    'http://localhost:5000',
+    'http://crossfittartu.localhost:3000',
+    'https://www.crossfittartu.irontack.ee',
+    'https://crossfittartu.irontrack.ee',
+];
+
+
+app.use(cors({
+    origin: function(origin, callback) {
+        // Debug: Logi origin, et näha, mida täpselt võrreldakse
+        console.log('Origin header:', origin);
+
+        // Kui päringu päritolu pole määratud (nt Postmani või server-to-server päringud), lase see läbi
+        if (!origin) return callback(null, true);
+
+        // Lisa dünaamiline localhost subdomainide kontroll
+        const isLocalSubdomain = origin &&
+            origin.match(/^http:\/\/[a-z0-9-]+\.localhost:3000$/);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || isLocalSubdomain) {
+            return callback(null, true);
+        }
+
+        const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
+        return callback(new Error(msg), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+}));
+
+app.set('trust proxy', 1);
+app.use(express.json());
+// Middleware to handle subdomains
+app.use(async (req, res, next) => {
+    // Parse hostname to extract subdomain
+    const hostname = req.hostname;
+
+    // Skip for direct domain access but allow localhost subdomains
+    if ((hostname === 'localhost' || hostname === 'irontrack.ee' || hostname === 'www.irontrack.ee') &&
+        !hostname.match(/^[^.]+\.localhost$/)) {
+        return next();
+    }
+
+    // Extract subdomain (assuming format is subdomain.irontrack.ee)
+    // Handles both development and production environments
+    const parts = hostname.split('.');
+    const subdomain = parts.length > 2 ? parts[0] : null;
+
+    if (subdomain) {
+        try {
+            // Find affiliate by subdomain
+            const affiliate = await prisma.affiliate.findFirst({
+                where: { subdomain },
+                include: {
+                    trainers: {
+                        include: {
+                            trainer: true,
+                        },
+                    },
+                    ClassSchedule: true,
+                },
+            });
+
+            if (affiliate) {
+                // Store affiliate data for use in frontend
+                res.locals.affiliate = affiliate;
+
+                // For API requests, continue to regular routing
+                if (req.path.startsWith('/api/')) {
+                    return next();
+                }
+
+                // For non-API requests to subdomains, we'll let React router handle it
+                // and serve the index.html file with our React app
+                // In production, this would be the path to your built React app
+                return res.sendFile(path.join(__dirname, '../../client/build/index.html'));
+            }
+        } catch (error) {
+            console.error('Error fetching affiliate from subdomain:', error);
+        }
+    }
+
+    next();
+});
+
+// Add an API endpoint to get affiliate info by subdomain
+app.get('/api/affiliate-by-subdomain', async (req, res) => {
+    // If we already have the affiliate from the middleware
+    if (res.locals.affiliate) {
+        return res.json(res.locals.affiliate);
+    }
+
+    let subdomain;
+
+    // First try: check if subdomain was passed in query parameter
+    if (req.query.subdomain) {
+        subdomain = req.query.subdomain;
+        console.log('Using subdomain from query parameter:', subdomain);
+    } else {
+        // Second try: extract from hostname
+        const hostname = req.hostname;
+        const parts = hostname.split('.');
+        subdomain = parts.length > 2 ? parts[0] : null;
+
+        if (hostname.includes('localhost') && hostname !== 'localhost') {
+            subdomain = hostname.split('.')[0];
+        }
+
+        console.log('Extracted subdomain from hostname:', subdomain);
+    }
+
+    if (!subdomain || subdomain === 'www') {
+        return res.status(400).json({ error: 'Invalid subdomain' });
+    }
+
+    try {
+        console.log('Looking for affiliate with subdomain:', subdomain);
+        const affiliate = await prisma.affiliate.findFirst({
+            where: { subdomain },
+            include: {
+                trainers: {
+                    include: {
+                        trainer: true,
+                    },
+                },
+                ClassSchedule: true,
+            },
+        });
+
+        if (!affiliate) {
+            console.log('No affiliate found with subdomain:', subdomain);
+            return res.status(404).json({ error: 'Affiliate not found' });
+        }
+
+        console.log('Found affiliate:', affiliate.name);
+        res.json(affiliate);
+    } catch (error) {
+        console.error('Error fetching affiliate from subdomain:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
 const session = require('express-session');
 const MemoryStore = require('memorystore')(session);
 const trainingRoutes = require('./routes/trainingRoutes');
@@ -32,33 +182,38 @@ const paymentRoutes = require('./routes/paymentRoutes');
 
 const { startScheduler } = require('./schedulers/contractChecker');
 
-const app = express();
-app.set('trust proxy', 1);
 
 
-const allowedOrigins = [
-    'http://localhost:3000',
-    'https://www.irontrack.ee',
-    'https://www.irontrack.ee/api',
-    'https://irontrack.ee',
-    'http://localhost:5000',
-];
 
+
+
+
+
+{/*
 app.use(cors({
     origin: function(origin, callback) {
+        // Debug: Logi origin, et näha, mida täpselt võrreldakse
+        console.log('Origin header:', origin);
+
         // Kui päringu päritolu pole määratud (nt Postmani või server-to-server päringud), lase see läbi
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
-            return callback(new Error(msg), false);
+
+        // Lisa dünaamiline localhost subdomainide kontroll
+        const isLocalSubdomain = origin &&
+            origin.match(/^http:\/\/[a-z0-9-]+\.localhost:3000$/);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || isLocalSubdomain) {
+            return callback(null, true);
         }
-        return callback(null, true);
+
+        const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
+        return callback(new Error(msg), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }));
+//*/}
 
-app.use(express.json());
 
 
 

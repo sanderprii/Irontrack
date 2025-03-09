@@ -44,6 +44,8 @@ const getMyAffiliate = async (req, res) => {
     }
 };
 
+
+
 const searchUsers = async (req, res) => {
     try {
         const query = req.query.q;
@@ -219,4 +221,4 @@ const getAffiliateById = async (req, res) => {
 };
 
 // ✅ Kasuta `module.exports`, mitte `exports`
-module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate, getAffiliateById };
+module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate, getAffiliateById};

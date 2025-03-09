@@ -675,6 +675,8 @@ const checkClassScore = async (req, res) => {
             return res.json({hasScore: false});
         }
 
+
+
         res.json({
             hasScore: true,
             scoreType: existing.scoreType,
@@ -688,12 +690,12 @@ const checkClassScore = async (req, res) => {
 
 const addClassScore = async (req, res) => {
     try {
-        const {classId, scoreType, score} = req.body;
+        const {classData, scoreType, score} = req.body;
         const userId = req.user.id;
 
         // Kontrolli, kas see rida juba eksisteerib
         const existing = await prisma.classLeaderboard.findFirst({
-            where: {classId, userId},
+            where: {classId: parseInt(classData.id), userId},
         });
         if (existing) {
             return res
@@ -704,12 +706,31 @@ const addClassScore = async (req, res) => {
         // Loo uus kirje
         await prisma.classLeaderboard.create({
             data: {
-                classId,
+                classId: parseInt(classData.id),
                 userId,
                 scoreType,
                 score
             },
         });
+
+        await prisma.training.create(
+            {
+                data: {
+                    userId: userId,
+                    type: classData.trainingType,
+                    score: score,
+                    date: classData.time,
+                    wodName: classData.wodName,
+                    wodType: classData.wodType,
+                    exercises: {
+                        create: {
+                            exerciseData: classData.description,
+
+                        }
+                    }
+                }
+            }
+        )
 
         res.status(200).json({message: "Score added successfully."});
     } catch (error) {
@@ -720,12 +741,12 @@ const addClassScore = async (req, res) => {
 
 const updateClassScore = async (req, res) => {
     try {
-        const {classId, scoreType, score} = req.body;
+        const {classData, scoreType, score} = req.body;
         const userId = req.user.id;
 
         // Kontrolli, et kirje on olemas
         const existing = await prisma.classLeaderboard.findFirst({
-            where: {classId, userId},
+            where: {classId: parseInt(classData.id), userId},
         });
         if (!existing) {
             return res
@@ -741,6 +762,8 @@ const updateClassScore = async (req, res) => {
                 score
             },
         });
+
+
 
         res.status(200).json({message: "Score updated successfully."});
     } catch (error) {

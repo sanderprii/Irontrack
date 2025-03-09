@@ -28,11 +28,29 @@ import Members from "./pages/Members";
 import Plans from "./pages/Plans";
 import Messages from "./pages/Messages";
 import Pricing from "./pages/Pricing";
-
+import MarketingPage from "./pages/MarketingPage";
 import Checkout from "./pages/Checkout";
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
+    const hostname = window.location.hostname;
+
+    // Check if we're on a subdomain
+    const isSubdomain =
+        ((hostname.includes('localhost') && hostname !== 'localhost' && hostname.includes('.')) ||
+            (hostname !== 'irontrack.ee' && hostname !== 'www.irontrack.ee' && hostname.split('.').length > 2));
+
+    // If we're on a subdomain, only show the marketing page
+    if (isSubdomain) {
+        return (
+            <HelmetProvider>
+                <AppTheme>
+                    <CssBaseline />
+                    <MarketingPage />
+                </AppTheme>
+            </HelmetProvider>
+        );
+    }
 
     return (
         <HelmetProvider>
@@ -66,7 +84,7 @@ function App() {
                 <Route path="/Messages" element={<Messages />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/pricing" element={<Pricing />} />
-
+                <Route path="/marketing" element={<MarketingPage />} />
 
                 {/* ✅ Lisa MarketingPage uue marsruudina */}
 

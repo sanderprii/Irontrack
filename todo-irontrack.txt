@@ -1,23 +1,14 @@
 todo:
 
 Üldine:
-1. light/dark taust igal lehel käima
-2. Log out, siis viskab home lehele
-3. Home/About leht visandada.
-4. Join Us - saab mõistlikke andmeid panna
-5. Register ja login with google
+
 6. Remember me ka toimima
 
 registerTrainingPage:
-1. plaane ei saa osta.
-2. search bari tagune korda teha
-3. affiliate info normaalsemaks teha
-4. nupud korda
-5. REgister class ka diary lehele.
-6. Päeva nupud M + kuupäev
-7. Classes card ilusaks ja info õigeks.
-8. Add score nupp ja funktsioon
-9. capacity ikoon
+
+
+
+
 
 
 RegisterPage:

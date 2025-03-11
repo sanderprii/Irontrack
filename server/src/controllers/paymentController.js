@@ -226,15 +226,15 @@ const handleMontonioWebhook = async (req, res) => {
         try {
             decodedToken = jwt.decode(orderToken);
 
-            if (!decodedToken || !decodedToken.uuid) {
+            if (!decodedToken || !decodedToken.paymentLinkUuid) {
                 console.log('Invalid token format or missing UUID');
                 return res.status(200).json({ success: false, message: 'Invalid token format' });
             }
 
             // Kasuta uuid-d paymentLinkUuid asemel
-            const orderUuid = decodedToken.uuid;  // UUID on otseselt decodedToken.uuid-s, mitte paymentLinkUuid-s
+            const orderUuid = decodedToken.paymentLinkUuid;  // UUID on otseselt decodedToken.uuid-s, mitte paymentLinkUuid-s
             console.log(`Processing webhook for order UUID: ${orderUuid}`);
-
+console.log(decodedToken)
             // Lepingu maksete jaoks otsime paymentMetadata
             const paymentMetadata = await prisma.paymentMetadata.findFirst({
                 where: { montonioUuid: orderUuid }

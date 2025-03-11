@@ -50,9 +50,7 @@ const RoleSelectionPage = () => {
         } else if (role === 'affiliate') {
             navigate('/affiliate-owner');
         } else if (role === 'trainer') {
-            alert('Trainer page not implemented yet');
-        } else if (role === 'checkin') {
-            alert('Check-in page not implemented yet');
+            navigate('/trainer');
         }
     };
 

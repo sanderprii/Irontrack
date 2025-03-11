@@ -37,8 +37,13 @@ export default function Classes() {
     const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
+        const affiliateIdLocalStorage = localStorage.getItem("affiliateId");
+
         if (selectedAffiliate) {
             setAffiliateId(selectedAffiliate.id);
+        } else if (affiliateIdLocalStorage) {
+            setAffiliateId(parseInt(localStorage.getItem("affiliateId")));
+
         } else {
             const fetchAffiliate = async () => {
                 try {

@@ -110,7 +110,7 @@ const CreditView = ({ user, affiliateId }) => {
     const role = localStorage.getItem('role');
 
     // Lisamise funktsiooni võib kasutada ainult, kui kasutaja roll on affiliate või trainer
-    const canAddCredit = role === 'affiliate' || role === 'trainer';
+    const canAddCredit = role === 'affiliate';
 
     return (
         <Box>

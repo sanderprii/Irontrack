@@ -203,6 +203,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const groupsRoutes = require('./routes/groupsRoutes');
 const contractRoutes = require('./routes/contractRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const trainerRoutes = require('./routes/trainerRoutes');
 
 const { startScheduler } = require('./schedulers/contractChecker');
 
@@ -268,6 +269,8 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/messagegroups', groupsRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api/trainer', trainerRoutes);
+
 // Lihtne test endpoint
 app.get('/api', (req, res) => {
     res.json({ message: 'Tere tulemast meie API-sse!' });

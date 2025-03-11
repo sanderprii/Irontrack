@@ -37,6 +37,16 @@ export function AuthProvider({ children }) {
         setAuthState({ token: null, role: null });
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('affiliateId');
+        localStorage.removeItem('affiliateName');
+        localStorage.removeItem('selectedAffiliate');
+        localStorage.removeItem('checkout_planData');
+        localStorage.removeItem('checkout_affiliateInfo');
+        localStorage.removeItem('checkout_contract');
+        localStorage.removeItem('checkout_appliedCredit');
+        localStorage.removeItem('checkout_userData');
+        localStorage.removeItem('checkout_isContractPayment');
+
 
         // suuna avalehele (või kuhu vaja)
         if (navigate) {

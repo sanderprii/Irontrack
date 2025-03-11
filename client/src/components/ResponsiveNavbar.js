@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useContext, useState } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { ThemeContext } from '../shared-theme/AppTheme';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {useContext, useState} from 'react';
+import {AuthContext} from '../context/AuthContext';
+import {ThemeContext} from '../shared-theme/AppTheme';
+import {Link, useNavigate, useLocation} from 'react-router-dom';
 
 // MUI komponendid
-import { styled, alpha } from '@mui/material/styles';
+import {styled, alpha} from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
@@ -36,7 +36,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 
-const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+const StyledToolbar = styled(Toolbar)(({theme}) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -54,8 +54,8 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 }));
 
 export default function AppAppBar() {
-    const { isLoggedIn, role, logout } = useContext(AuthContext);
-    const { mode, toggleTheme } = useContext(ThemeContext);
+    const {isLoggedIn, role, logout} = useContext(AuthContext);
+    const {mode, toggleTheme} = useContext(ThemeContext);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -78,43 +78,43 @@ export default function AppAppBar() {
     if (!isLoggedIn) {
         // Mitte sisse logitud kasutaja
         leftLinks = [
-            { name: 'Home', to: '/' },
-            { name: 'Pricing', to: '/pricing' },
-            { name: 'About', to: '/about' },
+            {name: 'Home', to: '/'},
+            {name: 'Pricing', to: '/pricing'},
+            {name: 'About', to: '/about'},
         ];
         rightLinks = [
-            { name: 'Log In', to: '/login' },
-            { name: 'Join Us', to: '/register' },
+            {name: 'Log In', to: '/login'},
+            {name: 'Join Us', to: '/register'},
         ];
     } else {
         // Sisse logitud
         if (role === 'regular') {
             // Regulaarne kasutaja
             leftLinks = [
-                { name: 'Trainings', to: '/trainings' },
-                { name: 'Records', to: '/records' },
-                { name: 'Register for Training', to: '/register-training' },
+                {name: 'Trainings', to: '/trainings'},
+                {name: 'Records', to: '/records'},
+                {name: 'Register for Training', to: '/register-training'},
             ];
             rightLinks = [
-                { name: 'My Profile', to: '/my-profile' },
+                {name: 'My Profile', to: '/my-profile'},
 
             ];
         } else if (role === 'affiliate') {
             // Affiliate
             leftLinks = [
-                { name: 'My Affiliate', to: '/my-affiliate' },
-                { name: 'Classes', to: '/classes' },
-                { name: 'Members', to: '/members' },
-                { name: 'Plans', to: '/plans' },
-                { name: 'Messages', to: '/messages' },
+                {name: 'My Affiliate', to: '/my-affiliate'},
+                {name: 'Classes', to: '/classes'},
+                {name: 'Members', to: '/members'},
+                {name: 'Plans', to: '/plans'},
+                {name: 'Messages', to: '/messages'},
             ];
 
         } else if (role === 'trainer') {
-            leftLinks = [{ name: 'Trainer Page', to: '/trainer' }];
-            rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
-        } else if (role === 'checkin') {
-            leftLinks = [{ name: 'Check-In Page', to: '/check-in' }];
-            rightLinks = [{ name: 'Log Out', action: () => logout(navigate) }];
+            leftLinks = [
+                {name: 'Classes', to: '/classes'},
+                {name: 'Members', to: '/members'},
+            ];
+            rightLinks = [{name: 'Log Out', action: () => logout(navigate)}];
         }
     }
 
@@ -128,18 +128,23 @@ export default function AppAppBar() {
     let bottomNavItems = [];
     if (isLoggedIn && role === 'regular') {
         bottomNavItems = [
-            { value: '/trainings', label: 'Trainings', icon: <FitnessCenterIcon /> },
-            { value: '/records', label: 'Records', icon: <AssignmentIcon /> },
-            { value: '/register-training', label: 'Register', icon: <AddBoxIcon /> },
-            { value: '/my-profile', label: 'Profile', icon: <PersonIcon /> },
+            {value: '/trainings', label: 'Trainings', icon: <FitnessCenterIcon/>},
+            {value: '/records', label: 'Records', icon: <AssignmentIcon/>},
+            {value: '/register-training', label: 'Register', icon: <AddBoxIcon/>},
+            {value: '/my-profile', label: 'Profile', icon: <PersonIcon/>},
         ];
     } else if (isLoggedIn && role === 'affiliate') {
         bottomNavItems = [
-            { value: '/my-affiliate', label: 'Affiliate', icon: <StoreIcon /> },
-            { value: '/classes', label: 'Classes', icon: <ClassIcon /> },
-            { value: '/members', label: 'Members', icon: <GroupIcon /> },
-            { value: '/plans', label: 'Plans', icon: <EventNoteIcon /> },
-            { value: '/messages', label: 'Messages', icon: <MailIcon /> },
+            {value: '/my-affiliate', label: 'Affiliate', icon: <StoreIcon/>},
+            {value: '/classes', label: 'Classes', icon: <ClassIcon/>},
+            {value: '/members', label: 'Members', icon: <GroupIcon/>},
+            {value: '/plans', label: 'Plans', icon: <EventNoteIcon/>},
+            {value: '/messages', label: 'Messages', icon: <MailIcon/>},
+        ];
+    } else if (isLoggedIn && role === 'trainer') {
+        bottomNavItems = [
+            {value: '/classes', label: 'Classes', icon: <ClassIcon/>},
+            {value: '/members', label: 'Members', icon: <GroupIcon/>},
         ];
     }
 
@@ -159,30 +164,35 @@ export default function AppAppBar() {
     // --------------------------------
 
 
-
     return (
         <>
             {/* Ülemine AppBar - alati nähtav, kuid menüünupud on nähtavad ainult desktopis */}
-            <AppBar position="static" enableColorOnDark sx={{ boxShadow: 0, backgroundColor: 'transparent', width: '100vw' }}>
+            <AppBar position="static" enableColorOnDark
+                    sx={{boxShadow: 0, backgroundColor: 'transparent', width: '100vw'}}>
 
-                    <StyledToolbar variant="dense" disableGutters sx={{ borderBottom: { xs: '2px solid #cccccc', md: 'none' } }}>
+                <StyledToolbar variant="dense" disableGutters
+                               sx={{borderBottom: {xs: '2px solid #cccccc', md: 'none'}}}>
 
-                        {/* NAVIGATION MOBILE VIEW */}
-                        <Box sx={{ width: '100%', display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'space-between' }}>
+                    {/* NAVIGATION MOBILE VIEW */}
+                    <Box sx={{
+                        width: '100%',
+                        display: {xs: 'flex', md: 'none'},
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
 
 
-
-                            {/* Keskel: Favicon pilt */}
-                            <Box sx={{ flexGrow: 1, display: 'flex', ml: 1}}>
-                                <img
-                                    src="/favicon.png"
-                                    alt="App Logo"
-                                    style={{ height: '40px', cursor: 'pointer' }}
-                                    onClick={() => navigate(role === 'regular' ? '/training-diary' : role ==='affiliate' ? '/affiliate-owner' : '/')}
-                                />
-                            </Box>
-                            {role === null && (
-                            <Box sx={{ display: { xs: 'flex', md: 'flex' }, gap: 1, ml: 2 }}>
+                        {/* Keskel: Favicon pilt */}
+                        <Box sx={{flexGrow: 1, display: 'flex', ml: 1}}>
+                            <img
+                                src="/favicon.png"
+                                alt="App Logo"
+                                style={{height: '40px', cursor: 'pointer'}}
+                                onClick={() => navigate(role === 'regular' ? '/training-diary' : role === 'affiliate' ? '/affiliate-owner' : role === 'trainer' ? '/trainer' : '/')}
+                            />
+                        </Box>
+                        {role === null && (
+                            <Box sx={{display: {xs: 'flex', md: 'flex'}, gap: 1, ml: 2}}>
 
 
                                 {leftLinks.map((link) =>
@@ -210,123 +220,122 @@ export default function AppAppBar() {
                                     )
                                 )}
                             </Box>
-                            )}
+                        )}
 
-                            {/* Paremal: Logout-nupp */}
-                            {isLoggedIn ? (
-                                <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 1 }}>
-                                    <LogoutIcon />
-                                </IconButton>
+                        {/* Paremal: Logout-nupp */}
+                        {isLoggedIn ? (
+                            <IconButton color="primary" onClick={() => logout(navigate)} sx={{mr: 1}}>
+                                <LogoutIcon/>
+                            </IconButton>
 
-                            ) : (
-                                <IconButton color="primary" onClick={() => navigate('/login')} sx={{ mr: 1 }}>
-                                    <PersonIcon />
-                                </IconButton>
+                        ) : (
+                            <IconButton color="primary" onClick={() => navigate('/login')} sx={{mr: 1}}>
+                                <PersonIcon/>
+                            </IconButton>
 
-                            )}
-                        </Box>
+                        )}
+                    </Box>
 
-                        {/* Vasakul Logo */}
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, ml: 2,  flexGrow: 1, alignItems: 'center', px: 0}}>
-                            <img
-                                src="/logo2.png"
-                                alt="Irontrack Logo"
-                                style={{ height: '50px', cursor: 'pointer' }}
-                                onClick={() => navigate(role === 'regular' ? '/training-diary' : role ==='affiliate' ? '/affiliate-owner' : '/')}
-                            />
-
-
+                    {/* Vasakul Logo */}
+                    <Box sx={{display: {xs: 'none', md: 'flex'}, ml: 2, flexGrow: 1, alignItems: 'center', px: 0}}>
+                        <img
+                            src="/logo2.png"
+                            alt="Irontrack Logo"
+                            style={{height: '50px', cursor: 'pointer'}}
+                            onClick={() => navigate(role === 'regular' ? '/training-diary' : role === 'affiliate' ? '/affiliate-owner' : role === 'trainer' ? '/trainer' : '/')}
+                        />
 
 
                         {isLoggedIn && (
                             <IconButton
                                 color="primary"
                                 onClick={() => logout(navigate)}
-                                sx={{ mr: 1,
-                                display: { xs: 'flex', md: 'none'  }
+                                sx={{
+                                    mr: 1,
+                                    display: {xs: 'flex', md: 'none'}
                                 }}
                             >
-                                <LogoutIcon />
+                                <LogoutIcon/>
                             </IconButton>
                         )}
 
-                        </Box>
-                        {/* Desktop menüü (Left) */}
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, ml: 2 }}>
+                    </Box>
+                    {/* Desktop menüü (Left) */}
+                    <Box sx={{display: {xs: 'none', md: 'flex'}, gap: 1, ml: 2}}>
 
 
-                            {leftLinks.map((link) =>
-                                link.action ? (
-                                    <Button
-                                        key={link.name}
-                                        onClick={link.action}
-                                        variant="text"
-                                        color="info"
-                                        size="small"
-                                    >
-                                        {link.name}
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        key={link.name}
-                                        component={Link}
-                                        to={link.to}
-                                        variant="text"
-                                        color="info"
-                                        size="small"
-                                    >
-                                        {link.name}
-                                    </Button>
-                                )
-                            )}
-                        </Box>
-
-                        {/* Desktop menüü (Right) - Log Out jt nupud */}
-
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
-                            {rightLinks.map((link) =>
-                                link.action ? (
-                                    <Button
-                                        key={link.name}
-                                        onClick={link.action}
-                                        color="primary"
-                                        variant="text"
-                                        size="small"
-                                    >
-                                        {link.name}
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        key={link.name}
-                                        component={Link}
-                                        to={link.to}
-                                        color="primary"
-                                        variant="contained"
-                                        size="small"
-                                    >
-                                        {link.name}
-                                    </Button>
-                                )
-                            )}
-                            {isLoggedIn && (
-                                <IconButton
-                                    color="primary"
-                                    onClick={() => logout(navigate)}
-
+                        {leftLinks.map((link) =>
+                            link.action ? (
+                                <Button
+                                    key={link.name}
+                                    onClick={link.action}
+                                    variant="text"
+                                    color="info"
+                                    size="small"
                                 >
-                                    <LogoutIcon />
-                                </IconButton>
-                            )}
-                        </Box>
+                                    {link.name}
+                                </Button>
+                            ) : (
+                                <Button
+                                    key={link.name}
+                                    component={Link}
+                                    to={link.to}
+                                    variant="text"
+                                    color="info"
+                                    size="small"
+                                >
+                                    {link.name}
+                                </Button>
+                            )
+                        )}
+                    </Box>
 
-                        {/* Mobiilne hamburger (Drawer) - näitame ainult siis, kui NOT isMobile?
+                    {/* Desktop menüü (Right) - Log Out jt nupud */}
+
+                    <Box sx={{display: {xs: 'none', md: 'flex'}, gap: 1, mr: 2}}>
+                        {rightLinks.map((link) =>
+                            link.action ? (
+                                <Button
+                                    key={link.name}
+                                    onClick={link.action}
+                                    color="primary"
+                                    variant="text"
+                                    size="small"
+                                >
+                                    {link.name}
+                                </Button>
+                            ) : (
+                                <Button
+                                    key={link.name}
+                                    component={Link}
+                                    to={link.to}
+                                    color="primary"
+                                    variant="contained"
+                                    size="small"
+                                >
+                                    {link.name}
+                                </Button>
+                            )
+                        )}
+                        {isLoggedIn && (
+                            <IconButton
+                                color="primary"
+                                onClick={() => logout(navigate)}
+
+                            >
+                                <LogoutIcon/>
+                            </IconButton>
+                        )}
+                    </Box>
+
+                    {/* Mobiilne hamburger (Drawer) - näitame ainult siis, kui NOT isMobile?
                 Või kui soovid säilitada vana menüü mobiilis, jätame siia.
                 Hetkel peidame hoopis, kuna kasutame alumist nav'i.
                 Kui soovid, võid taastada. */}
-                        <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+                    <Box sx={{display: {xs: 'flex', md: 'none'}}}>
 
-                        </Box>
-                    </StyledToolbar>
+                    </Box>
+                </StyledToolbar>
 
             </AppBar>
 

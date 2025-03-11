@@ -1,11 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, {useState, useContext} from 'react';
+import {HelmetProvider} from 'react-helmet-async';
+import {Routes, Route, Navigate} from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 // ✅ Impordi AppTheme
 import AppTheme from './shared-theme/AppTheme';
-import { AuthContext } from './context/AuthContext';
+import {AuthContext} from './context/AuthContext';
 
 
 // Impordi muud komponendid
@@ -30,19 +30,20 @@ import Messages from "./pages/Messages";
 import Pricing from "./pages/Pricing";
 import MarketingPage from "./pages/MarketingPage";
 import Checkout from "./pages/Checkout";
+import Trainer from "./pages/Trainer";
 
 const HomeRedirect = () => {
-    const { isLoggedIn } = useContext(AuthContext);// Assuming you have an auth context with these values
-const userRole = localStorage.getItem("role");
+    const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
+    const userRole = localStorage.getItem("role");
     // Redirect to training diary if logged in as regular user
     if (isLoggedIn && userRole === 'regular') {
-        return <Navigate to="/training-diary" replace />;
-    } else if ( isLoggedIn && userRole === 'affiliate') {
-        return <Navigate to="/affiliate-owner" replace />;
+        return <Navigate to="/training-diary" replace/>;
+    } else if (isLoggedIn && userRole === 'affiliate') {
+        return <Navigate to="/affiliate-owner" replace/>;
     }
 
     // Otherwise, show the normal homepage
-    return <HomePage />;
+    return <HomePage/>;
 };
 
 function App() {
@@ -59,11 +60,11 @@ function App() {
         return (
             <HelmetProvider>
                 <AppTheme>
-                    <CssBaseline />
+                    <CssBaseline/>
                     <Box>
                         <Routes>
-                            <Route path="/" element={<MarketingPage />} />
-                            <Route path="/classes" element={<Classes />} />
+                            <Route path="/" element={<MarketingPage/>}/>
+                            <Route path="/classes" element={<Classes/>}/>
                             {/* Lisa vajadusel teisi marsruute */}
                         </Routes>
                     </Box>
@@ -74,43 +75,43 @@ function App() {
 
     return (
         <HelmetProvider>
-        <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
-            <CssBaseline />
-            <ResponsiveNavbar />
-            <Box
-                sx={{
-                    // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
-                    // jätame ekraani alla tühja ruumi
-                    pb:'56px',
-                }}
-            >
-            <Routes>
-                <Route path="/" element={<HomeRedirect />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/trainings" element={<TrainingsPage />} />
-                <Route path="/records" element={<RecordsPage />} />
-                <Route path="/find-users" element={<FindUsersPage />} />
-                <Route path="/register-training" element={<RegisterTrainingPage />} />
-                <Route path="/my-profile" element={<MyProfile token={token} />} />
-                <Route path="/login" element={<LoginForm />} />
-                <Route path="/register" element={<JoinUsForm />} />
-                <Route path="/select-role" element={<RoleSelectionPage />} />
-                <Route path="/training-diary" element={<TrainingDiaryPage />} />
-                <Route path="/affiliate-owner" element={<AffiliateOwnerPage />} />
-                <Route path="/my-affiliate" element={<MyAffiliate token={token} />} />
-                <Route path="/classes" element={<Classes />} />
-                <Route path="/members" element={<Members />} />
-                <Route path="/plans" element={<Plans />} />
-                <Route path="/Messages" element={<Messages />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/marketing" element={<MarketingPage />} />
+            <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
+                <CssBaseline/>
+                <ResponsiveNavbar/>
+                <Box
+                    sx={{
+                        // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
+                        // jätame ekraani alla tühja ruumi
+                        pb: '56px',
+                    }}
+                >
+                    <Routes>
+                        <Route path="/" element={<HomeRedirect/>}/>
+                        <Route path="/about" element={<AboutPage/>}/>
+                        <Route path="/trainings" element={<TrainingsPage/>}/>
+                        <Route path="/records" element={<RecordsPage/>}/>
+                        <Route path="/find-users" element={<FindUsersPage/>}/>
+                        <Route path="/register-training" element={<RegisterTrainingPage/>}/>
+                        <Route path="/my-profile" element={<MyProfile token={token}/>}/>
+                        <Route path="/login" element={<LoginForm/>}/>
+                        <Route path="/register" element={<JoinUsForm/>}/>
+                        <Route path="/select-role" element={<RoleSelectionPage/>}/>
+                        <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
+                        <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
+                        <Route path="/my-affiliate" element={<MyAffiliate token={token}/>}/>
+                        <Route path="/classes" element={<Classes/>}/>
+                        <Route path="/members" element={<Members/>}/>
+                        <Route path="/plans" element={<Plans/>}/>
+                        <Route path="/Messages" element={<Messages/>}/>
+                        <Route path="/checkout" element={<Checkout/>}/>
+                        <Route path="/pricing" element={<Pricing/>}/>
+                        <Route path="/marketing" element={<MarketingPage/>}/>
+                        <Route path="/trainer" element={<Trainer/>}/>
+                        {/* ✅ Lisa MarketingPage uue marsruudina */}
 
-                {/* ✅ Lisa MarketingPage uue marsruudina */}
-
-            </Routes>
-            </Box>
-        </AppTheme>
+                    </Routes>
+                </Box>
+            </AppTheme>
         </HelmetProvider>
     );
 }

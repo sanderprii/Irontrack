@@ -348,6 +348,7 @@ export default function Pricing() {
                             <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2 }}>
                                 Montonio Integration (Optional)
                             </Typography>
+
                             <Typography variant="body1">
                                 Use Montonio's payment links for lower fees compared to Stripe. Choose between
                                 Standard or Premium packages and save on every transaction. Seamlessly integrate

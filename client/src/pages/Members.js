@@ -57,6 +57,13 @@ export default function Members() {
     ];
 
     useEffect(() => {
+
+        const affiliateIdLocalStorage = localStorage.getItem("affiliateId");
+
+        if (affiliateIdLocalStorage) {
+            setOwnerAffiliateId(parseInt(affiliateIdLocalStorage));
+        } else {
+
         async function fetchOwnerAffiliateId() {
             try {
                 const response = await getOwnerAffiliateId();
@@ -71,6 +78,7 @@ export default function Members() {
         }
 
         fetchOwnerAffiliateId();
+        }
     }, []);
 
     useEffect(() => {

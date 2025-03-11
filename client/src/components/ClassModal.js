@@ -357,7 +357,7 @@ export default function ClassModal({
 
     const handleDelete = async (userId) => {
         try {
-            await deleteAttendee(cls.id, userId);
+            await deleteAttendee(cls.id, cls.freeClass, userId);
             setAttendees(prev => prev.filter(a => a.userId !== userId));
             await refreshClasses();
 

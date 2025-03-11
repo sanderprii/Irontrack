@@ -665,7 +665,7 @@ const checkUserEnrollment = async (req, res) => {
 const checkClassScore = async (req, res) => {
     try {
         const {classId} = req.query;
-        const userId = req.user.id;
+        const userId = req.user?.id;
 
         const existing = await prisma.classLeaderboard.findFirst({
             where: {classId: parseInt(classId), userId},

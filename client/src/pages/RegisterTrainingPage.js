@@ -164,21 +164,32 @@ const RegisterTrainingPage = () => {
     };
 
     function getValidUntil(planId, userPlans) {
-        // Leia kasutaja ostetud plaan vastava planId järgi
-        const found = userPlans.find((up) => up.planId === planId);
-        if (!found) {
+        // Leia kõik kasutaja ostetud plaanid vastava planId järgi
+        const foundPlans = userPlans.filter((up) => up.planId === planId);
+        if (foundPlans.length === 0) {
             return null; // kasutajal pole seda plaani ostetud
         }
 
-        // Kas plaan on veel kehtiv (endDate tulevikus)?
         const now = new Date();
-        const endDate = new Date(found.endDate);
-        if (endDate > now) {
-            // Tagastame kehtiva kuupäeva kujul "DD.MM.YYYY"
-            return formatDateISOtoDDMMYYYY(found.endDate);
+        // Filtreerime välja kehtivad plaanid (endDate tulevikus ja sessionsLeft > 0)
+        const validPlans = foundPlans.filter(plan => {
+            const endDate = new Date(plan.endDate);
+            return endDate > now && plan.sessionsLeft > 0;
+        });
+
+        if (validPlans.length === 0) {
+            return null; // ükski plaan pole kehtiv
         }
-        // Muidu on aegunud
-        return null;
+
+        // Leiame plaani, millel on kõige hilisem lõppkuupäev
+        const latestPlan = validPlans.reduce((latest, current) => {
+            const latestDate = new Date(latest.endDate);
+            const currentDate = new Date(current.endDate);
+            return currentDate > latestDate ? current : latest;
+        }, validPlans[0]);
+
+        // Tagastame kehtiva kuupäeva kujul "DD.MM.YYYY"
+        return formatDateISOtoDDMMYYYY(latestPlan.endDate);
     }
 
 

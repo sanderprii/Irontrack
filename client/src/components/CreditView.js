@@ -10,9 +10,22 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Typography
+    Typography,
+    IconButton,
+    Collapse,
+    Card,
+    CardContent,
+    Divider,
+    Chip,
+    Grid
 } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import InfoIcon from '@mui/icons-material/Info';
 import { getUserCredits, getCreditHistory, addCredit } from '../api/creditApi';
 
 const CreditView = ({ user, affiliateId }) => {
@@ -112,50 +125,85 @@ const CreditView = ({ user, affiliateId }) => {
     // Lisamise funktsiooni võib kasutada ainult, kui kasutaja roll on affiliate või trainer
     const canAddCredit = role === 'affiliate';
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('et-EE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
     return (
         <Box>
-            <Typography variant="h5" gutterBottom sx={{ml: 2}}>
+            <Typography variant="h5" gutterBottom sx={{ml: 2, fontWeight: 'bold'}}>
                 Credit
             </Typography>
 
             {/* Kui pole üldse credits, näita "Add Credit" vormi */}
             {credits.length === 0 && canAddCredit && (
-                <Paper sx={{ mb: 4, p: 2 }}>
-                    <Typography variant="h6">Add Credit</Typography>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
-                        <TextField
-                            label="Amount"
-                            type="number"
-                            value={creditInputs['new']?.amount || ''}
-                            onChange={(e) => handleInputChange('new', 'amount', e.target.value)}
-                        />
-                        <TextField
-                            label="Description"
-                            value={creditInputs['new']?.description || ''}
-                            onChange={(e) => handleInputChange('new', 'description', e.target.value)}
-                        />
-                        <Button variant="contained" onClick={() => handleAddCredit('new', affiliateId)}>
-                            Apply
-                        </Button>
-                    </Box>
-                </Paper>
+                <Card elevation={2} sx={{ mb: 4, overflow: 'visible' }}>
+                    <CardContent>
+                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <AddCircleIcon sx={{ mr: 1, color: 'primary.main' }} />
+                            Add Credit
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <TextField
+                                label="Amount"
+                                type="number"
+                                value={creditInputs['new']?.amount || ''}
+                                onChange={(e) => handleInputChange('new', 'amount', e.target.value)}
+                                InputProps={{
+                                    startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>€</Box>,
+                                }}
+                            />
+                            <TextField
+                                label="Description"
+                                value={creditInputs['new']?.description || ''}
+                                onChange={(e) => handleInputChange('new', 'description', e.target.value)}
+                                sx={{ flexGrow: 1 }}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={() => handleAddCredit('new', affiliateId)}
+                                startIcon={<AddCircleIcon />}
+                            >
+                                Apply
+                            </Button>
+                        </Box>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Credits-tabel */}
-            <Paper sx={{ mb: 4 }}>
+            <Card elevation={2} sx={{ mb: 4, overflow: 'hidden' }}>
+                <CardContent sx={{ pb: 0 }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <AccountBalanceWalletIcon sx={{ mr: 1, color: 'primary.main' }} />
+                        Available Credit
+                    </Typography>
+                    <Divider sx={{ mb: 1 }} />
+                </CardContent>
+
                 <Table>
-                    <TableHead>
+                    <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableRow>
-                            <TableCell>Credit Amount</TableCell>
-                            <TableCell>Affiliate</TableCell>
-                            {canAddCredit && <TableCell>Actions</TableCell>}
+                            <TableCell sx={{ fontWeight: 'bold' }}>Credit Amount</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Affiliate</TableCell>
+                            {canAddCredit && <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {credits.map((credit) => (
                             <React.Fragment key={credit.id}>
                                 <TableRow>
-                                    <TableCell>{credit.credit} €</TableCell>
+                                    <TableCell>
+                                        <Typography sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                                            {credit.credit} €
+                                        </Typography>
+                                    </TableCell>
                                     <TableCell>{credit.affiliate?.name}</TableCell>
                                     {canAddCredit && (
                                         <TableCell>
@@ -172,19 +220,27 @@ const CreditView = ({ user, affiliateId }) => {
                                 {openRow === credit.id && (
                                     <TableRow>
                                         <TableCell colSpan={canAddCredit ? 3 : 2}>
-                                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+                                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, backgroundColor: '#f8f9fa' }}>
                                                 <TextField
                                                     label="Amount"
                                                     type="number"
                                                     value={creditInputs[credit.id]?.amount || ''}
                                                     onChange={(e) => handleInputChange(credit.id, 'amount', e.target.value)}
+                                                    InputProps={{
+                                                        startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>€</Box>,
+                                                    }}
                                                 />
                                                 <TextField
                                                     label="Description"
                                                     value={creditInputs[credit.id]?.description || ''}
                                                     onChange={(e) => handleInputChange(credit.id, 'description', e.target.value)}
+                                                    sx={{ flexGrow: 1 }}
                                                 />
-                                                <Button variant="contained" onClick={() => handleAddCredit(credit.id, credit.affiliateId)}>
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={() => handleAddCredit(credit.id, credit.affiliateId)}
+                                                    startIcon={<AddCircleIcon />}
+                                                >
                                                     Apply
                                                 </Button>
                                             </Box>
@@ -195,19 +251,25 @@ const CreditView = ({ user, affiliateId }) => {
                         ))}
                     </TableBody>
                 </Table>
-            </Paper>
+            </Card>
 
             {/* Credit History tabel */}
-            <Typography variant="h6" gutterBottom sx={{ml: 2}}>
-                Credit History
-            </Typography>
-            <Paper>
+            <Card elevation={2} sx={{ overflow: 'hidden' }}>
+                <CardContent sx={{ pb: 0 }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <ReceiptIcon sx={{ mr: 1, color: 'primary.main' }} />
+                        Credit History
+                    </Typography>
+                    <Divider sx={{ mb: 1 }} />
+                </CardContent>
+
                 <Table>
-                    <TableHead>
+                    <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableRow>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell>Amount</TableCell>
+                            <TableCell width="50px"></TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -217,52 +279,210 @@ const CreditView = ({ user, affiliateId }) => {
                                 <TableRow
                                     hover
                                     onClick={() => handleHistoryRowClick(entry.id)}
-                                    style={{ cursor: 'pointer' }}
+                                    sx={{ cursor: 'pointer' }}
                                 >
                                     <TableCell>
-                                        {new Date(entry.createdAt).toLocaleDateString('et-EE', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric'
-                                        })}
+                                        <IconButton size="small">
+                                            {openHistoryRow === entry.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                        </IconButton>
                                     </TableCell>
+                                    <TableCell>{formatDate(entry.createdAt)}</TableCell>
                                     <TableCell>{entry.description}</TableCell>
                                     <TableCell>
-                                        {entry.decrease ? '-' : '+'}{entry.amount}€
+                                        <Typography sx={{
+                                            fontWeight: 'bold',
+                                            color: entry.decrease ? '#e74c3c' : '#2ecc71'
+                                        }}>
+                                            {entry.decrease ? '-' : '+'}{entry.amount}€
+                                        </Typography>
                                     </TableCell>
                                 </TableRow>
 
                                 {/* Kui rida on avatud => Näitame detailset vaadet */}
-                                {openHistoryRow === entry.id && (
-                                    <TableRow>
-                                        <TableCell colSpan={3} sx={{ bgcolor: '#f5f5f5' }}>
-                                            <Box sx={{ p: 1 }}>
-                                                <Typography variant="subtitle2">
-                                                    Details:
+                                <TableRow>
+                                    <TableCell colSpan={4} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                                        <Collapse in={openHistoryRow === entry.id} timeout="auto" unmountOnExit>
+                                            <Box sx={{ margin: 2 }}>
+                                                <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                    Transaction Details
                                                 </Typography>
-                                                <Typography variant="body2">ID: {entry.id}</Typography>
-                                                <Typography variant="body2">Invoice Number: {entry.invoiceNumber}</Typography>
-                                                <Typography variant="body2">Status: {entry.status}</Typography>
-                                                <Typography variant="body2">Type: {entry.type}</Typography>
-                                                <Typography variant="body2">isCredit: {String(entry.isCredit)}</Typography>
-                                                <Typography variant="body2">decrease: {String(entry.decrease)}</Typography>
-                                                <Typography variant="body2">Affiliate ID: {entry.affiliateId}</Typography>
-                                                <Typography variant="body2">Credit ID: {entry.creditId}</Typography>
-                                                {/* ... Kui tahad kuvada ka planId, memberId, jms ... */}
-                                                <Typography variant="body2">Plan ID: {entry.planId}</Typography>
-                                                <Typography variant="body2">Member ID: {entry.memberId}</Typography>
 
-                                                {/* Kui sul on seal veel välju, võid neid lisada */}
-                                                {/* <pre>{JSON.stringify(entry, null, 2)}</pre> */}
+                                                <Grid container spacing={3}>
+                                                    {/* Transaction Information Card */}
+                                                    <Grid item xs={12} md={6}>
+                                                        <Card elevation={1} sx={{ height: '100%' }}>
+                                                            <CardContent>
+                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                    <ReceiptIcon sx={{ mr: 1 }} />
+                                                                    Transaction Information
+                                                                </Typography>
+                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            ID:
+                                                                        </Typography>
+                                                                        <Typography variant="body1">
+                                                                            {entry.id}
+                                                                        </Typography>
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Invoice Number:
+                                                                        </Typography>
+                                                                        <Typography variant="body1">
+                                                                            {entry.invoiceNumber || 'N/A'}
+                                                                        </Typography>
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Date:
+                                                                        </Typography>
+                                                                        <Typography variant="body1">
+                                                                            {formatDate(entry.createdAt)}
+                                                                        </Typography>
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Status:
+                                                                        </Typography>
+                                                                        <Chip
+                                                                            label={entry.status || 'N/A'}
+                                                                            color={
+                                                                                entry.status === 'completed' ? 'success' :
+                                                                                    entry.status === 'pending' ? 'warning' :
+                                                                                        entry.status === 'failed' ? 'error' :
+                                                                                            'default'
+                                                                            }
+                                                                            size="small"
+                                                                        />
+                                                                    </Box>
+                                                                </Box>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </Grid>
+
+                                                    {/* Payment Information Card */}
+                                                    <Grid item xs={12} md={6}>
+                                                        <Card elevation={1} sx={{ height: '100%' }}>
+                                                            <CardContent>
+                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                    <PaymentIcon sx={{ mr: 1 }} />
+                                                                    Payment Details
+                                                                </Typography>
+                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Amount:
+                                                                        </Typography>
+                                                                        <Typography variant="body1" sx={{
+                                                                            fontWeight: 'bold',
+                                                                            color: entry.decrease ? '#e74c3c' : '#2ecc71'
+                                                                        }}>
+                                                                            {entry.decrease ? '-' : '+'}{entry.amount} €
+                                                                        </Typography>
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Type:
+                                                                        </Typography>
+                                                                        <Typography variant="body1">
+                                                                            {entry.type || 'N/A'}
+                                                                        </Typography>
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Direction:
+                                                                        </Typography>
+                                                                        <Chip
+                                                                            label={entry.decrease ? "Debit" : "Credit"}
+                                                                            color={entry.decrease ? "error" : "success"}
+                                                                            size="small"
+                                                                        />
+                                                                    </Box>
+
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                            Credit Operation:
+                                                                        </Typography>
+                                                                        <Typography variant="body1">
+                                                                            {entry.isCredit ? "Yes" : "No"}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Box>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </Grid>
+
+                                                    {/* Additional Information Card */}
+                                                    <Grid item xs={12}>
+                                                        <Card elevation={1}>
+                                                            <CardContent>
+                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                    <InfoIcon sx={{ mr: 1 }} />
+                                                                    Additional Information
+                                                                </Typography>
+                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Affiliate ID:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {entry.affiliateId || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Credit ID:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {entry.creditId || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    </Grid>
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Plan ID:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {entry.planId || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Member ID:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {entry.memberId || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </Grid>
+                                                </Grid>
                                             </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
+                                        </Collapse>
+                                    </TableCell>
+                                </TableRow>
                             </React.Fragment>
                         ))}
                     </TableBody>
                 </Table>
-            </Paper>
+            </Card>
         </Box>
     );
 };

@@ -15,19 +15,14 @@ async function processContractPayments() {
     try {
         const today = new Date();
 
-
-
-
-
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + 5);
         const targetPaymentDay = futureDate.getDate();
 
-        const currentMonth = futureDate.toLocaleString('en-US', { month: 'long' }); // Get current month as string (January, February, etc.)
-
+        const currentMonth = futureDate.toLocaleString('en-US', { month: 'long' });
 
         // Otsi lepingud, millel on maksepäev täna ja lõpptähtaeg tulevikus
-        const activeContracts = await prisma.contract.findMany({
+        let activeContracts = await prisma.contract.findMany({
             where: {
                 active: true,
                 paymentDay: targetPaymentDay,
@@ -41,7 +36,6 @@ async function processContractPayments() {
                     not: null
                 },
                 status: 'accepted'
-
             },
             include: {
                 user: true,
@@ -49,9 +43,66 @@ async function processContractPayments() {
             }
         });
 
+        // Otsi pending transaktsioonid
+        const pendingTransactions = await prisma.transactions.findMany({
+            where: {
+                status: 'pending',
+                contractId: {
+                    in: activeContracts.map(contract => contract.id)
+                }
+            }
+        });
 
+        // Salvesta pending transaktsioonidega lepingute ID-d
+        const contractsWithPendingTransactions = new Set(
+            pendingTransactions.map(t => t.contractId)
+        );
 
-        // Käi läbi kõik lepingud ja loo neile makselingid
+        if (pendingTransactions.length > 0) {
+            console.log('Found pending transactions for contracts:', pendingTransactions.map(t => t.contractId));
+
+            // Märgi lepingud lõpetatuks
+            await prisma.contract.updateMany({
+                where: {
+                    id: {
+                        in: pendingTransactions.map(t => t.contractId)
+                    }
+                },
+                data: {
+                    status: 'terminated'
+                }
+            });
+
+            // Salvesta logi andmebaasi
+            await prisma.contractLogs.createMany({
+                data: pendingTransactions.map(t => ({
+                    contractId: t.contractId,
+                    userId: t.userId,
+                    affiliateId: t.affiliateId,
+                    action: 'contract terminated - Unpaid contract payment',
+                }))
+            });
+
+            await prisma.transactions.updateMany(
+                {
+                    where: {
+                        id: {
+                            in: pendingTransactions.map(t => t.id)
+                        }
+                    },
+                    data: {
+                        status: 'unpaid'
+                    }
+                }
+            )
+
+            // Filtreeri välja lepingud, millel on pending transaktsioonid
+            activeContracts = activeContracts.filter(
+                contract => !contractsWithPendingTransactions.has(contract.id)
+            );
+        }
+
+        // Käi läbi ainult lepingud, millel pole pending transaktsioone
         for (const contract of activeContracts) {
             await createAndSendPaymentLink(contract, currentMonth, true);
         }
@@ -123,7 +174,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             currency: "EUR",
             amount: paymentAmount,
             locale: "et",
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 päeva
+            expiresAt: new Date(Date.now() + 36 * 24 * 60 * 60 * 1000).toISOString(), // 7 päeva
             notificationUrl: notificationUrl,
             askAdditionalInfo: false
         };
@@ -180,6 +231,7 @@ async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
                     : `Monthly payment for contract #${contract.id}`,
                 type: "montonio",
                 status: "pending", // märgi alguses kui ootel
+                contractId: contract.id,
                 user: {
                     connect: {
                         id: contract.userId
@@ -259,7 +311,7 @@ async function sendPaymentEmail(contract, paymentUrl, paymentAmount, isPaymentHo
     Please use the following link to complete your payment:
     ${paymentUrl}
     
-    The payment link is valid for 7 days.
+    The payment link is valid for 36 days.
     
     Thank you!
     IronTrack Team
@@ -272,7 +324,7 @@ async function sendPaymentEmail(contract, paymentUrl, paymentAmount, isPaymentHo
     Please use the following link to complete your payment:
     ${paymentUrl}
     
-    The payment link is valid for 7 days.
+    The payment link is valid for 36 days.
     
     Thank you!
     IronTrack Team

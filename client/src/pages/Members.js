@@ -141,7 +141,7 @@ export default function Members() {
         menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
 
     return (
-        <Container maxWidth={false} sx={{display: "flex", flexDirection: "column"}}>
+        <Container maxWidth={false} sx={{display: "flex", flexDirection: "column", p: 0}}>
             {/* Mobiilne menüüriba navbari all, lehe täislaiuses */}
             <Paper
                 sx={{

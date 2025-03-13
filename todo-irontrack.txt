@@ -8,13 +8,11 @@ RegisterPage:
 1. form korda teha
 2. kalender M-S
 
-My Profile page:
 
-RecordsPage:
 
 2. Records card ilusamaks
 
-treener saab note kirja panna kliendi kohta, mis ta on algaja või vajab abi või on või vigastused.
+
 
 kliendi kohta kogu info nähtavaks owner vaates
 
@@ -34,6 +32,8 @@ klubil võimalus enda kujundus ja logo lisada.
 owner vaates lisada kui mitu korda klient on aasta jooksul külastanud.
 
 Mitu korda on klient enda skoori sisestanud - nähtav owner vaates.
+
+
 
 
 

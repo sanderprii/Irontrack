@@ -13,13 +13,28 @@ import {
     Button,
     Modal,
     TextField,
-    IconButton, DialogTitle, DialogContent, DialogContentText, DialogActions, Dialog
+    IconButton,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    Dialog,
+    Card,
+    CardContent,
+    Divider,
+    Chip,
+    Grid
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import Tooltip from '@mui/material/Tooltip';
-
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import DescriptionIcon from '@mui/icons-material/Description';
+import PaymentIcon from '@mui/icons-material/Payment';
+import EventIcon from '@mui/icons-material/Event';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import {
     getUserContracts,
@@ -27,7 +42,7 @@ import {
     createPaymentHoliday,
     updatePaymentHoliday,
     updateContract,
-} from '../api/contractApi'; // <-- API import
+} from '../api/contractApi';
 import { getAffiliateById} from "../api/affiliateApi";
 import ContractTermsModal from './ContractTermsModal';
 import { sendMessageToAffiliate } from "../api/messageApi";
@@ -164,8 +179,6 @@ export default function UserContracts({ user, affiliateId }) {
             alert('Payment holiday request created successfully!');
             const getAffiliateData = await getAffiliateById(phContract.affiliateId);
 
-
-
             const subject = 'Payment Holiday Request';
             const body = `You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}.`;
             const senderEmail = user.email;
@@ -231,29 +244,37 @@ export default function UserContracts({ user, affiliateId }) {
         await loadContracts();
     };
 
-
-
     const role = localStorage.getItem('role');
 
-
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
 
     return (
         <Box>
-            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', ml: 2 }}>
                 My Contracts
             </Typography>
             {contracts.length === 0 ? (
-                <Typography>No contracts found.</Typography>
+                <Paper sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography>No contracts found.</Typography>
+                </Paper>
             ) : (
-                <Paper>
+                <Card elevation={2} sx={{ overflow: 'hidden' }}>
                     <Table>
-                        <TableHead>
+                        <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableRow>
-                                <TableCell>ID</TableCell>
-                                <TableCell>Date</TableCell>
-                                <TableCell>Affiliate Name</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell> </TableCell>
+                                <TableCell width={50}></TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Affiliate Name</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}> </TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -267,12 +288,28 @@ export default function UserContracts({ user, affiliateId }) {
                                             onClick={() => toggleRow(contract.id)}
                                             sx={{ cursor: 'pointer' }}
                                         >
+                                            <TableCell>
+                                                <IconButton size="small">
+                                                    {isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                </IconButton>
+                                            </TableCell>
                                             <TableCell>{contract.id}</TableCell>
                                             <TableCell>
-                                                {new Date(contract.createdAt).toLocaleDateString()}
+                                                {formatDate(contract.createdAt)}
                                             </TableCell>
                                             <TableCell>{contract.affiliate.name}</TableCell>
-                                            <TableCell>{contract.status}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={contract.status}
+                                                    color={
+                                                        contract.status === 'accepted' ? 'success' :
+                                                            contract.status === 'Waiting for acceptance' ? 'warning' :
+                                                                contract.status === 'terminated' ? 'error' :
+                                                                    'primary'
+                                                    }
+                                                    size="small"
+                                                />
+                                            </TableCell>
                                             <TableCell>
                                                 { contract.status === 'accepted' && role === 'affiliate' && (
                                                     <Button
@@ -284,9 +321,7 @@ export default function UserContracts({ user, affiliateId }) {
                                                             if (window.confirm('Are you sure you want to change end date on this contract?')) {
                                                                 handleOpenDeactivateDialog(contract);
                                                             }
-
-                                                        }
-                                                        }
+                                                        }}
                                                     >
                                                         End Date
                                                     </Button>
@@ -295,147 +330,294 @@ export default function UserContracts({ user, affiliateId }) {
                                         </TableRow>
 
                                         <TableRow>
-                                            <TableCell colSpan={4} sx={{ p: 0 }}>
+                                            <TableCell colSpan={6} style={{ paddingBottom: 0, paddingTop: 0 }}>
                                                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                                                    <Box m={2}>
-                                                        <Typography variant="subtitle1" fontWeight="bold">
-                                                            Payment Holidays
+                                                    <Box sx={{ margin: 2 }}>
+                                                        <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                            Contract Details
                                                         </Typography>
 
-                                                        <Table>
-                                                            <TableHead>
-                                                                <TableRow>
-                                                                    <TableCell>Month</TableCell>
+                                                        <Grid container spacing={3}>
+                                                            {/* Payment Holidays Card */}
+                                                            <Grid item xs={12}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <CalendarMonthIcon sx={{ mr: 1 }} />
+                                                                            Payment Holidays
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
 
-                                                                    <TableCell>Reason</TableCell>
-                                                                    <TableCell>Accepted</TableCell>
-                                                                    <TableCell />
-                                                                </TableRow>
-                                                            </TableHead>
-                                                            <TableBody>
-                                                                {contract.paymentHolidays.map((ph) => (
-                                                                    <TableRow key={ph.id}>
-                                                                        <TableCell>{ph.month}</TableCell>
-                                                                        <TableCell>{ph.reason}</TableCell>
-                                                                        <TableCell>{ph.accepted}</TableCell>
-                                                                        <TableCell>
-                                                                            {/* Kui role===affiliate ja ph.accepted==='pending',
-                                                                                siis kuvame rohelise & punase nupu */}
-                                                                            {role === 'affiliate' && ph.accepted === 'pending' && (
-                                                                                <Box>
-                                                                                    <IconButton
-                                                                                        color="success"
-                                                                                        onClick={() =>
-                                                                                            handleUpdatePhStatus(ph.id, 'approved')
+                                                                        {contract.paymentHolidays && contract.paymentHolidays.length > 0 ? (
+                                                                            <Table>
+                                                                                <TableHead sx={{ backgroundColor: '#f8f9fa' }}>
+                                                                                    <TableRow>
+                                                                                        <TableCell sx={{ fontWeight: 'bold' }}>Month</TableCell>
+                                                                                        <TableCell sx={{ fontWeight: 'bold' }}>Reason</TableCell>
+                                                                                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                                                                                        <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                                                                                    </TableRow>
+                                                                                </TableHead>
+                                                                                <TableBody>
+                                                                                    {contract.paymentHolidays.map((ph) => (
+                                                                                        <TableRow key={ph.id}>
+                                                                                            <TableCell>{ph.month}</TableCell>
+                                                                                            <TableCell>{ph.reason}</TableCell>
+                                                                                            <TableCell>
+                                                                                                <Chip
+                                                                                                    label={ph.accepted}
+                                                                                                    color={
+                                                                                                        ph.accepted === 'approved' ? 'success' :
+                                                                                                            ph.accepted === 'declined' ? 'error' :
+                                                                                                                'warning'
+                                                                                                    }
+                                                                                                    size="small"
+                                                                                                />
+                                                                                            </TableCell>
+                                                                                            <TableCell>
+                                                                                                {/* Kui role===affiliate ja ph.accepted==='pending',
+                                                                                                    siis kuvame rohelise & punase nupu */}
+                                                                                                {role === 'affiliate' && ph.accepted === 'pending' && (
+                                                                                                    <Box>
+                                                                                                        <IconButton
+                                                                                                            color="success"
+                                                                                                            onClick={(e) => {
+                                                                                                                e.stopPropagation();
+                                                                                                                handleUpdatePhStatus(ph.id, 'approved');
+                                                                                                            }}
+                                                                                                        >
+                                                                                                            <CheckIcon />
+                                                                                                        </IconButton>
+                                                                                                        <IconButton
+                                                                                                            color="error"
+                                                                                                            onClick={(e) => {
+                                                                                                                e.stopPropagation();
+                                                                                                                handleUpdatePhStatus(ph.id, 'declined');
+                                                                                                            }}
+                                                                                                        >
+                                                                                                            <CloseIcon />
+                                                                                                        </IconButton>
+                                                                                                    </Box>
+                                                                                                )}
+                                                                                            </TableCell>
+                                                                                        </TableRow>
+                                                                                    ))}
+                                                                                </TableBody>
+                                                                            </Table>
+                                                                        ) : (
+                                                                            <Typography variant="body1" sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>
+                                                                                No payment holidays found for this contract
+                                                                            </Typography>
+                                                                        )}
+
+                                                                        {/* PaymentHoliday nupp (Request) — kui leping on accepted ja kasutaja on 'regular' */}
+                                                                        {contract.status === 'accepted' && role === 'regular' && (
+                                                                            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                                                                <Button
+                                                                                    variant="outlined"
+                                                                                    color="warning"
+                                                                                    startIcon={<EventIcon />}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleOpenPhModal(contract);
+                                                                                    }}
+                                                                                >
+                                                                                    Request Payment Holiday
+                                                                                </Button>
+                                                                            </Box>
+                                                                        )}
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* Payment Information Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <PaymentIcon sx={{ mr: 1 }} />
+                                                                            Payment Information
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Payment Type:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {contract.paymentType || 'N/A'}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Payment Amount:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                    {contract.paymentAmount} €
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Payment Interval:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {contract.paymentInterval || 'N/A'}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Payment Day:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {contract.paymentDay || 'N/A'}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* Contract Information Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <DescriptionIcon sx={{ mr: 1 }} />
+                                                                            Contract Information
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Contract ID:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {contract.id}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Created Date:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {formatDate(contract.createdAt)}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Valid Until:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {formatDate(contract.validUntil)}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Status:
+                                                                                </Typography>
+                                                                                <Chip
+                                                                                    label={contract.status}
+                                                                                    color={
+                                                                                        contract.status === 'accepted' ? 'success' :
+                                                                                            contract.status === 'Waiting for acceptance' ? 'warning' :
+                                                                                                contract.status === 'terminated' ? 'error' :
+                                                                                                    'primary'
+                                                                                    }
+                                                                                    size="small"
+                                                                                />
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* Contract Content Card */}
+                                                            <Grid item xs={12}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <DescriptionIcon sx={{ mr: 1 }} />
+                                                                            Contract Content
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box
+                                                                            sx={{
+                                                                                whiteSpace: 'pre-line',
+                                                                                backgroundColor: '#f8f9fa',
+                                                                                p: 2,
+                                                                                borderRadius: 1,
+                                                                                maxHeight: '300px',
+                                                                                overflowY: 'auto'
+                                                                            }}
+                                                                        >
+                                                                            {contract.content}
+                                                                        </Box>
+
+                                                                        {/* Accept Contract section */}
+                                                                        {isSent && role === 'regular' && (
+                                                                            <Box sx={{
+                                                                                display: 'flex',
+                                                                                flexDirection: 'column',
+                                                                                gap: 2,
+                                                                                mt: 3,
+                                                                                p: 2,
+                                                                                borderRadius: 1,
+                                                                                border: '1px solid #e0e0e0',
+                                                                                backgroundColor: '#f8f9fa'
+                                                                            }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                                    <Checkbox
+                                                                                        checked={!!acceptCheckbox[contract.id]}
+                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        onChange={(e) =>
+                                                                                            handleCheckboxChange(
+                                                                                                contract.id,
+                                                                                                e.target.checked
+                                                                                            )
                                                                                         }
+                                                                                    />
+                                                                                    <Typography>
+                                                                                        I have read and understand Terms and Conditions
+                                                                                    </Typography>
+                                                                                    <Button
+                                                                                        variant="outlined"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            openTerms(contract);
+                                                                                        }}
+                                                                                        size="small"
                                                                                     >
-                                                                                        <CheckIcon />
-                                                                                    </IconButton>
-                                                                                    <IconButton
-                                                                                        color="error"
-                                                                                        onClick={() =>
-                                                                                            handleUpdatePhStatus(ph.id, 'declined')
-                                                                                        }
-                                                                                    >
-                                                                                        <CloseIcon />
-                                                                                    </IconButton>
+                                                                                        Open Terms
+                                                                                    </Button>
                                                                                 </Box>
-                                                                            )}
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                ))}
-                                                            </TableBody>
-                                                        </Table>
 
-                                                        {/* PaymentHoliday nupp (Request) — kui leping on accepted ja kasutaja on 'regular' */}
-                                                        {contract.status === 'accepted' && role === 'regular' && (
-                                                            <Button
-                                                                variant="contained"
-                                                                color="warning"
-                                                                sx={{ mt: 2 }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleOpenPhModal(contract);
-                                                                }}
-                                                            >
-                                                                Request Payment Holiday
-                                                            </Button>
-                                                        )}
-
-                                                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2 }}>
-                                                            Contract Content
-                                                        </Typography>
-                                                        <Box mt={2}>
-                                                            <Typography>
-                                                                <strong>Payment Type:</strong> {contract.paymentType}
-                                                            </Typography>
-                                                            <Typography>
-                                                                <strong>Payment Amount:</strong> {contract.paymentAmount}
-                                                            </Typography>
-                                                            <Typography>
-                                                                <strong>Payment Interval:</strong> {contract.paymentInterval}
-                                                            </Typography>
-                                                            <Typography>
-                                                                <strong>Payment Day:</strong> {contract.paymentDay}
-                                                            </Typography>
-                                                        </Box>
-
-                                                        <Box
-                                                            sx={{
-                                                                backgroundColor: '#f7f7f7',
-                                                                p: 2,
-                                                                borderRadius: 2,
-                                                                whiteSpace: 'pre-line',
-                                                                mt: 1,
-                                                            }}
-                                                        >
-                                                            {contract.content}
-                                                        </Box>
-
-
-
-                                                        {/* Kui staatus on "Waiting for acceptance", näita checkboxi ja "Accept Contract" nuppu */}
-                                                        {isSent && role === 'regular' && (
-                                                            <Box display="flex" flexDirection="column" gap={1} mt={2}>
-                                                                <Box display="flex" alignItems="center" gap={1}>
-                                                                    <Checkbox
-                                                                        checked={!!acceptCheckbox[contract.id]}
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        onChange={(e) =>
-                                                                            handleCheckboxChange(
-                                                                                contract.id,
-                                                                                e.target.checked
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                    <Typography>
-                                                                        I have read and understand Terms and Conditions
-                                                                    </Typography>
-                                                                    <Button
-                                                                        variant="outlined"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            openTerms(contract);
-                                                                        }}
-                                                                        size="small"
-                                                                    >
-                                                                        Open Terms
-                                                                    </Button>
-                                                                </Box>
-
-                                                                <Button
-                                                                    variant="contained"
-                                                                    color="success"
-                                                                    disabled={!acceptCheckbox[contract.id]}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleAccept(contract);
-                                                                    }}
-                                                                >
-                                                                    Accept Contract
-                                                                </Button>
-                                                            </Box>
-                                                        )}
+                                                                                <Button
+                                                                                    variant="contained"
+                                                                                    color="success"
+                                                                                    disabled={!acceptCheckbox[contract.id]}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleAccept(contract);
+                                                                                    }}
+                                                                                    sx={{ alignSelf: 'flex-start' }}
+                                                                                >
+                                                                                    Accept Contract
+                                                                                </Button>
+                                                                            </Box>
+                                                                        )}
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+                                                        </Grid>
                                                     </Box>
                                                 </Collapse>
                                             </TableCell>
@@ -445,7 +627,7 @@ export default function UserContracts({ user, affiliateId }) {
                             })}
                         </TableBody>
                     </Table>
-                </Paper>
+                </Card>
             )}
 
             {/* Contract Terms modal */}
@@ -459,134 +641,160 @@ export default function UserContracts({ user, affiliateId }) {
 
             {/* PaymentHoliday Modal */}
             <Modal open={phModalOpen} onClose={handleClosePhModal}>
-                <Box
+                <Card
                     sx={{
                         position: 'absolute',
                         top: '50%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        bgcolor: '#fff',
-                        p: 4,
-                        borderRadius: 2,
-                        minWidth: 300,
+                        minWidth: 400,
+                        maxWidth: 600,
+                        outline: 'none',
+                        boxShadow: 24,
                     }}
                 >
-                    <Typography variant="h6" mb={2}>
-                        Request Payment Holiday
-                    </Typography>
+                    <CardContent>
+                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50', mb: 2 }}>
+                            <EventIcon sx={{ mr: 1 }} />
+                            Request Payment Holiday
+                        </Typography>
+                        <Divider sx={{ mb: 3 }} />
 
-                    {/* Month Selector with Tooltip */}
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                        <TextField
-                            select
-                            label="Month"
-                            name="month"
-                            value={phData.month || ''}
-                            onChange={handlePhDataChange}
-                            fullWidth
-                        >
-                            <MenuItem value="January">January</MenuItem>
-                            <MenuItem value="February">February</MenuItem>
-                            <MenuItem value="March">March</MenuItem>
-                            <MenuItem value="April">April</MenuItem>
-                            <MenuItem value="May">May</MenuItem>
-                            <MenuItem value="June">June</MenuItem>
-                            <MenuItem value="July">July</MenuItem>
-                            <MenuItem value="August">August</MenuItem>
-                            <MenuItem value="September">September</MenuItem>
-                            <MenuItem value="October">October</MenuItem>
-                            <MenuItem value="November">November</MenuItem>
-                            <MenuItem value="December">December</MenuItem>
-                        </TextField>
-                        <Tooltip
-                            title="Select the month for which you want to request a payment holiday. Payment holiday start date will be same as payment day."
-                            arrow
-                            placement="right"
-                            componentsProps={{
-                                tooltip: {
-                                    sx: {
-                                        bgcolor: 'primary.main',
-                                        '& .MuiTooltip-arrow': {
-                                            color: 'primary.main',
-                                        },
-                                        boxShadow: 1,
-                                        fontSize: '0.85rem',
-                                        p: 1,
-                                        maxWidth: 220
-                                    }
-                                }
-                            }}
-                        >
-                            <IconButton
-                                color="primary"
-                                size="small"
-                                sx={{ ml: 1, mt: 1 }}
-                                aria-label="Month info"
+                        {/* Month Selector with Tooltip */}
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                            <TextField
+                                select
+                                label="Month"
+                                name="month"
+                                value={phData.month || ''}
+                                onChange={handlePhDataChange}
+                                fullWidth
                             >
-                                <HelpOutlineIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-
-                    {/* Reason Field with Tooltip */}
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                        <TextField
-                            label="Reason"
-                            name="reason"
-                            multiline
-                            rows={3}
-                            value={phData.reason}
-                            onChange={handlePhDataChange}
-                            fullWidth
-                        />
-                        <Tooltip
-                            title="Please provide a detailed reason for your payment holiday request"
-                            arrow
-                            placement="right"
-                            componentsProps={{
-                                tooltip: {
-                                    sx: {
-                                        bgcolor: 'primary.main',
-                                        '& .MuiTooltip-arrow': {
-                                            color: 'primary.main',
-                                        },
-                                        boxShadow: 1,
-                                        fontSize: '0.85rem',
-                                        p: 1,
-                                        maxWidth: 220
+                                <MenuItem value="January">January</MenuItem>
+                                <MenuItem value="February">February</MenuItem>
+                                <MenuItem value="March">March</MenuItem>
+                                <MenuItem value="April">April</MenuItem>
+                                <MenuItem value="May">May</MenuItem>
+                                <MenuItem value="June">June</MenuItem>
+                                <MenuItem value="July">July</MenuItem>
+                                <MenuItem value="August">August</MenuItem>
+                                <MenuItem value="September">September</MenuItem>
+                                <MenuItem value="October">October</MenuItem>
+                                <MenuItem value="November">November</MenuItem>
+                                <MenuItem value="December">December</MenuItem>
+                            </TextField>
+                            <Tooltip
+                                title="Select the month for which you want to request a payment holiday. Payment holiday start date will be same as payment day."
+                                arrow
+                                placement="right"
+                                componentsProps={{
+                                    tooltip: {
+                                        sx: {
+                                            bgcolor: 'primary.main',
+                                            '& .MuiTooltip-arrow': {
+                                                color: 'primary.main',
+                                            },
+                                            boxShadow: 1,
+                                            fontSize: '0.85rem',
+                                            p: 1,
+                                            maxWidth: 220
+                                        }
                                     }
-                                }
-                            }}
-                        >
-                            <IconButton
-                                color="primary"
-                                size="small"
-                                sx={{ ml: 1, mt: 1 }}
-                                aria-label="Reason info"
+                                }}
                             >
-                                <HelpOutlineIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
+                                <IconButton
+                                    color="primary"
+                                    size="small"
+                                    sx={{ ml: 1, mt: 1 }}
+                                    aria-label="Month info"
+                                >
+                                    <HelpOutlineIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
 
-                    <Box display="flex" justifyContent="flex-end" gap={2}>
-                        <Button onClick={handleClosePhModal} color="secondary">
-                            Cancel
-                        </Button>
-                        <Button variant="contained" onClick={handlePhSave}>
-                            Save
-                        </Button>
-                    </Box>
-                </Box>
+                        {/* Reason Field with Tooltip */}
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                            <TextField
+                                label="Reason"
+                                name="reason"
+                                multiline
+                                rows={3}
+                                value={phData.reason}
+                                onChange={handlePhDataChange}
+                                fullWidth
+                            />
+                            <Tooltip
+                                title="Please provide a detailed reason for your payment holiday request"
+                                arrow
+                                placement="right"
+                                componentsProps={{
+                                    tooltip: {
+                                        sx: {
+                                            bgcolor: 'primary.main',
+                                            '& .MuiTooltip-arrow': {
+                                                color: 'primary.main',
+                                            },
+                                            boxShadow: 1,
+                                            fontSize: '0.85rem',
+                                            p: 1,
+                                            maxWidth: 220
+                                        }
+                                    }
+                                }}
+                            >
+                                <IconButton
+                                    color="primary"
+                                    size="small"
+                                    sx={{ ml: 1, mt: 1 }}
+                                    aria-label="Reason info"
+                                >
+                                    <HelpOutlineIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+
+                        <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                            <Button
+                                variant="outlined"
+                                onClick={handleClosePhModal}
+                                color="secondary"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={handlePhSave}
+                                startIcon={<EventIcon />}
+                            >
+                                Save
+                            </Button>
+                        </Box>
+                    </CardContent>
+                </Card>
             </Modal>
 
             <Dialog
                 open={openDeactivateDialog}
                 onClose={handleCancelDeactivate}
                 aria-labelledby="deactivate-dialog-title"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        maxWidth: 500
+                    }
+                }}
             >
-                <DialogTitle id="deactivate-dialog-title">Set New End Date</DialogTitle>
-                <DialogContent>
+                <DialogTitle id="deactivate-dialog-title" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: '#f5f5f5',
+                    borderBottom: '1px solid #e0e0e0'
+                }}>
+                    <CalendarMonthIcon sx={{ mr: 1, color: 'secondary.main' }} />
+                    Set New End Date
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText>
                         Please enter the new end date for the contract deactivation.
                     </DialogContentText>
@@ -601,18 +809,27 @@ export default function UserContracts({ user, affiliateId }) {
                         InputLabelProps={{
                             shrink: true,
                         }}
+                        sx={{ mt: 2 }}
                     />
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancelDeactivate} color="primary">
+                <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+                    <Button
+                        onClick={handleCancelDeactivate}
+                        color="inherit"
+                        variant="outlined"
+                    >
                         Cancel
                     </Button>
-                    <Button onClick={handleConfirmDeactivate} color="primary" disabled={!newEndDate}>
+                    <Button
+                        onClick={handleConfirmDeactivate}
+                        color="secondary"
+                        disabled={!newEndDate}
+                        variant="contained"
+                    >
                         Confirm
                     </Button>
                 </DialogActions>
             </Dialog>
-
         </Box>
     );
 }

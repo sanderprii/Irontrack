@@ -175,7 +175,7 @@ model Training {
 
 model Exercise {
   id           Int      @id @default(autoincrement())
-  exerciseData String
+  exerciseData String?
   trainingId   Int
   training     Training @relation(fields: [trainingId], references: [id])
 }
@@ -361,25 +361,27 @@ model todayWOD {
 }
 
 model transactions {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   userId        Int
-  user          User      @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
   amount        Float
   invoiceNumber String
   description   String
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime @default(now())
   status        String?
   type          String?
   affiliateId   Int
   planId        Int?
   creditId      Int?
-  isCredit      Boolean?  @default(false)
-  decrease      Boolean   @default(true)
-  plan          Plan?     @relation(fields: [planId], references: [id])
-  affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
-  memberId      Int?
-  member        Members?  @relation(fields: [memberId], references: [id])
-  credit        Credit?   @relation(fields: [creditId], references: [id])
+  contractId    Int?
+
+  isCredit  Boolean?  @default(false)
+  decrease  Boolean   @default(true)
+  plan      Plan?     @relation(fields: [planId], references: [id])
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+  memberId  Int?
+  member    Members?  @relation(fields: [memberId], references: [id])
+  credit    Credit?   @relation(fields: [creditId], references: [id])
 }
 
 model PaymentHoliday {

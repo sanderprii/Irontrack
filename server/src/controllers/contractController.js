@@ -10,8 +10,6 @@ const prisma = new PrismaClient();
  */
 exports.getAllContracts = async (req, res) => {
     try {
-
-
         const { search = '', sortBy = 'createdAt', sortOrder = 'desc', affiliateId } = req.query;
 
         let orderBy = {};
@@ -25,18 +23,58 @@ exports.getAllContracts = async (req, res) => {
             orderBy[sortBy] = sortOrder; // Vaikimisi sorteerimine
         }
 
+        // Fetch basic contracts data
         const contracts = await prisma.contract.findMany({
             where: {
                 affiliateId: parseInt(affiliateId),
             },
             include: {
                 user: { select: { fullName: true } },
-                paymentHolidays: true,
+                paymentHolidays: true
             },
-            orderBy: orderBy, // Siin toimub õige sorteerimine
+            orderBy: orderBy
         });
 
-        res.json(contracts);
+        // Get IDs of terminated contracts
+        const terminatedContractIds = contracts
+            .filter(c => c.status === 'terminated')
+            .map(c => c.id);
+
+        // If there are any terminated contracts, fetch their most recent logs
+        let contractLogs = [];
+        if (terminatedContractIds.length > 0) {
+            // For each terminated contract, get the most recent log
+            const logPromises = terminatedContractIds.map(contractId =>
+                prisma.contractLogs.findFirst({
+                    where: { contractId },
+                    orderBy: { createdAt: 'desc' }
+                })
+            );
+
+            contractLogs = await Promise.all(logPromises);
+
+            // Filter out null results (contracts without logs)
+            contractLogs = contractLogs.filter(log => log !== null);
+        }
+
+        // Create a map of contractId -> latestLog for quick lookup
+        const logMap = {};
+        contractLogs.forEach(log => {
+            logMap[log.contractId] = log;
+        });
+
+        // Enhance contracts with their latest log if they're terminated
+        const enhancedContracts = contracts.map(contract => {
+            if (contract.status === 'terminated' && logMap[contract.id]) {
+                return {
+                    ...contract,
+                    latestLog: logMap[contract.id]
+                };
+            }
+            return contract;
+        });
+
+        res.json(enhancedContracts);
     } catch (error) {
         console.error('Error fetching contracts:', error);
         res.status(500).json({ error: 'Failed to fetch contracts' });
@@ -437,3 +475,77 @@ exports.updatePaymentHoliday = async (req, res) => {
         return res.status(500).json({ error: 'Failed to update payment holiday' });
     }
 }
+
+exports.getUnpaidUsers = async (req, res) => {
+    try {
+        const { affiliateId } = req.query;
+
+        // Kontrolli, kas affiliateId on olemas
+        if (!affiliateId) {
+            return res.status(400).json({ error: 'Affiliate ID is required' });
+        }
+
+        // Teisenda affiliateId numbriks
+        const affiliateIdInt = parseInt(affiliateId);
+
+        // Leia kõik tehingud, millel on status='pending'
+        const pendingTransactions = await prisma.transactions.findMany({
+            where: {
+                status: 'pending',
+                affiliateId: affiliateIdInt
+            },
+            include: {
+                user: true,
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // Kui tehinguid pole, tagasta tühi massiiv
+        if (pendingTransactions.length === 0) {
+            return res.json([]);
+        }
+
+        // Kogu kõik kasutaja ID-d, kellel on maksmata tehingud
+        const userIds = [...new Set(pendingTransactions.map(t => t.userId))];
+
+        // Leia nende kasutajate aktiivsed lepingud
+        const contracts = await prisma.contract.findMany({
+            where: {
+                userId: { in: userIds },
+                affiliateId: affiliateIdInt,
+                active: true
+            }
+        });
+
+        // Loo kaardistus kasutaja ID -> tema lepingud
+        const userContractsMap = {};
+        contracts.forEach(contract => {
+            if (!userContractsMap[contract.userId]) {
+                userContractsMap[contract.userId] = [];
+            }
+            userContractsMap[contract.userId].push(contract);
+        });
+
+        // Ühenda andmed: iga tehingu juurde lisa vastav leping
+        const unpaidUsersData = pendingTransactions.map(transaction => {
+            const userContracts = userContractsMap[transaction.userId] || [];
+
+            // Kui kasutajal on mitu lepingut, võta kõige värskem
+            const relatedContract = userContracts.length > 0
+                ? userContracts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+                : null;
+
+            return {
+                ...transaction,
+                contract: relatedContract
+            };
+        });
+
+        res.json(unpaidUsersData);
+    } catch (error) {
+        console.error('Error fetching unpaid users:', error);
+        res.status(500).json({ error: 'Failed to fetch unpaid users' });
+    }
+};

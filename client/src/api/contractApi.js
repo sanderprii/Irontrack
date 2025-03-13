@@ -206,3 +206,18 @@ export const updatePaymentHoliday = async (phId, payload) => {
         console.error('Error updatePaymentHoliday:', error);
     }
 }
+
+export const getUnpaidUsers = async (affiliateId) => {
+    const token = localStorage.getItem('token');
+    try {
+        const resp = await fetch(`${API_BASE}/contracts/unpaid?affiliateId=${affiliateId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return await resp.json();
+    } catch (error) {
+        console.error('Error getUnpaidUsers:', error);
+        return [];
+    }
+};

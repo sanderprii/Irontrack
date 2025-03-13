@@ -97,6 +97,9 @@ INSERT INTO _prisma_migrations VALUES('4d98fdd2-0d59-486b-96f4-e260c0e75933','c0
 INSERT INTO _prisma_migrations VALUES('e7db20ba-a602-4184-8bdf-0502d59c91bf','448889fd368a3454898f8c12e747ae02fa87fc617a2555b2f5594ad07338f4a2',1740939341143,'20250302181540_add_planname',NULL,NULL,1740939340964,1);
 INSERT INTO _prisma_migrations VALUES('92d4c200-a7b2-42d8-8be0-e4fde35d70bd','2bebc36721962856d404923d32ab8da8a467a42ffde9dac821968c86ef0d1847',1741501899675,'20250309063139_add_subdomain',NULL,NULL,1741501899560,1);
 INSERT INTO _prisma_migrations VALUES('73a6fd82-3042-4432-ab25-586f65aff836','0c5ef75e1b209a6d8c6b28fccd96cf3975a2d23984c152c1f8ad10190c785f33',1741542252581,'20250309174412_add_emergencycontact',NULL,NULL,1741542252490,1);
+INSERT INTO _prisma_migrations VALUES('31b72207-6c9c-447a-bab6-a8d9ab12bbe1','5c695acde1e93cd5181c9a69318ff86a9fc0f1af89bb4e19ac580b768d718087',1741705783742,'20250311150943_add_contract_id',NULL,NULL,1741705783577,1);
+INSERT INTO _prisma_migrations VALUES('dacf8eb6-9453-46ec-81cc-92a0c4536052','eeac5c6d071400b4f87230147653aa405c08c65d91ec8f5f36cc7151b8d8a73d',1741706053335,'20250311151413_remove',NULL,NULL,1741706053175,1);
+INSERT INTO _prisma_migrations VALUES('dc3dd2e6-8ac3-4937-9382-4e108b94c9b2','aa49cda4b5ff883511b43e5ba3862b5594258acbc02154fcad303daaa92233b9',1741877750226,'20250313145550_add_optional',NULL,NULL,1741877750017,1);
 CREATE TABLE IF NOT EXISTS "Training" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT NOT NULL,
@@ -117,22 +120,7 @@ INSERT INTO Training VALUES(7,'Other',NULL,NULL,1738195200000,NULL,5);
 INSERT INTO Training VALUES(8,'WOD','AMANDA','For Time',1738195200000,'2',1);
 INSERT INTO Training VALUES(9,'WOD','ASD','EMOM',1738713600000,'ASD',5);
 INSERT INTO Training VALUES(10,'WOD','KELLIKAS','EMOM',1741275000000,'12',5);
-CREATE TABLE IF NOT EXISTS "Exercise" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "exerciseData" TEXT NOT NULL,
-    "trainingId" INTEGER NOT NULL,
-    CONSTRAINT "Exercise_trainingId_fkey" FOREIGN KEY ("trainingId") REFERENCES "Training" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
-INSERT INTO Exercise VALUES(2,'sa',1);
-INSERT INTO Exercise VALUES(5,'jump',3);
-INSERT INTO Exercise VALUES(6,'sas',2);
-INSERT INTO Exercise VALUES(8,'jump',4);
-INSERT INTO Exercise VALUES(10,'122',5);
-INSERT INTO Exercise VALUES(12,'asdasd',6);
-INSERT INTO Exercise VALUES(14,'asdfasdf',7);
-INSERT INTO Exercise VALUES(15,'jump',8);
-INSERT INTO Exercise VALUES(16,'ASD',9);
-INSERT INTO Exercise VALUES(19,replace('For load:\nEMOM 12:\n3 power cleans2\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),10);
+INSERT INTO Training VALUES(11,'WOD',NULL,NULL,1741876200000,'asd',5);
 CREATE TABLE IF NOT EXISTS "Record" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT,
@@ -350,6 +338,7 @@ INSERT INTO defaultWOD VALUES(392,'WILSON','For Time','30 Kettlebell Swings (32 
 INSERT INTO defaultWOD VALUES(393,'WOOD','5 Rounds for Time','5 Rounds: 400-meter Run, 10 Burpee Box Jumps (61 cm), 10 Sumo Deadlift High-Pulls (43 kg), 10 Thrusters (43 kg), Rest 1 minute');
 INSERT INTO defaultWOD VALUES(394,'WOODROW','For Time','5 Rounds: 400-meter Run, 10 Burpee Box Jumps (61 cm), 10 Sumo Deadlift High-Pulls (43 kg), 10 Thrusters (43 kg), Rest 1 minute');
 INSERT INTO defaultWOD VALUES(395,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)));
+INSERT INTO defaultWOD VALUES(396,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)));
 CREATE TABLE IF NOT EXISTS "AffiliateTrainer" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "affiliateId" INTEGER NOT NULL,
@@ -357,7 +346,7 @@ CREATE TABLE IF NOT EXISTS "AffiliateTrainer" (
     CONSTRAINT "AffiliateTrainer_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "AffiliateTrainer_trainerId_fkey" FOREIGN KEY ("trainerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO AffiliateTrainer VALUES(8,1,1);
+INSERT INTO AffiliateTrainer VALUES(8,1,7);
 INSERT INTO AffiliateTrainer VALUES(10,10,1);
 INSERT INTO AffiliateTrainer VALUES(11,10,5);
 CREATE TABLE IF NOT EXISTS "ClassLeaderboard" (
@@ -384,6 +373,8 @@ INSERT INTO ClassLeaderboard VALUES(11,1613,5,'rx','22',1741466250670);
 INSERT INTO ClassLeaderboard VALUES(12,2726,5,'rx','qw',1741466387513);
 INSERT INTO ClassLeaderboard VALUES(13,1666,5,'rx','122',1741466669325);
 INSERT INTO ClassLeaderboard VALUES(14,1719,5,'rx','1222',1741467059871);
+INSERT INTO ClassLeaderboard VALUES(15,1720,5,'rx','55',1741877688172);
+INSERT INTO ClassLeaderboard VALUES(16,1667,5,'rx','asd',1741877790266);
 CREATE TABLE IF NOT EXISTS "todayWOD" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "wodName" TEXT,
@@ -405,6 +396,7 @@ INSERT INTO todayWOD VALUES(12,'','For Time',replace('\n2,000-m row','\n',char(1
 INSERT INTO todayWOD VALUES(13,'GRACE','For Time','30 Clean and Jerks (61/43 kg) for time',1740096000000,1);
 INSERT INTO todayWOD VALUES(14,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1741219200000,10);
 INSERT INTO todayWOD VALUES(15,'','For Time',replace('AMRAP 20:\n30 burpees\n20 alternating DB snatches (15/22.5 kg)\n100-m double-DB farmers carry (15/22.5 kg)','\n',char(10)),1741478400000,10);
+INSERT INTO todayWOD VALUES(16,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1741651200000,10);
 CREATE TABLE IF NOT EXISTS "Affiliate" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
@@ -550,6 +542,19 @@ INSERT INTO Message VALUES(60,10,10,'Early Payment Notification: Payment Holiday
 INSERT INTO Message VALUES(61,10,7,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741115728506);
 INSERT INTO Message VALUES(62,10,9,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741116206822);
 INSERT INTO Message VALUES(63,10,9,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741116405578);
+INSERT INTO Message VALUES(64,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/1ab22fc6-508c-4528-8a8d-c3d911e37935\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693261143);
+INSERT INTO Message VALUES(65,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b9eadcdb-e432-4b42-89f7-6b5a5a379fcc\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693445532);
+INSERT INTO Message VALUES(66,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/0c5e8dc2-2fcd-41cb-aac6-debee50dadd5\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693621328);
+INSERT INTO Message VALUES(67,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/1e63de77-f583-46f5-90bf-52ccc3f8583e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694041693);
+INSERT INTO Message VALUES(68,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/022e30e1-b023-4a5e-9c6c-58d3637e8203\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694221754);
+INSERT INTO Message VALUES(69,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/f4b14309-d765-4bd9-8071-fcfef635453b\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694341247);
+INSERT INTO Message VALUES(70,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/28926c5c-3902-47c2-a20d-3d901e0f23e7\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706101473);
+INSERT INTO Message VALUES(71,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b7640e57-104b-4bd0-8b5d-33aecc87a417\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706522072);
+INSERT INTO Message VALUES(72,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/c0f13e0d-6da1-4e05-83c5-22f01906db1c\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706641416);
+INSERT INTO Message VALUES(73,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/04235735-3aab-4a0f-abf3-6649ecad9e1e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706761867);
+INSERT INTO Message VALUES(74,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/9b35ebcc-be22-497b-991f-6e456ab75385\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706821120);
+INSERT INTO Message VALUES(75,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 18/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/9d47dd12-544e-46b6-97e2-f08b953a19c6\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741863541961);
+INSERT INTO Message VALUES(76,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 18/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/abc61445-9a46-40af-b1e7-a07a2644a7ae\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741875661917);
 CREATE TABLE IF NOT EXISTS "ContractTemplate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "affiliateId" INTEGER NOT NULL,
@@ -567,38 +572,6 @@ CREATE TABLE IF NOT EXISTS "ContractTerms" (
 );
 INSERT INTO ContractTerms VALUES(1,'contract',replace('Terms and Conditions\nLast updated: [Date]\n\n1. Introduction\n1.1 These Terms and Conditions (“T&C”) govern your use of and/or subscription to the membership services (“Services”) provided by [Provider] (“we,” “us,” “our”).\n1.2 By clicking on the “Accept” button (or a similarly labeled checkbox) and/or by signing this contract electronically, you acknowledge that you have read, understood, and agree to be legally bound by these T&C.\n\n2. Parties to the Agreement\n2.1 The parties to this Agreement are:\n\n[Provider Name, if needed at runtime], hereinafter referred to as the “Provider,” and\nYou, hereinafter referred to as the “Member” or “you.”\n2.2 These T&C also apply to any amendments, supplemental policies, or additional documents that are referenced or linked within these T&C.\n\n3. Scope of Services\n3.1 The Provider offers gym or fitness-related membership services, including but not limited to access to facilities, group classes, personal training sessions, and other related offerings (“Services”).\n3.2 All Services are subject to availability and may be modified, updated, or discontinued at any time at the Provider’s discretion, provided reasonable notice is given for significant changes.\n\n4. Membership and Payment\n4.1 Membership: Your membership entitles you to the benefits specified in the membership plan you select.\n4.2 Fees: You agree to pay the membership fees according to the plan you have chosen. All fees are due in advance and must be paid on the due date indicated in the payment schedule.\n4.3 Payment Methods: Acceptable forms of payment include [list methods, e.g., credit card, direct debit, etc.]. You agree to keep your payment information accurate and updated.\n4.4 Late Payment: Late or missed payments may result in suspension or termination of membership, and you may be charged a late fee or any applicable administrative fee.\n4.5 Refunds: Unless otherwise stated by applicable consumer protection laws, membership fees are generally non-refundable. Any exceptions will be handled in compliance with applicable EU consumer protection regulations and relevant national laws.\n\n5. Data Protection (GDPR)\n5.1 Data Controller: The Provider acts as the Data Controller for personal data you provide.\n5.2 Purpose of Data Processing: Personal data (e.g., name, contact details, payment information, and fitness activity) is processed for the following purposes:\n\nMembership administration and invoicing\nProviding access to facilities and Services\nCommunicating with you regarding updates or changes to your membership\nComplying with legal obligations (e.g., accounting, safety, or public health requirements)\n5.3 Legal Basis: The legal bases for processing your personal data include your consent (when required), performance of a contract, and compliance with legal obligations.\n5.4 Data Sharing: Your personal data may be shared with third parties only to the extent necessary for payment processing, IT support, or other legitimate business needs. All third parties must adhere to data protection requirements in line with the EU General Data Protection Regulation (“GDPR”).\n5.5 Data Retention: Personal data is retained as long as necessary to fulfill the purposes outlined in these T&C, unless a different retention period is required by law.\n5.6 Your Rights: Under the GDPR, you have the right to access, correct, delete, restrict, or object to the processing of your personal data, as well as the right to data portability. You may also lodge a complaint with a supervisory authority if you believe your rights have been infringed.\n5.7 Contact for Privacy Matters: If you have questions about data processing or wish to exercise your rights, please contact [provider’s email/phone/address, or generic contact point].\n6. User Conduct\n6.1 You agree to use the facilities and Services responsibly and to respect other members and staff.\n6.2 You will abide by any facility rules, safety instructions, and applicable policies that the Provider implements.\n\n7. Warranties and Limitation of Liability\n7.1 Warranties: The Provider makes reasonable efforts to ensure Services are provided with due care and skill but does not guarantee uninterrupted or error-free operation.\n7.2 Liability: To the maximum extent permitted by applicable law, the Provider shall not be liable for any indirect, incidental, special, or consequential damages, including but not limited to loss of profits, data, or goodwill. The Provider is not liable for personal injury or property damage sustained while using facilities, except where caused by the Provider’s gross negligence or willful misconduct.\n7.3 Consumer Rights: Nothing in these T&C limits your statutory rights under EU or local consumer protection laws.\n\n8. Termination\n8.1 Termination by You: You may terminate your membership by providing notice per the cancellation policy stated in your membership plan or required by law.\n8.2 Termination by the Provider: The Provider may terminate or suspend your membership if you breach these T&C, fail to pay fees, or otherwise violate any applicable law or policies.\n8.3 Effects of Termination: Upon termination, your access to Services ends. Any outstanding fees become immediately due, unless otherwise specified by law or agreement.\n\n9. Governing Law and Dispute Resolution\n9.1 These T&C are governed by and construed in accordance with applicable local laws and EU regulations.\n9.2 Any disputes arising from or in connection with these T&C shall be subject to the jurisdiction of the competent courts in [jurisdiction] (or as otherwise mandated by consumer protection rules).\n\n10. Changes to These Terms\n10.1 The Provider reserves the right to modify these T&C from time to time. In the event of significant changes, reasonable notice will be provided (e.g., via email or a website announcement).\n10.2 Continued use of Services after such changes signifies your acceptance of the updated T&C.\n\n11. Binding Acceptance\n11.1 By checking the “I Accept the Terms and Conditions” box (or an equivalent statement) and clicking the “Accept” button, you confirm that you have read, understood, and agree to abide by these T&C.\n11.2 You acknowledge that clicking the “Accept” button creates a legally binding agreement between you and the Provider, having the same legal effect as a written and signed contract.\n\n12. Contact Information\nFor any questions or concerns about these T&C, please contact [generic provider contact details or instructions].','\n',char(10)),1739467874195);
 INSERT INTO ContractTerms VALUES(2,'register',replace('Terms and Conditions for Irontrack\nLast Updated: 25.02.2025\n\n1. Introduction\nThese Terms and Conditions ("Terms") govern your use of [Your App Name] (the "App"), operated by [Your Company Name] ("we," "us," or "our"). By accessing or using the App, you agree to comply with these Terms. The App is designed for fitness clubs and users in Estonia, Latvia, and Lithuania (the "Baltic Region").\n\n2. Acceptance of Terms\nBy creating an account, purchasing packages, or using any services through the App, you:\n\nConfirm you are at least 18 years old or have legal guardian consent.\n\nAgree to be legally bound by these Terms.\n\nAcknowledge sole responsibility for risks associated with fitness activities booked via the App.\n\n3. User Responsibilities\n3.1 General Obligations\nProvide accurate and current information during registration.\n\nMaintain the confidentiality of your account credentials.\n\nNotify us immediately of unauthorized account use.\n\n3.2 Fitness Activities\nAssumption of Risk: You acknowledge that participating in workouts, classes, or events booked through the App carries inherent risks (e.g., injury, illness, or death). You voluntarily assume all risks.\n\nHealth Disclaimer: Confirm you are in good physical health and have consulted a medical professional before engaging in strenuous activities.\n\nRelease of Liability: Neither [Your Company Name] nor affiliated fitness clubs are liable for injuries, damages, or losses arising from your participation in workouts.\n\n4. Fitness Club Responsibilities\nClubs using the App to manage memberships, sell packages, or host workouts agree to:\n\nProvide accurate descriptions of workouts, including intensity levels and requirements.\n\nComply with all local laws and safety standards in the Baltic Region.\n\nMaintain appropriate insurance coverage for their activities.\n\n5. Payments & Refunds\nAll purchases (e.g., workout packages, subscriptions) are final unless otherwise stated.\n\nRefunds may be granted at the sole discretion of the fitness club or [Your Company Name].\n\nSubscriptions auto-renew unless canceled before the billing cycle.\n\n6. Intellectual Property\nThe App, its content, logos, and features are owned by [Your Company Name] and protected under EU and Baltic copyright laws.\n\nYou may not copy, modify, or distribute App content without written permission.\n\n7. Data Privacy\nWe comply with the EU General Data Protection Regulation (GDPR).\n\nPersonal data (e.g., name, email, payment details) is collected to provide services and improve the App.\n\nUsers may request data deletion or corrections via [contact email].\n\n8. Termination\nWe reserve the right to suspend or terminate your access to the App for:\n\nViolations of these Terms.\n\nFraudulent or harmful behavior.\n\nNon-payment of fees.\n\n9. Governing Law\nThese Terms are governed by the laws of [Your Company’s Registered Country, e.g., Estonia]. Disputes will be resolved in the courts of [Jurisdiction City].\n\n10. Changes to Terms\nWe may update these Terms periodically. Continued use of the App after changes constitutes acceptance.\n\n11. Contact\nFor questions about these Terms, contact:\n[Your Company Name]\n[Email Address]\n[Physical Address in the Baltic Region]\n\nBy clicking "I Accept," you confirm that you have read, understood, and agree to these Terms and assume full responsibility for your actions.','\n',char(10)),'2025-02-25 10:03:43');
-CREATE TABLE IF NOT EXISTS "transactions" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "userId" INTEGER NOT NULL,
-    "amount" REAL NOT NULL,
-    "invoiceNumber" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "status" TEXT,
-    "type" TEXT,
-    "affiliateId" INTEGER NOT NULL,
-    "planId" INTEGER,
-    "creditId" INTEGER,
-    "isCredit" BOOLEAN DEFAULT false,
-    "decrease" BOOLEAN NOT NULL DEFAULT true,
-    "memberId" INTEGER,
-    CONSTRAINT "transactions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "transactions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "transactions_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "transactions_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "Members" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "transactions_creditId_fkey" FOREIGN KEY ("creditId") REFERENCES "Credit" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
-INSERT INTO transactions VALUES(120,5,9.0,'contract-2-1740938971713','Contract payment: credit Contract Payment',1740938972407,'success','contract',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(121,5,55.0,'contract-1-1740939513601','Contract payment: cred Contract Payment',1740939514217,'success','contract',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(122,5,55.0,'contract-1-1740939587342','Contract payment: cred Contract Payment',1740939587791,'success','contract',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(123,5,55.0,'contract-1-1740939643441','Contract payment: cred Contract Payment',1740939643966,'success','contract',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(124,5,50.0,'20250302182352','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740939832196,'success','credit',10,1,NULL,0,1,5);
-INSERT INTO transactions VALUES(125,5,50.0,'20250302182414','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 25€',1740939867851,'success','mixed',10,1,NULL,0,1,5);
-INSERT INTO transactions VALUES(126,5,55.0,'contract-1-1740940487667','Contract payment: cred Contract Payment',1740940488300,'success','contract',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(127,5,50.0,'20250302183523','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740940540977,'success','montonio',10,1,NULL,0,1,5);
-INSERT INTO transactions VALUES(128,10,11.0,'2025030412575','Payment holiday fee for contract #1',1741112220640,'pending','montonio',10,NULL,NULL,0,1,NULL);
-INSERT INTO transactions VALUES(129,9,50.0,'20250304192106','Plan purchase: Unlimited, by: prii.sander@gmail.com, from: Crossfit Tartu, paid by credit: 50€',1741116066240,'success','credit',10,1,NULL,0,1,10);
-INSERT INTO transactions VALUES(130,5,1000.0,'20250308202723','stebby',1741465643891,'success',NULL,10,NULL,1,1,0,NULL);
 CREATE TABLE IF NOT EXISTS "ClassAttendee" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "classId" INTEGER NOT NULL,
@@ -619,6 +592,9 @@ INSERT INTO ClassAttendee VALUES(14,2195,5,65,1740937754998,0,10);
 INSERT INTO ClassAttendee VALUES(22,1825,9,74,1741116404825,1,10);
 INSERT INTO ClassAttendee VALUES(23,1613,5,72,1741119799642,0,10);
 INSERT INTO ClassAttendee VALUES(24,2726,5,72,1741466384624,0,10);
+INSERT INTO ClassAttendee VALUES(25,3678,5,73,1741694906002,0,10);
+INSERT INTO ClassAttendee VALUES(26,2936,5,75,1741694912203,1,10);
+INSERT INTO ClassAttendee VALUES(31,1720,5,73,1741877667553,0,10);
 CREATE TABLE IF NOT EXISTS "ContractLogs" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "contractId" INTEGER NOT NULL,
@@ -655,6 +631,7 @@ INSERT INTO ContractLogs VALUES(23,1,5,10,'User accepted the contract',174093960
 INSERT INTO ContractLogs VALUES(24,1,5,10,'User accepted the contract',1740939655878);
 INSERT INTO ContractLogs VALUES(25,1,5,10,'User accepted the contract',1740940506695);
 INSERT INTO ContractLogs VALUES(26,1,5,10,'change end date',1741464192041);
+INSERT INTO ContractLogs VALUES(27,1,9,10,'terminated - Unpaid contract payment',1741706520928);
 CREATE TABLE IF NOT EXISTS "SignedContract" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "contractId" INTEGER NOT NULL,
@@ -700,9 +677,12 @@ CREATE TABLE IF NOT EXISTS "UserPlan" (
     CONSTRAINT "UserPlan_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "UserPlan_contractId_fkey" FOREIGN KEY ("contractId") REFERENCES "Contract" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO UserPlan VALUES(72,5,1,10,0,'MonthlyMembership',31,55.0,1740940506741,1743615306741,994);
-INSERT INTO UserPlan VALUES(73,5,NULL,10,1,'Unlimited',99,50.0,1740940540981,1749494140981,9999);
+INSERT INTO UserPlan VALUES(72,9,1,10,0,'MonthlyMembership',31,55.0,1740940506741,1751477706741,994);
+INSERT INTO UserPlan VALUES(73,5,NULL,10,1,'Unlimited',99,50.0,1740940540981,1749427200000,9997);
 INSERT INTO UserPlan VALUES(74,9,NULL,10,1,'Unlimited',99,50.0,1741116066241,1749669666242,9997);
+INSERT INTO UserPlan VALUES(78,5,NULL,10,2,'1 time pass',10,10.0,1741703636399,1742567636399,0);
+INSERT INTO UserPlan VALUES(79,1,NULL,10,2,'1 time pass',10,10.0,1741703782122,1742567782122,1);
+INSERT INTO UserPlan VALUES(80,1,NULL,10,2,'1 time pass',10,10.0,1741704197337,1742568197337,0);
 CREATE TABLE IF NOT EXISTS "ClassSchedule" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "trainingType" TEXT,
@@ -1866,7 +1846,7 @@ INSERT INTO ClassSchedule VALUES(2879,'WOD','CROSSFIT',1771772400000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2880,'WOD','CROSSFIT',1772377200000,60,'Karl Sasi',14,'Must saal',1,6,10,2830,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2881,'WOD','CROSSFIT',1772982000000,60,'Karl Sasi',14,'Must saal',1,6,10,2830,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2882,'WOD','CROSSFIT',1773586800000,60,'Karl Sasi',14,'Must saal',1,6,10,2830,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2883,'WOD','CROSSFIT',1741687200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2883,'WOD','CROSSFIT',1741687200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2884,'WOD','CROSSFIT',1742292000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2885,'WOD','CROSSFIT',1742896800000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2886,'WOD','CROSSFIT',1743498000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
@@ -1919,7 +1899,7 @@ INSERT INTO ClassSchedule VALUES(2932,'WOD','CROSSFIT',1771322400000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2933,'WOD','CROSSFIT',1771927200000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2934,'WOD','CROSSFIT',1772532000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2935,'WOD','CROSSFIT',1773136800000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2936,'WOD','CROSSFIT',1741703400000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2936,'WOD','CROSSFIT',1741703400000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2937,'WOD','CROSSFIT',1742308200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2938,'WOD','CROSSFIT',1742913000000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2939,'WOD','CROSSFIT',1743514200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
@@ -1972,7 +1952,7 @@ INSERT INTO ClassSchedule VALUES(2985,'WOD','CROSSFIT',1771338600000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2986,'WOD','CROSSFIT',1771943400000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2987,'WOD','CROSSFIT',1772548200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2988,'WOD','CROSSFIT',1773153000000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2989,'WOD','CROSSFIT',1741707000000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2989,'WOD','CROSSFIT',1741707000000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2990,'WOD','CROSSFIT',1742311800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2991,'WOD','CROSSFIT',1742916600000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2992,'WOD','CROSSFIT',1743517800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
@@ -2025,7 +2005,7 @@ INSERT INTO ClassSchedule VALUES(3038,'WOD','CROSSFIT',1771342200000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(3039,'WOD','CROSSFIT',1771947000000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3040,'WOD','CROSSFIT',1772551800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3041,'WOD','CROSSFIT',1773156600000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(3042,'WOD','CROSSFIT',1741710600000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(3042,'WOD','CROSSFIT',1741710600000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(3043,'WOD','CROSSFIT',1742315400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3044,'WOD','CROSSFIT',1742920200000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3045,'WOD','CROSSFIT',1743521400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
@@ -2078,7 +2058,7 @@ INSERT INTO ClassSchedule VALUES(3091,'WOD','CROSSFIT',1771345800000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(3092,'WOD','CROSSFIT',1771950600000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3093,'WOD','CROSSFIT',1772555400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3094,'WOD','CROSSFIT',1773160200000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(3095,'WOD','CROSSFIT',1741714200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(3095,'WOD','CROSSFIT',1741714200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(3096,'WOD','CROSSFIT',1742319000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3097,'WOD','CROSSFIT',1742923800000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3098,'WOD','CROSSFIT',1743525000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
@@ -2131,7 +2111,7 @@ INSERT INTO ClassSchedule VALUES(3144,'WOD','CROSSFIT',1771349400000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(3145,'WOD','CROSSFIT',1771954200000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3146,'WOD','CROSSFIT',1772559000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3147,'WOD','CROSSFIT',1773163800000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(3148,'Weightlifting','WEIGHTLIFTING',1741706100000,90,'Karl Sasi',8,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(3148,'Weightlifting','WEIGHTLIFTING',1741706100000,90,'Karl Sasiss',8,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3149,'Weightlifting','WEIGHTLIFTING',1742310900000,90,'Karl Sasi',8,'Must saal',1,6,10,3148,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3150,'Weightlifting','WEIGHTLIFTING',1742915700000,90,'Karl Sasi',8,'Must saal',1,6,10,3148,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3151,'Weightlifting','WEIGHTLIFTING',1743516900000,90,'Karl Sasi',8,'Must saal',1,6,10,3148,NULL,NULL,NULL,1,0);
@@ -3722,6 +3702,7 @@ INSERT INTO ClassSchedule VALUES(5052,'Other','OPEN GYM',1771776000000,120,'Ain 
 INSERT INTO ClassSchedule VALUES(5053,'Other','OPEN GYM',1772380800000,120,'Ain Lubi',8,'Must saal',1,6,10,5003,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(5054,'Other','OPEN GYM',1772985600000,120,'Ain Lubi',8,'Must saal',1,6,10,5003,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(5055,'Other','OPEN GYM',1773590400000,120,'Ain Lubi',8,'Must saal',1,6,10,5003,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(5056,'WOD','testgg',1740984240000,11,'Karl Sasi',11,'',0,1,10,NULL,'','For Time',NULL,1,0);
 CREATE TABLE IF NOT EXISTS "User" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "email" TEXT NOT NULL,
@@ -3759,6 +3740,7 @@ CREATE TABLE IF NOT EXISTS "Plan" (
     CONSTRAINT "Plan_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 INSERT INTO "Plan" VALUES(1,'Unlimited',99,50.0,'',9999,10,1,6);
+INSERT INTO "Plan" VALUES(2,'1 time pass',10,10.0,'',1,10,1,6);
 CREATE TABLE IF NOT EXISTS "AffiliateApiKeys" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "affiliateId" INTEGER NOT NULL,
@@ -3796,6 +3778,19 @@ INSERT INTO paymentMetadata VALUES(23,122,'4f7764c3-cf62-43cd-abac-af05931a2c29'
 INSERT INTO paymentMetadata VALUES(24,123,'ae5fe885-f140-45c7-929d-c667a9a3407c',1,10,0,1740939644001);
 INSERT INTO paymentMetadata VALUES(25,126,'5a1090ba-26a6-4c8a-adde-715ff49bcd8c',1,10,0,1740940488334);
 INSERT INTO paymentMetadata VALUES(26,128,'32a1247c-12e3-425f-a7c8-7e090c10cc7f',1,10,1,1741112220681);
+INSERT INTO paymentMetadata VALUES(27,131,'1ab22fc6-508c-4528-8a8d-c3d911e37935',1,10,0,1741693260396);
+INSERT INTO paymentMetadata VALUES(28,132,'b9eadcdb-e432-4b42-89f7-6b5a5a379fcc',1,10,0,1741693444612);
+INSERT INTO paymentMetadata VALUES(29,133,'0c5e8dc2-2fcd-41cb-aac6-debee50dadd5',1,10,0,1741693620706);
+INSERT INTO paymentMetadata VALUES(30,134,'1e63de77-f583-46f5-90bf-52ccc3f8583e',1,10,0,1741694040724);
+INSERT INTO paymentMetadata VALUES(31,135,'022e30e1-b023-4a5e-9c6c-58d3637e8203',1,10,0,1741694220904);
+INSERT INTO paymentMetadata VALUES(32,136,'f4b14309-d765-4bd9-8071-fcfef635453b',1,10,0,1741694340803);
+INSERT INTO paymentMetadata VALUES(33,143,'28926c5c-3902-47c2-a20d-3d901e0f23e7',1,10,0,1741706100681);
+INSERT INTO paymentMetadata VALUES(34,144,'b7640e57-104b-4bd0-8b5d-33aecc87a417',1,10,0,1741706521301);
+INSERT INTO paymentMetadata VALUES(35,145,'c0f13e0d-6da1-4e05-83c5-22f01906db1c',1,10,0,1741706640949);
+INSERT INTO paymentMetadata VALUES(36,146,'04235735-3aab-4a0f-abf3-6649ecad9e1e',1,10,0,1741706761107);
+INSERT INTO paymentMetadata VALUES(37,147,'9b35ebcc-be22-497b-991f-6e456ab75385',1,10,0,1741706820527);
+INSERT INTO paymentMetadata VALUES(38,148,'9d47dd12-544e-46b6-97e2-f08b953a19c6',1,10,0,1741863541053);
+INSERT INTO paymentMetadata VALUES(39,149,'abc61445-9a46-40af-b1e7-a07a2644a7ae',1,10,0,1741875660924);
 CREATE TABLE IF NOT EXISTS "Waitlist" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "classId" INTEGER NOT NULL,
@@ -3824,36 +3819,94 @@ CREATE TABLE IF NOT EXISTS "Contract" (
     CONSTRAINT "Contract_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Contract_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Contract VALUES(1,10,5,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'cred',55.0,'month',9,1752192000000,1,'accepted',1740939370309,1740940506658);
+INSERT INTO Contract VALUES(1,10,9,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'cred',55.0,'month',18,1743120000000,1,'accepted',1740939370309,1740940506658);
+INSERT INTO Contract VALUES(2,10,5,'Monthly Membership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'',40.0,'month',13,1855612800000,1,'Waiting for acceptance',1741874492989,NULL);
+CREATE TABLE IF NOT EXISTS "transactions" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "userId" INTEGER NOT NULL,
+    "amount" REAL NOT NULL,
+    "invoiceNumber" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" TEXT,
+    "type" TEXT,
+    "affiliateId" INTEGER NOT NULL,
+    "planId" INTEGER,
+    "creditId" INTEGER,
+    "contractId" INTEGER,
+    "isCredit" BOOLEAN DEFAULT false,
+    "decrease" BOOLEAN NOT NULL DEFAULT true,
+    "memberId" INTEGER,
+    CONSTRAINT "transactions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "transactions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "transactions_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "transactions_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "Members" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "transactions_creditId_fkey" FOREIGN KEY ("creditId") REFERENCES "Credit" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+INSERT INTO transactions VALUES(120,5,9.0,'contract-2-1740938971713','Contract payment: credit Contract Payment',1740938972407,'success','contract',10,NULL,NULL,NULL,0,1,NULL);
+INSERT INTO transactions VALUES(121,5,55.0,'contract-1-1740939513601','Contract payment: cred Contract Payment',1740939514217,'success','contract',10,NULL,NULL,NULL,0,1,NULL);
+INSERT INTO transactions VALUES(122,5,55.0,'contract-1-1740939587342','Contract payment: cred Contract Payment',1740939587791,'success','contract',10,NULL,NULL,NULL,0,1,NULL);
+INSERT INTO transactions VALUES(123,5,55.0,'contract-1-1740939643441','Contract payment: cred Contract Payment',1740939643966,'success','contract',10,NULL,NULL,NULL,0,1,NULL);
+INSERT INTO transactions VALUES(124,5,50.0,'20250302182352','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 50€',1740939832196,'success','credit',10,1,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(125,5,50.0,'20250302182414','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 25€',1740939867851,'success','mixed',10,1,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(126,5,55.0,'contract-1-1740940487667','Contract payment: cred Contract Payment',1740940488300,'success','contract',10,NULL,NULL,NULL,0,1,NULL);
+INSERT INTO transactions VALUES(127,5,50.0,'20250302183523','Plan purchase: Unlimited, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1740940540977,'success','montonio',10,1,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(129,9,50.0,'20250304192106','Plan purchase: Unlimited, by: prii.sander@gmail.com, from: Crossfit Tartu, paid by credit: 50€',1741116066240,'success','credit',10,1,NULL,NULL,0,1,10);
+INSERT INTO transactions VALUES(130,5,1000.0,'20250308202723','stebby',1741465643891,'success',NULL,10,NULL,1,NULL,1,0,NULL);
+INSERT INTO transactions VALUES(137,5,10.0,'20250311120535','Plan purchase: 1 time pass, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1741694747108,'success','montonio',10,2,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(138,5,10.0,'20250311131940','Plan purchase: 1 time pass, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1741699191955,'success','montonio',10,2,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(139,5,10.0,'20250311132056','Plan purchase: 1 time pass, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1741699267899,'success','montonio',10,2,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(140,5,10.0,'20250311143344','Plan purchase: 1 time pass, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1741703636399,'success','montonio',10,2,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(141,1,10.0,'20250311143611','Plan purchase: 1 time pass, by: a@a.a, from: Crossfit Tartu, paid by credit: 0€',1741703782122,'success','montonio',10,2,NULL,NULL,0,1,1);
+INSERT INTO transactions VALUES(142,1,10.0,'20250311144306','Plan purchase: 1 time pass, by: a@a.a, from: Crossfit Tartu, paid by credit: 0€',1741704197336,'success','montonio',10,2,NULL,NULL,0,1,1);
+INSERT INTO transactions VALUES(148,9,55.0,'2025031342515','Monthly payment for contract #1',1739444341015,'success','montonio',10,NULL,NULL,1,0,1,NULL);
+INSERT INTO transactions VALUES(149,9,55.0,'2025031384494','Monthly payment for contract #1',1741875660880,'success','montonio',10,NULL,NULL,1,0,1,NULL);
+CREATE TABLE IF NOT EXISTS "Exercise" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "exerciseData" TEXT,
+    "trainingId" INTEGER NOT NULL,
+    CONSTRAINT "Exercise_trainingId_fkey" FOREIGN KEY ("trainingId") REFERENCES "Training" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO Exercise VALUES(2,'sa',1);
+INSERT INTO Exercise VALUES(5,'jump',3);
+INSERT INTO Exercise VALUES(6,'sas',2);
+INSERT INTO Exercise VALUES(8,'jump',4);
+INSERT INTO Exercise VALUES(10,'122',5);
+INSERT INTO Exercise VALUES(12,'asdasd',6);
+INSERT INTO Exercise VALUES(14,'asdfasdf',7);
+INSERT INTO Exercise VALUES(15,'jump',8);
+INSERT INTO Exercise VALUES(16,'ASD',9);
+INSERT INTO Exercise VALUES(19,replace('For load:\nEMOM 12:\n3 power cleans2\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),10);
+INSERT INTO Exercise VALUES(20,NULL,11);
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('Affiliate',10);
-INSERT INTO sqlite_sequence VALUES('Training',10);
-INSERT INTO sqlite_sequence VALUES('Exercise',19);
-INSERT INTO sqlite_sequence VALUES('defaultWOD',395);
+INSERT INTO sqlite_sequence VALUES('Training',11);
+INSERT INTO sqlite_sequence VALUES('defaultWOD',396);
 INSERT INTO sqlite_sequence VALUES('Record',19);
 INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',11);
-INSERT INTO sqlite_sequence VALUES('todayWOD',15);
-INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',14);
+INSERT INTO sqlite_sequence VALUES('todayWOD',16);
+INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',16);
 INSERT INTO sqlite_sequence VALUES('Members',10);
 INSERT INTO sqlite_sequence VALUES('Credit',6);
-INSERT INTO sqlite_sequence VALUES('UserNote',6);
+INSERT INTO sqlite_sequence VALUES('UserNote',7);
 INSERT INTO sqlite_sequence VALUES('MessageGroup',4);
 INSERT INTO sqlite_sequence VALUES('UserMessageGroup',3);
-INSERT INTO sqlite_sequence VALUES('Message',63);
-INSERT INTO sqlite_sequence VALUES('ContractLogs',26);
+INSERT INTO sqlite_sequence VALUES('Message',76);
+INSERT INTO sqlite_sequence VALUES('ContractLogs',31);
 INSERT INTO sqlite_sequence VALUES('SignedContract',17);
 INSERT INTO sqlite_sequence VALUES('ContractTerms',2);
-INSERT INTO sqlite_sequence VALUES('transactions',130);
-INSERT INTO sqlite_sequence VALUES('ClassAttendee',24);
-INSERT INTO sqlite_sequence VALUES('UserPlan',74);
-INSERT INTO sqlite_sequence VALUES('ClassSchedule',5055);
+INSERT INTO sqlite_sequence VALUES('ClassAttendee',31);
+INSERT INTO sqlite_sequence VALUES('UserPlan',80);
+INSERT INTO sqlite_sequence VALUES('ClassSchedule',5056);
 INSERT INTO sqlite_sequence VALUES('User',11);
-INSERT INTO sqlite_sequence VALUES('Plan',1);
+INSERT INTO sqlite_sequence VALUES('Plan',2);
 INSERT INTO sqlite_sequence VALUES('AffiliateApiKeys',1);
 INSERT INTO sqlite_sequence VALUES('PaymentHoliday',6);
-INSERT INTO sqlite_sequence VALUES('paymentMetadata',26);
+INSERT INTO sqlite_sequence VALUES('paymentMetadata',39);
 INSERT INTO sqlite_sequence VALUES('Waitlist',8);
-INSERT INTO sqlite_sequence VALUES('Contract',1);
+INSERT INTO sqlite_sequence VALUES('Contract',2);
+INSERT INTO sqlite_sequence VALUES('transactions',149);
+INSERT INTO sqlite_sequence VALUES('Exercise',20);
 CREATE UNIQUE INDEX "defaultWOD_name_key" ON "defaultWOD"("name");
 CREATE UNIQUE INDEX "AffiliateTrainer_affiliateId_trainerId_key" ON "AffiliateTrainer"("affiliateId", "trainerId");
 CREATE UNIQUE INDEX "Members_userId_affiliateId_key" ON "Members"("userId", "affiliateId");

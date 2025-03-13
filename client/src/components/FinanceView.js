@@ -18,13 +18,21 @@ import {
     Paper,
     Grid,
     Collapse,
-    IconButton
+    IconButton,
+    Card,
+    CardContent,
+    Divider,
+    Chip
 } from "@mui/material";
 import { getOrders, getFinanceData } from "../api/financeApi";
 import { getAffiliateTransactions } from "../api/creditApi";
 import { getOwnerAffiliateId } from "../api/membersApi";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import DescriptionIcon from '@mui/icons-material/Description';
+import PaymentIcon from '@mui/icons-material/Payment';
+import PersonIcon from '@mui/icons-material/Person';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 
 export default function FinanceView() {
     const [orders, setOrders] = useState([]);
@@ -355,7 +363,18 @@ export default function FinanceView() {
                                             <TableCell>€{transaction.amount.toFixed(2)}</TableCell>
                                             <TableCell>{transaction.description}</TableCell>
                                             <TableCell>{transaction.type || "N/A"}</TableCell>
-                                            <TableCell>{transaction.status || "N/A"}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={transaction.status || "N/A"}
+                                                    color={
+                                                        transaction.status === 'completed' ? 'success' :
+                                                            transaction.status === 'pending' ? 'warning' :
+                                                                transaction.status === 'failed' ? 'error' :
+                                                                    'default'
+                                                    }
+                                                    size="small"
+                                                />
+                                            </TableCell>
                                             <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
                                         </TableRow>
 
@@ -364,40 +383,156 @@ export default function FinanceView() {
                                             <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
                                                 <Collapse in={expandedTransactionId === transaction.id} timeout="auto" unmountOnExit>
                                                     <Box sx={{ margin: 2 }}>
-                                                        <Typography variant="h6" gutterBottom component="div">
+                                                        <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
                                                             Transaction Details
                                                         </Typography>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={6}>
-                                                                <Typography variant="body1">
-                                                                    <strong>Invoice Number:</strong> {transaction.invoiceNumber}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>User:</strong> {transaction.user?.fullName || "Unknown"}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Amount:</strong> €{transaction.amount.toFixed(2)}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Transaction Date:</strong> {new Date(transaction.createdAt).toLocaleString()}
-                                                                </Typography>
+
+                                                        <Grid container spacing={3}>
+                                                            {/* Transaction Overview Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <ReceiptIcon sx={{ mr: 1 }} />
+                                                                            Invoice Information
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Invoice Number:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {transaction.invoiceNumber}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Transaction Date:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {new Date(transaction.createdAt).toLocaleString()}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Status:
+                                                                                </Typography>
+                                                                                <Chip
+                                                                                    label={transaction.status || "N/A"}
+                                                                                    color={
+                                                                                        transaction.status === 'completed' ? 'success' :
+                                                                                            transaction.status === 'pending' ? 'warning' :
+                                                                                                transaction.status === 'failed' ? 'error' :
+                                                                                                    'default'
+                                                                                    }
+                                                                                    size="small"
+                                                                                />
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Type:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {transaction.type || "N/A"}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
                                                             </Grid>
-                                                            <Grid item xs={6}>
-                                                                <Typography variant="body1">
-                                                                    <strong>Description:</strong> {transaction.description}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Type:</strong> {transaction.type || "N/A"}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Status:</strong> {transaction.status || "N/A"}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Credit Operation:</strong> {transaction.isCredit ? "Yes" : "No"}
-                                                                </Typography>
-                                                                <Typography variant="body1">
-                                                                    <strong>Direction:</strong> {transaction.decrease ? "Debit" : "Credit"}
-                                                                </Typography>
+
+                                                            {/* Payment Information Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <PaymentIcon sx={{ mr: 1 }} />
+                                                                            Payment Information
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Amount:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                                                                                    €{transaction.amount.toFixed(2)}
+                                                                                </Typography>
+                                                                            </Box>
+
+
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Credit Operation:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {transaction.isCredit ? "Yes" : "No"}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* User Information Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <PersonIcon sx={{ mr: 1 }} />
+                                                                            User Information
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    User:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {transaction.user?.fullName || "Unknown"}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            {transaction.user?.email && (
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Email:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {transaction.user.email}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* Description Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <DescriptionIcon sx={{ mr: 1 }} />
+                                                                            Description
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ p: 1 }}>
+                                                                            <Typography variant="body1">
+                                                                                {transaction.description || "No description available"}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
                                                             </Grid>
                                                         </Grid>
                                                     </Box>

@@ -7,11 +7,22 @@ import {
     TableCell,
     TableHead,
     TableRow,
-    Typography
+    Typography,
+    IconButton,
+    Collapse,
+    Card,
+    CardContent,
+    Divider,
+    Chip,
+    Grid
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import EventIcon from '@mui/icons-material/Event';
+import PersonIcon from '@mui/icons-material/Person';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
 
 import {getUserAttendees} from '../api/profileApi'; // Sinu olemasolev API-funktsioon
 
@@ -52,7 +63,7 @@ export default function VisitHistory({user, affiliateId}) {
             }
         };
         fetchData();
-    }, [user]);
+    }, [user, affiliateId]);
 
     // Klikkides reale: avab või sulgeb detailvaate
     const handleRowClick = (id) => {
@@ -61,7 +72,7 @@ export default function VisitHistory({user, affiliateId}) {
 
     return (
         <Box>
-            <Typography variant="h5" gutterBottom sx={{ml: 2}}>
+            <Typography variant="h5" gutterBottom sx={{ml: 2, fontWeight: 'bold'}}>
                 Visit History
             </Typography>
             <Paper>
@@ -101,80 +112,184 @@ export default function VisitHistory({user, affiliateId}) {
                                         style={{cursor: 'pointer'}}
                                     >
                                         <TableCell>
-                                            {isOpen ? <KeyboardArrowUpIcon/> : <KeyboardArrowDownIcon/>}
+                                            <IconButton size="small">
+                                                {isOpen ? <KeyboardArrowUpIcon/> : <KeyboardArrowDownIcon/>}
+                                            </IconButton>
                                         </TableCell>
                                         <TableCell>{classDate}</TableCell>
-                                        <TableCell>{trainingType}</TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={trainingType}
+                                                color="primary"
+                                                size="small"
+                                                variant="outlined"
+                                            />
+                                        </TableCell>
                                         <TableCell align="center">
                                             {hasLeaderboard && <EmojiEventsIcon color="primary"/>}
                                         </TableCell>
                                     </TableRow>
 
                                     {/* DETAILRIDA (kuvatakse, kui lahti) */}
-                                    {isOpen && (
-                                        <TableRow>
-                                            <TableCell colSpan={4} sx={{bgcolor: '#f5f5f5'}}>
-                                                <Box sx={{p: 2}}>
-                                                    <Typography variant="subtitle1" gutterBottom>
+                                    <TableRow>
+                                        <TableCell colSpan={4} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                                            <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                                                <Box sx={{ margin: 2 }}>
+                                                    <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
                                                         Class Details
                                                     </Typography>
-                                                    <Typography variant="body2">
-                                                        <strong>Name:</strong> {att.classSchedule?.trainingName}
-                                                    </Typography>
-                                                    <Typography variant="body2" sx={{mb: 2}}>
-                                                        <strong>Trainer:</strong> {att.classSchedule?.trainer}
-                                                    </Typography>
-                                                    {hasDescription && (
-                                                        <>
-                                                        <Box
-                                                            sx={{
-                                                                backgroundColor: "#ccc",
-                                                                padding: 2,
-                                                                borderRadius: "8px",
 
-                                                            }}
-                                                        >
-                                                            <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
-                                                                <strong>🔥{att.classSchedule?.wodName || "None"}</strong>
-                                                            </Typography>
-                                                            <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
-                                                                <strong>{att.classSchedule?.wodType || "None"}</strong>
-                                                            </Typography>
-                                                            <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
-                                                                <strong></strong>{" "}
-                                                                {att.classSchedule?.description || "No description available"}
-                                                            </Typography>
-                                                        </Box>
-                                                        </>
-
-                                                    )}
-
-
-                                                    {/* Leaderboard tulemused (kui on) */}
-                                                    {hasLeaderboard && (
-                                                        <>
-                                                            <Typography variant="subtitle1">Your leaderboard
-                                                                result:</Typography>
-                                                            {att.leaderboard.map((lb) => (
-                                                                <Box key={lb.id} sx={{ backgroundColor: "#ccc",
-                                                                    padding: 2,
-                                                                    borderRadius: "8px",}}>
-                                                                    <Typography variant="body2">
-                                                                        <strong>Score:</strong> {lb.score}
+                                                    <Grid container spacing={3}>
+                                                        {/* Class Information Card */}
+                                                        <Grid item xs={12} md={6}>
+                                                            <Card elevation={1} sx={{ height: '100%' }}>
+                                                                <CardContent>
+                                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                        <FitnessCenterIcon sx={{ mr: 1 }} />
+                                                                        Class Information
                                                                     </Typography>
-                                                                    <Typography variant="body2">
-                                                                        <strong>{lb.scoreType.toUpperCase()}</strong>
-                                                                    </Typography>
+                                                                    <Divider sx={{ mb: 2 }} />
 
+                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                Name:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {att.classSchedule?.trainingName || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
 
-                                                                </Box>
-                                                            ))}
-                                                        </>
-                                                    )}
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                Trainer:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {att.classSchedule?.trainer || 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                Date:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {classDate}
+                                                                            </Typography>
+                                                                        </Box>
+
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                Type:
+                                                                            </Typography>
+                                                                            <Chip
+                                                                                label={trainingType}
+                                                                                color="primary"
+                                                                                size="small"
+                                                                            />
+                                                                        </Box>
+                                                                    </Box>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </Grid>
+
+                                                        {/* Workout Information Card - if has description */}
+                                                        {hasDescription && (
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <WhatshotIcon sx={{ mr: 1 }} />
+                                                                            Workout Details
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                    WOD Name:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#e74c3c' }}>
+                                                                                    {att.classSchedule?.wodName || "None"}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                    WOD Type:
+                                                                                </Typography>
+                                                                                <Chip
+                                                                                    label={att.classSchedule?.wodType || "None"}
+                                                                                    color="secondary"
+                                                                                    size="small"
+                                                                                />
+                                                                            </Box>
+                                                                        </Box>
+
+                                                                        <Box sx={{ mt: 2 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                                                                Description:
+                                                                            </Typography>
+                                                                            <Box
+                                                                                sx={{
+                                                                                    backgroundColor: '#f8f9fa',
+                                                                                    p: 2,
+                                                                                    borderRadius: 1,
+                                                                                    whiteSpace: 'pre-line',
+                                                                                }}
+                                                                            >
+                                                                                {att.classSchedule?.description || "No description available"}
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+                                                        )}
+
+                                                        {/* Leaderboard Results Card - if has leaderboard */}
+                                                        {hasLeaderboard && (
+                                                            <Grid item xs={12}>
+                                                                <Card elevation={1}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <EmojiEventsIcon sx={{ mr: 1 }} />
+                                                                            Leaderboard Results
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Grid container spacing={2}>
+                                                                            {att.leaderboard.map((lb) => (
+                                                                                <Grid item xs={12} md={6} key={lb.id}>
+                                                                                    <Card elevation={0} sx={{
+                                                                                        backgroundColor: '#f8f9fa',
+                                                                                        border: '1px solid #e9ecef',
+                                                                                        borderRadius: 1
+                                                                                    }}>
+                                                                                        <CardContent>
+                                                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                                    {lb.scoreType.toUpperCase()}
+                                                                                                </Typography>
+                                                                                                <Chip
+                                                                                                    label={lb.score}
+                                                                                                    color="success"
+                                                                                                    sx={{ fontWeight: 'bold' }}
+                                                                                                />
+                                                                                            </Box>
+                                                                                        </CardContent>
+                                                                                    </Card>
+                                                                                </Grid>
+                                                                            ))}
+                                                                        </Grid>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+                                                        )}
+                                                    </Grid>
                                                 </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                                            </Collapse>
+                                        </TableCell>
+                                    </TableRow>
                                 </React.Fragment>
                             );
                         })}

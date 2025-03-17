@@ -20,12 +20,125 @@ import {
     Alert,
     List,
     ListItemButton,
-    CircularProgress
+    CircularProgress,
+    Paper,
+    Grid,
+    Divider,
+    IconButton,
+    Chip,
+    FormHelperText,
+    Tab,
+    Tabs,
+    Card,
+    CardContent,
+    Radio,
+    RadioGroup,
+    FormControlLabel,
+    useMediaQuery,
+    useTheme,
+    TextareaAutosize
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import AddIcon from '@mui/icons-material/Add';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import TimerIcon from '@mui/icons-material/Timer';
+import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 
 // FullCalendar React
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import AppTheme from "../shared-theme/AppTheme";
+
+// Styled components
+const StyledContainer = styled(Container)(({ theme }) => ({
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(8),
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: theme.spacing(3),
+}));
+
+const FormPaper = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(4),
+    borderRadius: theme.shape.borderRadius,
+    boxShadow: theme.shadows[2],
+    width: '100%'
+}));
+
+const CalendarPaper = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(4),
+    borderRadius: theme.shape.borderRadius,
+    boxShadow: theme.shadows[2],
+    overflow: 'hidden',
+}));
+
+const StyledListItem = styled(ListItemButton)(({ theme }) => ({
+    '&:hover': {
+        backgroundColor: theme.palette.action.hover,
+    },
+}));
+
+const StyledListContainer = styled(Paper)(({ theme }) => ({
+    border: `1px solid ${theme.palette.divider}`,
+    maxHeight: 150,
+    overflowY: 'auto',
+    marginBottom: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius,
+}));
+
+const TypeChip = styled(Chip)(({ theme, trainingtype }) => {
+    let chipColor, textColor;
+
+    switch(trainingtype) {
+        case 'WOD':
+            chipColor = 'rgba(25, 118, 210, 0.85)'; // Lighter blue
+            textColor = '#FFFFFF';
+            break;
+        case 'Weightlifting':
+            chipColor = 'rgba(76, 175, 80, 0.85)'; // Lighter green
+            textColor = '#FFFFFF';
+            break;
+        case 'Cardio':
+            chipColor = 'rgba(255, 152, 0, 0.85)'; // Lighter orange
+            textColor = '#000000'; // Black text for better contrast with orange
+            break;
+        default:
+            chipColor = 'rgba(33, 150, 243, 0.85)'; // Lighter info blue
+            textColor = '#FFFFFF';
+    }
+
+    return {
+        backgroundColor: chipColor,
+        color: textColor,
+        fontWeight: 'bold',
+        padding: '4px 8px',
+        '& .MuiChip-label': {
+            padding: '0 8px'
+        }
+    };
+});
+
+const getTypeIcon = (type) => {
+    switch(type) {
+        case 'WOD':
+            return <TimerIcon />;
+        case 'Weightlifting':
+            return <FitnessCenterIcon />;
+        case 'Cardio':
+            return <DirectionsRunIcon />;
+        default:
+            return <SportsMartialArtsIcon />;
+    }
+};
 
 export default function TrainingsPage() {
     // --- State for creating new training ---
@@ -53,7 +166,16 @@ export default function TrainingsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalTraining, setModalTraining] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const API_URL = process.env.REACT_APP_API_URL
+
+    // Form section visibility
+    const [formExpanded, setFormExpanded] = useState(true);
+
+    // Theme and responsive design
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const API_URL = process.env.REACT_APP_API_URL;
+
     // --- 1) Load trainings on mount ---
     useEffect(() => {
         loadTrainings();
@@ -65,12 +187,10 @@ export default function TrainingsPage() {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/trainings`, {
                 method: 'GET',
-
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'application/json'
                 }
-
             });
             if (!response.ok) {
                 throw new Error('Failed to load trainings');
@@ -132,7 +252,7 @@ export default function TrainingsPage() {
     async function handleSubmitTraining(e) {
         e.preventDefault();
         if (!trainingType || !trainingDate) {
-            alert('Please select training type and date!');
+            setError('Please select training type and date!');
             return;
         }
 
@@ -169,7 +289,7 @@ export default function TrainingsPage() {
             });
             const result = await response.json();
             if (!response.ok) {
-                alert(result.error || 'Error creating training');
+                setError(result.error || 'Error creating training');
                 return;
             }
             // If server returns updated training list, set it:
@@ -186,8 +306,9 @@ export default function TrainingsPage() {
             setWodScore('');
             setExercises('');
             setShowOptions(false);
+            setError('');
         } catch (error) {
-            alert('Error: ' + error.message);
+            setError('Error: ' + error.message);
         }
     }
 
@@ -195,14 +316,25 @@ export default function TrainingsPage() {
     // Convert trainings -> FullCalendar events
     function getCalendarEvents() {
         return trainings.map((t) => {
-            let bgColor = 'blue';
-            if (t.type === 'Weightlifting') bgColor = 'green';
-            else if (t.type === 'Cardio') bgColor = 'yellow';
-            else if (t.type === 'Other') bgColor = 'orange';
+            // Using more vibrant, slightly transparent colors
+            let bgColor;
+            switch(t.type) {
+                case 'WOD':
+                    bgColor = 'rgba(25, 118, 210, 0.85)'; // Blue
+                    break;
+                case 'Weightlifting':
+                    bgColor = 'rgba(76, 175, 80, 0.85)'; // Green
+                    break;
+                case 'Cardio':
+                    bgColor = 'rgba(255, 152, 0, 0.85)'; // Orange
+                    break;
+                default:
+                    bgColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
+            }
 
             return {
                 id: t.id,
-                title: '',  // we only show color
+                title: t.type,
                 start: t.date,
                 backgroundColor: bgColor,
                 borderColor: bgColor,
@@ -219,10 +351,24 @@ export default function TrainingsPage() {
 
     // eventContent, to replicate the "colored bar"
     function renderEventContent(arg) {
-        const color = arg.event.backgroundColor || 'blue';
-        // Return a small color bar
+        // Use more vibrant, slightly transparent colors for better visibility
+        let backgroundColor;
+        switch(arg.event.title) {
+            case 'WOD':
+                backgroundColor = 'rgba(25, 118, 210, 0.85)'; // Blue
+                break;
+            case 'Weightlifting':
+                backgroundColor = 'rgba(76, 175, 80, 0.85)'; // Green
+                break;
+            case 'Cardio':
+                backgroundColor = 'rgba(255, 152, 0, 0.85)'; // Orange
+                break;
+            default:
+                backgroundColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
+        }
+
         return {
-            html: `<div style="width:100%;height:10px;background-color:${color};margin-bottom:2px;"></div>`,
+            html: `<div style="width:100%;height:14px;background-color:${backgroundColor};border-radius:3px;margin-bottom:2px;"></div>`,
         };
     }
 
@@ -258,14 +404,14 @@ export default function TrainingsPage() {
             });
             if (!response.ok) {
                 const resErr = await response.json();
-                alert('Error: ' + (resErr.error || 'Unknown'));
+                setError('Error: ' + (resErr.error || 'Unknown'));
                 return;
             }
-            alert('Training updated!');
+            setIsEditing(false);
             closeModal();
             loadTrainings();
         } catch (err) {
-            alert('Error saving training: ' + err.message);
+            setError('Error saving training: ' + err.message);
         }
     }
 
@@ -292,12 +438,13 @@ export default function TrainingsPage() {
             });
             if (!response.ok) {
                 const resErr = await response.json();
-                alert('Error: ' + (resErr.error || 'Could not add to records'));
+                setError('Error: ' + (resErr.error || 'Could not add to records'));
                 return;
             }
-            alert('Added to records successfully!');
+            // Show success alert instead of regular alert
+            setError(''); // Clear any existing errors
         } catch (err) {
-            alert('Error: ' + err.message);
+            setError('Error: ' + err.message);
         }
     }
 
@@ -318,270 +465,477 @@ export default function TrainingsPage() {
         });
     }
 
+    // Toggle form visibility
+    const toggleForm = () => {
+        setFormExpanded(!formExpanded);
+    };
+
     return (
-        <Container maxWidth={false} sx={{mt: 3}}>
-            <Typography variant="h4" gutterBottom>
-                Training Page
-            </Typography>
+        <AppTheme>
+            <StyledContainer maxWidth="lg" sx={{ width: '100%' }}>
+                <Typography variant="h4" gutterBottom align="center" fontWeight="bold">
+                    TRAININGS
+                </Typography>
 
-            {/* --- FORM for creating new training --- */}
-            <Box component="form" onSubmit={handleSubmitTraining} sx={{mb: 4, backgroundColor: "background.paper"}}>
-                <FormControl fullWidth sx={{mb: 2, backgroundColor: "background.paper"}}>
-                    <InputLabel id="training-type-label" sx={{backgroundColor: "background.paper"}}>Training
-                        Type</InputLabel>
-                    <Select
-                        labelId="training-type-label"
-                        value={trainingType}
-                        label="Training Type"
-                        onChange={handleTrainingTypeChange}
-                        sx={{backgroundColor: "background.paper"}}
-
+                {error && (
+                    <Alert
+                        severity="error"
+                        sx={{ width: '100%', mb: 2 }}
+                        onClose={() => setError('')}
                     >
-                        <MenuItem value="" sx={{backgroundColor: "background.paper"}}>-- Select Training Type
-                            --</MenuItem>
-                        <MenuItem value="WOD" sx={{backgroundColor: "background.paper"}}>WOD</MenuItem>
-                        <MenuItem value="Weightlifting"
-                                  sx={{backgroundColor: "background.paper"}}>Weightlifting</MenuItem>
-                        <MenuItem value="Cardio" sx={{backgroundColor: "background.paper"}}>Cardio</MenuItem>
-                        <MenuItem value="Other" sx={{backgroundColor: "background.paper"}}>Other</MenuItem>
-                    </Select>
-                </FormControl>
-
-                {showOptions && (
-                    <TextField
-                        fullWidth
-                        type="date"
-                        label="Date"
-                        value={trainingDate}
-                        onChange={(e) => setTrainingDate(e.target.value)}
-                        InputLabelProps={{shrink: true}}
-                        sx={{mb: 2}}
-                        required
-                    />
+                        {error}
+                    </Alert>
                 )}
 
-                {/* WOD stuff */}
-                {trainingType === 'WOD' && showOptions && (
-                    <Box sx={{mb: 2}}>
-                        {/* Search default WODs */}
-                        <TextField
-                            fullWidth
-                            label="Search Default WODs"
-                            value={wodSearch}
-                            onChange={(e) => setWodSearch(e.target.value)}
-                            sx={{mb: 1}}
-                        />
-                        {wodSearchResults.length > 0 && (
-                            <List dense sx={{border: '1px solid #ccc', maxHeight: 150, overflowY: 'auto'}}>
-                                {wodSearchResults.map((w) => (
-                                    <ListItemButton key={w.name} onClick={() => handleSelectWod(w)}>
-                                        {w.name}
-                                    </ListItemButton>
-                                ))}
-                            </List>
-                        )}
-
-                        <TextField
-                            fullWidth
-                            label="WOD Name"
-                            value={wodName}
-                            onChange={(e) => setWodName(e.target.value)}
-                            sx={{mb: 1}}
-                        />
-
-                        <Box sx={{mb: 1}}>
-                            <Typography>WOD Type:</Typography>
-                            <div>
-                                {['For Time', 'EMOM', 'Tabata', 'AMRAP'].map((val) => (
-                                    <label key={val} style={{marginRight: 10}}>
-                                        <input
-                                            type="radio"
-                                            name="wod-type"
-                                            value={val}
-                                            checked={wodType === val}
-                                            onChange={(e) => setWodType(e.target.value)}
-                                        />
-                                        {val}
-                                    </label>
-                                ))}
-                            </div>
-                        </Box>
-
-                        <TextField
-                            fullWidth
-                            multiline
-                            minRows={3}
-                            label="WOD Description"
-                            value={wodDescription}
-                            onChange={(e) => setWodDescription(e.target.value)}
-                            sx={{mb: 1}}
-                        />
-
-                        <TextField
-                            label="Score"
-                            value={wodScore}
-                            onChange={(e) => setWodScore(e.target.value)}
-                        />
+                {/* Add Training Form Section */}
+                <FormPaper>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" fontWeight="medium">
+                            Add New Training
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            startIcon={formExpanded ? <CloseIcon /> : <AddIcon />}
+                            onClick={toggleForm}
+                            size="small"
+                        >
+                            {formExpanded ? 'Hide Form' : 'Show Form'}
+                        </Button>
                     </Box>
-                )}
 
-                {/* Weightlifting, Cardio, Other */}
-                {['Weightlifting', 'Cardio', 'Other'].includes(trainingType) && showOptions && (
-                    <Box sx={{mb: 2}}>
-                        <TextField
-                            fullWidth
-                            multiline
-                            minRows={3}
-                            label="Exercises"
-                            value={exercises}
-                            onChange={(e) => setExercises(e.target.value)}
-                        />
-                    </Box>
-                )}
-
-                {showOptions && (
-                    <Button type="submit" variant="contained">
-                        Save Training
-                    </Button>
-                )}
-            </Box>
-
-            {/* Error or loading indicator */}
-            {loadingTrainings && <CircularProgress/>}
-            {error && <Alert severity="error">{error}</Alert>}
-
-            {/* FULLCALENDAR to display trainings */}
-            <Box sx={{mb: 4}}>
-                <FullCalendar
-                    plugins={[dayGridPlugin]}
-                    initialView="dayGridMonth"
-                    events={getCalendarEvents()}
-                    eventClick={handleEventClick}
-                    eventContent={renderEventContent}
-                />
-            </Box>
-
-            {/* MODAL (Dialog) for training details */}
-            <Dialog open={modalOpen} onClose={closeModal} maxWidth="sm" fullWidth>
-                <DialogTitle>Training Details</DialogTitle>
-                <DialogContent>
-                    {modalTraining && (
-                        <Box>
-                            <Typography variant="subtitle1" gutterBottom>
-                                {modalTraining.type}
-                            </Typography>
-                            {/* Date */}
-                            <TextField
-                                label="Date"
-                                type="date"
-                                value={modalTraining.date?.split('T')[0] || ''}
-                                fullWidth
-                                onChange={(e) => updateModalField('date', e.target.value)}
-                                disabled={!isEditing}
-                                sx={{mb: 2}}
-                                InputLabelProps={{shrink: true}}
-                            />
-                            {/* If WOD */}
-                            {modalTraining.type === 'WOD' && (
-                                <>
-                                    <TextField
-                                        label="WOD Name"
-                                        value={modalTraining.wodName || ''}
-                                        fullWidth
-                                        disabled={!isEditing}
-                                        onChange={(e) => updateModalField('wodName', e.target.value)}
-                                        sx={{mb: 2}}
-                                    />
-                                    <TextField
-                                        label="WOD Type"
-                                        value={modalTraining.wodType || ''}
-                                        fullWidth
-                                        disabled={!isEditing}
-                                        onChange={(e) => updateModalField('wodType', e.target.value)}
-                                        sx={{mb: 2}}
-                                    />
-                                    <TextField
-                                        label="Score"
-                                        value={modalTraining.score || ''}
-                                        fullWidth
-                                        disabled={!isEditing}
-                                        onChange={(e) => updateModalField('score', e.target.value)}
-                                        sx={{mb: 2}}
-                                    />
-                                </>
-                            )}
-
-                            {/* Exercises array => modalTraining.exercises: [{exerciseData: "..."}] */}
-                            {/* If it's a WOD or weightlifting, etc., the server response might differ. */}
-                            {modalTraining.exercises?.length > 0 && (
-                                <Box>
-                                    <Typography>Exercises:</Typography>
-                                    {modalTraining.exercises.map((ex, idx) => (
-                                        <Box
-                                            key={idx}
-                                            sx={{
-                                                mb: 2,
-                                                border: '1px solid #e0e0e0',
-                                                borderRadius: 1,
-                                                minHeight: '100px',
-                                                overflow: 'hidden' // Ensures the content stays within the box
-                                            }}
+                    {formExpanded && (
+                        <Box component="form" onSubmit={handleSubmitTraining}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="training-type-label">Training Type</InputLabel>
+                                        <Select
+                                            labelId="training-type-label"
+                                            value={trainingType}
+                                            label="Training Type"
+                                            onChange={handleTrainingTypeChange}
                                         >
-                                            {isEditing ? (
-                                                <textarea
-                                                    value={ex.exerciseData || ''}
-                                                    onChange={(e) => updateExercise(idx, e.target.value)}
+                                            <MenuItem value="">-- Select Training Type --</MenuItem>
+                                            <MenuItem value="WOD">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <TimerIcon sx={{ mr: 1 }} />
+                                                    WOD
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="Weightlifting">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <FitnessCenterIcon sx={{ mr: 1 }} />
+                                                    Weightlifting
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="Cardio">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <DirectionsRunIcon sx={{ mr: 1 }} />
+                                                    Cardio
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="Other">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <SportsMartialArtsIcon sx={{ mr: 1 }} />
+                                                    Other
+                                                </Box>
+                                            </MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                {showOptions && (
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            label="Date"
+                                            value={trainingDate}
+                                            onChange={(e) => setTrainingDate(e.target.value)}
+                                            InputLabelProps={{shrink: true}}
+                                            required
+                                        />
+                                    </Grid>
+                                )}
+                            </Grid>
+
+                            {/* WOD stuff */}
+                            {trainingType === 'WOD' && showOptions && (
+                                <Box sx={{ mt: 3 }}>
+                                    <Divider sx={{ my: 2 }} />
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12}>
+                                            {/* Search default WODs */}
+                                            <TextField
+                                                fullWidth
+                                                label="Search Default WODs"
+                                                value={wodSearch}
+                                                onChange={(e) => setWodSearch(e.target.value)}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <SearchIcon sx={{ color: 'action.active', mr: 1 }} />
+                                                    ),
+                                                }}
+                                            />
+                                            {wodSearchResults.length > 0 && (
+                                                <StyledListContainer>
+                                                    <List dense>
+                                                        {wodSearchResults.map((w) => (
+                                                            <StyledListItem key={w.name} onClick={() => handleSelectWod(w)}>
+                                                                <Typography>{w.name}</Typography>
+                                                            </StyledListItem>
+                                                        ))}
+                                                    </List>
+                                                </StyledListContainer>
+                                            )}
+                                        </Grid>
+
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="WOD Name"
+                                                value={wodName}
+                                                onChange={(e) => setWodName(e.target.value)}
+                                            />
+                                        </Grid>
+
+                                        <Grid item xs={12} md={6}>
+                                            <FormControl component="fieldset">
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    WOD Type
+                                                </Typography>
+                                                <RadioGroup
+                                                    row
+                                                    name="wod-type"
+                                                    value={wodType}
+                                                    onChange={(e) => setWodType(e.target.value)}
+                                                >
+                                                    {['For Time', 'EMOM', 'Tabata', 'AMRAP'].map((val) => (
+                                                        <FormControlLabel
+                                                            key={val}
+                                                            value={val}
+                                                            control={<Radio />}
+                                                            label={val}
+                                                        />
+                                                    ))}
+                                                </RadioGroup>
+                                            </FormControl>
+                                        </Grid>
+
+                                        <Grid item xs={12}>
+                                            <FormControl fullWidth>
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    WOD Description
+                                                </Typography>
+                                                <TextareaAutosize
+                                                    minRows={5}
+                                                    maxRows={20}
+                                                    value={wodDescription}
+                                                    onChange={(e) => setWodDescription(e.target.value)}
+                                                    placeholder="Enter exercises and reps"
                                                     style={{
                                                         width: '100%',
-                                                        height: '100%',
-                                                        minHeight: '100px',
-                                                        padding: '16px',
-                                                        border: 'none',
+                                                        padding: '10px',
+                                                        borderRadius: '4px',
+                                                        borderColor: '#AAAAAA',
+                                                        fontSize: '14px',
+                                                        lineHeight: '1.5',
                                                         resize: 'vertical',
-                                                        fontFamily: 'inherit',
-                                                        fontSize: 'inherit',
-                                                        backgroundColor: 'transparent',
-                                                        outline: 'none',
-                                                        boxSizing: 'border-box'
+                                                        fontFamily: 'inherit'
                                                     }}
                                                 />
-                                            ) : (
-                                                <Box
-                                                    sx={{
-                                                        p: 2,
-                                                        minHeight: '100px',
-                                                        whiteSpace: 'pre-wrap'
-                                                    }}
-                                                >
-                                                    {ex.exerciseData || ''}
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    ))}
+                                            </FormControl>
+                                        </Grid>
+
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Score"
+                                                value={wodScore}
+                                                onChange={(e) => setWodScore(e.target.value)}
+                                                placeholder="Enter your result"
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            )}
+
+                            {/* Weightlifting, Cardio, Other */}
+                            {['Weightlifting', 'Cardio', 'Other'].includes(trainingType) && showOptions && (
+                                <Box sx={{ mt: 3 }}>
+                                    <Divider sx={{ my: 2 }} />
+                                    <FormControl fullWidth>
+                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                            Exercises
+                                        </Typography>
+                                        <TextareaAutosize
+                                            minRows={5}
+                                            maxRows={20}
+                                            value={exercises}
+                                            onChange={(e) => setExercises(e.target.value)}
+                                            placeholder="Enter your exercises, sets, reps and weights"
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                borderRadius: '4px',
+                                                borderColor: '#AAAAAA',
+                                                fontSize: '14px',
+                                                lineHeight: '1.5',
+                                                resize: 'vertical',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
+                                    </FormControl>
+                                </Box>
+                            )}
+
+                            {showOptions && (
+                                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        startIcon={<SaveIcon />}
+                                        size="large"
+                                    >
+                                        Save Training
+                                    </Button>
                                 </Box>
                             )}
                         </Box>
                     )}
-                </DialogContent>
-                <DialogActions>
-                    {modalTraining?.type === 'WOD' && modalTraining?.wodName && !isEditing && (
-                        <Button onClick={handleAddToRecords} color="secondary">
-                            Add to Records
-                        </Button>
+                </FormPaper>
+
+                {/* Training Calendar Section */}
+                <CalendarPaper>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" fontWeight="medium">
+                            Training Calendar
+                        </Typography>
+                    </Box>
+
+                    {/* Legend */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                        <TypeChip
+                            label="WOD"
+                            icon={<TimerIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="WOD"
+                            size="medium"
+                        />
+                        <TypeChip
+                            label="Weightlifting"
+                            icon={<FitnessCenterIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="Weightlifting"
+                            size="medium"
+                        />
+                        <TypeChip
+                            label="Cardio"
+                            icon={<DirectionsRunIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="Cardio"
+                            size="medium"
+                        />
+                        <TypeChip
+                            label="Other"
+                            icon={<SportsMartialArtsIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="Other"
+                            size="medium"
+                        />
+                    </Box>
+
+                    {/* Error or loading indicator */}
+                    {loadingTrainings && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                            <CircularProgress />
+                        </Box>
                     )}
-                    {!isEditing && (
-                        <Button variant="contained" onClick={handleEdit}>
-                            Edit
-                        </Button>
+
+                    {/* FULLCALENDAR to display trainings */}
+                    {!loadingTrainings && (
+                        <Box sx={{ '.fc': { fontFamily: 'inherit' } }}>
+                            <FullCalendar
+                                plugins={[dayGridPlugin]}
+                                initialView="dayGridMonth"
+                                events={getCalendarEvents()}
+                                eventClick={handleEventClick}
+                                eventContent={renderEventContent}
+                                height="auto"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth'
+                                }}
+                            />
+                        </Box>
                     )}
-                    {isEditing && (
-                        <Button variant="contained" color="success" onClick={handleSave}>
-                            Save
+                </CalendarPaper>
+
+                {/* MODAL (Dialog) for training details */}
+                <Dialog
+                    open={modalOpen}
+                    onClose={closeModal}
+                    maxWidth="md"
+                    fullWidth
+                    fullScreen={isMobile}
+                >
+                    <DialogTitle>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {modalTraining && (
+                                    <>
+                                        {getTypeIcon(modalTraining.type)}
+                                        <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+                                            {modalTraining.type === 'WOD' ? modalTraining.wodName || 'Training Details' : 'Training Details'}
+                                        </Typography>
+                                        <TypeChip
+                                            label={modalTraining.type}
+                                            trainingtype={modalTraining.type}
+                                            size="small"
+                                            sx={{ ml: 2 }}
+                                        />
+                                    </>
+                                )}
+                            </Box>
+                            <IconButton onClick={closeModal} edge="end">
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                    </DialogTitle>
+
+                    <DialogContent dividers>
+                        {modalTraining && (
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label="Date"
+                                        type="date"
+                                        value={modalTraining.date?.split('T')[0] || ''}
+                                        fullWidth
+                                        onChange={(e) => updateModalField('date', e.target.value)}
+                                        disabled={!isEditing}
+                                        InputLabelProps={{shrink: true}}
+                                    />
+                                </Grid>
+
+                                {/* If WOD */}
+                                {modalTraining.type === 'WOD' && (
+                                    <>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                label="WOD Name"
+                                                value={modalTraining.wodName || ''}
+                                                fullWidth
+                                                disabled={!isEditing}
+                                                onChange={(e) => updateModalField('wodName', e.target.value)}
+                                            />
+                                        </Grid>
+
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                label="WOD Type"
+                                                value={modalTraining.wodType || ''}
+                                                fullWidth
+                                                disabled={!isEditing}
+                                                onChange={(e) => updateModalField('wodType', e.target.value)}
+                                            />
+                                        </Grid>
+
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                label="Score"
+                                                value={modalTraining.score || ''}
+                                                fullWidth
+                                                disabled={!isEditing}
+                                                onChange={(e) => updateModalField('score', e.target.value)}
+                                            />
+                                        </Grid>
+                                    </>
+                                )}
+
+                                {/* Exercises */}
+                                {modalTraining.exercises?.length > 0 && (
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1" gutterBottom>
+                                            Exercises:
+                                        </Typography>
+                                        {modalTraining.exercises.map((ex, idx) => (
+                                            <Paper
+                                                key={idx}
+                                                elevation={1}
+                                                sx={{
+                                                    mb: 2,
+                                                    p: 0,
+                                                    borderRadius: 1,
+                                                    overflow: 'hidden'
+                                                }}
+                                            >
+                                                {isEditing ? (
+                                                    <TextField
+                                                        fullWidth
+                                                        multiline
+                                                        minRows={4}
+                                                        value={ex.exerciseData || ''}
+                                                        onChange={(e) => updateExercise(idx, e.target.value)}
+                                                        variant="outlined"
+                                                        sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
+                                                    />
+                                                ) : (
+                                                    <Box
+                                                        sx={{
+                                                            p: 2,
+                                                            minHeight: '100px',
+                                                            whiteSpace: 'pre-wrap'
+                                                        }}
+                                                    >
+                                                        {ex.exerciseData || ''}
+                                                    </Box>
+                                                )}
+                                            </Paper>
+                                        ))}
+                                    </Grid>
+                                )}
+                            </Grid>
+                        )}
+                    </DialogContent>
+
+                    <DialogActions sx={{ p: 2 }}>
+                        {modalTraining?.type === 'WOD' && modalTraining?.wodName && !isEditing && (
+                            <Button
+                                onClick={handleAddToRecords}
+                                color="secondary"
+                                startIcon={<BookmarkAddIcon />}
+                            >
+                                Add to Records
+                            </Button>
+                        )}
+
+                        {!isEditing ? (
+                            <Button
+                                variant="contained"
+                                onClick={handleEdit}
+                                startIcon={<EditIcon />}
+                            >
+                                Edit
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="contained"
+                                color="success"
+                                onClick={handleSave}
+                                startIcon={<SaveIcon />}
+                            >
+                                Save Changes
+                            </Button>
+                        )}
+
+                        <Button
+                            variant={isEditing ? "outlined" : "text"}
+                            onClick={isEditing ? () => setIsEditing(false) : closeModal}
+                            color="inherit"
+                        >
+                            {isEditing ? "Cancel" : "Close"}
                         </Button>
-                    )}
-                    <Button onClick={closeModal}>Close</Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                    </DialogActions>
+                </Dialog>
+            </StyledContainer>
+        </AppTheme>
     );
 }

@@ -15,36 +15,78 @@ import {
     Grid,
     Card,
     CardContent,
-    CircularProgress
+    CircularProgress,
+    Paper,
+    Chip,
+    IconButton,
+    InputAdornment,
+    useMediaQuery,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    FormHelperText,
+    Divider
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import AppTheme from "../shared-theme/AppTheme";
-// ==== Lisatud ====
 import RecordModal from "../components/RecordModal";
 
+// Styled components
 const StyledContainer = styled(Container)(({ theme }) => ({
-    pt: { xs: 4, sm: 12 },
-    pb: { xs: 8, sm: 16 },
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(8),
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: theme.spacing(4),
+    gap: theme.spacing(3),
 }));
 
-const StyledCard = styled(Card)(({ theme }) => ({
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    textAlign: "center",
-    transition: "0.3s",
-    width: "125px",
-    height: "75px",
-    cursor: "pointer",
-    "&:hover": {
-        boxShadow: theme.shadows[5],
+const RecordCard = styled(Paper)(({ theme }) => ({
+    width: '100%',
+    padding: theme.spacing(2, 3),
+    borderRadius: theme.shape.borderRadius,
+    marginBottom: theme.spacing(2),
+    backgroundColor: theme.palette.mode === 'dark' ? '#121212' : theme.palette.background.paper,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: theme.shadows[6],
     },
+}));
+
+const FilterContainer = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: theme.spacing(2),
+    width: '100%',
+    [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        alignItems: 'stretch',
+    },
+}));
+
+const ProgressChip = styled(Chip)(({ theme, progress }) => ({
+    fontWeight: 'bold',
+    backgroundColor: progress > 0
+        ? 'rgba(46, 125, 50, 0.2)'
+        : 'rgba(211, 47, 47, 0.2)',
+    color: progress > 0
+        ? theme.palette.success.main
+        : theme.palette.error.main,
 }));
 
 export default function RecordsPage() {
@@ -53,18 +95,24 @@ export default function RecordsPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [addModalOpen, setAddModalOpen] = useState(false);
+
+    // Record form state
     const [recordName, setRecordName] = useState('');
+    const [selectedExistingName, setSelectedExistingName] = useState('');
     const [recordDate, setRecordDate] = useState('');
     const [recordScore, setRecordScore] = useState('');
     const [recordWeight, setRecordWeight] = useState('');
     const [recordTime, setRecordTime] = useState('');
 
-    // Uus: otsingusisendi olek
-    const [searchQuery, setSearchQuery] = useState('');
+    // Track existing record names for the dropdown
+    const [existingNames, setExistingNames] = useState([]);
 
-    // Uus: valitud kaardile klõpsamise modaal
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [recordModalOpen, setRecordModalOpen] = useState(false);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -92,6 +140,10 @@ export default function RecordsPage() {
 
             const data = await response.json();
             setRecords(data);
+
+            // Extract unique names for the dropdown
+            const names = data.map(record => record.name);
+            setExistingNames(names);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -102,13 +154,14 @@ export default function RecordsPage() {
     const handleRecordTypeChange = (event, newType) => {
         if (newType) {
             setRecordType(newType);
-            setSearchQuery(''); // tühjenda otsing, kui tüüp muutub
+            setSearchQuery('');
         }
     };
 
     const handleOpenAddRecord = () => {
         setError('');
         setRecordName('');
+        setSelectedExistingName('');
         setRecordDate('');
         setRecordScore('');
         setRecordWeight('');
@@ -120,13 +173,64 @@ export default function RecordsPage() {
         setAddModalOpen(false);
     };
 
+    const handleExistingNameChange = (event) => {
+        const selectedName = event.target.value;
+        setSelectedExistingName(selectedName);
+
+        // If a name is selected from dropdown, clear the manual input
+        if (selectedName) {
+            setRecordName('');
+        }
+    };
+
+    const handleManualNameChange = (event) => {
+        const manualName = event.target.value;
+        setRecordName(manualName);
+
+        // If user starts typing a name manually, clear the dropdown selection
+        if (manualName) {
+            setSelectedExistingName('');
+        }
+    };
+
+    const getFinalName = () => {
+        // Return either the selected name from dropdown or manually entered name
+        return selectedExistingName || recordName;
+    };
+
     const handleSaveRecord = async () => {
         try {
             setError('');
+
+            // Validate that either a dropdown selection or manual name is provided
+            const finalName = getFinalName();
+            if (!finalName) {
+                setError('Please select an existing name or enter a new one');
+                return;
+            }
+
+            // Validate date
+            if (!recordDate) {
+                setError('Please enter a date');
+                return;
+            }
+
+            // Validate type-specific fields
+            if (recordType === 'WOD' && !recordScore) {
+                setError('Please enter a score');
+                return;
+            } else if (recordType === 'Weightlifting' && !recordWeight) {
+                setError('Please enter a weight');
+                return;
+            } else if (recordType === 'Cardio' && !recordTime) {
+                setError('Please enter a time');
+                return;
+            }
+
             const token = localStorage.getItem('token');
             let payload = {
                 type: recordType,
-                name: recordName,
+                name: finalName.toUpperCase(),
                 date: recordDate,
             };
 
@@ -169,7 +273,17 @@ export default function RecordsPage() {
         setSelectedRecord(null);
     };
 
-    // Otsing
+    // Mock function to simulate progress data
+    // In a real app, this would come from your API
+    const getProgressData = (record) => {
+        // This is just for demonstration - you would replace this with real logic
+        if (record.name.includes('PRESS')) return 13;
+        if (record.name.includes('DEADLIFT')) return -6;
+        if (record.name.includes('OVERHEAD')) return -10;
+        return null; // No progress data available
+    };
+
+    // Filter records based on search query
     const filteredRecords = records.filter((rec) => {
         const lowerCaseQuery = searchQuery.toLowerCase();
         return (
@@ -182,122 +296,218 @@ export default function RecordsPage() {
 
     return (
         <AppTheme>
-            <StyledContainer maxWidth={false}>
-                <Typography variant="h4" gutterBottom>
-                    Records
+            <StyledContainer maxWidth="md">
+                <Typography variant="h4" gutterBottom align="center" fontWeight="bold">
+                    RECORDS
                 </Typography>
 
-                {error && <Alert severity="error">{error}</Alert>}
+                {error && <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>}
 
-                {/* Spinner */}
-                {loading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                        <CircularProgress />
-                    </Box>
-                )}
-
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 3,
-                        flexWrap: 'wrap',
-                        gap: 2
-                    }}
-                >
+                <FilterContainer elevation={3}>
                     <ToggleButtonGroup
                         color="primary"
                         value={recordType}
                         exclusive
                         onChange={handleRecordTypeChange}
+                        aria-label="record type"
+                        sx={{
+                            '& .MuiToggleButton-root': {
+                                px: 3,
+                                py: 1,
+                                fontWeight: 'medium',
+                            }
+                        }}
                     >
                         <ToggleButton value="WOD">WOD</ToggleButton>
                         <ToggleButton value="Weightlifting">Weightlifting</ToggleButton>
                         <ToggleButton value="Cardio">Cardio</ToggleButton>
                     </ToggleButtonGroup>
 
-                    <TextField
-                        label="Search"
-                        variant="outlined"
-                        size="small"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by name, score, etc."
-                        sx={{ maxWidth: 200 }}
-                    />
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        [theme.breakpoints.down('sm')]: {
+                            width: '100%',
+                            justifyContent: 'space-between'
+                        }
+                    }}>
+                        <TextField
+                            placeholder="Search records..."
+                            variant="outlined"
+                            size="small"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            sx={{ minWidth: isMobile ? '100%' : 200 }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleOpenAddRecord}
+                            startIcon={<AddIcon />}
+                            sx={{
+                                fontWeight: 'bold',
+                                [theme.breakpoints.down('sm')]: {
+                                    width: '100%'
+                                }
+                            }}
+                        >
+                            Add Record
+                        </Button>
+                    </Box>
+                </FilterContainer>
 
-                    <Button variant="contained" onClick={handleOpenAddRecord}>
-                        Add Record
-                    </Button>
-                </Box>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <>
+                        {filteredRecords.length === 0 ? (
+                            <Typography variant="body1" sx={{ my: 4, textAlign: 'center' }}>
+                                No records found. Add your first record!
+                            </Typography>
+                        ) : (
+                            <Box sx={{ width: '100%' }}>
+                                {filteredRecords.map((rec) => {
+                                    let valueDisplay = '';
+                                    if (recordType === 'WOD') {
+                                        valueDisplay = rec.score || '';
+                                    } else if (recordType === 'Weightlifting') {
+                                        valueDisplay = `${rec.weight || ''} KG`;
+                                    } else if (recordType === 'Cardio') {
+                                        valueDisplay = rec.time || '';
+                                    }
 
-                {!loading && filteredRecords.length === 0 && (
-                    <Typography variant="body1" sx={{ mt: 2 }}>
-                        No records found.
-                    </Typography>
+                                    const progress = getProgressData(rec);
+
+                                    return (
+                                        <RecordCard
+                                            key={rec.id}
+                                            elevation={2}
+                                            onClick={() => handleOpenRecordModal(rec)}
+                                        >
+                                            <Box>
+                                                <Typography
+                                                    variant="h6"
+                                                    sx={{
+                                                        fontWeight: 'bold',
+                                                        letterSpacing: '0.5px',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    {rec.name}
+                                                </Typography>
+
+                                                {progress !== null && (
+                                                    <ProgressChip
+                                                        label={`${progress > 0 ? '+' : ''}${progress}%`}
+                                                        size="small"
+                                                        progress={progress}
+                                                        icon={progress > 0 ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography
+                                                variant="h5"
+                                                sx={{ fontWeight: 'bold' }}
+                                            >
+                                                {valueDisplay}
+                                            </Typography>
+                                        </RecordCard>
+                                    );
+                                })}
+                            </Box>
+                        )}
+                    </>
                 )}
 
-                <Grid container spacing={2} sx={{ justifyContent: "center" }}>
-                    {filteredRecords.map((rec) => {
-                        let displayText = '';
-                        if (recordType === 'WOD') {
-                            displayText = `Score: ${rec.score}`;
-                        } else if (recordType === 'Weightlifting') {
-                            displayText = `Weight: ${rec.weight} kg`;
-                        } else if (recordType === 'Cardio') {
-                            displayText = `Time: ${rec.time}`;
-                        }
-
-                        return (
-                            <Grid item key={rec.id}>
-                                <StyledCard
-                                    sx={{ bgcolor: "background.paper"}}
-                                    onClick={() => handleOpenRecordModal(rec)}
-                                >
-                                    <CardContent>
-                                        <Typography variant="subtitle1" fontWeight="bold">
-                                            {rec.name}
-                                        </Typography>
-                                        <Typography variant="body2">{displayText}</Typography>
-                                    </CardContent>
-                                </StyledCard>
-                            </Grid>
-                        );
-                    })}
-                </Grid>
-
-                <Dialog open={addModalOpen} onClose={handleCloseAddRecord}>
-                    <DialogTitle>Add Record</DialogTitle>
+                {/* Add Record Modal */}
+                <Dialog open={addModalOpen} onClose={handleCloseAddRecord} maxWidth="sm" fullWidth>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>Add New Record</DialogTitle>
                     <DialogContent>
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
+                                {error}
+                            </Alert>
+                        )}
+
+                        {/* Select for existing names */}
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="existing-name-label"></InputLabel>
+                            <Select
+                                labelId="existing-name-label"
+                                value={selectedExistingName}
+                                onChange={handleExistingNameChange}
+
+                                displayEmpty
+                            >
+                                <MenuItem value="">
+                                    <em>Select an existing name or enter new below</em>
+                                </MenuItem>
+                                {existingNames.map((name, index) => (
+                                    <MenuItem key={index} value={name}>
+                                        {name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>
+                                Choose an existing name or add a new one below
+                            </FormHelperText>
+                        </FormControl>
+
+                        <Box sx={{ my: 2, display: 'flex', alignItems: 'center' }}>
+                            <Divider sx={{ flex: 1 }} />
+                            <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+                                OR
+                            </Typography>
+                            <Divider sx={{ flex: 1 }} />
+                        </Box>
+
+                        {/* Manual input for new name */}
                         <TextField
-                            label="Name"
+                            label="New Exercise Name"
                             value={recordName}
-                            onChange={(e) => setRecordName(e.target.value)}
+                            onChange={handleManualNameChange}
                             fullWidth
-                            sx={{ mb: 2 }}
-                            placeholder="Enter name/title"
+                            margin="normal"
+                            placeholder="e.g. 1RM BACK SQUAT"
+                            disabled={!!selectedExistingName}
+                            helperText={
+                                selectedExistingName
+                                    ? "Clear selection above to enter new name"
+                                    : "Enter a new exercise name"
+                            }
                         />
+
                         <TextField
                             label="Date"
                             type="date"
                             value={recordDate}
                             onChange={(e) => setRecordDate(e.target.value)}
                             fullWidth
-                            sx={{ mb: 2 }}
+                            margin="normal"
                             InputLabelProps={{ shrink: true }}
-                            helperText="Select date for this record"
                         />
+
                         {recordType === 'WOD' && (
                             <TextField
                                 label="Score"
                                 value={recordScore}
                                 onChange={(e) => setRecordScore(e.target.value)}
                                 fullWidth
-                                sx={{ mb: 2 }}
-                                placeholder="e.g. number of rounds, reps, etc."
+                                margin="normal"
+                                placeholder="Enter score (reps, rounds, etc.)"
                             />
                         )}
+
                         {recordType === 'Weightlifting' && (
                             <TextField
                                 label="Weight (kg)"
@@ -305,28 +515,38 @@ export default function RecordsPage() {
                                 value={recordWeight}
                                 onChange={(e) => setRecordWeight(e.target.value)}
                                 fullWidth
-                                sx={{ mb: 2 }}
+                                margin="normal"
                                 placeholder="Enter weight in kg"
                             />
                         )}
+
                         {recordType === 'Cardio' && (
                             <TextField
-                                label="Time (mm:ss)"
+                                label="Time"
                                 value={recordTime}
                                 onChange={(e) => setRecordTime(e.target.value)}
                                 fullWidth
-                                sx={{ mb: 2 }}
-                                placeholder="mm:ss"
+                                margin="normal"
+                                placeholder="Format: mm:ss"
                             />
                         )}
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseAddRecord}>Cancel</Button>
-                        <Button variant="contained" onClick={handleSaveRecord}>Save</Button>
+
+                    <DialogActions sx={{ px: 3, pb: 3 }}>
+                        <Button onClick={handleCloseAddRecord} color="inherit">
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleSaveRecord}
+                            startIcon={<CheckCircleRoundedIcon />}
+                        >
+                            Save Record
+                        </Button>
                     </DialogActions>
                 </Dialog>
 
-                {/* Modaal, mis näitab täpsemalt kõikide tulemuste graafikut */}
+                {/* Record Detail Modal */}
                 {selectedRecord && (
                     <RecordModal
                         open={recordModalOpen}

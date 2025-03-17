@@ -57,6 +57,112 @@ exports.getRecordsByName = async (req, res) => {
     }
 };
 
+// GET /api/records/stats/:name?type=...
+exports.getRecordStats = async (req, res) => {
+    const { name } = req.params;
+    const type = req.query.type || 'WOD';
+
+    try {
+        const userId = req.user.id;
+        const records = await prisma.record.findMany({
+            where: { userId, type, name },
+            orderBy: { date: 'asc' },
+            select: {
+                id: true,
+                date: true,
+                score: true,
+                weight: true,
+                time: true,
+            },
+        });
+
+        if (records.length === 0) {
+            return res.json({
+                best: null,
+                worst: null,
+                average: null,
+                progress: null,
+                totalEntries: 0
+            });
+        }
+
+        let best, worst, average, progress;
+        const totalEntries = records.length;
+
+        // Calculate stats based on record type
+        if (type === 'Weightlifting') {
+            const weights = records.map(r => r.weight).filter(Boolean);
+
+            if (weights.length > 0) {
+                best = Math.max(...weights);
+                worst = Math.min(...weights);
+                average = weights.reduce((sum, w) => sum + w, 0) / weights.length;
+
+                // Progress calculation (first vs last entry)
+                if (weights.length >= 2) {
+                    const first = records[0].weight;
+                    const last = records[records.length - 1].weight;
+                    progress = ((last - first) / first) * 100;
+                }
+            }
+        } else if (type === 'Cardio') {
+            // For cardio, convert times to seconds for calculation
+            const times = records.map(r => {
+                if (!r.time) return null;
+                const [min, sec] = r.time.split(':').map(Number);
+                return min * 60 + sec;
+            }).filter(Boolean);
+
+            if (times.length > 0) {
+                // For cardio, lower is better
+                best = Math.min(...times);
+                worst = Math.max(...times);
+                average = times.reduce((sum, t) => sum + t, 0) / times.length;
+
+                // Progress calculation (first vs last entry)
+                if (times.length >= 2) {
+                    const first = times[0];
+                    const last = times[times.length - 1];
+                    // Negative progress is good for cardio (faster time)
+                    progress = ((last - first) / first) * 100;
+                }
+            }
+        } else {
+            // WOD - assuming higher score is better, but scores might be strings
+            const scores = records.map(r => {
+                if (!r.score) return null;
+                // Try to convert to number if possible
+                const num = parseFloat(r.score);
+                return isNaN(num) ? null : num;
+            }).filter(Boolean);
+
+            if (scores.length > 0) {
+                best = Math.max(...scores);
+                worst = Math.min(...scores);
+                average = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+
+                // Progress calculation (first vs last entry)
+                if (scores.length >= 2) {
+                    const first = scores[0];
+                    const last = scores[scores.length - 1];
+                    progress = ((last - first) / first) * 100;
+                }
+            }
+        }
+
+        res.json({
+            best,
+            worst,
+            average: average !== undefined ? average.toFixed(2) : null,
+            progress: progress !== undefined ? progress.toFixed(2) : null,
+            totalEntries
+        });
+    } catch (error) {
+        console.error('Error calculating record stats:', error);
+        res.status(500).json({ error: 'Failed to calculate record statistics.' });
+    }
+};
+
 // POST /api/records
 exports.createRecord = async (req, res) => {
     const { type, name, date, score, weight, time } = req.body;
@@ -80,6 +186,49 @@ exports.createRecord = async (req, res) => {
     } catch (error) {
         console.error('Error adding record:', error);
         res.status(500).json({ error: 'Failed to add record.' });
+    }
+};
+
+// PUT /api/records/:id
+exports.updateRecord = async (req, res) => {
+    const recordId = parseInt(req.params.id, 10);
+    const { date, score, weight, time } = req.body;
+
+    try {
+        const userId = req.user.id;
+
+        // Check if record exists and belongs to user
+        const existingRecord = await prisma.record.findUnique({
+            where: { id: recordId },
+        });
+
+        if (!existingRecord || existingRecord.userId !== userId) {
+            return res.status(404).json({ error: 'Record not found or not authorized.' });
+        }
+
+        // Prepare update data
+        const updateData = {
+            date: date ? new Date(date) : undefined,
+            score: score !== undefined ? score : undefined,
+            weight: weight !== undefined ? parseFloat(weight) : undefined,
+            time: time !== undefined ? time : undefined,
+        };
+
+        // Remove undefined fields
+        Object.keys(updateData).forEach(key =>
+            updateData[key] === undefined && delete updateData[key]
+        );
+
+        // Update the record
+        await prisma.record.update({
+            where: { id: recordId },
+            data: updateData,
+        });
+
+        res.status(200).json({ message: 'Record updated successfully!' });
+    } catch (error) {
+        console.error('Error updating record:', error);
+        res.status(500).json({ error: 'Failed to update record.', details: error.message });
     }
 };
 

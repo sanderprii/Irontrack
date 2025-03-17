@@ -31,6 +31,7 @@ import Pricing from "./pages/Pricing";
 import MarketingPage from "./pages/MarketingPage";
 import Checkout from "./pages/Checkout";
 import Trainer from "./pages/Trainer";
+import Help from "./pages/Help";
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -107,6 +108,7 @@ function App() {
                         <Route path="/pricing" element={<Pricing/>}/>
                         <Route path="/marketing" element={<MarketingPage/>}/>
                         <Route path="/trainer" element={<Trainer/>}/>
+                        <Route path="/help" element={<Help/>}/>
                         {/* ✅ Lisa MarketingPage uue marsruudina */}
 
                     </Routes>

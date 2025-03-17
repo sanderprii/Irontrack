@@ -648,11 +648,14 @@ IronTrack Team
 // ✅ Kontrolli, kas kasutaja on klassis registreeritud
 const checkUserEnrollment = async (req, res) => {
     const classId = parseInt(req.query.classId);
-    const userId = parseInt(req.user.id);
-
+    const userId = req.user.id;
+console.log('userId', userId)
     try {
         const enrollment = await prisma.classAttendee.findFirst({
-            where: {userId, classId},
+            where: {
+                classId,
+                userId: parseInt(userId)
+            },
         });
 
         res.json({enrolled: !!enrollment});
@@ -692,7 +695,7 @@ const addClassScore = async (req, res) => {
     try {
         const {classData, scoreType, score} = req.body;
         const userId = req.user.id;
-
+console.log('userIdadd', userId)
         // Kontrolli, kas see rida juba eksisteerib
         const existing = await prisma.classLeaderboard.findFirst({
             where: {classId: parseInt(classData.id), userId},

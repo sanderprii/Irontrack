@@ -32,6 +32,7 @@ import GroupIcon from '@mui/icons-material/Group';                 // Members
 import EventNoteIcon from '@mui/icons-material/EventNote';         // Plans
 import MailIcon from '@mui/icons-material/Mail';                   // Messages
 import LogoutIcon from '@mui/icons-material/Logout';
+import HelpIcon from '@mui/icons-material/Help';
 // BottomNavigation
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
@@ -223,6 +224,10 @@ export default function AppAppBar() {
                         )}
 
                         {/* Paremal: Logout-nupp */}
+                        <HelpIcon color="primary"
+
+
+                                  onClick={() => navigate('/help')}/>
                         {isLoggedIn ? (
                             <IconButton color="primary" onClick={() => logout(navigate)} sx={{mr: 1}}>
                                 <LogoutIcon/>
@@ -293,6 +298,10 @@ export default function AppAppBar() {
                     {/* Desktop menüü (Right) - Log Out jt nupud */}
 
                     <Box sx={{display: {xs: 'none', md: 'flex'}, gap: 1, mr: 2}}>
+                        <HelpIcon color="primary"
+                                  sx={{margin: 1, pt: 1}}
+
+                                  onClick={() => navigate('/help')}/>
                         {rightLinks.map((link) =>
                             link.action ? (
                                 <Button
@@ -317,6 +326,7 @@ export default function AppAppBar() {
                                 </Button>
                             )
                         )}
+
                         {isLoggedIn && (
                             <IconButton
                                 color="primary"

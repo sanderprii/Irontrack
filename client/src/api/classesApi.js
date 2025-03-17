@@ -109,12 +109,12 @@ export const deleteClass = async (classId) => {
 
 export const getClassAttendeesCount = async (classId) => {
     try {
-        const token = localStorage.getItem("token");
 
+        const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/attendees/${classId}`, {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
         });
@@ -133,12 +133,12 @@ export const getClassAttendeesCount = async (classId) => {
 
 export const getClassAttendees = async (classId) => {
     try {
-        const token = localStorage.getItem("token");
+
 
         const response = await fetch(`${API_URL}/class-attendees?classId=${classId}`, {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${token}`,
+
                 "Content-Type": "application/json",
             },
         });
@@ -157,13 +157,13 @@ export const getClassAttendees = async (classId) => {
 export const checkInAttendee = async (classId, userId) => {
     try {
 
-
         const token = localStorage.getItem("token");
+
 
         const response = await fetch(`${API_URL}/class-attendees/check-in`, {
             method: "PATCH",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({classId, userId})
@@ -274,7 +274,7 @@ export const checkUserEnrollment = async (classId) => {
         const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/class/check-enrollment?classId=${classId}`, {
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
         });

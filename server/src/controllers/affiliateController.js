@@ -47,6 +47,7 @@ const getMyAffiliate = async (req, res) => {
 
 
 const searchUsers = async (req, res) => {
+    console.log('läheb')
     try {
         const query = req.query.q;
         const userId = req.user?.id;
@@ -55,7 +56,7 @@ const searchUsers = async (req, res) => {
             return res.status(400).json({ error: "Query parameter is required." });
         }
 
-
+console.log('query', query)
         const users = await prisma.user.findMany({
             where: {
                 OR: [

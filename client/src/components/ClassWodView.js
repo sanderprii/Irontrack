@@ -116,7 +116,8 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                             + Add WOD
                                         </Button>
                                         {wod && (
-                                            <Button size="small" variant="contained" color="secondary" onClick={() => handleApplyWOD(dayDate)}>
+                                            <Button size="small" variant="contained" color="secondary" onClick={() => {handleApplyWOD(dayDate)
+                                                alert("WOD applied to trainings!")}}>
                                                 Apply WOD
                                             </Button>
                                         )}

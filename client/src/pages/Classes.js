@@ -17,6 +17,7 @@ export default function Classes() {
     const location = useLocation();
     const selectedAffiliate = location.state?.affiliate || null;
     const [affiliateId, setAffiliateId] = useState(null);
+    const [affiliateEmail, setAffiliateEmail] = useState(null);
     const [classes, setClasses] = useState([]);
     const [selectedTraining, setSelectedTraining] = useState(null);
     const [selectedClass, setSelectedClass] = useState(null); // ✅ Hoitakse valitud klassi andmeid
@@ -50,6 +51,7 @@ export default function Classes() {
                     const response = await getAffiliate();
                     if (response && response.affiliate && response.affiliate.id) {
                         setAffiliateId(response.affiliate.id);
+                        setAffiliateEmail(response.affiliate.email);
                     } else {
                         console.error("Affiliate ID not found in response:", response);
                     }

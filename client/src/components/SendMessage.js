@@ -9,26 +9,56 @@ import {
     Box,
     List,
     ListItem,
-    Paper
+    Paper,
+    Chip,
+    Stack
 } from '@mui/material';
 import { sendMessage } from '../api/messageApi'; // Funktsioon, mis saadab sõnumi
 import { searchUsers } from '../api/membersApi';  // Otsib kasutajaid
 import { getGroups } from '../api/groupsApi';
-import TextareaAutosize from "@mui/material/TextareaAutosize";     // Toob kõik grupid
-// NB! Kontrolli, et teed õiget importi, vastavalt sinu failistruktuurile
+import ReactQuill from 'react-quill'; // Import React Quill
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
-export default function SendMessage({ affiliate, affiliateEmail }) {
+export default function SendMessage({ affiliate, affiliateEmail, preSelectedUsers = [], onMessageSent }) {
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
-    const [recipientType, setRecipientType] = useState('user'); // 'user' või 'group'
-    const [recipient, setRecipient] = useState(''); // Tekst, mida sisestame sisendisse (kas fullName või groupName)
-    const [searchResults, setSearchResults] = useState([]); // Otsingutulemused
-    const [showDropdown, setShowDropdown] = useState(false); // Kas kuvame dropdowni
-
-    const [selectedUserId, setSelectedUserId] = useState(null); // Kui valime useri, hoiame tema ID
-    const [selectedGroupId, setSelectedGroupId] = useState(null); // Kui valime grupi, hoiame tema ID
-
+    const [recipientType, setRecipientType] = useState('user');
+    const [recipient, setRecipient] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState(preSelectedUsers || []);
+    const [selectedGroupId, setSelectedGroupId] = useState(null);
     const [status, setStatus] = useState('');
+
+    // Quill editor modules and formats configuration
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'align': [] }],
+            ['link'],
+            ['clean']
+        ],
+    };
+
+    const formats = [
+        'header',
+        'bold', 'italic', 'underline', 'strike',
+        'color', 'background',
+        'list', 'bullet',
+        'align',
+        'link'
+    ];
+
+    // Initialize with preSelectedUsers if provided
+    useEffect(() => {
+        if (preSelectedUsers && preSelectedUsers.length > 0) {
+            setSelectedUsers(preSelectedUsers);
+            setRecipientType('user');
+        }
+    }, [preSelectedUsers]);
 
     // Kui "recipient" või "recipientType" muutub, teeme otsingu
     useEffect(() => {
@@ -71,58 +101,83 @@ export default function SendMessage({ affiliate, affiliateEmail }) {
 
     const handleSend = async (e) => {
         e.preventDefault();
-        setStatus('Saatmine...');
+        setStatus('Sending...');
 
         try {
-            /**
-             * Nüüd pane paika, mida backend tahab:
-             *  - senderId -> affiliate.id ? Sinu koodis sõltub, kas affiliate on number/objekt
-             *  - Kui recipientType='user', siis kasutame selectedUserId
-             *  - Kui recipientType='group', siis kasutame selectedGroupId või groupName
-             */
-            const payload = {
-                senderId: affiliate,     // Kui affiliate on objekt ja tema ID on .id
-                subject,
-                body,
-                recipientType,
-                affiliateEmail,
-            };
+            if (recipientType === 'user' && selectedUsers.length > 0) {
+                // Send to each selected user
+                for (const user of selectedUsers) {
+                    const payload = {
+                        senderId: affiliate,
+                        subject,
+                        body, // Rich HTML body will be sent as is
+                        recipientType: 'user',
+                        affiliateEmail,
+                        recipientId: user.id
+                    };
 
-            if (recipientType === 'user') {
-                payload.recipientId = selectedUserId; // Lõplik user ID
+                    await sendMessage(payload);
+                }
+
+                setStatus(`Email successfully sent to ${selectedUsers.length} recipients!`);
+            } else if (recipientType === 'group' || recipientType === 'allMembers') {
+                // Original logic for groups and all members
+                const payload = {
+                    senderId: affiliate,
+                    subject,
+                    body, // Rich HTML body
+                    recipientType,
+                    affiliateEmail,
+                };
+
+                if (recipientType === 'group') {
+                    payload.groupName = recipient;
+                }
+
+                await sendMessage(payload);
+                setStatus('Email sent successfully!');
             } else {
-                // group
-                payload.groupName = recipient;   // Või kui su backend vajab groupId, siis kasuta selectedGroupId
+                setStatus('Please select at least one recipient!');
+                return;
             }
 
-            const responseData = await sendMessage(payload);
-
-            setStatus('Email saadetud edukalt!');
             // Tühjendame väljad
             setSubject('');
             setBody('');
             setRecipient('');
-            setSelectedUserId(null);
+            setSelectedUsers([]);
             setSelectedGroupId(null);
             setSearchResults([]);
             setShowDropdown(false);
+
+            // Call onMessageSent callback if provided
+            if (onMessageSent) {
+                onMessageSent();
+            }
         } catch (error) {
             console.error('❌ Email saatmise viga:', error);
-            setStatus('Saatmine nurjus...');
+            setStatus('Sending failed...');
         }
     };
 
     const handleSelectResult = (item) => {
-        // Kui recipientType = user, item on { id, fullName }
-        // Kui recipientType = group, item on { id, groupName }
         if (recipientType === 'user') {
-            setRecipient(item.fullName);      // Kuvame inputis fullName
-            setSelectedUserId(item.id);       // Salvestame user ID
+            // Check if user is already in the selected users list
+            if (!selectedUsers.some(user => user.id === item.id)) {
+                setSelectedUsers([...selectedUsers, item]);
+            }
+            // Clear the search input and results
+            setRecipient('');
+            setSearchResults([]);
         } else {
             setRecipient(item.groupName);     // Kuvame inputis groupName
             setSelectedGroupId(item.id);      // Grupi ID, kui vaja
         }
         setShowDropdown(false);
+    };
+
+    const handleRemoveUser = (userId) => {
+        setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
     };
 
     return (
@@ -143,7 +198,7 @@ export default function SendMessage({ affiliate, affiliateEmail }) {
                             // Resetime pooled asjad, kui tüüp muutub
                             setRecipient('');
                             setSearchResults([]);
-                            setSelectedUserId(null);
+                            setSelectedUsers([]);
                             setSelectedGroupId(null);
                             setShowDropdown(false);
                         }}
@@ -208,6 +263,25 @@ export default function SendMessage({ affiliate, affiliateEmail }) {
                     )}
                 </FormControl>
 
+                {/* Display selected users as chips when recipientType is 'user' */}
+                {recipientType === 'user' && selectedUsers.length > 0 && (
+                    <Box sx={{ mt: 2, mb: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                            Selected Recipients:
+                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {selectedUsers.map((user) => (
+                                <Chip
+                                    key={user.id}
+                                    label={user.fullName}
+                                    onDelete={() => handleRemoveUser(user.id)}
+                                    sx={{ margin: '3px' }}
+                                />
+                            ))}
+                        </Stack>
+                    </Box>
+                )}
+
                 {/* Pealkiri */}
                 <FormControl fullWidth margin="normal">
                     <TextField
@@ -217,23 +291,33 @@ export default function SendMessage({ affiliate, affiliateEmail }) {
                     />
                 </FormControl>
 
-                {/* Sisu (body) - minimaalselt 10 rida, kasvab sisu lisandudes */}
+                {/* Rich Text Editor for body */}
                 <FormControl fullWidth margin="normal">
-                    <TextareaAutosize
-                        multiline
-                        minRows={10}
-                        maxRows={Infinity}
-                        label="Body"
-                        variant="outlined"
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                    />
-
-
-
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                        Message Body
+                    </Typography>
+                    <div style={{ border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+                        <ReactQuill
+                            theme="snow"
+                            value={body}
+                            onChange={setBody}
+                            modules={modules}
+                            formats={formats}
+                            style={{ height: '250px', marginBottom: '40px' }}
+                        />
+                    </div>
                 </FormControl>
 
-                <Button variant="contained" type="submit">
+                <Button
+                    variant="contained"
+                    type="submit"
+                    disabled={
+                        (recipientType === 'user' && selectedUsers.length === 0) ||
+                        (recipientType === 'group' && !recipient) ||
+                        !subject ||
+                        !body
+                    }
+                >
                     Send
                 </Button>
             </form>

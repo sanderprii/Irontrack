@@ -381,6 +381,7 @@ export default function JoinUsForm() {
                     <Divider>or</Divider>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {/* Google
                         <Button
                             fullWidth
                             variant="outlined"
@@ -389,6 +390,7 @@ export default function JoinUsForm() {
                         >
                             Sign up with Google
                         </Button>
+                        */}
 
                         <Typography sx={{ textAlign: 'center' }}>
                             Already have an account?{' '}

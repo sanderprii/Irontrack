@@ -28,6 +28,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
 import LeaderboardModal from "./LeaderboardModal";
 import ProfileModal from "./ProfileModal";
+import SendMessageModal from './SendMessageModal';
+import SendIcon from '@mui/icons-material/Send';
 
 // ✅ impordi uued API-funktsioonid
 import {
@@ -59,6 +61,7 @@ export default function ClassModal({
                                        refreshClasses,
                                        attendeesCount,
                                        affiliateId,
+    affiliateEmail,
                                        props
                                    }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -83,6 +86,8 @@ export default function ClassModal({
     const [isInWaitlist, setIsInWaitlist] = useState(false);
     const [isClassFull, setIsClassFull] = useState(false);
     const [waitlistEntries, setWaitlistEntries] = useState([]);
+
+    const [isSendMessageOpen, setSendMessageOpen] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("role");
@@ -394,6 +399,10 @@ export default function ClassModal({
         }
     }
 
+    const handleSendMessage = () => {
+        setSendMessageOpen(true);
+    };
+
     const isClassOver = new Date(cls.time) < new Date();
 
     const role = localStorage.getItem("role");
@@ -626,9 +635,21 @@ export default function ClassModal({
                 {/* Osalejate sektsioon */}
                 {(userRole === "affiliate" || userRole === "trainer") && (
                     <>
-                        <Typography variant="h6" sx={{fontWeight: "bold", marginBottom: 1}}>
-                            Attendees
-                        </Typography>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                                Attendees
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                startIcon={<SendIcon />}
+                                onClick={handleSendMessage}
+                                disabled={attendees.length === 0}
+                            >
+                                Send Message
+                            </Button>
+                        </Box>
                         <List>
                             {attendees?.length > 0 ? (
                                 attendees.map((attendee) => (
@@ -881,6 +902,18 @@ export default function ClassModal({
                 onClose={() => setProfileOpen(false)}
                 user={selectedUser}
             />
+
+            <SendMessageModal
+                open={isSendMessageOpen}
+                onClose={() => setSendMessageOpen(false)}
+                affiliate={affiliateId}
+                affiliateEmail={affiliateEmail}
+                preSelectedUsers={Array.isArray(attendees) ? attendees.map(attendee => ({
+                    id: attendee.userId,
+                    fullName: attendee.fullName
+                })) : []}
+            />
+
         </Dialog>
     );
 }

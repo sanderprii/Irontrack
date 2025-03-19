@@ -1,25 +1,49 @@
 // controllers/messageController.js
 
-const {PrismaClient} = require("@prisma/client");
-const sgMail = require("@sendgrid/mail");
+const { PrismaClient } = require("@prisma/client");
+const AWS = require("aws-sdk");
 require("dotenv").config();
 
 // Initsialiseerime Prisma klient
 const prisma = new PrismaClient();
 
-// Seadistame SendGrid API võtme
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Amazon SES seadistus
+AWS.config.update({
+    region: process.env.AWS_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
 
+// Loome SES teenuse objekti
+const ses = new AWS.SES({ apiVersion: "2010-12-01" });
+
+// Lihtsustatud e-kirja saatmise funktsioon otse SES kaudu (ilma Nodemailer'ita)
+const sendEmailViaSES = async (params) => {
+    try {
+        console.log("Saadan e-kirja SES kaudu:", params.Destination.ToAddresses);
+        const data = await ses.sendEmail(params).promise();
+        console.log("E-kiri edukalt saadetud:", data.MessageId);
+        return data;
+    } catch (error) {
+        console.error("E-kirja saatmine ebaõnnestus:", error);
+        throw error;
+    }
+};
+
+// Express controller - HTTP päringu töötlemine
 const sendMessage = async (req, res) => {
-        try {
-            let {recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail} = req.body;
+    try {
+        console.log("Request body:", req.body);
 
-            const htmlContent = `
+        // Ekstraktime andmed req.body objektist
+        let {recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail} = req.body;
+
+        // Loome HTML sisu - UPDATED to directly include body HTML
+        const htmlContent = `
 <html>
   <head>
     <meta charset="utf-8" />
     <style>
-      /* Näiteks inline CSS, mis on vajalik e-kirja kujundamiseks */
       .email-container {
         max-width: 600px;
         margin: auto;
@@ -51,7 +75,7 @@ const sendMessage = async (req, res) => {
         <h1>${subject}</h1>
       </div>
       <div class="content">
-        <p style="white-space: pre-wrap;">${body}</p>
+        ${body}
       </div>
       <div class="footer">
         <p>See on automaatne teade, palun ära vasta sellele.</p>
@@ -61,139 +85,200 @@ const sendMessage = async (req, res) => {
 </html>
 `;
 
+        // Vaikimisi väärtus recipientId-le
+        let finalRecipientId = recipientId;
 
-            let groupIds = 0;
-
-            if (recipientType === 'user') {
-                // 2. Otsi kasutaja email, kui recipientId on olemas
-                let recipientEmail = null;
-                if (recipientId) {
-                    const recipientUser = await prisma.user.findUnique({
-                        where: {id: recipientId},
-                    });
-                    if (!recipientUser) {
-                        return res
-                            .status(404)
-                            .json({error: "Recipient user not found in the database."});
-                    }
-                    recipientEmail = recipientUser.email;
-                } else {
-                    // Kui ei ole adressaati, pane test@... või viska viga
-                    recipientEmail = "test@example.com";
+        if (recipientType === 'user') {
+            // Otsi kasutaja email
+            let recipientEmail = null;
+            if (recipientId) {
+                const recipientUser = await prisma.user.findUnique({
+                    where: {id: recipientId},
+                });
+                if (!recipientUser) {
+                    return res
+                        .status(404)
+                        .json({error: "Recipient user not found in the database."});
                 }
+                recipientEmail = recipientUser.email;
+            } else {
+                recipientEmail = "test@example.com"; // Või viska viga
+            }
 
-                // 3. Valmista SendGrid sõnum
-                const msg = {
-                    to: recipientEmail,
-                    from: {
-                        email: "noreply@irontrack.ee",
-                        name: "IronTrack",
+
+            // Valmista SES e-kiri (ilma Nodemailer'ita)
+            const params = {
+                Source: "info@irontrack.ee", // Peab olema SES-is verifitseeritud
+                Destination: {
+                    ToAddresses: [recipientEmail] // Testimiseks - muuda hiljem: recipientEmail
+                },
+                ReplyToAddresses: [affiliateEmail],
+                Message: {
+                    Subject: {
+                        Data: subject,
+                        Charset: "UTF-8"
                     },
-                   subject: subject,
-                    text: body,
-                    html: `<p style="white-space: pre-wrap;">${body}</p>`,
+                    Body: {
+                        Text: {
+                            Data: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
+                            Charset: "UTF-8"
+                        },
+                        Html: {
+                            Data: htmlContent,
+                            Charset: "UTF-8"
+                        }
+                    }
+                }
+            };
+
+            try {
+                // Saada e-kiri otse Amazon SES kaudu
+                await sendEmailViaSES(params);
+            } catch (emailError) {
+                console.error("E-kirja saatmine ebaõnnestus:", emailError);
+                // Jätkame andmebaasi salvestamisega
+            }
+        }
+
+        if (recipientType === 'group') {
+            // 2. Otsi grupi liikmed
+            const groupId = await prisma.messageGroup.findFirst({
+                where: {groupName: groupName, affiliateId: senderId},
+            });
+
+            if (!groupId) {
+                return res
+                    .status(404)
+                    .json({error: "Group not found in the database."});
+            }
+
+            // Määrame finalRecipientId grupi ID-ks
+            finalRecipientId = groupId.id;
+
+            const groupMembers = await prisma.userMessageGroup.findMany({
+                where: {groupId: groupId.id},
+                include: {user: true},
+            });
+
+            // 3. Saada kõigile grupi liikmetele kiri
+            for (const member of groupMembers) {
+                const params = {
+                    Source: "info@irontrack.ee", // Peab olema SES-is verifitseeritud
+                    Destination: {
+                        ToAddresses: [member.user.email] // Testimiseks - muuda hiljem: member.user.email
+                    },
+                    ReplyToAddresses: [affiliateEmail],
+                    Message: {
+                        Subject: {
+                            Data: subject,
+                            Charset: "UTF-8"
+                        },
+                        Body: {
+                            Text: {
+                                Data: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
+                                Charset: "UTF-8"
+                            },
+                            Html: {
+                                Data: htmlContent,
+                                Charset: "UTF-8"
+                            }
+                        }
+                    }
                 };
 
-                // 4. Saada kiri SendGridi kaudu
-                await sgMail.send(msg);
-            }
-
-            if (recipientType === 'group') {
-                // 2. Otsi grupi liikmed
-                const groupId = await prisma.messageGroup.findFirst({
-                    where: {groupName: groupName, affiliateId: senderId},
-                })
-
-                groupIds = groupId.id;
-                const groupMembers = await prisma.userMessageGroup.findMany({
-                    where: {groupId: groupId.id},
-                    include: {user: true},
-                });
-
-                // 3. Saada kõigile grupi liikmetele kiri
-                for (const member of groupMembers) {
-                    const msg = {
-                        to: member.user.email,
-                        from: {
-                            email: "noreply@irontrack.ee",
-                            name: "IronTrack",
-                        },
-                        replyTo: affiliateEmail,
-                        subject: subject,
-                        text: body,
-                        html: `<p style="white-space: pre-wrap;">${body}</p>`,
-                    };
-                    await sgMail.send(msg);
+                try {
+                    await sendEmailViaSES(params);
+                } catch (emailError) {
+                    console.error("E-kirja saatmine grupiliikmele ebaõnnestus:", emailError);
+                    // Jätka ülejäänud liikmetega
                 }
             }
-
-
-            if (recipientType === "allMembers") {
-                const affiliateMembers = await prisma.members.findMany({
-                    where: {affiliateId: senderId},
-                    include: {user: true},
-                });
-
-                for (const member of affiliateMembers) {
-                    const msg = {
-                        to: member.user.email,
-                        from: {
-                            email: "noreply@irontrack.ee",
-                            name: "IronTrack",
-                        },
-                        replyTo: affiliateEmail,
-                        subject: subject,
-                        text: body, // tekstiline versioon
-                        html: htmlContent,
-                    };
-                    await sgMail.send(msg);
-                }
-            }
-
-            if (recipientType === 'group') {
-                recipientId = groupIds;
-            }
-
-            if (recipientType === "allMembers") {
-                recipientId = 0;
-            }
-
-            // 1. Salvestame teate andmebaasi
-            const savedMessage = await prisma.message.create({
-                data: {
-                    recipientType,
-                    affiliateId: senderId,
-                    recipientId,
-                    subject,
-                    body,
-                },
-            });
-
-            res.status(200).json({
-                message: "Email sent successfully",
-                savedMessage,
-            });
-        } catch
-            (error) {
-            console.error("Error sending email:", error);
-            res.status(500).json({error: "Failed to send email"});
         }
+
+        if (recipientType === "allMembers") {
+            // Määrame finalRecipientId väärtuseks 0 allMembers tüübi jaoks
+            finalRecipientId = 0;
+
+            const affiliateMembers = await prisma.members.findMany({
+                where: {affiliateId: senderId},
+                include: {user: true},
+            });
+
+            for (const member of affiliateMembers) {
+                // TESTIMISEKS: Kasuta ainult kinnitatud e-posti aadresse
+                const params = {
+                    Source: "info@irontrack.ee", // Peab olema SES-is verifitseeritud
+                    Destination: {
+                        ToAddresses: [member.user.email] // Testimiseks - muuda hiljem: member.user.email
+                    },
+                    ReplyToAddresses: [affiliateEmail],
+                    Message: {
+                        Subject: {
+                            Data: subject,
+                            Charset: "UTF-8"
+                        },
+                        Body: {
+                            Text: {
+                                Data: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
+                                Charset: "UTF-8"
+                            },
+                            Html: {
+                                Data: htmlContent,
+                                Charset: "UTF-8"
+                            }
+                        }
+                    }
+                };
+
+                try {
+                    await sendEmailViaSES(params);
+                } catch (emailError) {
+                    console.error("E-kirja saatmine liikmele ebaõnnestus:", emailError);
+                    // Jätka ülejäänud liikmetega
+                }
+            }
+        }
+
+        // Salvesta teade andmebaasi - ainult üks kord
+        console.log("Salvestan andmebaasi:", {
+            recipientType,
+            affiliateId: senderId,
+            recipientId: finalRecipientId,
+            subject,
+            body
+        });
+
+        const savedMessage = await prisma.message.create({
+            data: {
+                recipientType,
+                affiliateId: senderId,
+                recipientId: finalRecipientId,
+                subject,
+                body,
+            },
+        });
+
+        res.status(200).json({
+            message: "Email sent successfully",
+            savedMessage,
+        });
+    } catch (error) {
+        console.error("Error sending email:", error);
+        res.status(500).json({error: "Failed to send email"});
     }
-;
+};
 
-
+// Ülejäänud funktsioonid jäävad samaks
 const getAllMessages = async (req, res) => {
     try {
         const messages = await prisma.message.findMany();
 
-        // iga message.userId kohta leia user.fullName
         for (const message of messages) {
             const user = await prisma.user.findUnique({
                 where: {id: message.recipientId},
             });
-            message.recipientFullName = user.fullName;
+            message.recipientFullName = user ? user.fullName : "All Members";
         }
-
 
         res.status(200).json(messages);
     } catch (error) {
@@ -207,38 +292,30 @@ const getSentMessages = async (req, res) => {
         const user = parseInt(req.user?.id);
         const affiliate = req.query.affiliate
 
-        // Leia sõnumid, mis kuuluvad sellele affiliate’ile
-        // Samuti include recipient user
         const messages = await prisma.message.findMany({
             where: {affiliateId: parseInt(affiliate)},
-
             orderBy: {
                 createdAt: 'desc',
             },
         });
 
-        // leia iga messages.recipientId kohta user.fullName ja lisa see iga message objekti sisse
         for (const message of messages) {
             if (message.recipientType === 'group') {
                 const groupName = await prisma.messageGroup.findUnique({
                     where: {id: message.recipientId},
                 });
-                message.fullName = groupName.groupName;
-
+                message.fullName = groupName ? groupName.groupName : "Unknown Group";
                 continue;
-
             } else if (message.recipientType === 'user') {
                 const user = await prisma.user.findUnique({
                     where: {id: message.recipientId},
                 });
-
-
-                message.fullName = user.fullName;
+                message.fullName = user ? user.fullName : "Unknown User";
+            } else if (message.recipientType === 'allMembers') {
+                message.fullName = "All Members";
             }
         }
 
-
-        // Vormindame vastuse: lisame recipientFullName, jms
         const result = messages.map((msg) => {
             return {
                 id: msg.id,
@@ -259,16 +336,14 @@ const getSentMessages = async (req, res) => {
     }
 };
 
-
- const sendMessageToAffiliate = async (req, res) => {
-        try {
-            const {senderEmail, affiliateEmail, subject, body} = req.body;
-            const htmlContent = `
+const sendMessageToAffiliate = async (req, res) => {
+    try {
+        const {senderEmail, affiliateEmail, subject, body} = req.body;
+        const htmlContent = `
 <html>
   <head>
     <meta charset="utf-8" />
     <style>
-      /* Näiteks inline CSS, mis on vajalik e-kirja kujundamiseks */
       .email-container {
         max-width: 600px;
         margin: auto;
@@ -300,7 +375,7 @@ const getSentMessages = async (req, res) => {
         <h1>${subject}</h1>
       </div>
       <div class="content">
-        <p style="white-space: pre-wrap;">${body}</p>
+        ${body}
       </div>
       <div class="footer">
         <p>See on automaatne teade, palun ära vasta sellele.</p>
@@ -310,30 +385,50 @@ const getSentMessages = async (req, res) => {
 </html>
 `;
 
-            const msg = {
-                to: affiliateEmail,
-                from: {
-                    email: 'noreply@irontrack.ee',
-                    name: "IronTrack",
+        // TESTIMISEKS: Kasuta ainult kinnitatud e-posti aadresse
+        const testingEmail = process.env.VERIFIED_EMAIL || "info@irontrack.ee";
+
+        const params = {
+            Source: "IronTrack <info@irontrack.ee>", // Peab olema SES-is verifitseeritud
+            Destination: {
+                ToAddresses: [testingEmail] // Testimiseks - muuda hiljem: affiliateEmail
+            },
+            ReplyToAddresses: [senderEmail],
+            Message: {
+                Subject: {
+                    Data: subject,
+                    Charset: "UTF-8"
                 },
-                replyTo: senderEmail,
-                subject: subject,
-                text: body,
-                html: htmlContent,
-            };
+                Body: {
+                    Text: {
+                        Data: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
+                        Charset: "UTF-8"
+                    },
+                    Html: {
+                        Data: htmlContent,
+                        Charset: "UTF-8"
+                    }
+                }
+            }
+        };
 
-            await sgMail.send(msg);
-
-            res.status(200).json({message: "Email sent successfully"});
-        } catch (error) {
-            console.error("Error sending email to affiliate:", error);
-            res.status(500).json({error: "Failed to send email to affiliate"});
+        try {
+            await sendEmailViaSES(params);
+        } catch (emailError) {
+            console.error("E-kirja saatmine ebaõnnestus:", emailError);
+            // Jätkame vastuse saatmisega
         }
- }
+
+        res.status(200).json({message: "Email sent successfully"});
+    } catch (error) {
+        console.error("Error sending email to affiliate:", error);
+        res.status(500).json({error: "Failed to send email to affiliate"});
+    }
+};
+
 module.exports = {
-    // eelnevalt defined sendMessage, getAllMessages, ...
     sendMessage,
     getAllMessages,
     getSentMessages,
-    sendMessageToAffiliate// <-- ekspordime
+    sendMessageToAffiliate,
 };

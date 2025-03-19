@@ -248,6 +248,16 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                             minRows={6}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '4px',
+                                borderColor: '#AAAAAA',
+                                fontSize: '14px',
+                                lineHeight: '1.5',
+                                resize: 'vertical',
+                                fontFamily: 'inherit'
+                            }}
                         />
                     </FormControl>
                 </Box>

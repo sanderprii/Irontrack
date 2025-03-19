@@ -48,6 +48,16 @@ export default function AddDefaultContractModal({ open, onClose, affiliateId }) 
                         minRows={10}
                         value={content}
                         onChange={handleChange}
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '4px',
+                            borderColor: '#AAAAAA',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            resize: 'vertical',
+                            fontFamily: 'inherit'
+                        }}
                     />
                 </FormControl>
             </DialogContent>

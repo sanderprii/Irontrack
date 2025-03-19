@@ -7,6 +7,19 @@ export const sendMessage = async ({ recipientType, groupName, senderId, recipien
         // Kui sul on vaja tokenit localStoragest, saad selle siit kätte
         const token = localStorage.getItem('token');
 
+        // Veendume, et need on õiged tüübid
+        const payload = {
+            recipientType,
+            groupName,
+            senderId,
+            recipientId,
+            subject,
+            body,
+            affiliateEmail,
+        };
+
+        console.log("Saadan päringu andmetega:", payload);
+
         const response = await fetch(`${API_URL}/messages/send`, {
             method: 'POST',
             headers: {
@@ -14,15 +27,7 @@ export const sendMessage = async ({ recipientType, groupName, senderId, recipien
                 // Kui sul on vaja autoriseeringut, lisan siia
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-                groupName,
-                recipientType,
-                senderId,
-                recipientId,
-                subject,
-                body,
-                affiliateEmail,
-            }),
+            body: JSON.stringify(payload), // Saadame andmed nii, et igal väljal on õige nimi
         });
 
         if (!response.ok) {
@@ -83,4 +88,4 @@ export const sendMessageToAffiliate = async (senderEmail, affiliateEmail, subjec
         console.error('sendMessageToAffiliate error:', error);
         throw error;
     }
-}
+};

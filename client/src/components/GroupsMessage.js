@@ -83,6 +83,13 @@ export default function GroupsMessage({affiliate}) {
         setSelectedGroup({ ...selectedGroup });
     };
 
+    const handleRemoveMember = (userId) => {
+        // Filter out the member with the given userId
+        const updatedMembers = selectedGroup.members.filter(member => member.id !== userId);
+        // Update the selectedGroup state with the new members array
+        setSelectedGroup({ ...selectedGroup, members: updatedMembers });
+    };
+
     return (
         <div>
             <Typography variant="h5" gutterBottom>
@@ -162,8 +169,17 @@ export default function GroupsMessage({affiliate}) {
                         Group Members:
                     </Typography>
                     {selectedGroup?.members?.map((m) => (
-                        <div key={m.id}>
+                        <div key={m.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                             {m.fullName}
+                            <Button
+                                variant="text"
+                                color="error"
+                                size="small"
+                                onClick={() => handleRemoveMember(m.id)}
+                                sx={{ ml: 1 }}
+                            >
+                                Remove
+                            </Button>
                         </div>
                     ))}
                 </DialogContent>

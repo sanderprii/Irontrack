@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
+import React, {useState, useContext} from 'react';
+import {AuthContext} from '../context/AuthContext';
+import {useNavigate} from 'react-router-dom';
+import {styled} from '@mui/material/styles';
 import {
     Box,
     Button,
@@ -20,9 +20,9 @@ import {
 import MuiCard from '@mui/material/Card';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import {GoogleIcon, FacebookIcon, SitemarkIcon} from './components/CustomIcons';
 
-const Card = styled(MuiCard)(({ theme }) => ({
+const Card = styled(MuiCard)(({theme}) => ({
     display: 'flex',
     flexDirection: 'column',
     alignSelf: 'center',
@@ -41,7 +41,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
     }),
 }));
 
-const LoginContainer = styled(Stack)(({ theme }) => ({
+const LoginContainer = styled(Stack)(({theme}) => ({
     height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
     minHeight: '100%',
     padding: theme.spacing(2),
@@ -63,7 +63,7 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
 }));
 
 const LoginForm = () => {
-    const { setToken } = useContext(AuthContext);
+    const {setToken} = useContext(AuthContext);
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -112,7 +112,7 @@ const LoginForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({email, password}),
             });
 
             const data = await response.json();
@@ -130,22 +130,24 @@ const LoginForm = () => {
 
     return (
         <AppTheme>
-            <CssBaseline enableColorScheme />
+            <CssBaseline enableColorScheme/>
             <LoginContainer direction="column" justifyContent="space-between">
-                <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
-                <Card variant="outlined" sx={{ bgcolor: "background.paper", boxShadow: "0px 4px 10px rgba(255, 179, 71, 0.5)" }}>
-                    <SitemarkIcon />
+                <ColorModeSelect sx={{position: 'fixed', top: '1rem', right: '1rem'}}/>
+                <Card variant="outlined"
+                      sx={{bgcolor: "background.paper", boxShadow: "0px 4px 10px rgba(255, 179, 71, 0.5)"}}>
+                    <SitemarkIcon/>
                     <Typography
                         component="h1"
                         variant="h4"
-                        sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+                        sx={{width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)'}}
                     >
                         Log In
                     </Typography>
 
                     {error && <Alert severity="error">{error}</Alert>}
 
-                    <Box component="form" onSubmit={handleLogin} noValidate sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2 }}>
+                    <Box component="form" onSubmit={handleLogin} noValidate
+                         sx={{display: 'flex', flexDirection: 'column', width: '100%', gap: 2}}>
                         <FormControl>
                             <FormLabel htmlFor="email">Email</FormLabel>
                             <TextField
@@ -185,7 +187,7 @@ const LoginForm = () => {
                             />
                         </FormControl>
 
-                        <FormControlLabel control={<Checkbox value="remember" color="primary" />} label="Remember me" />
+
 
                         <Button type="submit" fullWidth variant="contained">
                             Log In
@@ -194,12 +196,14 @@ const LoginForm = () => {
 
                     <Divider>or</Divider>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+                        {/* google
                         <Button fullWidth variant="outlined" onClick={() => alert('Sign in with Google')} startIcon={<GoogleIcon />}>
                             Sign in with Google
                         </Button>
+*/}
 
-                        <Typography sx={{ textAlign: 'center' }}>
+                        <Typography sx={{textAlign: 'center'}}>
                             Don&apos;t have an account?{' '}
                             <Link href="/register" variant="body2">
                                 Sign up

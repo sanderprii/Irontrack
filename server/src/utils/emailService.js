@@ -1,14 +1,34 @@
 const { PrismaClient } = require("@prisma/client");
-const sgMail = require("@sendgrid/mail");
+const AWS = require("aws-sdk");
 require("dotenv").config();
 
+// Initsialiseerime Prisma kliendi
 const prisma = new PrismaClient();
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// Amazon SES seadistus
+AWS.config.update({
+    region: process.env.AWS_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
+
+// Loome SES teenuse objekti
+const ses = new AWS.SES({ apiVersion: "2010-12-01" });
+
+// E-kirja saatmise funktsioon SES kaudu
+const sendEmailViaSES = async (params) => {
+    try {
+        console.log("Saadan e-kirja SES kaudu:", params.Destination.ToAddresses);
+        const data = await ses.sendEmail(params).promise();
+        console.log("E-kiri edukalt saadetud:", data.MessageId);
+        return data;
+    } catch (error) {
+        console.error("E-kirja saatmine ebaõnnestus:", error);
+        throw error;
+    }
+};
 
 const sendMessage = async ({ recipientType, senderId, recipientId, subject, body, affiliateEmail }) => {
-
-
-
     try {
         const htmlContent = `
       <html>
@@ -71,21 +91,33 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
                 throw new Error("Recipient ID is required.");
             }
 
-            // Valmista SendGrid sõnum
-            const msg = {
-                to: recipientEmail,
-                from: {
-                    email: "noreply@irontrack.ee",
-                    name: "IronTrack",
+            // Valmista SES e-kiri
+            const params = {
+                Source: "noreply@irontrack.ee", // Peab olema SES-is verifitseeritud
+                Destination: {
+                    ToAddresses: [recipientEmail]
                 },
-                replyTo: affiliateEmail,
-                subject: subject,
-                text: body,
-                html: htmlContent,
+                ReplyToAddresses: [affiliateEmail],
+                Message: {
+                    Subject: {
+                        Data: subject,
+                        Charset: "UTF-8"
+                    },
+                    Body: {
+                        Text: {
+                            Data: body,
+                            Charset: "UTF-8"
+                        },
+                        Html: {
+                            Data: htmlContent,
+                            Charset: "UTF-8"
+                        }
+                    }
+                }
             };
 
-            // Saada kiri SendGridi kaudu
-            await sgMail.send(msg);
+            // Saada e-kiri Amazon SES kaudu
+            await sendEmailViaSES(params);
         }
 
         // Salvesta teade andmebaasi

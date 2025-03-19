@@ -99,7 +99,16 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     minRows={3} // ✅ Algne kõrgus
                     maxRows={10} // ✅ Ei lähe suuremaks kui 10 rida
                     placeholder="Description"
-                    style={{ width: "100%", fontSize: "16px", padding: "8px" }}
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        borderColor: '#AAAAAA',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                    }}
                     value={wod.description}
                     onChange={(e) => setWod({ ...wod, description: e.target.value })}
                 />

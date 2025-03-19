@@ -150,18 +150,7 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                     </CardContent>
                 </Card>
 
-                <Card sx={{ mt: 2, bgcolor: 'background.paper' }}>
-                    <CardContent>
-                        <Typography variant="h6">Bank Details</Typography>
-                        <Typography>IBAN: {affiliate.iban || 'No IBAN'}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <AccountBalanceIcon sx={{ color: "gray" }} />
-                            <Typography>
-                                <strong></strong> {affiliate.bankName}
-                            </Typography>
-                        </Box>
-                    </CardContent>
-                </Card>
+
 
                 <Card sx={{ mt: 2, bgcolor: 'background.paper' }}>
                     <CardContent>

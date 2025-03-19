@@ -733,7 +733,7 @@ export default function TrainingsPage() {
                             trainingtype="Cardio"
                             size="medium"
                         />
-                        <TypeChip
+                        <TypeChip sx={{backgroundColor: 'yellow'}}
                             label="Other"
                             icon={<SportsMartialArtsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Other"

@@ -82,6 +82,7 @@ export default function AppAppBar() {
             {name: 'Home', to: '/'},
             {name: 'Pricing', to: '/pricing'},
             {name: 'About', to: '/about'},
+            {name: 'Privacy Policy', to: '/privacy-policy'},
         ];
         rightLinks = [
             {name: 'Log In', to: '/login'},

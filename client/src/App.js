@@ -32,6 +32,8 @@ import MarketingPage from "./pages/MarketingPage";
 import Checkout from "./pages/Checkout";
 import Trainer from "./pages/Trainer";
 import Help from "./pages/Help";
+import PrivacyApp from "./pages/Privacy-app"
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -109,6 +111,8 @@ function App() {
                         <Route path="/marketing" element={<MarketingPage/>}/>
                         <Route path="/trainer" element={<Trainer/>}/>
                         <Route path="/help" element={<Help/>}/>
+                        <Route path="/privacy-app" element={<PrivacyApp/>}/>
+                        <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                         {/* ✅ Lisa MarketingPage uue marsruudina */}
 
                     </Routes>

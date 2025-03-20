@@ -23,7 +23,7 @@ exports.createTraining = async (req, res) => {
 
         const trainingData = {
             type,
-            wodName: wodName || null,
+            wodName: wodName.toUpperCase() || null,
             wodType: wodType || null,
             date: new Date(date),
             score: score || null,
@@ -149,7 +149,7 @@ exports.updateTraining = async (req, res) => {
             data: {
                 type,
                 date: new Date(date),
-                wodName,
+                wodName: wodName.toUpperCase() || null,
                 wodType,
                 score,
                 exercises: {

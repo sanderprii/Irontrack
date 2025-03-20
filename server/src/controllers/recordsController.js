@@ -172,7 +172,7 @@ exports.createRecord = async (req, res) => {
         // Koosta recordi andmed
         const recordData = {
             type,
-            name,
+            name: name.toUpperCase(),
             date: new Date(date),
             userId,
             score: score || null,

@@ -419,7 +419,7 @@ export default function TrainingsPage() {
     async function handleAddToRecords() {
         if (!modalTraining) return;
         if (modalTraining.type !== 'WOD' || !modalTraining.wodName) return;
-
+alert('Adding to records');
         const recordData = {
             type: 'WOD',
             name: modalTraining.wodName,

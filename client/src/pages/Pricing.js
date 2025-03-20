@@ -99,6 +99,19 @@ export default function Pricing() {
                 Free for Regular Users
             </Typography>
 
+            <Typography
+                variant="h4"
+                align="center"
+                sx={{ fontWeight: "bold", mb: 2 }}
+            >
+                How it works?
+            </Typography>
+            <Typography variant="body1" align="center" sx={{ maxWidth: 700, mx: "auto", mb: 4 }}>
+                Create account as affiliate owner and start using Irontrack Premium package for free for 3 months. After that we will contact you and ask if you want to continue using our service. If you are regular user, you can use our service for free.
+                <strong> If you want to use payments, then you need to create user  on Montonio! Contact us and we will help you through!</strong>
+
+            </Typography>
+
             {/** PÕHISISU **/}
             <Container sx={{ py: 8 }}>
                 <Typography
@@ -132,145 +145,9 @@ export default function Pricing() {
                 </Typography>
 
                 <Grid container spacing={4}>
-                    {/** 1. Basic Package **/}
-                    <Grid item xs={12} md={4}>
-                        <Paper
-                            elevation={2}
-                            sx={{
-                                p: 4,
-                                borderRadius: 2,
-                                textAlign: "center",
-                                height: "100%",
-                                transition: "transform 0.3s, box-shadow 0.3s",
-                                "&:hover": {
-                                    transform: "translateY(-5px)",
-                                    boxShadow: 6
-                                }
-                            }}
-                        >
-                            <IconCircle>
-                                <FitnessCenterIcon sx={{ fontSize: 32, color: iconColor }} />
-                            </IconCircle>
-                            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-                                Basic
-                            </Typography>
-                            <Typography variant="h4" sx={{ mb: 2, color: "#0072E5" }}>
-                                €39.99
-                                <Typography component="span" variant="body1" sx={{ color: "text.secondary" }}>
-                                    /month
-                                </Typography>
-                            </Typography>
-                            <Divider sx={{ my: 2 }} />
 
-                            <Box sx={{ mb: 3, textAlign: "left", pl: 2 }}>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Add Classes & WODs</Typography>
-                                </Box>
-
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Member Tracking</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
-                                    <Typography variant="body1">Payment Management</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
-                                    <Typography variant="body1">Contract Management</Typography>
-                                </Box>
-
-                            </Box>
-
-                            <Button variant="outlined" color="primary" size="large" fullWidth sx={{ mt: 2 }} onClick={() => navigate("/register")}>
-                                Get Started
-                            </Button>
-                        </Paper>
-                    </Grid>
 
                     {/** 2. Standard Package **/}
-                    <Grid item xs={12} md={4}>
-                        <Paper
-                            elevation={4}
-                            sx={{
-                                p: 4,
-                                borderRadius: 2,
-                                textAlign: "center",
-                                border: "2px solid",
-                                borderColor: "#0072E5",
-                                height: "100%",
-                                position: "relative",
-                                transition: "transform 0.3s, box-shadow 0.3s",
-                                "&:hover": {
-                                    transform: "translateY(-5px)",
-                                    boxShadow: 6
-                                }
-                            }}
-                        >
-                            <Box
-                                sx={{
-                                    position: "absolute",
-                                    top: 20,
-                                    right: -8,
-                                    backgroundColor: "#0072E5",
-                                    color: "white",
-                                    py: 0.5,
-                                    px: 2,
-                                    transform: "rotate(45deg)",
-                                    transformOrigin: "top right",
-                                }}
-                            >
-                                <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                                    TOP
-                                </Typography>
-                            </Box>
-
-                            <IconCircle>
-                                <DescriptionIcon sx={{ fontSize: 32, color: iconColor }} />
-                            </IconCircle>
-                            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-                                Standard
-                            </Typography>
-                            <Typography variant="h4" sx={{ mb: 2, color: "#0072E5" }}>
-                                €74.99
-                                <Typography component="span" variant="body1" sx={{ color: "text.secondary" }}>
-                                    /month
-                                </Typography>
-                            </Typography>
-                            <Divider sx={{ my: 2 }} />
-
-                            <Box sx={{ mb: 3, textAlign: "left", pl: 2 }}>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Add Classes & WODs</Typography>
-                                </Box>
-
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Contract Management</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Member Tracking</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Performance Analytics</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
-                                    <Typography variant="body1">Payment Management</Typography>
-                                </Box>
-                            </Box>
-
-                            <Button variant="contained" color="primary" size="large" fullWidth sx={{ mt: 2 }} onClick={() => navigate("/register")}>
-                                Get Started
-                            </Button>
-                        </Paper>
-                    </Grid>
-
-                    {/** 3. Premium Package **/}
                     <Grid item xs={12} md={4}>
                         <Paper
                             elevation={2}
@@ -288,7 +165,97 @@ export default function Pricing() {
                             }}
                         >
 
+                            <IconCircle>
+                                <DescriptionIcon sx={{ fontSize: 32, color: iconColor }} />
+                            </IconCircle>
+                            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                                Standard
+                            </Typography>
+                            <Typography variant="h4" sx={{ mb: 2, color: "#0072E5" }}>
+                                €49.99
+                                <Typography component="span" variant="body1" sx={{ color: "text.secondary" }}>
+                                    /month
+                                </Typography>
+                            </Typography>
+                            <Divider sx={{ my: 2 }} />
 
+                            <Box sx={{ mb: 3, textAlign: "left", pl: 2 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add Classes & WODs</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add and manage plans</Typography>
+                                </Box>
+
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add credit to users</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Member Tracking</Typography>
+                                </Box>
+
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
+                                    <Typography variant="body1">Payment Management</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
+                                    <Typography variant="body1">Email service</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
+                                    <Typography variant="body1">Contract Management</Typography>
+                                </Box>
+                            </Box>
+
+                            <Button variant="contained" color="primary" size="large" fullWidth sx={{ mt: 2 }} onClick={() => navigate("/register")}>
+                                Get Started
+                            </Button>
+                        </Paper>
+                    </Grid>
+
+                    {/** 3. Premium Package **/}
+                    <Grid item xs={12} md={4}>
+
+
+                            <Paper
+                                elevation={4}
+                                sx={{
+                                    p: 4,
+                                    borderRadius: 2,
+                                    textAlign: "center",
+                                    border: "2px solid",
+                                    borderColor: "#0072E5",
+                                    height: "100%",
+                                    position: "relative",
+                                    transition: "transform 0.3s, box-shadow 0.3s",
+                                    "&:hover": {
+                                        transform: "translateY(-5px)",
+                                        boxShadow: 6
+                                    }
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        position: "absolute",
+                                        top: 20,
+                                        right: -8,
+                                        backgroundColor: "#0072E5",
+                                        color: "white",
+                                        py: 0.5,
+                                        px: 2,
+                                        transform: "rotate(45deg)",
+                                        transformOrigin: "top right",
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                                        TOP
+                                    </Typography>
+                                </Box>
 
                             <IconCircle sx={{ backgroundColor: "#E1F5FE" }}>
                                 <StoreIcon sx={{ fontSize: 32, color: iconColor }} />
@@ -309,11 +276,16 @@ export default function Pricing() {
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
                                     <Typography variant="body1">Add Classes & WODs</Typography>
                                 </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add and manage plans</Typography>
+                                </Box>
 
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
-                                    <Typography variant="body1">Contract Management</Typography>
+                                    <Typography variant="body1">Add credit to users</Typography>
                                 </Box>
+
 
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
@@ -325,7 +297,19 @@ export default function Pricing() {
                                 </Box>
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Automated payment links for monthly memberships</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
                                     <Typography variant="body1">Member Tracking</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Email service</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Contract Management</Typography>
                                 </Box>
                             </Box>
 
@@ -349,11 +333,12 @@ export default function Pricing() {
                                 Montonio Integration (Optional)
                             </Typography>
 
+
                             <Typography variant="body1">
-                                Use Montonio's payment links for lower fees compared to Stripe. Choose between
-                                Standard or Premium packages and save on every transaction. Seamlessly integrate
-                                with your subscription plan for enhanced payment management. <strong>Montonio fees are not included on Irontrack package price!</strong>
+                                Use Montonio's payment links for lower fees compared to Stripe. Choose Standard or Premium package on Montonio and save on every transaction. Seamlessly integrate
+                                with your subscription plan for enhanced payment management. <strong>Montonio fees are not included on Irontrack package price! Standard Montonio package price: 11.99€ monthly fee, 10€ payment link fee (for contract payments) plus 0,15€ per bank payment. NB! Card payment have different pricing! </strong>
                             </Typography>
+
                         </Grid>
                         <Grid item xs={12} md={3} sx={{ textAlign: "center" }}>
                             <Button
@@ -496,6 +481,9 @@ export default function Pricing() {
                                 </Typography>
                                 <Typography variant="body2">
                                     Approx. <strong>€40</strong> for the same volume by using Montonio Premium package + Payment links.
+                                </Typography>
+                                <Typography variant="body2">
+                                    <strong>NB! Calculation is done with bank payments.</strong>
                                 </Typography>
                             </Paper>
                         </Grid>

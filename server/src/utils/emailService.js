@@ -1,27 +1,34 @@
 const { PrismaClient } = require("@prisma/client");
-const AWS = require("aws-sdk");
+const { MailerSend, EmailParams, Recipient, Sender } = require("mailersend");
 require("dotenv").config();
 
 // Initsialiseerime Prisma kliendi
 const prisma = new PrismaClient();
 
-// Amazon SES seadistus
-AWS.config.update({
-    region: process.env.AWS_REGION,
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+// MailerSend seadistus
+const mailerSend = new MailerSend({
+    apiKey: process.env.MAILERSEND_API_KEY,
 });
 
-// Loome SES teenuse objekti
-const ses = new AWS.SES({ apiVersion: "2010-12-01" });
+// Loome saatja
+const defaultSender = new Sender("noreply@irontrack.ee", "IronTrack");
 
-// E-kirja saatmise funktsioon SES kaudu
-const sendEmailViaSES = async (params) => {
+// E-kirja saatmise funktsioon MailerSend kaudu
+const sendEmailViaMailerSend = async (params) => {
     try {
-        console.log("Saadan e-kirja SES kaudu:", params.Destination.ToAddresses);
-        const data = await ses.sendEmail(params).promise();
-        console.log("E-kiri edukalt saadetud:", data.MessageId);
-        return data;
+        console.log("Saadan e-kirja MailerSend kaudu:", params.recipients);
+
+        const emailParams = new EmailParams()
+            .setFrom(params.from)
+            .setTo(params.recipients)
+            .setReplyTo(params.replyTo)
+            .setSubject(params.subject)
+            .setHtml(params.html)
+            .setText(params.text);
+
+        const response = await mailerSend.email.send(emailParams);
+        console.log("E-kiri edukalt saadetud:", response);
+        return response;
     } catch (error) {
         console.error("E-kirja saatmine ebaõnnestus:", error);
         throw error;
@@ -91,33 +98,18 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
                 throw new Error("Recipient ID is required.");
             }
 
-            // Valmista SES e-kiri
+            // Valmista MailerSend e-kiri
             const params = {
-                Source: "noreply@irontrack.ee", // Peab olema SES-is verifitseeritud
-                Destination: {
-                    ToAddresses: [recipientEmail]
-                },
-                ReplyToAddresses: [affiliateEmail],
-                Message: {
-                    Subject: {
-                        Data: subject,
-                        Charset: "UTF-8"
-                    },
-                    Body: {
-                        Text: {
-                            Data: body,
-                            Charset: "UTF-8"
-                        },
-                        Html: {
-                            Data: htmlContent,
-                            Charset: "UTF-8"
-                        }
-                    }
-                }
+                from: defaultSender,
+                recipients: [new Recipient(recipientEmail)],
+                replyTo: new Sender(affiliateEmail, "Reply To"),
+                subject: subject,
+                html: htmlContent,
+                text: body
             };
 
-            // Saada e-kiri Amazon SES kaudu
-            await sendEmailViaSES(params);
+            // Saada e-kiri MailerSend kaudu
+            await sendEmailViaMailerSend(params);
         }
 
         // Salvesta teade andmebaasi

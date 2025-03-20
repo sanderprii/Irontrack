@@ -105,7 +105,7 @@ const createClass = async (req, res) => {
                 location,
                 repeatWeekly,
 
-                wodName,
+                wodName: wodName.toUpperCase(),
                 wodType,
                 ownerId: owner,
                 affiliateId: parseInt(affiliateId)
@@ -189,7 +189,7 @@ const updateClass = async (req, res) => {
                 memberCapacity: parseInt(memberCapacity),
                 location,
                 repeatWeekly,
-                wodName,
+                wodName: wodName.toUpperCase(),
                 wodType
             }
         });

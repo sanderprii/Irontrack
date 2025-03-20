@@ -33,7 +33,7 @@ function PrivacyPolicy() {
             <h3>Website Privacy Policy</h3>
             <p>
                 Since the App merely serves as a tool to display the www.irontrack.ee website, any data
-                you enter on the website is subject to the privacy policies of the www.irontrack.ee website.
+                you enter on the website is subject to the privacy policies of the www.irontrack.ee/privacy-policy website.
                 We recommend that you review the website's privacy policy to understand how your data is
                 processed on the website.
             </p>

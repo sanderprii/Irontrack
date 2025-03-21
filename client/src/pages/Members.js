@@ -32,6 +32,7 @@ import CreditView from "../components/CreditView";
 import UserContracts from "../components/UserContracts";
 import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
+import TrainingPlans from '../components/TrainingPlans';
 
 export default function Members() {
     const [members, setMembers] = useState([]);
@@ -45,8 +46,12 @@ export default function Members() {
     const [activeComponent, setActiveComponent] = useState("profile");
     const [isLoadingMember, setIsLoadingMember] = useState(false);
 
+    // User role for components like TrainingPlans
+    const [userRole, setUserRole] = useState('affiliate');
+
     const menuItems = [
         {id: "profile", label: "Profile", component: ProfileView},
+        { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
         {id: "statistics", label: "Statistics", component: Statistics},
         {id: "purchase-history", label: "Purchase History", component: PurchaseHistory},
         {id: "visit-history", label: "Visit History", component: VisitHistory},
@@ -57,6 +62,11 @@ export default function Members() {
     ];
 
     useEffect(() => {
+        // Determine user role
+        const userRoleFromStorage = localStorage.getItem("userRole");
+        if (userRoleFromStorage) {
+            setUserRole(userRoleFromStorage);
+        }
 
         const affiliateIdLocalStorage = localStorage.getItem("affiliateId");
 
@@ -64,20 +74,20 @@ export default function Members() {
             setOwnerAffiliateId(parseInt(affiliateIdLocalStorage));
         } else {
 
-        async function fetchOwnerAffiliateId() {
-            try {
-                const response = await getOwnerAffiliateId();
-                if (response?.affiliateId) {
-                    setOwnerAffiliateId(response.affiliateId);
-                } else {
-                    console.error("❌ Failed to get owner's affiliateId.");
+            async function fetchOwnerAffiliateId() {
+                try {
+                    const response = await getOwnerAffiliateId();
+                    if (response?.affiliateId) {
+                        setOwnerAffiliateId(response.affiliateId);
+                    } else {
+                        console.error("❌ Failed to get owner's affiliateId.");
+                    }
+                } catch (error) {
+                    console.error("❌ Error fetching affiliateId:", error);
                 }
-            } catch (error) {
-                console.error("❌ Error fetching affiliateId:", error);
             }
-        }
 
-        fetchOwnerAffiliateId();
+            fetchOwnerAffiliateId();
         }
     }, []);
 
@@ -340,6 +350,9 @@ export default function Members() {
                                         <ActiveComponent
                                             user={selectedMember}
                                             userId={selectedMember.id}
+                                            role={userRole}
+                                            userName={selectedMember.email}
+                                            userFullName={selectedMember.fullName}
                                             affiliateId={ownerAffiliateId}
                                         />
                                     </Grid>

@@ -9,44 +9,47 @@ generator client {
 }
 
 model User {
-  id                  Int                @id @default(autoincrement())
-  email               String             @unique
-  password            String
-  fullName            String?
-  emailConfirmed      Boolean            @default(false)
-  verificationToken   String?
-  verificationExpires DateTime?
-  resetToken          String?
-  resetTokenExpires   DateTime?
-  affiliateOwner      Boolean            @default(false)
-  pricingPlan         String?            @default("premium")
-  createdAt           DateTime           @default(now())
-  records             Record[]
-  trainings           Training[]
-  monthlyGoal         Int?
-  isAcceptedTerms     Boolean            @default(false)
-  phone               String?
-  address             String?
-  logo                String?
-  emergencyContact    String?
-  classSchedules      ClassSchedule[]
-  Plan                Plan[]
-  Affiliate           Affiliate[]
-  AffiliateTrainer    AffiliateTrainer[]
-  classAttendances    ClassAttendee[]
-  credit              Credit[]
-  UserPlan            UserPlan[]
-  homeAffiliate       Int?
-  classLeaderboard    ClassLeaderboard[]
-  members             Members[]
-  transactions        transactions[]
-  waitlist            Waitlist[]
-  userNotes           UserNote[]
-  messageGroups       UserMessageGroup[]
-  contract            Contract[]
-  signedContracts     SignedContract[]
-  paymentHolidays     PaymentHoliday[]
-  contractLogs        ContractLogs[]
+  id                    Int                @id @default(autoincrement())
+  email                 String             @unique
+  password              String
+  fullName              String?
+  emailConfirmed        Boolean            @default(false)
+  verificationToken     String?
+  verificationExpires   DateTime?
+  resetToken            String?
+  resetTokenExpires     DateTime?
+  affiliateOwner        Boolean            @default(false)
+  pricingPlan           String?            @default("premium")
+  createdAt             DateTime           @default(now())
+  records               Record[]
+  trainings             Training[]
+  monthlyGoal           Int?
+  isAcceptedTerms       Boolean            @default(false)
+  phone                 String?
+  address               String?
+  logo                  String?
+  emergencyContact      String?
+  classSchedules        ClassSchedule[]
+  Plan                  Plan[]
+  Affiliate             Affiliate[]
+  AffiliateTrainer      AffiliateTrainer[]
+  classAttendances      ClassAttendee[]
+  credit                Credit[]
+  UserPlan              UserPlan[]
+  homeAffiliate         Int?
+  classLeaderboard      ClassLeaderboard[]
+  members               Members[]
+  transactions          transactions[]
+  waitlist              Waitlist[]
+  userNotes             UserNote[]
+  messageGroups         UserMessageGroup[]
+  contract              Contract[]
+  signedContracts       SignedContract[]
+  paymentHolidays       PaymentHoliday[]
+  contractLogs          ContractLogs[]
+  createdTrainingPlans  TrainingPlan[]     @relation("CreatedPlans")
+  assignedTrainingPlans TrainingPlan[]     @relation("AssignedPlans")
+  sectorComments        SectorComment[]
 }
 
 model Message {
@@ -429,4 +432,52 @@ model Waitlist {
   createdAt     DateTime      @default(now())
 
   @@unique([classId, userId]) // vältimaks duplikaatregistratsioone
+}
+
+model TrainingPlan {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  creatorId    Int // User who created the plan
+  userId       Int // User for whom the plan was created
+  createdAt    DateTime      @default(now())
+  trainingDays TrainingDay[]
+  creator      User          @relation("CreatedPlans", fields: [creatorId], references: [id])
+  user         User          @relation("AssignedPlans", fields: [userId], references: [id])
+}
+
+model TrainingDay {
+  id             Int              @id @default(autoincrement())
+  name           String // e.g., "Day 1"
+  trainingPlanId Int
+  trainingPlan   TrainingPlan     @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
+  sectors        TrainingSector[]
+  comments       SectorComment[]
+}
+
+model TrainingSector {
+  id            Int                 @id @default(autoincrement())
+  type          String // "Strength", "WOD", "Essentials"
+  content       String // The text content for the sector
+  completed     Boolean             @default(false)
+  trainingDayId Int
+  trainingDay   TrainingDay         @relation(fields: [trainingDayId], references: [id], onDelete: Cascade)
+  youtubeLinks  SectorYoutubeLink[]
+}
+
+model SectorYoutubeLink {
+  id               Int            @id @default(autoincrement())
+  url              String
+  trainingSectorId Int
+  trainingSector   TrainingSector @relation(fields: [trainingSectorId], references: [id], onDelete: Cascade)
+}
+
+model SectorComment {
+  id            Int         @id @default(autoincrement())
+  content       String
+  trainingDayId Int
+  trainingDay   TrainingDay @relation(fields: [trainingDayId], references: [id], onDelete: Cascade)
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
 }

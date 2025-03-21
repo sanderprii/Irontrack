@@ -27,6 +27,7 @@ import CreditView from '../components/CreditView';
 import UserContracts from '../components/UserContracts'; // <-- Importime komponendi
 import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
+import TrainingPlans from '../components/TrainingPlans';
 
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../api/profileApi';
 import { uploadProfilePicture } from '../api/logoApi';
@@ -34,14 +35,13 @@ import { getUserContracts } from '../api/contractApi';
 
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
+    { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
     { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
     { id: 'change-password', label: 'Change Password', component: ChangePassword },
     { id: 'statistics', label: 'Statistics', component: Statistics },
     { id: 'purchase-history', label: 'Purchase History', component: PurchaseHistory },
     { id: 'visit-history', label: 'Visit History', component: VisitHistory },
-
     { id: 'active-plans', label: 'Active Plans', component: ActivePlans },
-
     { id: 'credit', label: 'Credit', component: CreditView },
     // UUS menüüelement
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
@@ -59,17 +59,15 @@ export default function MyProfile() {
     const [sentCount, setSentCount] = useState(0);
 
     useEffect(() => {
-
-            getUserProfile()
-                .then((data) => {
-                    setUser(data);
-                    setIsLoading(false);
-                })
-                .catch((error) => {
-                    console.error('Error fetching user profile:', error);
-                    setIsLoading(false);
-                });
-
+        getUserProfile()
+            .then((data) => {
+                setUser(data);
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.error('Error fetching user profile:', error);
+                setIsLoading(false);
+            });
     }, []);
 
     // Kui kasutaja info on laetud, toome tema lepingud (GET /contracts/user/:userId)
@@ -130,6 +128,60 @@ export default function MyProfile() {
     // Leiame aktiivse komponendi menüüelementide seast
     const ActiveComponent =
         menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
+
+    const renderActiveComponent = () => {
+        if (isLoading) {
+            return (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+                    <CircularProgress />
+                </Box>
+            );
+        }
+
+        if (activeComponent === 'edit-profile') {
+            return (
+                <ProfileEdit
+                    user={user}
+                    onSave={handleSaveProfile}
+                    onCancel={() => setActiveComponent('my-profile')}
+                />
+            );
+        }
+
+        if (activeComponent === 'change-password') {
+            return (
+                <ChangePassword
+                    onChangePassword={handleChangePassword}
+                    onCancel={() => setActiveComponent('my-profile')}
+                />
+            );
+        }
+
+        if (activeComponent === 'training-plans') {
+            return (
+                <TrainingPlans
+                    userId="self"
+                    role={user?.role || 'regular'}
+                    userName={user?.email}
+                    userFullName={user?.fullName}
+                    affiliateId={user?.homeAffiliate}
+                />
+            );
+        }
+
+        // For all other components
+        return (
+            <ActiveComponent
+                user={user}
+                userId={user?.id}
+                role={user?.role || 'regular'}
+                userName={user?.email}
+                userFullName={user?.fullName}
+                affiliateId={user?.homeAffiliate}
+                onUploadProfilePicture={handleUploadProfilePicture}
+            />
+        );
+    };
 
     return (
         <Container
@@ -192,7 +244,6 @@ export default function MyProfile() {
                     left: 0,
                     right: 0,
                     zIndex: 1300,
-
                     display: { xs: 'block', md: 'none' },
                 }}
             >
@@ -303,29 +354,7 @@ export default function MyProfile() {
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>
                     <CardContent>
-                        {isLoading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
-                                <CircularProgress />
-                            </Box>
-                        ) : activeComponent === 'edit-profile' ? (
-                            <ProfileEdit
-                                user={user}
-                                onSave={handleSaveProfile}
-                                onCancel={() => setActiveComponent('my-profile')}
-                            />
-                        ) : activeComponent === 'change-password' ? (
-                            <ChangePassword
-                                onChangePassword={handleChangePassword}
-                                onCancel={() => setActiveComponent('my-profile')}
-                            />
-                        ) : (
-                            <ActiveComponent
-
-                                user={user}
-                                userId={user?.id}
-                                onUploadProfilePicture={handleUploadProfilePicture}
-                            />
-                        )}
+                        {renderActiveComponent()}
                     </CardContent>
                 </Card>
             </Box>

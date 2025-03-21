@@ -103,6 +103,8 @@ INSERT INTO _prisma_migrations VALUES('dc3dd2e6-8ac3-4937-9382-4e108b94c9b2','aa
 INSERT INTO _prisma_migrations VALUES('4532bc4f-f0e2-4638-a8d6-0ac5d6ca2ca5','31e936a1f139bd7fafa1c8305134e0a51f54c81f5184ccd6e080816d57df4075',1742539565610,'20250321064605_add_email_confirm',NULL,NULL,1742539565413,1);
 INSERT INTO _prisma_migrations VALUES('d15faab6-61d0-4507-a187-5f1c3a44c1f8','4b80d7e40f6c31124c01619f2c32ae25ad5478b2a02aba16d24dddb46030308c',1742540453945,'20250321070053_add_emailconfirm',NULL,NULL,1742540453781,1);
 INSERT INTO _prisma_migrations VALUES('84634485-2498-4e15-ba38-e0f10451f69d','833fa9692924d053446cb95b1737036516c3fb9d93c501efd9d992dda8f24a8c',1742541583839,'20250321071943_add_pricing_plan',NULL,NULL,1742541583738,1);
+INSERT INTO _prisma_migrations VALUES('d9a0d543-b804-4f04-b6d2-38bf0f1eff14','35d09bce709e2db03d6736370c0f5250ff4715fd22537a1a73f76401c8c5d714',1742546689042,'20250321084448_add_trainingplan',NULL,NULL,1742546688842,1);
+INSERT INTO _prisma_migrations VALUES('a591f9fc-5d2e-4d5d-8edc-31ba01830dbc','83ec8981827bd63e83ae64b9043898f0b0d280f89e5c0ba3feeae8b77980b052',1742547477839,'20250321085757_remoce_affiliate_id',NULL,NULL,1742547477683,1);
 CREATE TABLE IF NOT EXISTS "Training" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT NOT NULL,
@@ -129,6 +131,9 @@ INSERT INTO Training VALUES(13,'Weightlifting',NULL,NULL,1741878900000,'22',5);
 INSERT INTO Training VALUES(14,'WOD','AA','For Time',1742464800000,'456',5);
 INSERT INTO Training VALUES(15,'WOD','AAASADF','For Time',1742342400000,'32',5);
 INSERT INTO Training VALUES(16,'WOD','AMANDA','For Time',1742256000000,'222',5);
+INSERT INTO Training VALUES(17,'WOD','No pain, no fain - Day 1','Training Plan',1742549479446,NULL,5);
+INSERT INTO Training VALUES(18,'Weightlifting',NULL,NULL,1742549559618,NULL,5);
+INSERT INTO Training VALUES(19,'WOD','No pain, no fain - Day 1','Training Plan',1742549570669,NULL,5);
 CREATE TABLE IF NOT EXISTS "Record" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT,
@@ -3844,6 +3849,9 @@ INSERT INTO Exercise VALUES(23,replace('For load:\nEMOM 12:\n3 power cleans2\n2 
 INSERT INTO Exercise VALUES(24,NULL,14);
 INSERT INTO Exercise VALUES(25,'asdf',15);
 INSERT INTO Exercise VALUES(26,replace('9-7-5 reps:\n Muscle-up\n Squat Snatch (61/43 kg)','\n',char(10)),16);
+INSERT INTO Exercise VALUES(27,'amanda',17);
+INSERT INTO Exercise VALUES(28,'squat',18);
+INSERT INTO Exercise VALUES(29,'amanda',19);
 CREATE TABLE IF NOT EXISTS "User" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "email" TEXT NOT NULL,
@@ -3870,9 +3878,58 @@ INSERT INTO User VALUES(9,'prii.sander@gmail.comm','$2b$10$5jVQiXQcJjNJ26v.qI7Za
 INSERT INTO User VALUES(10,'prii.sander@gmail.com','$2b$10$kVa5SZew8Ze2IWG6pAVr.uoNlA.o7IGbfGD87lg0jnKNNoyIJ0WBK','Kati Testija',1,0,1738831102031,NULL,0,'533256456','lehe 10,asdas',NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
 INSERT INTO User VALUES(11,'l@l.l','$2b$10$Yzg0ZS6l6IR8ollK8EAgVeKNqe5bCD27ivpg1TKqtiEm0xR1gaabC','g@g.g',0,0,1740479619109,NULL,1,'546546546','',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
 INSERT INTO User VALUES(12,'sander.prii@vikk.ee','$2b$10$WxjaRQGzd42nwgHSvTheWOJM5O9zqhnDB04m/TYzi.5oXA7Ti56fq','Kelly Prii',1,0,1742541098767,NULL,1,'','',NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
+CREATE TABLE IF NOT EXISTS "TrainingDay" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "trainingPlanId" INTEGER NOT NULL,
+    CONSTRAINT "TrainingDay_trainingPlanId_fkey" FOREIGN KEY ("trainingPlanId") REFERENCES "TrainingPlan" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+INSERT INTO TrainingDay VALUES(2,'Day 1',2);
+INSERT INTO TrainingDay VALUES(3,'Day 2',2);
+CREATE TABLE IF NOT EXISTS "TrainingSector" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "type" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "completed" BOOLEAN NOT NULL DEFAULT false,
+    "trainingDayId" INTEGER NOT NULL,
+    CONSTRAINT "TrainingSector_trainingDayId_fkey" FOREIGN KEY ("trainingDayId") REFERENCES "TrainingDay" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+INSERT INTO TrainingSector VALUES(4,'Strength',replace('5 x 3 Power Clean (tehnika, progresseeruv raskus 70-80% 1RM-st)\nPeale igat seeriat: 8-10 Handstand Push-up progressioon (vastavalt tasemele)','\n',char(10)),0,2);
+INSERT INTO TrainingSector VALUES(5,'WOD',replace('AMRAP 12 min:\n\n8 Power Clean (60-65% 1RM)\n16 Wall Ball Shots\n24 Double Unders','\n',char(10)),0,2);
+INSERT INTO TrainingSector VALUES(6,'Essentials',replace('4 x 30-45 sek Handstand Hold (seina ääres või vabalt)\n4 x 3-5 Ring Dip + 3-5 Strict HSPU\nPeale igat seeriat: 8-10 GHD Sit-up või V-up','\n',char(10)),0,2);
+INSERT INTO TrainingSector VALUES(7,'Strength',replace('Snatch tehnika drill-id (5 min)\n5 x 3 Snatch Pull + 2 Hang Snatch (70-75% 1RM)\nPeale igat seeriat: 30-45 sek Hollow Hold','\n',char(10)),0,3);
+INSERT INTO TrainingSector VALUES(8,'WOD',replace('EMOM 20 min (iga minut alguses):\n\nMin 1: 5 Power Snatch (60% 1RM)\nMin 2: 10 Push Press (60% 1RM)\nMin 3: 15 Kettlebell Swing (raske)\nMin 4: 20 Box Jump\nMin 5: Max Calories sõudmine/rattasõit','\n',char(10)),0,3);
+INSERT INTO TrainingSector VALUES(9,'Essentials',replace('4 x 5 Snatch Grip Deadlift (85-90% Snatch 1RM)\n4 x 8-10 Dumbbell Strict Press (mõõdukas raskus)','\n',char(10)),0,3);
+CREATE TABLE IF NOT EXISTS "SectorYoutubeLink" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "url" TEXT NOT NULL,
+    "trainingSectorId" INTEGER NOT NULL,
+    CONSTRAINT "SectorYoutubeLink_trainingSectorId_fkey" FOREIGN KEY ("trainingSectorId") REFERENCES "TrainingSector" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+INSERT INTO SectorYoutubeLink VALUES(2,'https://youtu.be/aPYCiuiB4PA?si=uJLVdA8t6XfGM7Y1',4);
+INSERT INTO SectorYoutubeLink VALUES(3,'https://youtu.be/GhxhiehJcQY?si=8EleL07YCsAgRYCM',7);
+CREATE TABLE IF NOT EXISTS "SectorComment" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "content" TEXT NOT NULL,
+    "trainingDayId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "SectorComment_trainingDayId_fkey" FOREIGN KEY ("trainingDayId") REFERENCES "TrainingDay" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "SectorComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "TrainingPlan" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "creatorId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "TrainingPlan_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "TrainingPlan_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO TrainingPlan VALUES(2,'No pain, no fain',6,5,1742549869314);
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('Affiliate',10);
-INSERT INTO sqlite_sequence VALUES('Training',16);
+INSERT INTO sqlite_sequence VALUES('Training',19);
 INSERT INTO sqlite_sequence VALUES('defaultWOD',397);
 INSERT INTO sqlite_sequence VALUES('Record',28);
 INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',11);
@@ -3897,8 +3954,13 @@ INSERT INTO sqlite_sequence VALUES('paymentMetadata',42);
 INSERT INTO sqlite_sequence VALUES('Waitlist',11);
 INSERT INTO sqlite_sequence VALUES('Contract',2);
 INSERT INTO sqlite_sequence VALUES('transactions',155);
-INSERT INTO sqlite_sequence VALUES('Exercise',26);
+INSERT INTO sqlite_sequence VALUES('Exercise',29);
 INSERT INTO sqlite_sequence VALUES('User',12);
+INSERT INTO sqlite_sequence VALUES('TrainingPlan',3);
+INSERT INTO sqlite_sequence VALUES('TrainingDay',7);
+INSERT INTO sqlite_sequence VALUES('TrainingSector',21);
+INSERT INTO sqlite_sequence VALUES('SectorYoutubeLink',11);
+INSERT INTO sqlite_sequence VALUES('SectorComment',1);
 CREATE UNIQUE INDEX "defaultWOD_name_key" ON "defaultWOD"("name");
 CREATE UNIQUE INDEX "AffiliateTrainer_affiliateId_trainerId_key" ON "AffiliateTrainer"("affiliateId", "trainerId");
 CREATE UNIQUE INDEX "Members_userId_affiliateId_key" ON "Members"("userId", "affiliateId");

@@ -100,6 +100,9 @@ INSERT INTO _prisma_migrations VALUES('73a6fd82-3042-4432-ab25-586f65aff836','0c
 INSERT INTO _prisma_migrations VALUES('31b72207-6c9c-447a-bab6-a8d9ab12bbe1','5c695acde1e93cd5181c9a69318ff86a9fc0f1af89bb4e19ac580b768d718087',1741705783742,'20250311150943_add_contract_id',NULL,NULL,1741705783577,1);
 INSERT INTO _prisma_migrations VALUES('dacf8eb6-9453-46ec-81cc-92a0c4536052','eeac5c6d071400b4f87230147653aa405c08c65d91ec8f5f36cc7151b8d8a73d',1741706053335,'20250311151413_remove',NULL,NULL,1741706053175,1);
 INSERT INTO _prisma_migrations VALUES('dc3dd2e6-8ac3-4937-9382-4e108b94c9b2','aa49cda4b5ff883511b43e5ba3862b5594258acbc02154fcad303daaa92233b9',1741877750226,'20250313145550_add_optional',NULL,NULL,1741877750017,1);
+INSERT INTO _prisma_migrations VALUES('4532bc4f-f0e2-4638-a8d6-0ac5d6ca2ca5','31e936a1f139bd7fafa1c8305134e0a51f54c81f5184ccd6e080816d57df4075',1742539565610,'20250321064605_add_email_confirm',NULL,NULL,1742539565413,1);
+INSERT INTO _prisma_migrations VALUES('d15faab6-61d0-4507-a187-5f1c3a44c1f8','4b80d7e40f6c31124c01619f2c32ae25ad5478b2a02aba16d24dddb46030308c',1742540453945,'20250321070053_add_emailconfirm',NULL,NULL,1742540453781,1);
+INSERT INTO _prisma_migrations VALUES('84634485-2498-4e15-ba38-e0f10451f69d','833fa9692924d053446cb95b1737036516c3fb9d93c501efd9d992dda8f24a8c',1742541583839,'20250321071943_add_pricing_plan',NULL,NULL,1742541583738,1);
 CREATE TABLE IF NOT EXISTS "Training" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT NOT NULL,
@@ -119,8 +122,13 @@ INSERT INTO Training VALUES(6,'Cardio',NULL,NULL,1738108800000,NULL,5);
 INSERT INTO Training VALUES(7,'Other',NULL,NULL,1738195200000,NULL,5);
 INSERT INTO Training VALUES(8,'WOD','AMANDA','For Time',1738195200000,'2',1);
 INSERT INTO Training VALUES(9,'WOD','ASD','EMOM',1738713600000,'ASD',5);
-INSERT INTO Training VALUES(10,'WOD','KELLIKAS','EMOM',1741275000000,'12',5);
+INSERT INTO Training VALUES(10,'WOD','KELLIKAS','EMOM',1741275000000,'66',5);
 INSERT INTO Training VALUES(11,'WOD',NULL,NULL,1741876200000,'asd',5);
+INSERT INTO Training VALUES(12,'WOD','','For Time',1741883400000,'12',5);
+INSERT INTO Training VALUES(13,'Weightlifting',NULL,NULL,1741878900000,'22',5);
+INSERT INTO Training VALUES(14,'WOD','AA','For Time',1742464800000,'456',5);
+INSERT INTO Training VALUES(15,'WOD','AAASADF','For Time',1742342400000,'32',5);
+INSERT INTO Training VALUES(16,'WOD','AMANDA','For Time',1742256000000,'222',5);
 CREATE TABLE IF NOT EXISTS "Record" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "type" TEXT,
@@ -138,7 +146,6 @@ INSERT INTO Record VALUES(4,'WOD','test',1738540800000,'12',NULL,NULL,5);
 INSERT INTO Record VALUES(5,'Weightlifting','test',1737936000000,NULL,22.0,NULL,5);
 INSERT INTO Record VALUES(6,'Cardio','aaa',1737936000000,NULL,NULL,'22:22',5);
 INSERT INTO Record VALUES(7,'WOD','abc',1740009600000,'12',NULL,NULL,5);
-INSERT INTO Record VALUES(8,'WOD','test',1740700800000,'22',NULL,NULL,5);
 INSERT INTO Record VALUES(9,'WOD','as',1738627200000,'22:22',NULL,NULL,5);
 INSERT INTO Record VALUES(10,'WOD','test',1738800000000,'11',NULL,NULL,5);
 INSERT INTO Record VALUES(11,'WOD','test',1738713600000,'33',NULL,NULL,5);
@@ -150,6 +157,15 @@ INSERT INTO Record VALUES(16,'WOD','test',1739836800000,'4',NULL,NULL,5);
 INSERT INTO Record VALUES(17,'WOD','test',1739318400000,'22',NULL,NULL,5);
 INSERT INTO Record VALUES(18,'WOD','test',1737936000000,'33',NULL,NULL,5);
 INSERT INTO Record VALUES(19,'WOD','KELLIKAS',1741275000000,'12',NULL,NULL,5);
+INSERT INTO Record VALUES(20,'WOD','KELLIKAS',1742256000000,'17',NULL,NULL,5);
+INSERT INTO Record VALUES(21,'WOD','abc',1742256000000,'55',NULL,NULL,5);
+INSERT INTO Record VALUES(22,'WOD','ASDFGHJK',1742169600000,'5',NULL,NULL,5);
+INSERT INTO Record VALUES(23,'WOD','KELLIKAS',1741275000000,'66',NULL,NULL,5);
+INSERT INTO Record VALUES(24,'WOD','AA',1742464800000,'456',NULL,NULL,5);
+INSERT INTO Record VALUES(25,'WOD','AAAA',1742428800000,'qwe',NULL,NULL,5);
+INSERT INTO Record VALUES(26,'WOD','AAASADF',1742342400000,'32',NULL,NULL,5);
+INSERT INTO Record VALUES(27,'WOD','AA',1742464800000,'456',NULL,NULL,5);
+INSERT INTO Record VALUES(28,'WOD','AMANDA',1742256000000,'222',NULL,NULL,5);
 CREATE TABLE IF NOT EXISTS "defaultWOD" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
@@ -339,6 +355,7 @@ INSERT INTO defaultWOD VALUES(393,'WOOD','5 Rounds for Time','5 Rounds: 400-mete
 INSERT INTO defaultWOD VALUES(394,'WOODROW','For Time','5 Rounds: 400-meter Run, 10 Burpee Box Jumps (61 cm), 10 Sumo Deadlift High-Pulls (43 kg), 10 Thrusters (43 kg), Rest 1 minute');
 INSERT INTO defaultWOD VALUES(395,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)));
 INSERT INTO defaultWOD VALUES(396,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)));
+INSERT INTO defaultWOD VALUES(397,'AA','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)));
 CREATE TABLE IF NOT EXISTS "AffiliateTrainer" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "affiliateId" INTEGER NOT NULL,
@@ -375,6 +392,9 @@ INSERT INTO ClassLeaderboard VALUES(13,1666,5,'rx','122',1741466669325);
 INSERT INTO ClassLeaderboard VALUES(14,1719,5,'rx','1222',1741467059871);
 INSERT INTO ClassLeaderboard VALUES(15,1720,5,'rx','55',1741877688172);
 INSERT INTO ClassLeaderboard VALUES(16,1667,5,'rx','asd',1741877790266);
+INSERT INTO ClassLeaderboard VALUES(17,4314,5,'rx','12',1741879455649);
+INSERT INTO ClassLeaderboard VALUES(18,2038,5,'rx','22',1741879631122);
+INSERT INTO ClassLeaderboard VALUES(19,1615,5,'rx','456',1742464606553);
 CREATE TABLE IF NOT EXISTS "todayWOD" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "wodName" TEXT,
@@ -397,6 +417,10 @@ INSERT INTO todayWOD VALUES(13,'GRACE','For Time','30 Clean and Jerks (61/43 kg)
 INSERT INTO todayWOD VALUES(14,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1741219200000,10);
 INSERT INTO todayWOD VALUES(15,'','For Time',replace('AMRAP 20:\n30 burpees\n20 alternating DB snatches (15/22.5 kg)\n100-m double-DB farmers carry (15/22.5 kg)','\n',char(10)),1741478400000,10);
 INSERT INTO todayWOD VALUES(16,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1741651200000,10);
+INSERT INTO todayWOD VALUES(17,'AA','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1742256000000,10);
+INSERT INTO todayWOD VALUES(18,'','AMRAP',replace('3 rounds for reps of:\n1:00 double-unders\n1:00 push presses (25/35 kg)\n1:00 air squats\n– No rest between movements.\n\nPost-workout\nEvery 2:00 for 5 sets:\n3 thrusters','\n',char(10)),1742169600000,10);
+INSERT INTO todayWOD VALUES(19,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1741824000000,10);
+INSERT INTO todayWOD VALUES(20,'','For Time',replace('EMOM 12:\nMin. 1 | 2 rope climbs (4.6/4.6 m)\nMin. 2 | :30 bike, row, ski\n\nPost-workout benchmark\nFor calories:\n1:00 bike','\n',char(10)),1742342400000,10);
 CREATE TABLE IF NOT EXISTS "Affiliate" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
@@ -421,7 +445,7 @@ CREATE TABLE IF NOT EXISTS "Credit" (
 );
 INSERT INTO Credit VALUES(1,5,1289.0,10);
 INSERT INTO Credit VALUES(2,1,1023.0,10);
-INSERT INTO Credit VALUES(3,10,100.0,10);
+INSERT INTO Credit VALUES(3,10,90.0,10);
 INSERT INTO Credit VALUES(4,8,111.0,10);
 INSERT INTO Credit VALUES(5,9,1172.0,10);
 INSERT INTO Credit VALUES(6,5,901.0,1);
@@ -437,13 +461,11 @@ CREATE TABLE IF NOT EXISTS "Members" (
     CONSTRAINT "Members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Members_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Members VALUES(1,10,1,0,0,0,NULL,1);
 INSERT INTO Members VALUES(4,10,10,0,0,0,NULL,1);
 INSERT INTO Members VALUES(5,10,5,0,0,0,NULL,1);
-INSERT INTO Members VALUES(6,10,2,0,0,0,NULL,1);
 INSERT INTO Members VALUES(8,10,7,0,0,0,NULL,1);
-INSERT INTO Members VALUES(9,1,5,0,0,0,NULL,1);
-INSERT INTO Members VALUES(10,10,9,0,0,0,NULL,1);
+INSERT INTO Members VALUES(11,10,2,0,0,0,NULL,1);
+INSERT INTO Members VALUES(12,10,12,0,0,0,NULL,1);
 CREATE TABLE IF NOT EXISTS "UserNote" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "userId" INTEGER NOT NULL,
@@ -464,6 +486,8 @@ CREATE TABLE IF NOT EXISTS "UserMessageGroup" (
 INSERT INTO UserMessageGroup VALUES(1,1,4);
 INSERT INTO UserMessageGroup VALUES(2,10,4);
 INSERT INTO UserMessageGroup VALUES(3,10,3);
+INSERT INTO UserMessageGroup VALUES(4,7,5);
+INSERT INTO UserMessageGroup VALUES(5,10,5);
 CREATE TABLE IF NOT EXISTS "MessageGroup" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "groupName" TEXT NOT NULL,
@@ -475,6 +499,7 @@ INSERT INTO MessageGroup VALUES(1,'nonii',10,'2025-02-11 16:46:25');
 INSERT INTO MessageGroup VALUES(2,'New Group',10,1739292766871);
 INSERT INTO MessageGroup VALUES(3,'tt',10,1739292927659);
 INSERT INTO MessageGroup VALUES(4,'no',10,1739293090493);
+INSERT INTO MessageGroup VALUES(5,'test',10,1742368237227);
 CREATE TABLE IF NOT EXISTS "Message" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "affiliateId" INTEGER NOT NULL,
@@ -485,76 +510,18 @@ CREATE TABLE IF NOT EXISTS "Message" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Message_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Message VALUES(1,10,4,'asd','group','asd',1739298738571);
-INSERT INTO Message VALUES(2,10,4,'qwe','group','qwe',1739298768668);
-INSERT INTO Message VALUES(3,10,10,'dfg','user','dfg',1739298894220);
-INSERT INTO Message VALUES(4,10,10,'asd','user','asddddddddddddd',1739304120572);
-INSERT INTO Message VALUES(11,10,3,'asdasdasd','group','asdasdasd',1739304963376);
-INSERT INTO Message VALUES(12,10,0,'asdasd','allMembers','asdsad',1739305873167);
-INSERT INTO Message VALUES(13,10,10,'asdasdasd','user',replace('asdasdasdasd\nasdasda\nasdasd','\n',char(10)),1739305904947);
-INSERT INTO Message VALUES(14,10,0,'sfgsdf','allMembers','gsdfgsdfg',1739305969562);
-INSERT INTO Message VALUES(15,10,0,'asda','allMembers',replace('df222\n3\n34\n5\n6\n7\n8','\n',char(10)),1739306330285);
-INSERT INTO Message VALUES(16,10,0,'asd','allMembers',replace('asdasdasdas\ndas\nd\nasd\nas\nd','\n',char(10)),1739307057904);
-INSERT INTO Message VALUES(17,10,0,'444','allMembers',replace('4\n4\n4\n4\n4\n4','\n',char(10)),1739307477762);
-INSERT INTO Message VALUES(18,10,0,'asdasd','allMembers',replace('45\n34\n534\n5\n34\n5','\n',char(10)),1739307679240);
-INSERT INTO Message VALUES(19,10,0,'asdfadsfadf','allMembers',replace('546\nt\nhgf\nh\nfg\nh\nfgh','\n',char(10)),1739307723151);
-INSERT INTO Message VALUES(20,10,0,'dsfsdf','allMembers',replace('sdfsd\nf\nsdf\nsd\nf\nsdf\nsdf','\n',char(10)),1739308199490);
-INSERT INTO Message VALUES(21,10,0,'asd','allMembers',replace('asd\nas\nda\nsd\nasd\nasd','\n',char(10)),1739308238133);
-INSERT INTO Message VALUES(22,10,0,'tere','allMembers',replace('adfdasd\nasd\na\nsda\nsd\nas\nd\nas','\n',char(10)),1739778958046);
-INSERT INTO Message VALUES(23,10,0,'tere','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740553808090);
-INSERT INTO Message VALUES(24,10,0,'Jõudu','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740554221803);
-INSERT INTO Message VALUES(25,10,0,'tere','allMembers',replace('What is Lorem Ipsum?\nLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.','\n',char(10)),1740554439170);
-INSERT INTO Message VALUES(26,10,0,'asd','allMembers','asd',1740571919973);
-INSERT INTO Message VALUES(27,10,0,'dfgh','allMembers','dfgh',1740575635313);
-INSERT INTO Message VALUES(28,10,0,'jfgh','allMembers','jfghjf',1740575815097);
-INSERT INTO Message VALUES(29,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/01bb4013-27ba-45e0-87e8-c61ef0ffc468\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740655382383);
-INSERT INTO Message VALUES(30,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/cc33a1e2-4541-45c7-90e8-bb4e2c3b9ced\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740655383538);
-INSERT INTO Message VALUES(31,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b2368919-8dc2-483e-853f-69115b391930\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740656821954);
-INSERT INTO Message VALUES(32,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/e30de00f-6930-45c1-9f26-5d5d752bc940\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740656822493);
-INSERT INTO Message VALUES(33,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/38545535-065f-4680-b240-f9d046639621\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740656942152);
-INSERT INTO Message VALUES(34,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/0f9334f6-524c-4ff2-986d-62cdd3766e8e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740656943248);
-INSERT INTO Message VALUES(35,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b469e91f-780f-487f-99f5-6ab9fe92bf56\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658022734);
-INSERT INTO Message VALUES(36,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/ad917e5a-81e0-4d4f-bc4e-7518d5ce23de\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658023401);
-INSERT INTO Message VALUES(37,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/c424ef7a-591d-40e2-a9c8-0ed514e91123\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658382103);
-INSERT INTO Message VALUES(38,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/8332997d-f7fe-45d0-9b85-d6b934597bda\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658383743);
-INSERT INTO Message VALUES(39,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/4e65961d-5bf8-4f40-aca1-7387309d662a\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658862469);
-INSERT INTO Message VALUES(40,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/ffdc04db-76c4-4e68-8663-8d69dc5287ec\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740658863288);
-INSERT INTO Message VALUES(41,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/39023879-8792-4bff-9c27-b241e8b90598\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740659401477);
-INSERT INTO Message VALUES(42,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/651ee176-98e9-47b6-a567-787033ab1297\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740659402126);
-INSERT INTO Message VALUES(43,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/89a78a84-6a05-43bf-8389-a5ad1d47bbd8\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740896401591);
-INSERT INTO Message VALUES(44,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/4536a0c2-051b-45f8-b4b1-2b40a7f60d9b\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740898202233);
-INSERT INTO Message VALUES(45,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/45254360-c31d-472e-93d7-1ba064154718\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740898203210);
-INSERT INTO Message VALUES(46,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/17349a0e-42c5-41c8-a817-b3b6c9474ab2\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740898381844);
-INSERT INTO Message VALUES(47,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/8ce42586-005f-498a-b362-01691b99892e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740898382765);
-INSERT INTO Message VALUES(48,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/7d041643-683e-46d7-9d96-2ddde8b33a40\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740902281730);
-INSERT INTO Message VALUES(49,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/7efcadf5-feb0-4ee2-9ab3-c4c84ecd07cd\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740902282303);
-INSERT INTO Message VALUES(50,10,10,'Payment Holiday Fee for Crossfit Tartu - March','user',replace('\n    Dear Kati Testija,\n    \n    This is a payment holiday month for your subscription with Crossfit Tartu.\n    \n    A reduced fee of €11 is due for March.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/0e8a5f35-57be-4205-af20-ba92899b0d1f\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740902461445);
-INSERT INTO Message VALUES(51,10,10,'Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    Your monthly payment of €9 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/9a8e7b9f-2672-430b-bfe1-2f275e182269\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740902462648);
-INSERT INTO Message VALUES(52,10,10,'Payment Holiday Fee for Crossfit Tartu - March','user',replace('\n    Dear Kati Testija,\n    \n    This is a payment holiday month for your subscription with Crossfit Tartu.\n    \n    A reduced fee of €11 is due for March.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/5b4730bb-9cc7-41fe-8e3d-c48d656b82a5\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740902701578);
-INSERT INTO Message VALUES(53,10,10,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 07/03/2025.\n\nYour monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/4355923f-c137-439e-8c00-4ce55b353ada\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740905406500);
-INSERT INTO Message VALUES(54,10,10,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 07/03/2025.\n\nYour monthly payment of €90 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/795e8299-6aa8-48fa-8168-0e2e99ad2cae\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740905701512);
-INSERT INTO Message VALUES(55,10,10,'Early Payment Notification: Payment Holiday Fee for Crossfit Tartu - March','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 07/03/2025.\n\nThis is a payment holiday month for your subscription with Crossfit Tartu.\n    \n    A reduced fee of €11 is due for March.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/7d34bb07-e7e4-4f91-b7d3-595dfd7dbfbf\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740905822284);
-INSERT INTO Message VALUES(56,10,10,'Early Payment Notification: Payment Holiday Fee for Crossfit Tartu - March','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 07/03/2025.\n\nThis is a payment holiday month for your subscription with Crossfit Tartu.\n    \n    A reduced fee of €11 is due for March.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b2358fee-671b-48e7-b620-86959f498eb2\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1740905942196);
-INSERT INTO Message VALUES(57,10,10,'You''ve been registered for OPEN GYM','user',replace('\nDear Kati Testija,\n\nGood news! A spot has opened up in the class "OPEN GYM" scheduled for 03/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\nLocation: Must saal\nTrainer: Tarvi Torn\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                    ','\n',char(10)),1740920542285);
-INSERT INTO Message VALUES(58,10,10,'You''ve been registered for OPEN GYM','user',replace('\nDear Kati Testija,\n\nGood news! A spot has opened up in the class "OPEN GYM" scheduled for 03/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\nLocation: Must saal\nTrainer: Tarvi Torn\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1740920854010);
-INSERT INTO Message VALUES(59,10,10,'You''ve been registered for OPEN GYM','user',replace('\nDear Kati Testija,\n\nGood news! A spot has opened up in the class "OPEN GYM" scheduled for 03/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\nClass: N/A\nTime: 03/03/2025, 11:00:00\nTrainer: Tarvi Torn\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1740920992251);
-INSERT INTO Message VALUES(60,10,10,'Early Payment Notification: Payment Holiday Fee for Crossfit Tartu - March','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 09/03/2025.\n\nThis is a payment holiday month for your subscription with Crossfit Tartu.\n    \n    A reduced fee of €11 is due for March.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/32a1247c-12e3-425f-a7c8-7e090c10cc7f\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741112221979);
-INSERT INTO Message VALUES(61,10,7,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741115728506);
-INSERT INTO Message VALUES(62,10,9,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741116206822);
-INSERT INTO Message VALUES(63,10,9,'You''ve been registered for Open Gym','user',replace('\nDear asd,\n\nGood news! A spot has opened up in the class "Open Gym" scheduled for 06/03/2025, 11:00:00.\n\nYou have been automatically registered for this class from the waitlist.\n\n\nTime: 06/03/2025, 11:00:00\nTrainer: Karl Sasi\n\nWe look forward to seeing you there!\n\nIronTrack Team\n                ','\n',char(10)),1741116405578);
-INSERT INTO Message VALUES(64,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/1ab22fc6-508c-4528-8a8d-c3d911e37935\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693261143);
-INSERT INTO Message VALUES(65,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b9eadcdb-e432-4b42-89f7-6b5a5a379fcc\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693445532);
-INSERT INTO Message VALUES(66,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/0c5e8dc2-2fcd-41cb-aac6-debee50dadd5\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741693621328);
-INSERT INTO Message VALUES(67,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/1e63de77-f583-46f5-90bf-52ccc3f8583e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694041693);
-INSERT INTO Message VALUES(68,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/022e30e1-b023-4a5e-9c6c-58d3637e8203\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694221754);
-INSERT INTO Message VALUES(69,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/f4b14309-d765-4bd9-8071-fcfef635453b\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741694341247);
-INSERT INTO Message VALUES(70,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/28926c5c-3902-47c2-a20d-3d901e0f23e7\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706101473);
-INSERT INTO Message VALUES(71,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/b7640e57-104b-4bd0-8b5d-33aecc87a417\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706522072);
-INSERT INTO Message VALUES(72,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/c0f13e0d-6da1-4e05-83c5-22f01906db1c\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706641416);
-INSERT INTO Message VALUES(73,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/04235735-3aab-4a0f-abf3-6649ecad9e1e\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706761867);
-INSERT INTO Message VALUES(74,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 16/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/9b35ebcc-be22-497b-991f-6e456ab75385\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741706821120);
-INSERT INTO Message VALUES(75,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 18/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/9d47dd12-544e-46b6-97e2-f08b953a19c6\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741863541961);
-INSERT INTO Message VALUES(76,10,9,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear asd,\n    \n    This is an early payment notification. Your payment is due on 18/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/abc61445-9a46-40af-b1e7-a07a2644a7ae\n    \n    The payment link is valid for 7 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1741875661917);
+INSERT INTO Message VALUES(89,10,0,'123','allMembers',replace('Tutvumistreeningul võtad sa osa CrossFit klassist ning saad ühe tunni jooksul esmase ettekujutuse sellest kuidas toimub meie igapäevane treening. Tutvumistreeningud toimuvad iganädalaselt. Täpsema aja kokku leppimiseks võta meiega ühendust. Treeningust osavõtt on tasuta.\n\nTutvumistreening ei ole kohustuslik sissejuhatavast kursusest osavõtuks ja võid end ka ilma tutvumistreeningut läbimata registreerida sissejuhatavale kursusele.','\n',char(10)),1742368813476);
+INSERT INTO Message VALUES(90,10,10,'stebby','user','If you have not yet applied for a sending limit increase, then you are still in the sandbox environment, and you can only send email to addresses that have been verified. To verify a new email address or domain, see the Identity Management section of the Amazon SES console.',1742369740075);
+INSERT INTO Message VALUES(91,10,7,'stebby','user','If you have not yet applied for a sending limit increase, then you are still in the sandbox environment, and you can only send email to addresses that have been verified. To verify a new email address or domain, see the Identity Management section of the Amazon SES console.',1742369740329);
+INSERT INTO Message VALUES(92,10,10,'trenn','user','tänane trenn jäb ära',1742371712823);
+INSERT INTO Message VALUES(93,10,7,'tere','user','tere',1742372690653);
+INSERT INTO Message VALUES(94,10,10,'tere','user','tere',1742372749660);
+INSERT INTO Message VALUES(95,10,10,'tere','user','tere',1742372954888);
+INSERT INTO Message VALUES(96,10,10,'tere','user','trenn jääb ära',1742372975856);
+INSERT INTO Message VALUES(97,10,10,'stebby','user','<h1>Adding Rich Text Editing to SendMessage Component</h1><p>I''ve implemented a rich text editor for your email message body with all the formatting capabilities similar to Gmail. Here''s a complete<strong> explanation </strong>of the changes:</p>',1742373464002);
+INSERT INTO Message VALUES(98,10,10,'tere','user','<p>tere</p>',1742467208792);
+INSERT INTO Message VALUES(99,10,10,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 25/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/5463a1a9-3317-41b1-9804-f724903e28e3\n    \n    The payment link is valid for 36 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1742467441243);
+INSERT INTO Message VALUES(100,10,10,'Early Payment Notification: Monthly payment for Crossfit Tartu','user',replace('\n    Dear Kati Testija,\n    \n    This is an early payment notification. Your payment is due on 25/03/2025.\n\nYour monthly payment of €55 for Crossfit Tartu is due.\n    \n    Please use the following link to complete your payment:\n    https://sandbox-pay.montonio.com/278b16f5-3cbc-4fd7-abae-47e5e8be5093\n    \n    The payment link is valid for 36 days.\n    \n    Thank you!\n    IronTrack Team\n  ','\n',char(10)),1742467621438);
 CREATE TABLE IF NOT EXISTS "ContractTemplate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "affiliateId" INTEGER NOT NULL,
@@ -594,7 +561,11 @@ INSERT INTO ClassAttendee VALUES(23,1613,5,72,1741119799642,0,10);
 INSERT INTO ClassAttendee VALUES(24,2726,5,72,1741466384624,0,10);
 INSERT INTO ClassAttendee VALUES(25,3678,5,73,1741694906002,0,10);
 INSERT INTO ClassAttendee VALUES(26,2936,5,75,1741694912203,1,10);
-INSERT INTO ClassAttendee VALUES(31,1720,5,73,1741877667553,0,10);
+INSERT INTO ClassAttendee VALUES(32,1720,5,73,1741878936944,0,10);
+INSERT INTO ClassAttendee VALUES(33,4314,5,73,1741879258556,0,10);
+INSERT INTO ClassAttendee VALUES(35,2884,9,72,1742282248128,0,10);
+INSERT INTO ClassAttendee VALUES(37,4103,10,82,1742367621201,0,10);
+INSERT INTO ClassAttendee VALUES(38,1615,5,73,1742464594713,0,10);
 CREATE TABLE IF NOT EXISTS "ContractLogs" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "contractId" INTEGER NOT NULL,
@@ -677,12 +648,15 @@ CREATE TABLE IF NOT EXISTS "UserPlan" (
     CONSTRAINT "UserPlan_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "UserPlan_contractId_fkey" FOREIGN KEY ("contractId") REFERENCES "Contract" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO UserPlan VALUES(72,9,1,10,0,'MonthlyMembership',31,55.0,1740940506741,1751477706741,994);
-INSERT INTO UserPlan VALUES(73,5,NULL,10,1,'Unlimited',99,50.0,1740940540981,1749427200000,9997);
+INSERT INTO UserPlan VALUES(72,9,1,10,0,'MonthlyMembership',31,55.0,1740940506741,1756834506741,993);
+INSERT INTO UserPlan VALUES(73,5,NULL,10,1,'Unlimited',99,50.0,1740940540981,1749427200000,9995);
 INSERT INTO UserPlan VALUES(74,9,NULL,10,1,'Unlimited',99,50.0,1741116066241,1749669666242,9997);
 INSERT INTO UserPlan VALUES(78,5,NULL,10,2,'1 time pass',10,10.0,1741703636399,1742567636399,0);
 INSERT INTO UserPlan VALUES(79,1,NULL,10,2,'1 time pass',10,10.0,1741703782122,1742567782122,1);
 INSERT INTO UserPlan VALUES(80,1,NULL,10,2,'1 time pass',10,10.0,1741704197337,1742568197337,0);
+INSERT INTO UserPlan VALUES(81,5,NULL,10,2,'1 time pass',10,10.0,1742202603250,1743066603250,1);
+INSERT INTO UserPlan VALUES(82,10,NULL,10,2,'1 time pass',10,10.0,1742367599556,1743231599556,0);
+INSERT INTO UserPlan VALUES(83,12,NULL,10,1,'Unlimited',99,50.0,1742541209601,1751094809601,9999);
 CREATE TABLE IF NOT EXISTS "ClassSchedule" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "trainingType" TEXT,
@@ -725,8 +699,8 @@ INSERT INTO ClassSchedule VALUES(1610,'WOD','CROSSFIT',1739440800000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(1611,'WOD','CROSSFIT',1740045600000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1612,'WOD','CROSSFIT',1740650400000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1613,'WOD','CROSSFIT',1741255200000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(1614,'WOD','CROSSFIT',1741860000000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(1615,'WOD','CROSSFIT',1742464800000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(1614,'WOD','CROSSFIT',1741860000000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1,0);
+INSERT INTO ClassSchedule VALUES(1615,'WOD','CROSSFIT',1742464800000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,'AA','For Time',NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1616,'WOD','CROSSFIT',1743069600000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1617,'WOD','CROSSFIT',1743670800000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1618,'WOD','CROSSFIT',1744275600000,60,'Karl Sasi',14,'Must saal',1,6,10,1610,NULL,NULL,NULL,1,0);
@@ -778,7 +752,7 @@ INSERT INTO ClassSchedule VALUES(1663,'WOD','CROSSFIT',1739457000000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(1664,'WOD','CROSSFIT',1740061800000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1665,'WOD','CROSSFIT',1740666600000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1666,'WOD','CROSSFIT',1741271400000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(1667,'WOD','CROSSFIT',1741876200000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(1667,'WOD','CROSSFIT',1741876200000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(1668,'WOD','CROSSFIT',1742481000000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1669,'WOD','CROSSFIT',1743085800000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1670,'WOD','CROSSFIT',1743687000000,60,'Karl Sasi',14,'Must saal',1,6,10,1663,NULL,NULL,NULL,1,0);
@@ -831,7 +805,7 @@ INSERT INTO ClassSchedule VALUES(1716,'WOD','CROSSFIT',1739460600000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(1717,'WOD','CROSSFIT',1740065400000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1718,'WOD','CROSSFIT',1740670200000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1719,'WOD','CROSSFIT',1741275000000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(1720,'WOD','CROSSFIT',1741879800000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(1720,'WOD','CROSSFIT',1741879800000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(1721,'WOD','CROSSFIT',1742484600000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1722,'WOD','CROSSFIT',1743089400000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1723,'WOD','CROSSFIT',1743690600000,60,'Karl Sasi',14,'Must saal',1,6,10,1716,NULL,NULL,NULL,1,0);
@@ -884,7 +858,7 @@ INSERT INTO ClassSchedule VALUES(1769,'WOD','CROSSFIT',1739464200000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(1770,'WOD','CROSSFIT',1740069000000,60,'Karl Sasi',14,'Must saal',1,6,10,1769,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1771,'WOD','CROSSFIT',1740673800000,60,'Karl Sasi',14,'Must saal',1,6,10,1769,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1772,'WOD','CROSSFIT',1741278600000,60,'Karl Sasi',14,'Must saal',1,6,10,1769,'KELLIKAS','EMOM',replace('For load:\nEMOM 12:\n3 power cleans\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(1773,'WOD','CROSSFIT',1741883400000,60,'Karl Sasi',14,'Must saal',1,6,10,1769,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(1773,'WOD','CROSSFIT',1741883400000,60,'Karl Sasi',14,'Must saal',1,6,10,1769,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(1822,'Other','Open Gym',1739437200000,120,'Karl Sasi',10,'',1,6,10,NULL,'','For Time',NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1823,'Other','Open Gym',1740042000000,120,'Karl Sasi',10,'',1,6,10,1822,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(1824,'Other','Open Gym',1740646800000,120,'Karl Sasi',10,'',1,6,10,1822,NULL,NULL,NULL,1,0);
@@ -1210,7 +1184,7 @@ INSERT INTO ClassSchedule VALUES(2193,'WOD','CROSSFIT',1739786400000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2194,'WOD','CROSSFIT',1740391200000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,'bmu',1,0);
 INSERT INTO ClassSchedule VALUES(2195,'WOD','CROSSFIT',1740996000000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2196,'WOD','CROSSFIT',1741600800000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2197,'WOD','CROSSFIT',1742205600000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2197,'WOD','CROSSFIT',1742205600000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,'','AMRAP',replace('3 rounds for reps of:\n1:00 double-unders\n1:00 push presses (25/35 kg)\n1:00 air squats\n– No rest between movements.\n\nPost-workout\nEvery 2:00 for 5 sets:\n3 thrusters','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2198,'WOD','CROSSFIT',1742810400000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2199,'WOD','CROSSFIT',1743411600000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2200,'WOD','CROSSFIT',1744016400000,60,'Karl Sasi',14,'Must saal',1,6,10,2193,NULL,NULL,NULL,1,0);
@@ -1263,7 +1237,7 @@ INSERT INTO ClassSchedule VALUES(2246,'WOD','CROSSFIT',1739802600000,60,'Tarvi T
 INSERT INTO ClassSchedule VALUES(2247,'WOD','CROSSFIT',1740407400000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2248,'WOD','CROSSFIT',1741012200000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2249,'WOD','CROSSFIT',1741617000000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2250,'WOD','CROSSFIT',1742221800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2250,'WOD','CROSSFIT',1742221800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,'','AMRAP',replace('3 rounds for reps of:\n1:00 double-unders\n1:00 push presses (25/35 kg)\n1:00 air squats\n– No rest between movements.\n\nPost-workout\nEvery 2:00 for 5 sets:\n3 thrusters','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2251,'WOD','CROSSFIT',1742826600000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2252,'WOD','CROSSFIT',1743427800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2253,'WOD','CROSSFIT',1744032600000,60,'Tarvi Torn',14,'Must saal',1,6,10,2246,NULL,NULL,NULL,1,0);
@@ -1316,7 +1290,7 @@ INSERT INTO ClassSchedule VALUES(2299,'WOD','CROSSFIT',1739806200000,60,'Tarvi T
 INSERT INTO ClassSchedule VALUES(2300,'WOD','CROSSFIT',1740411000000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2301,'WOD','CROSSFIT',1741015800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2302,'WOD','CROSSFIT',1741620600000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2303,'WOD','CROSSFIT',1742225400000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2303,'WOD','CROSSFIT',1742225400000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,'','AMRAP',replace('3 rounds for reps of:\n1:00 double-unders\n1:00 push presses (25/35 kg)\n1:00 air squats\n– No rest between movements.\n\nPost-workout\nEvery 2:00 for 5 sets:\n3 thrusters','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2304,'WOD','CROSSFIT',1742830200000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2305,'WOD','CROSSFIT',1743431400000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2306,'WOD','CROSSFIT',1744036200000,60,'Tarvi Torn',14,'Must saal',1,6,10,2299,NULL,NULL,NULL,1,0);
@@ -1369,7 +1343,7 @@ INSERT INTO ClassSchedule VALUES(2352,'WOD','CROSSFIT',1739809800000,60,'Tarvi T
 INSERT INTO ClassSchedule VALUES(2353,'WOD','CROSSFIT',1740414600000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2354,'WOD','CROSSFIT',1741019400000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2355,'WOD','CROSSFIT',1741624200000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(2356,'WOD','CROSSFIT',1742229000000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2356,'WOD','CROSSFIT',1742229000000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,'','AMRAP',replace('3 rounds for reps of:\n1:00 double-unders\n1:00 push presses (25/35 kg)\n1:00 air squats\n– No rest between movements.\n\nPost-workout\nEvery 2:00 for 5 sets:\n3 thrusters','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2357,'WOD','CROSSFIT',1742833800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2358,'WOD','CROSSFIT',1743435000000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2359,'WOD','CROSSFIT',1744039800000,60,'Tarvi Torn',14,'Must saal',1,6,10,2352,NULL,NULL,NULL,1,0);
@@ -1847,7 +1821,7 @@ INSERT INTO ClassSchedule VALUES(2880,'WOD','CROSSFIT',1772377200000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2881,'WOD','CROSSFIT',1772982000000,60,'Karl Sasi',14,'Must saal',1,6,10,2830,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2882,'WOD','CROSSFIT',1773586800000,60,'Karl Sasi',14,'Must saal',1,6,10,2830,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2883,'WOD','CROSSFIT',1741687200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(2884,'WOD','CROSSFIT',1742292000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2884,'WOD','CROSSFIT',1742292000000,60,'Karl Sasi',1,'Must saal',1,6,10,2883,'','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2885,'WOD','CROSSFIT',1742896800000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2886,'WOD','CROSSFIT',1743498000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2887,'WOD','CROSSFIT',1744102800000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
@@ -1900,7 +1874,7 @@ INSERT INTO ClassSchedule VALUES(2933,'WOD','CROSSFIT',1771927200000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2934,'WOD','CROSSFIT',1772532000000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2935,'WOD','CROSSFIT',1773136800000,60,'Karl Sasi',14,'Must saal',1,6,10,2883,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2936,'WOD','CROSSFIT',1741703400000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(2937,'WOD','CROSSFIT',1742308200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2937,'WOD','CROSSFIT',1742308200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,'','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2938,'WOD','CROSSFIT',1742913000000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2939,'WOD','CROSSFIT',1743514200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2940,'WOD','CROSSFIT',1744119000000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
@@ -1953,7 +1927,7 @@ INSERT INTO ClassSchedule VALUES(2986,'WOD','CROSSFIT',1771943400000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(2987,'WOD','CROSSFIT',1772548200000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2988,'WOD','CROSSFIT',1773153000000,60,'Karl Sasi',14,'Must saal',1,6,10,2936,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2989,'WOD','CROSSFIT',1741707000000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(2990,'WOD','CROSSFIT',1742311800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(2990,'WOD','CROSSFIT',1742311800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,'','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(2991,'WOD','CROSSFIT',1742916600000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2992,'WOD','CROSSFIT',1743517800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(2993,'WOD','CROSSFIT',1744122600000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
@@ -2006,7 +1980,7 @@ INSERT INTO ClassSchedule VALUES(3039,'WOD','CROSSFIT',1771947000000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(3040,'WOD','CROSSFIT',1772551800000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3041,'WOD','CROSSFIT',1773156600000,60,'Karl Sasi',14,'Must saal',1,6,10,2989,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3042,'WOD','CROSSFIT',1741710600000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(3043,'WOD','CROSSFIT',1742315400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(3043,'WOD','CROSSFIT',1742315400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,'','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(3044,'WOD','CROSSFIT',1742920200000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3045,'WOD','CROSSFIT',1743521400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3046,'WOD','CROSSFIT',1744126200000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
@@ -2059,7 +2033,7 @@ INSERT INTO ClassSchedule VALUES(3092,'WOD','CROSSFIT',1771950600000,60,'Karl Sa
 INSERT INTO ClassSchedule VALUES(3093,'WOD','CROSSFIT',1772555400000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3094,'WOD','CROSSFIT',1773160200000,60,'Karl Sasi',14,'Must saal',1,6,10,3042,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3095,'WOD','CROSSFIT',1741714200000,60,'Karl Sasi',14,'Must saal',1,6,10,NULL,'AS','For Time',replace('On a 16:00 clock:\n0:00-10:00:\nMin 1: bike\nMin 2: rest\n10:00-16:00:\nBuild to a heavy 3-rep shoulder-to-overhead\n\nPost-workout\nOn a 5:00 clock:\nAccumulate as much time as possible in an L-sit.','\n',char(10)),1,0);
-INSERT INTO ClassSchedule VALUES(3096,'WOD','CROSSFIT',1742319000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(3096,'WOD','CROSSFIT',1742319000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,'','For Time',replace('5 rounds for time of:\n15/18-cal row\n12 deadlifts (47/70 kg)\n9 hang power cleans\n\nPost-workout\nAccumulate:\n2:00 weighted plank hold','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(3097,'WOD','CROSSFIT',1742923800000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3098,'WOD','CROSSFIT',1743525000000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(3099,'WOD','CROSSFIT',1744129800000,60,'Karl Sasi',14,'Must saal',1,6,10,3095,NULL,NULL,NULL,1,0);
@@ -2749,7 +2723,7 @@ INSERT INTO ClassSchedule VALUES(4099,'Other','OPEN GYM',1772038800000,120,'Joos
 INSERT INTO ClassSchedule VALUES(4100,'Other','OPEN GYM',1772643600000,120,'Joosep Roosaar',8,'',1,6,10,4049,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4101,'Other','OPEN GYM',1773248400000,120,'Joosep Roosaar',8,'',1,6,10,4049,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4102,'WOD','CROSSFIT',1741773600000,60,'Joosep Roosaar',14,'',1,6,10,NULL,'','For Time',NULL,1,0);
-INSERT INTO ClassSchedule VALUES(4103,'WOD','CROSSFIT',1742378400000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(4103,'WOD','CROSSFIT',1742378400000,60,'Joosep Roosaar',1,'',1,6,10,4102,'','For Time',replace('EMOM 12:\nMin. 1 | 2 rope climbs (4.6/4.6 m)\nMin. 2 | :30 bike, row, ski\n\nPost-workout benchmark\nFor calories:\n1:00 bike','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(4104,'WOD','CROSSFIT',1742983200000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4105,'WOD','CROSSFIT',1743584400000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4106,'WOD','CROSSFIT',1744189200000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
@@ -2802,7 +2776,7 @@ INSERT INTO ClassSchedule VALUES(4152,'WOD','CROSSFIT',1772013600000,60,'Joosep 
 INSERT INTO ClassSchedule VALUES(4153,'WOD','CROSSFIT',1772618400000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4154,'WOD','CROSSFIT',1773223200000,60,'Joosep Roosaar',14,'',1,6,10,4102,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4155,'WOD','CROSSFIT',1741789800000,60,'Joosep Roosaar',14,'',1,6,10,NULL,'','For Time',NULL,1,0);
-INSERT INTO ClassSchedule VALUES(4156,'WOD','CROSSFIT',1742394600000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(4156,'WOD','CROSSFIT',1742394600000,60,'Joosep Roosaar',14,'',1,6,10,4155,'','For Time',replace('EMOM 12:\nMin. 1 | 2 rope climbs (4.6/4.6 m)\nMin. 2 | :30 bike, row, ski\n\nPost-workout benchmark\nFor calories:\n1:00 bike','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(4157,'WOD','CROSSFIT',1742999400000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4158,'WOD','CROSSFIT',1743600600000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4159,'WOD','CROSSFIT',1744205400000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
@@ -2855,7 +2829,7 @@ INSERT INTO ClassSchedule VALUES(4205,'WOD','CROSSFIT',1772029800000,60,'Joosep 
 INSERT INTO ClassSchedule VALUES(4206,'WOD','CROSSFIT',1772634600000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4207,'WOD','CROSSFIT',1773239400000,60,'Joosep Roosaar',14,'',1,6,10,4155,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4208,'WOD','CROSSFIT',1741793400000,60,'Joosep Roosaar',14,'',1,6,10,NULL,'','For Time',NULL,1,0);
-INSERT INTO ClassSchedule VALUES(4209,'WOD','CROSSFIT',1742398200000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(4209,'WOD','CROSSFIT',1742398200000,60,'Joosep Roosaar',14,'',1,6,10,4208,'','For Time',replace('EMOM 12:\nMin. 1 | 2 rope climbs (4.6/4.6 m)\nMin. 2 | :30 bike, row, ski\n\nPost-workout benchmark\nFor calories:\n1:00 bike','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(4210,'WOD','CROSSFIT',1743003000000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4211,'WOD','CROSSFIT',1743604200000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4212,'WOD','CROSSFIT',1744209000000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
@@ -2908,7 +2882,7 @@ INSERT INTO ClassSchedule VALUES(4258,'WOD','CROSSFIT',1772033400000,60,'Joosep 
 INSERT INTO ClassSchedule VALUES(4259,'WOD','CROSSFIT',1772638200000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4260,'WOD','CROSSFIT',1773243000000,60,'Joosep Roosaar',14,'',1,6,10,4208,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4261,'WOD','CROSSFIT',1741797000000,60,'Joosep Roosaar',14,'',1,6,10,NULL,'','For Time',NULL,1,0);
-INSERT INTO ClassSchedule VALUES(4262,'WOD','CROSSFIT',1742401800000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
+INSERT INTO ClassSchedule VALUES(4262,'WOD','CROSSFIT',1742401800000,60,'Joosep Roosaar',14,'',1,6,10,4261,'','For Time',replace('EMOM 12:\nMin. 1 | 2 rope climbs (4.6/4.6 m)\nMin. 2 | :30 bike, row, ski\n\nPost-workout benchmark\nFor calories:\n1:00 bike','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(4263,'WOD','CROSSFIT',1743006600000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4264,'WOD','CROSSFIT',1743607800000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4265,'WOD','CROSSFIT',1744212600000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
@@ -2960,7 +2934,7 @@ INSERT INTO ClassSchedule VALUES(4310,'WOD','CROSSFIT',1771432200000,60,'Joosep 
 INSERT INTO ClassSchedule VALUES(4311,'WOD','CROSSFIT',1772037000000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4312,'WOD','CROSSFIT',1772641800000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4313,'WOD','CROSSFIT',1773246600000,60,'Joosep Roosaar',14,'',1,6,10,4261,NULL,NULL,NULL,1,0);
-INSERT INTO ClassSchedule VALUES(4314,'WOD','CROSSFIT',1741883400000,60,'Joosep Roosaar',14,'Must saal',1,6,10,NULL,'','For Time',NULL,1,0);
+INSERT INTO ClassSchedule VALUES(4314,'WOD','CROSSFIT',1741883400000,60,'Joosep Roosaar',14,'Must saal',1,6,10,NULL,'','For Time',replace('4 rounds for time with a partner:\n30 toes-to-bars\n400-m run\n– Share the toes-to-bars and run together.','\n',char(10)),1,0);
 INSERT INTO ClassSchedule VALUES(4315,'WOD','CROSSFIT',1742488200000,60,'Joosep Roosaar',14,'Must saal',1,6,10,4314,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4316,'WOD','CROSSFIT',1743093000000,60,'Joosep Roosaar',14,'Must saal',1,6,10,4314,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(4317,'WOD','CROSSFIT',1743694200000,60,'Joosep Roosaar',14,'Must saal',1,6,10,4314,NULL,NULL,NULL,1,0);
@@ -3703,29 +3677,6 @@ INSERT INTO ClassSchedule VALUES(5053,'Other','OPEN GYM',1772380800000,120,'Ain 
 INSERT INTO ClassSchedule VALUES(5054,'Other','OPEN GYM',1772985600000,120,'Ain Lubi',8,'Must saal',1,6,10,5003,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(5055,'Other','OPEN GYM',1773590400000,120,'Ain Lubi',8,'Must saal',1,6,10,5003,NULL,NULL,NULL,1,0);
 INSERT INTO ClassSchedule VALUES(5056,'WOD','testgg',1740984240000,11,'Karl Sasi',11,'',0,1,10,NULL,'','For Time',NULL,1,0);
-CREATE TABLE IF NOT EXISTS "User" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "fullName" TEXT,
-    "affiliateOwner" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "monthlyGoal" INTEGER,
-    "isAcceptedTerms" BOOLEAN NOT NULL DEFAULT false,
-    "phone" TEXT,
-    "address" TEXT,
-    "logo" TEXT,
-    "homeAffiliate" INTEGER
-, "emergencyContact" TEXT);
-INSERT INTO User VALUES(1,'a@a.a','$2b$10$ITNZmTGLWeI0OUBcg0Z6c.ytApjxuHPumMZZHwo0yX0UWOLbFOxpm','Sander Prii2',0,1737547508429,NULL,0,'55656565',NULL,NULL,10,NULL);
-INSERT INTO User VALUES(2,'b@b.b','$2b$10$24nnApK0B94jywcxhNxqe.5qbq2BX7jcdcmTMNX5xUUDvGtQCu.ja','asd',1,1737553951494,NULL,0,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO User VALUES(5,'c@c.c','$2b$10$OgnssFdOCtXb./TgYkMcNOM.8NFZbUThigIN.LWdg.zUpJCWe8aPG','Mati Testija2',0,1738004558172,NULL,1,'55656565','asdasd','data:image/jpeg;base64,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',10,'56552558');
-INSERT INTO User VALUES(6,'d@d.d','$2b$10$whhsYiO2RmqdX99TCazAkOJjnDi7iIEZRK72a/BXc7hzwcVX1CiDe','asd',1,1738046044319,NULL,0,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO User VALUES(7,'sander.prii@vikk.ee','$2b$10$J0CTr.RA0/WPqaBm4E1pOOeP4ASDzuLqSloyQUbvn1nfh96kVzxfS','asd',0,1738745068793,NULL,0,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO User VALUES(8,'s@s.e','$2b$10$GlB3m88fuxnqTb6bG9Ns7.OFrXrJoW8aWg2ADpJwrWMTGWbxbp2Em','asd',0,1738751263465,NULL,0,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO User VALUES(9,'prii.sander@gmail.com','$2b$10$5jVQiXQcJjNJ26v.qI7ZaOvvWW.Cb2Mtr00NpitjDeMRQEzuZWPHi','asd',0,1738751962995,NULL,0,NULL,NULL,NULL,10,NULL);
-INSERT INTO User VALUES(10,'g@g.g','$2b$10$zsd9.nL10T10EKojrqliqe5K7LY/DnbDZFmfx3JejJqAuC6SVVrIC','Kati Testija',0,1738831102031,NULL,0,'533256456','lehe 10,asdas',NULL,NULL,NULL);
-INSERT INTO User VALUES(11,'l@l.l','$2b$10$Yzg0ZS6l6IR8ollK8EAgVeKNqe5bCD27ivpg1TKqtiEm0xR1gaabC','g@g.g',0,1740479619109,NULL,1,'546546546','',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "Plan" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
@@ -3791,6 +3742,9 @@ INSERT INTO paymentMetadata VALUES(36,146,'04235735-3aab-4a0f-abf3-6649ecad9e1e'
 INSERT INTO paymentMetadata VALUES(37,147,'9b35ebcc-be22-497b-991f-6e456ab75385',1,10,0,1741706820527);
 INSERT INTO paymentMetadata VALUES(38,148,'9d47dd12-544e-46b6-97e2-f08b953a19c6',1,10,0,1741863541053);
 INSERT INTO paymentMetadata VALUES(39,149,'abc61445-9a46-40af-b1e7-a07a2644a7ae',1,10,0,1741875660924);
+INSERT INTO paymentMetadata VALUES(40,152,'f21063e2-cfa3-467f-81bf-60d7401f0f07',1,10,0,1742367780418);
+INSERT INTO paymentMetadata VALUES(41,153,'5463a1a9-3317-41b1-9804-f724903e28e3',1,10,0,1742467440797);
+INSERT INTO paymentMetadata VALUES(42,154,'278b16f5-3cbc-4fd7-abae-47e5e8be5093',1,10,0,1742467620972);
 CREATE TABLE IF NOT EXISTS "Waitlist" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "classId" INTEGER NOT NULL,
@@ -3801,6 +3755,7 @@ CREATE TABLE IF NOT EXISTS "Waitlist" (
     CONSTRAINT "Waitlist_userPlanId_fkey" FOREIGN KEY ("userPlanId") REFERENCES "UserPlan" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Waitlist_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
+INSERT INTO Waitlist VALUES(11,4103,5,73,1742367747042);
 CREATE TABLE IF NOT EXISTS "Contract" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "affiliateId" INTEGER NOT NULL,
@@ -3819,7 +3774,7 @@ CREATE TABLE IF NOT EXISTS "Contract" (
     CONSTRAINT "Contract_affiliateId_fkey" FOREIGN KEY ("affiliateId") REFERENCES "Affiliate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Contract_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO Contract VALUES(1,10,9,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'cred',55.0,'month',18,1743120000000,1,'accepted',1740939370309,1740940506658);
+INSERT INTO Contract VALUES(1,10,10,'MonthlyMembership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'cred',55.0,'month',25,1743120000000,1,'accepted',1740939370309,1740940506658);
 INSERT INTO Contract VALUES(2,10,5,'Monthly Membership',replace('Leping nr [X]\nSõlmitud: [kuupäev]\n\nLepingupooled:\n\nCrossFit Tartu\n\nOmanik: Ain Lubi\nAsukoht: Tartu, Aardla\nedaspidi „Teenusepakkuja” või „Affiliate“\n[Kliendi nimi ja isikukood]\n\n[Kontaktandmed: aadress, telefon, e-post]\nedaspidi „Klient”\n1. Lepingu ese\n1.1 Käesoleva lepingu esemeks on CrossFit Tartu poolt pakutavate treeningvõimaluste, sh rühmatreeningute, iseseisva treeningu ja muude seotud teenuste kasutamise õigus.\n1.2 Leping on tähtajatu ning Klient võib tasu eest kasutada Teenusepakkuja treeningteenuseid käesolevas lepingus sätestatud tingimustel.\n\n2. Liikmemaks ja maksetingimused\n2.1 Klient kohustub tasuma igakuist liikmemaksu summas [X eurot].\n2.2 Liikmemaks kuulub tasumisele hiljemalt iga kuu 15. kuupäevaks.\n2.3 Maksetingimused (sh arveldusarve number, selgitus jms) määratakse Teenusepakkuja poolt. Klient vastutab õigeaegse ning õige viitenumbriga tasumise eest.\n2.4 Viivitusintressi või leppetrahvi võidakse rakendada vastavalt Teenusepakkuja kehtestatud üldtingimustele, kui Klient ei ole kokkulepitud tähtpäevaks liikmemaksu tasunud. Teenusepakkuja võib samuti peatada Kliendi treeninguõiguse, kuni võlgnevus on tasutud.\n\n3. Teenuste kasutamine\n3.1 Klient on kohustatud tutvuma CrossFit Tartu sisekorraeeskirjadega (sh turvalisus, hügieen, treeningute registreerimine, tühistamise kord jms) ja neid täitma.\n3.2 Teenusepakkujal on õigus ajutiselt piirata treeningute või ruumide kasutamist seoses remondi, hooldustööde või muude etteplaneeritud tegevustega, teavitades sellest mõistliku aja jooksul ette.\n3.3 Teenusepakkuja võib teha muudatusi treeningute ajakavas, hinnakirjas või sisukorras, teavitades sellest Kliendi e-posti või veebilehe vahendusel. Oluliste muudatuste puhul on Kliendil õigus leping üles öelda, teatades sellest 14 päeva ette.\n\n4. Lepingu kestus ja lõpetamine\n4.1 Leping jõustub selle allkirjastamisest (või digiallkirjast) ning on sõlmitud tähtajatult.\n4.2 Klient võib lepingu igal ajal üles öelda, esitades Teenusepakkujale kirjaliku (või digitaalse) avalduse. Lepingu lõppemisest tulenevalt arvestatakse liikmemaks proportsionaalselt selle kuu kasutusajaga või vastavalt Teenusepakkuja üldtingimustele.\n4.3 Teenusepakkuja võib lepingu erakorraliselt lõpetada, kui Klient on oluliselt lepingut rikkunud (näiteks korduv makseviivitus või sisekorraeeskirjade rikkumine).\n\n5. Vastutus ja pretensioonid\n5.1 Teenusepakkuja vastutab Kliendi ees üksnes siis, kui kahju või kahjustus on põhjustatud Teenusepakkuja raskest hooletusest või tahtlikust tegevusest.\n5.2 Klient vastutab oma tervisliku seisundi eest ning on kohustatud veenduma, et tal pole vastunäidustusi treeningutes osalemiseks.\n5.3 Kui Kliendil on kaebusi või pretensioone, lahendatakse need esmalt heas usus läbirääkimiste teel. Vaidluste jätkumisel on Kliendil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti või kohtusse vastavalt Eesti Vabariigi seadustele.\n\n6. Isikuandmete kaitse ja GDPR\n6.1 Teenusepakkuja töötleb Kliendi isikuandmeid (nt nimi, kontaktandmed, makseinfo) üksnes teenuste osutamiseks, lepingu täitmiseks, raamatupidamis- või juriidiliste kohustuste täitmiseks vastavalt Euroopa Liidu isikuandmete kaitse üldmäärusele (GDPR) ja Eesti seadustele.\n6.2 Klient võib igal ajal küsida teavet enda isikuandmete töötlemise kohta ning taotleda parandamist, kustutamist või töötlemise piiramist, kui see ei ole vastuolus seadusest tulenevate kohustustega.\n\n7. Muud tingimused\n7.1 Poolte vahelised teated loetakse kehtivaks, kui need on edastatud e-posti teel, kirjalikult või muus tõendatavas vormis.\n7.2 Kõik lepingus puuduvad küsimused ja suhted lahendatakse vastavalt Eesti Vabariigi kehtivatele õigusaktidele.\n7.3 Kokkuleppe muutmine või täiendamine toimub kirjalikult või digiallkirjastatud lisakokkuleppega.\n\n8. Allkirjastamine ja jõustumine\n8.1 Klient kinnitab, et on käesoleva lepingu ja teenusepakkuja Terms and Conditions (üldtingimuste) sisust aru saanud ning nõustub nendega.\n8.2 Leping loetakse sõlmituks ning õiguslikult siduvaks hetkest, mil Klient on lepingu allkirjastanud (sh digiallkirjastanud) või klõpsanud „Accept” (nõustun) nuppu.\n\nPOOLTE ALLEKIRJAD\n\nCrossFit Tartu\n(omanik Ain Lubi)\nAllkiri: …………………….. Kuupäev: ………………\n\nKlient\n[nimi ja isikukood]\nAllkiri: …………………….. Kuupäev: ………………','\n',char(10)),'',40.0,'month',13,1855612800000,1,'Waiting for acceptance',1741874492989,NULL);
 CREATE TABLE IF NOT EXISTS "transactions" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -3861,6 +3816,12 @@ INSERT INTO transactions VALUES(141,1,10.0,'20250311143611','Plan purchase: 1 ti
 INSERT INTO transactions VALUES(142,1,10.0,'20250311144306','Plan purchase: 1 time pass, by: a@a.a, from: Crossfit Tartu, paid by credit: 0€',1741704197336,'success','montonio',10,2,NULL,NULL,0,1,1);
 INSERT INTO transactions VALUES(148,9,55.0,'2025031342515','Monthly payment for contract #1',1739444341015,'success','montonio',10,NULL,NULL,1,0,1,NULL);
 INSERT INTO transactions VALUES(149,9,55.0,'2025031384494','Monthly payment for contract #1',1741875660880,'success','montonio',10,NULL,NULL,1,0,1,NULL);
+INSERT INTO transactions VALUES(150,5,10.0,'20250317090952','Plan purchase: 1 time pass, by: c@c.c, from: Crossfit Tartu, paid by credit: 0€',1742202603249,'success','montonio',10,2,NULL,NULL,0,1,5);
+INSERT INTO transactions VALUES(151,10,10.0,'20250319065959','Plan purchase: 1 time pass, by: prii.sander@gmail.com, from: Crossfit Tartu, paid by credit: 10€',1742367599546,'success','credit',10,2,NULL,NULL,0,1,4);
+INSERT INTO transactions VALUES(152,10,55.0,'2025031979393','Monthly payment for contract #1',1742367780381,'success','montonio',10,NULL,NULL,1,0,1,NULL);
+INSERT INTO transactions VALUES(153,10,55.0,'2025032098611','Monthly payment for contract #1',1742467440762,'success','montonio',10,NULL,NULL,1,0,1,NULL);
+INSERT INTO transactions VALUES(154,10,55.0,'2025032005358','Monthly payment for contract #1',1742467620941,'pending','montonio',10,NULL,NULL,1,0,1,NULL);
+INSERT INTO transactions VALUES(155,12,50.0,'20250321071317','Plan purchase: Unlimited, by: sander.prii@vikk.ee, from: Crossfit Tartu, paid by credit: 0€',1742541209601,'success','montonio',10,1,NULL,NULL,0,1,12);
 CREATE TABLE IF NOT EXISTS "Exercise" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "exerciseData" TEXT,
@@ -3876,44 +3837,75 @@ INSERT INTO Exercise VALUES(12,'asdasd',6);
 INSERT INTO Exercise VALUES(14,'asdfasdf',7);
 INSERT INTO Exercise VALUES(15,'jump',8);
 INSERT INTO Exercise VALUES(16,'ASD',9);
-INSERT INTO Exercise VALUES(19,replace('For load:\nEMOM 12:\n3 power cleans2\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),10);
 INSERT INTO Exercise VALUES(20,NULL,11);
+INSERT INTO Exercise VALUES(21,NULL,12);
+INSERT INTO Exercise VALUES(22,NULL,13);
+INSERT INTO Exercise VALUES(23,replace('For load:\nEMOM 12:\n3 power cleans2\n2 hang power cleans\n1 push jerk\n– Build in load.\n\nPost-workout\nOn an 8:00 clock:\nRow, bike, or ski','\n',char(10)),10);
+INSERT INTO Exercise VALUES(24,NULL,14);
+INSERT INTO Exercise VALUES(25,'asdf',15);
+INSERT INTO Exercise VALUES(26,replace('9-7-5 reps:\n Muscle-up\n Squat Snatch (61/43 kg)','\n',char(10)),16);
+CREATE TABLE IF NOT EXISTS "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "fullName" TEXT,
+    "emailConfirmed" BOOLEAN NOT NULL DEFAULT false,
+    "affiliateOwner" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "monthlyGoal" INTEGER,
+    "isAcceptedTerms" BOOLEAN NOT NULL DEFAULT false,
+    "phone" TEXT,
+    "address" TEXT,
+    "logo" TEXT,
+    "emergencyContact" TEXT,
+    "homeAffiliate" INTEGER
+, "resetToken" TEXT, "resetTokenExpires" DATETIME, "verificationExpires" DATETIME, "verificationToken" TEXT, "pricingPlan" TEXT DEFAULT 'premium');
+INSERT INTO User VALUES(1,'a@a.a','$2b$10$ITNZmTGLWeI0OUBcg0Z6c.ytApjxuHPumMZZHwo0yX0UWOLbFOxpm','Sander Prii2',0,0,1737547508429,NULL,0,'55656565',NULL,NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(2,'b@b.b','$2b$10$24nnApK0B94jywcxhNxqe.5qbq2BX7jcdcmTMNX5xUUDvGtQCu.ja','asd',0,1,1737553951494,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(5,'c@c.c','$2b$10$OgnssFdOCtXb./TgYkMcNOM.8NFZbUThigIN.LWdg.zUpJCWe8aPG','Mati Testija2',1,0,1738004558172,NULL,1,'55656565','asdasd','data:image/jpeg;base64,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','56552558',10,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(6,'d@d.d','$2b$10$whhsYiO2RmqdX99TCazAkOJjnDi7iIEZRK72a/BXc7hzwcVX1CiDe','asd',1,1,1738046044319,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(7,'g@g.g','$2b$10$J0CTr.RA0/WPqaBm4E1pOOeP4ASDzuLqSloyQUbvn1nfh96kVzxfS','muumitroll',0,0,1738745068793,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(8,'s@s.e','$2b$10$GlB3m88fuxnqTb6bG9Ns7.OFrXrJoW8aWg2ADpJwrWMTGWbxbp2Em','asd',0,0,1738751263465,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(9,'prii.sander@gmail.comm','$2b$10$5jVQiXQcJjNJ26v.qI7ZaOvvWW.Cb2Mtr00NpitjDeMRQEzuZWPHi','kelly prii',0,0,1738751962995,NULL,0,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(10,'prii.sander@gmail.com','$2b$10$kVa5SZew8Ze2IWG6pAVr.uoNlA.o7IGbfGD87lg0jnKNNoyIJ0WBK','Kati Testija',1,0,1738831102031,NULL,0,'533256456','lehe 10,asdas',NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(11,'l@l.l','$2b$10$Yzg0ZS6l6IR8ollK8EAgVeKNqe5bCD27ivpg1TKqtiEm0xR1gaabC','g@g.g',0,0,1740479619109,NULL,1,'546546546','',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'premium');
+INSERT INTO User VALUES(12,'sander.prii@vikk.ee','$2b$10$WxjaRQGzd42nwgHSvTheWOJM5O9zqhnDB04m/TYzi.5oXA7Ti56fq','Kelly Prii',1,0,1742541098767,NULL,1,'','',NULL,NULL,10,NULL,NULL,NULL,NULL,'premium');
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('Affiliate',10);
-INSERT INTO sqlite_sequence VALUES('Training',11);
-INSERT INTO sqlite_sequence VALUES('defaultWOD',396);
-INSERT INTO sqlite_sequence VALUES('Record',19);
+INSERT INTO sqlite_sequence VALUES('Training',16);
+INSERT INTO sqlite_sequence VALUES('defaultWOD',397);
+INSERT INTO sqlite_sequence VALUES('Record',28);
 INSERT INTO sqlite_sequence VALUES('AffiliateTrainer',11);
-INSERT INTO sqlite_sequence VALUES('todayWOD',16);
-INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',16);
-INSERT INTO sqlite_sequence VALUES('Members',10);
+INSERT INTO sqlite_sequence VALUES('todayWOD',20);
+INSERT INTO sqlite_sequence VALUES('ClassLeaderboard',19);
+INSERT INTO sqlite_sequence VALUES('Members',12);
 INSERT INTO sqlite_sequence VALUES('Credit',6);
 INSERT INTO sqlite_sequence VALUES('UserNote',7);
-INSERT INTO sqlite_sequence VALUES('MessageGroup',4);
-INSERT INTO sqlite_sequence VALUES('UserMessageGroup',3);
-INSERT INTO sqlite_sequence VALUES('Message',76);
+INSERT INTO sqlite_sequence VALUES('MessageGroup',5);
+INSERT INTO sqlite_sequence VALUES('UserMessageGroup',5);
+INSERT INTO sqlite_sequence VALUES('Message',100);
 INSERT INTO sqlite_sequence VALUES('ContractLogs',31);
 INSERT INTO sqlite_sequence VALUES('SignedContract',17);
 INSERT INTO sqlite_sequence VALUES('ContractTerms',2);
-INSERT INTO sqlite_sequence VALUES('ClassAttendee',31);
-INSERT INTO sqlite_sequence VALUES('UserPlan',80);
+INSERT INTO sqlite_sequence VALUES('ClassAttendee',38);
+INSERT INTO sqlite_sequence VALUES('UserPlan',83);
 INSERT INTO sqlite_sequence VALUES('ClassSchedule',5056);
-INSERT INTO sqlite_sequence VALUES('User',11);
 INSERT INTO sqlite_sequence VALUES('Plan',2);
 INSERT INTO sqlite_sequence VALUES('AffiliateApiKeys',1);
 INSERT INTO sqlite_sequence VALUES('PaymentHoliday',6);
-INSERT INTO sqlite_sequence VALUES('paymentMetadata',39);
-INSERT INTO sqlite_sequence VALUES('Waitlist',8);
+INSERT INTO sqlite_sequence VALUES('paymentMetadata',42);
+INSERT INTO sqlite_sequence VALUES('Waitlist',11);
 INSERT INTO sqlite_sequence VALUES('Contract',2);
-INSERT INTO sqlite_sequence VALUES('transactions',149);
-INSERT INTO sqlite_sequence VALUES('Exercise',20);
+INSERT INTO sqlite_sequence VALUES('transactions',155);
+INSERT INTO sqlite_sequence VALUES('Exercise',26);
+INSERT INTO sqlite_sequence VALUES('User',12);
 CREATE UNIQUE INDEX "defaultWOD_name_key" ON "defaultWOD"("name");
 CREATE UNIQUE INDEX "AffiliateTrainer_affiliateId_trainerId_key" ON "AffiliateTrainer"("affiliateId", "trainerId");
 CREATE UNIQUE INDEX "Members_userId_affiliateId_key" ON "Members"("userId", "affiliateId");
 CREATE UNIQUE INDEX "Credit_userId_affiliateId_key" ON "Credit"("userId", "affiliateId");
 CREATE UNIQUE INDEX "ClassAttendee_classId_userId_key" ON "ClassAttendee"("classId", "userId");
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "paymentMetadata_montonioUuid_contractId_key" ON "paymentMetadata"("montonioUuid", "contractId");
 CREATE UNIQUE INDEX "Waitlist_classId_userId_key" ON "Waitlist"("classId", "userId");
 CREATE UNIQUE INDEX "Affiliate_subdomain_key" ON "Affiliate"("subdomain");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 COMMIT;

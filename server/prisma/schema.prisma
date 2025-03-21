@@ -9,38 +9,44 @@ generator client {
 }
 
 model User {
-  id               Int                @id @default(autoincrement())
-  email            String             @unique
-  password         String
-  fullName         String?
-  affiliateOwner   Boolean            @default(false)
-  createdAt        DateTime           @default(now())
-  records          Record[]
-  trainings        Training[]
-  monthlyGoal      Int?
-  isAcceptedTerms  Boolean            @default(false)
-  phone            String?
-  address          String?
-  logo             String?
-  emergencyContact String?
-  classSchedules   ClassSchedule[]
-  Plan             Plan[]
-  Affiliate        Affiliate[]
-  AffiliateTrainer AffiliateTrainer[]
-  classAttendances ClassAttendee[]
-  credit           Credit[]
-  UserPlan         UserPlan[]
-  homeAffiliate    Int?
-  classLeaderboard ClassLeaderboard[]
-  members          Members[]
-  transactions     transactions[]
-  waitlist         Waitlist[]
-  userNotes        UserNote[]
-  messageGroups    UserMessageGroup[]
-  contract         Contract[]
-  signedContracts  SignedContract[]
-  paymentHolidays  PaymentHoliday[]
-  contractLogs     ContractLogs[]
+  id                  Int                @id @default(autoincrement())
+  email               String             @unique
+  password            String
+  fullName            String?
+  emailConfirmed      Boolean            @default(false)
+  verificationToken   String?
+  verificationExpires DateTime?
+  resetToken          String?
+  resetTokenExpires   DateTime?
+  affiliateOwner      Boolean            @default(false)
+  pricingPlan         String?            @default("premium")
+  createdAt           DateTime           @default(now())
+  records             Record[]
+  trainings           Training[]
+  monthlyGoal         Int?
+  isAcceptedTerms     Boolean            @default(false)
+  phone               String?
+  address             String?
+  logo                String?
+  emergencyContact    String?
+  classSchedules      ClassSchedule[]
+  Plan                Plan[]
+  Affiliate           Affiliate[]
+  AffiliateTrainer    AffiliateTrainer[]
+  classAttendances    ClassAttendee[]
+  credit              Credit[]
+  UserPlan            UserPlan[]
+  homeAffiliate       Int?
+  classLeaderboard    ClassLeaderboard[]
+  members             Members[]
+  transactions        transactions[]
+  waitlist            Waitlist[]
+  userNotes           UserNote[]
+  messageGroups       UserMessageGroup[]
+  contract            Contract[]
+  signedContracts     SignedContract[]
+  paymentHolidays     PaymentHoliday[]
+  contractLogs        ContractLogs[]
 }
 
 model Message {

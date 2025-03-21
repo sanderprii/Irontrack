@@ -66,6 +66,8 @@ export default function AppAppBar() {
         setOpen(newOpen);
     };
 
+    const pricingPlan = localStorage.getItem('pricingPlan');
+
     // Kontrollime, kas ekraani laius on väiksem kui "md"
     // et näidata kas ülemist menüüd (desktop) või alumist nav'i (mobiil).
     const isMobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
@@ -108,8 +110,9 @@ export default function AppAppBar() {
                 {name: 'Classes', to: '/classes'},
                 {name: 'Members', to: '/members'},
                 {name: 'Plans', to: '/plans'},
-                {name: 'Messages', to: '/messages'},
+                ...(pricingPlan === 'premium' ? [{name: 'Messages', to: '/messages'}] : [])
             ];
+
 
         } else if (role === 'trainer') {
             leftLinks = [

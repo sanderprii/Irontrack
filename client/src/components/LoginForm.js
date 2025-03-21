@@ -1,28 +1,32 @@
-import React, {useState, useContext} from 'react';
-import {AuthContext} from '../context/AuthContext';
-import {useNavigate} from 'react-router-dom';
-import {styled} from '@mui/material/styles';
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
 import {
     Box,
     Button,
-    Checkbox,
     CssBaseline,
     FormControl,
-    FormControlLabel,
     FormLabel,
-    Link,
     TextField,
     Typography,
     Stack,
     Divider,
-    Alert
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
+    InputAdornment,
+    Paper
 } from '@mui/material';
-import MuiCard from '@mui/material/Card';
+import { Visibility, VisibilityOff, Close as CloseIcon } from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import {GoogleIcon, FacebookIcon, SitemarkIcon} from './components/CustomIcons';
 
-const Card = styled(MuiCard)(({theme}) => ({
+
+const Card = styled(Paper)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignSelf: 'center',
@@ -33,46 +37,83 @@ const Card = styled(MuiCard)(({theme}) => ({
     [theme.breakpoints.up('sm')]: {
         maxWidth: '450px',
     },
-    boxShadow:
-        'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-    ...theme.applyStyles('dark', {
-        boxShadow:
-            'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
-    }),
+    boxShadow: theme.palette.mode === 'dark'
+        ? '0 8px 32px rgba(0, 0, 0, 0.5)'
+        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+    borderRadius: '16px',
+    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+    '&:hover': {
+        boxShadow: theme.palette.mode === 'dark'
+            ? '0 12px 40px rgba(0, 0, 0, 0.7)'
+            : '0 12px 40px rgba(0, 0, 0, 0.15)',
+    }
 }));
 
-const LoginContainer = styled(Stack)(({theme}) => ({
+const LoginContainer = styled(Stack)(({ theme }) => ({
     height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
     minHeight: '100%',
+    background: theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+        : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
     padding: theme.spacing(2),
     [theme.breakpoints.up('sm')]: {
         padding: theme.spacing(4),
     },
-    '&::before': {
-        content: '""',
-        display: 'block',
-        position: 'absolute',
-        zIndex: -1,
-        inset: 0,
+}));
 
-        ...theme.applyStyles('dark', {
-            backgroundImage:
-                'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-        }),
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+    marginBottom: theme.spacing(2),
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+    padding: '12px 0',
+    borderRadius: '8px',
+    fontWeight: 600,
+    textTransform: 'none',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease-in-out',
+    boxShadow: 'none',
+    '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    },
+}));
+
+const ForgotPasswordLink = styled(Typography)(({ theme }) => ({
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+    textAlign: 'right',
+    cursor: 'pointer',
+    color: theme.palette.primary.main,
+    '&:hover': {
+        textDecoration: 'underline',
     },
 }));
 
 const LoginForm = () => {
-    const {setToken} = useContext(AuthContext);
+    const { setToken } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    // Login form state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
     const [passwordError, setPasswordError] = useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-    const API_URL = process.env.REACT_APP_API_URL
+
+    // Forgot password dialog state
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetEmailError, setResetEmailError] = useState(false);
+    const [resetEmailErrorMessage, setResetEmailErrorMessage] = useState('');
+    const [resetRequestSuccess, setResetRequestSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const API_URL = process.env.REACT_APP_API_URL;
+
     const validateInputs = () => {
         let isValid = true;
 
@@ -85,9 +126,9 @@ const LoginForm = () => {
             setEmailErrorMessage('');
         }
 
-        if (!password || password.length < 1) {
+        if (!password) {
             setPasswordError(true);
-            setPasswordErrorMessage('Password must be at least 6 characters long.');
+            setPasswordErrorMessage('Password is required.');
             isValid = false;
         } else {
             setPasswordError(false);
@@ -100,8 +141,10 @@ const LoginForm = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+        setIsSubmitting(true);
 
         if (!validateInputs()) {
+            setIsSubmitting(false);
             return;
         }
 
@@ -112,44 +155,130 @@ const LoginForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({email, password}),
+                body: JSON.stringify({ email, password }),
             });
 
             const data = await response.json();
+
             if (response.ok) {
                 setToken(data.token);
+
+                if (data.pricingPlan) {
+                    localStorage.setItem('pricingPlan', data.pricingPlan);
+                }
+
                 navigate('/select-role');
             } else {
-                setError(data.error || 'Something went wrong during login.');
+                if (data.emailConfirmed === false) {
+                    setError('Please verify your email before logging in. Check your inbox for a verification link.');
+                } else {
+                    setError(data.error || 'Something went wrong during login.');
+                }
             }
         } catch (err) {
             console.error(err);
             setError('Server error, please try again later.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleForgotPasswordOpen = () => {
+        setForgotPasswordOpen(true);
+        setResetEmail(email); // Pre-fill with login email if available
+        setResetRequestSuccess(false);
+    };
+
+    const handleForgotPasswordClose = () => {
+        setForgotPasswordOpen(false);
+        setResetEmail('');
+        setResetEmailError(false);
+        setResetEmailErrorMessage('');
+    };
+
+    const validateResetEmail = () => {
+        if (!resetEmail || !/\S+@\S+\.\S+/.test(resetEmail)) {
+            setResetEmailError(true);
+            setResetEmailErrorMessage('Please enter a valid email address.');
+            return false;
+        }
+        setResetEmailError(false);
+        setResetEmailErrorMessage('');
+        return true;
+    };
+
+    const handleRequestPasswordReset = async () => {
+        if (!validateResetEmail()) return;
+
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch(`${API_URL}/auth/request-password-reset`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: resetEmail }),
+            });
+
+            if (response.ok) {
+                setResetRequestSuccess(true);
+            } else {
+                const data = await response.json();
+                setResetEmailError(true);
+                setResetEmailErrorMessage(data.error || 'Failed to send reset email.');
+            }
+        } catch (err) {
+            console.error(err);
+            setResetEmailError(true);
+            setResetEmailErrorMessage('Server error, please try again later.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <AppTheme>
-            <CssBaseline enableColorScheme/>
+            <CssBaseline enableColorScheme />
             <LoginContainer direction="column" justifyContent="space-between">
-                <ColorModeSelect sx={{position: 'fixed', top: '1rem', right: '1rem'}}/>
-                <Card variant="outlined"
-                      sx={{bgcolor: "background.paper", boxShadow: "0px 4px 10px rgba(255, 179, 71, 0.5)"}}>
-                    <SitemarkIcon/>
+                <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+                <Card elevation={6}>
+
                     <Typography
                         component="h1"
                         variant="h4"
-                        sx={{width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)'}}
+                        sx={{
+                            width: '100%',
+                            fontSize: 'clamp(2rem, 10vw, 2.15rem)',
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            mb: 3
+                        }}
                     >
-                        Log In
+                        Welcome Back
                     </Typography>
 
-                    {error && <Alert severity="error">{error}</Alert>}
+                    {error && (
+                        <Alert
+                            severity="error"
+                            sx={{
+                                mb: 2,
+                                borderRadius: '8px',
+                                animation: 'fadeIn 0.5s'
+                            }}
+                        >
+                            {error}
+                        </Alert>
+                    )}
 
-                    <Box component="form" onSubmit={handleLogin} noValidate
-                         sx={{display: 'flex', flexDirection: 'column', width: '100%', gap: 2}}>
-                        <FormControl>
-                            <FormLabel htmlFor="email">Email</FormLabel>
+                    <Box
+                        component="form"
+                        onSubmit={handleLogin}
+                        noValidate
+                        sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+                    >
+                        <StyledFormControl>
+                            <FormLabel htmlFor="email" sx={{ mb: 1, fontWeight: 500 }}>Email</FormLabel>
                             <TextField
                                 error={emailError}
                                 helperText={emailErrorMessage}
@@ -165,17 +294,23 @@ const LoginForm = () => {
                                 color={emailError ? 'error' : 'primary'}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                sx={{
+                                    borderRadius: '8px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '8px',
+                                    }
+                                }}
                             />
-                        </FormControl>
+                        </StyledFormControl>
 
-                        <FormControl>
-                            <FormLabel htmlFor="password">Password</FormLabel>
+                        <StyledFormControl>
+                            <FormLabel htmlFor="password" sx={{ mb: 1, fontWeight: 500 }}>Password</FormLabel>
                             <TextField
                                 error={passwordError}
                                 helperText={passwordErrorMessage}
                                 name="password"
                                 placeholder="••••••"
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 id="password"
                                 autoComplete="current-password"
                                 required
@@ -184,34 +319,169 @@ const LoginForm = () => {
                                 color={passwordError ? 'error' : 'primary'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                sx={{
+                                    borderRadius: '8px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '8px',
+                                    }
+                                }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                aria-label="toggle password visibility"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
                             />
-                        </FormControl>
+                        </StyledFormControl>
 
+                        <ForgotPasswordLink variant="body2" onClick={handleForgotPasswordOpen}>
+                            Forgot password?
+                        </ForgotPasswordLink>
 
-
-                        <Button type="submit" fullWidth variant="contained">
-                            Log In
-                        </Button>
+                        <StyledButton
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Logging in...' : 'Log In'}
+                        </StyledButton>
                     </Box>
 
-                    <Divider>or</Divider>
+                    <Divider sx={{ my: 3 }}>or</Divider>
 
-                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-                        {/* google
-                        <Button fullWidth variant="outlined" onClick={() => alert('Sign in with Google')} startIcon={<GoogleIcon />}>
-                            Sign in with Google
-                        </Button>
-*/}
-
-                        <Typography sx={{textAlign: 'center'}}>
-                            Don&apos;t have an account?{' '}
-                            <Link href="/register" variant="body2">
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Typography sx={{ textAlign: 'center' }}>
+                            Don't have an account?{' '}
+                            <Link to="/register" style={{ color: 'inherit', fontWeight: 600 }}>
                                 Sign up
                             </Link>
                         </Typography>
                     </Box>
                 </Card>
             </LoginContainer>
+
+            {/* Forgot Password Dialog */}
+            <Dialog
+                open={forgotPasswordOpen}
+                onClose={handleForgotPasswordClose}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: '16px',
+                        p: 2
+                    }
+                }}
+            >
+                <DialogTitle sx={{ position: 'relative', textAlign: 'center', pb: 0 }}>
+                    <IconButton
+                        aria-label="close"
+                        onClick={handleForgotPasswordClose}
+                        sx={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                    <Typography variant="h5" component="div" fontWeight={700}>
+                        Reset Password
+                    </Typography>
+                </DialogTitle>
+
+                <DialogContent>
+                    {resetRequestSuccess ? (
+                        <Alert
+                            severity="success"
+                            sx={{
+                                mt: 2,
+                                borderRadius: '8px',
+                                animation: 'fadeIn 0.5s'
+                            }}
+                        >
+                            Password reset link sent! Please check your email inbox.
+                        </Alert>
+                    ) : (
+                        <>
+                            <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
+                                Enter your email address and we'll send you a link to reset your password.
+                            </Typography>
+
+                            <TextField
+                                error={resetEmailError}
+                                helperText={resetEmailErrorMessage}
+                                id="reset-email"
+                                type="email"
+                                label="Email"
+                                placeholder="your@email.com"
+                                fullWidth
+                                variant="outlined"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                                sx={{
+                                    mb: 2,
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '8px',
+                                    }
+                                }}
+                            />
+                        </>
+                    )}
+                </DialogContent>
+
+                <DialogActions sx={{ px: 3, pb: 3, pt: 0, justifyContent: resetRequestSuccess ? 'center' : 'space-between' }}>
+                    {resetRequestSuccess ? (
+                        <Button
+                            onClick={handleForgotPasswordClose}
+                            variant="contained"
+                            sx={{
+                                borderRadius: '8px',
+                                padding: '10px 24px',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                            }}
+                        >
+                            Close
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                onClick={handleForgotPasswordClose}
+                                variant="outlined"
+                                sx={{
+                                    borderRadius: '8px',
+                                    padding: '10px 24px',
+                                    textTransform: 'none',
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleRequestPasswordReset}
+                                variant="contained"
+                                disabled={isSubmitting}
+                                sx={{
+                                    borderRadius: '8px',
+                                    padding: '10px 24px',
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
         </AppTheme>
     );
 };

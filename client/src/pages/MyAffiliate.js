@@ -26,11 +26,15 @@ import UnpaidUsers from '../components/UnPaidUsers';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
+const pricingPlan = localStorage.getItem('pricingPlan');
+
 const menuItems = [
     { id: 'my-affiliate', label: 'My Affiliate', component: AffiliateView },
     { id: 'finance', label: 'Finance', component: FinanceView },
-    { id: 'contracts', label: 'Contracts', component: AffiliateContracts },
-    { id: 'unpaid-users', label: 'Unpaid Users', component: UnpaidUsers },
+    ...(pricingPlan === 'premium' ? [
+        { id: 'contracts', label: 'Contracts', component: AffiliateContracts },
+        { id: 'unpaid-users', label: 'Unpaid Users', component: UnpaidUsers },
+    ] : [])
 ];
 
 export default function MyAffiliate() {

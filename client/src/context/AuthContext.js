@@ -6,6 +6,7 @@ export function AuthProvider({ children }) {
     const [authState, setAuthState] = useState({
         token: localStorage.getItem('token') || null,
         role: localStorage.getItem('role') || null,
+
     });
 
     // LocalStorage sünk
@@ -46,6 +47,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('checkout_appliedCredit');
         localStorage.removeItem('checkout_userData');
         localStorage.removeItem('checkout_isContractPayment');
+        localStorage.removeItem('pricingPlan');
 
 
         // suuna avalehele (või kuhu vaja)

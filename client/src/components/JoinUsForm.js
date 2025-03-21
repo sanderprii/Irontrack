@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
+import { useNavigate, Link } from 'react-router-dom';
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     Box,
     Button,
@@ -9,20 +10,23 @@ import {
     FormControl,
     FormControlLabel,
     FormLabel,
-    Link,
     TextField,
     Typography,
     Stack,
     Divider,
-    Alert
+    Alert,
+    Paper,
+    Grid,
+    InputAdornment,
+    IconButton
 } from '@mui/material';
-import MuiCard from '@mui/material/Card';
+import { Visibility, VisibilityOff, Person, Email, Phone, Home, Key } from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+
 import ContractTermsModal from './ContractTermsModal';
 
-const Card = styled(MuiCard)(({ theme }) => ({
+const Card = styled(Paper)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignSelf: 'center',
@@ -30,70 +34,79 @@ const Card = styled(MuiCard)(({ theme }) => ({
     padding: theme.spacing(4),
     gap: theme.spacing(2),
     margin: 'auto',
-    boxShadow:
-        'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-    [theme.breakpoints.up('sm')]: {
-        width: '450px',
+    boxShadow: theme.palette.mode === 'dark'
+        ? '0 8px 32px rgba(0, 0, 0, 0.5)'
+        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+    borderRadius: '16px',
+    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+    '&:hover': {
+        boxShadow: theme.palette.mode === 'dark'
+            ? '0 12px 40px rgba(0, 0, 0, 0.7)'
+            : '0 12px 40px rgba(0, 0, 0, 0.15)',
     },
-    ...theme.applyStyles('dark', {
-        boxShadow:
-            'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
-    }),
+    [theme.breakpoints.up('md')]: {
+        maxWidth: '900px',
+    },
 }));
 
 const SignUpContainer = styled(Stack)(({ theme }) => ({
-    height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-    minHeight: '100%',
+    minHeight: '100vh',
+    background: theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+        : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
     padding: theme.spacing(2),
     [theme.breakpoints.up('sm')]: {
         padding: theme.spacing(4),
     },
-    '&::before': {
-        content: '""',
-        display: 'block',
-        position: 'absolute',
-        zIndex: -1,
-        inset: 0,
+}));
 
-        backgroundRepeat: 'no-repeat',
-        ...theme.applyStyles('dark', {
-            backgroundImage:
-                'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-        }),
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+    marginBottom: theme.spacing(2),
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+    padding: '12px 0',
+    borderRadius: '8px',
+    fontWeight: 600,
+    textTransform: 'none',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease-in-out',
+    boxShadow: 'none',
+    '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     },
 }));
 
 export default function JoinUsForm() {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMediumScreen = useMediaQuery(theme.breakpoints.up('md'));
+
+    // Form state
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [termsModalOpen, setTermsModalOpen] = useState(false);
-    const [ termstId, setTermsId] = useState('');
-
-    // Kontrollboole ja errormessage'id
+    const [termsId, setTermsId] = useState('');
     const [isAffiliateOwner, setIsAffiliateOwner] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Email
+    // Validation error states
     const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
-
-    // Parool
     const [passwordError, setPasswordError] = useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-
-    // Kinnituse parool
     const [confirmPasswordError, setConfirmPasswordError] = useState(false);
     const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = useState('');
-
-    // FullName
     const [fullNameError, setFullNameError] = useState(false);
     const [fullNameErrorMessage, setFullNameErrorMessage] = useState('');
 
@@ -103,7 +116,7 @@ export default function JoinUsForm() {
     const validateInputs = () => {
         let isValid = true;
 
-        // FullName (nõutud)
+        // Full Name validation
         if (!fullName.trim()) {
             setFullNameError(true);
             setFullNameErrorMessage('Full name is required.');
@@ -113,7 +126,7 @@ export default function JoinUsForm() {
             setFullNameErrorMessage('');
         }
 
-        // Email (nõutud + vormindus)
+        // Email validation
         if (!email || !/\S+@\S+\.\S+/.test(email)) {
             setEmailError(true);
             setEmailErrorMessage('Please enter a valid email address.');
@@ -123,7 +136,7 @@ export default function JoinUsForm() {
             setEmailErrorMessage('');
         }
 
-        // Parool (nõutud, min 6 tähte)
+        // Password validation (min 6 characters)
         if (!password || password.length < 6) {
             setPasswordError(true);
             setPasswordErrorMessage('Password must be at least 6 characters long.');
@@ -133,7 +146,7 @@ export default function JoinUsForm() {
             setPasswordErrorMessage('');
         }
 
-        // Kinnita parool (nõutud + peab kattuma `password`)
+        // Confirm password validation
         if (!confirmPassword || confirmPassword !== password) {
             setConfirmPasswordError(true);
             setConfirmPasswordErrorMessage('Passwords do not match.');
@@ -143,9 +156,12 @@ export default function JoinUsForm() {
             setConfirmPasswordErrorMessage('');
         }
 
+        // Terms acceptance validation
         if (!acceptedTerms) {
             setError('You must accept the terms and conditions');
             isValid = false;
+        } else {
+            setError('');
         }
 
         return isValid;
@@ -155,8 +171,10 @@ export default function JoinUsForm() {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setIsSubmitting(true);
 
         if (!validateInputs()) {
+            setIsSubmitting(false);
             return;
         }
 
@@ -179,231 +197,401 @@ export default function JoinUsForm() {
 
             const data = await response.json();
             if (response.ok) {
-                setSuccess('Registration successful!');
-                localStorage.setItem('token', data.token);
-                navigate('/');
+                setSuccess(
+                    'Registration successful! Please check your email to verify your account before logging in.'
+                );
+
+                // Clear form
+                setFullName('');
+                setPhone('');
+                setAddress('');
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                setAcceptedTerms(false);
+                setIsAffiliateOwner(false);
+
+                // Automatically redirect to login after 5 seconds
+                setTimeout(() => {
+                    navigate('/login');
+                }, 5000);
             } else {
                 setError(data.error || 'Something went wrong with registration.');
             }
         } catch (err) {
             console.error(err);
             setError('Server error, please try again later.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
-    const openTerms = (contract) => {
-        setTermsId('register')
+    const openTerms = () => {
+        setTermsId('register');
         setTermsModalOpen(true);
     };
 
     return (
         <AppTheme>
             <CssBaseline enableColorScheme />
-            <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+            <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 1100 }} />
             <SignUpContainer direction="column" justifyContent="space-between">
-                <Card
-                    variant="outlined"
-                    sx={{
-                        backgroundColor: 'background.paper',
-                        boxShadow: '0px 4px 10px rgba(255, 179, 71, 0.5)',
-                        flex: 1,
-                        overflow: 'auto',
-                    }}
-                >
-                    <SitemarkIcon />
-                    <Typography
-                        component="h1"
-                        variant="h4"
-                        sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-                    >
-                        Join Us
-                    </Typography>
+                <Card elevation={6}>
+                    <Box sx={{ textAlign: 'center', mb: 3 }}>
 
-                    {error && <Alert severity="error">{error}</Alert>}
-                    {success && <Alert severity="success">{success}</Alert>}
+                        <Typography
+                            component="h1"
+                            variant="h4"
+                            sx={{
+                                fontSize: 'clamp(2rem, 5vw, 2.5rem)',
+                                fontWeight: 700,
+                            }}
+                        >
+                            Join Us
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                            Create an account to get started with IronTrack
+                        </Typography>
+                    </Box>
+
+                    {error && (
+                        <Alert
+                            severity="error"
+                            sx={{
+                                mb: 3,
+                                borderRadius: '8px',
+                                animation: 'fadeIn 0.5s'
+                            }}
+                        >
+                            {error}
+                        </Alert>
+                    )}
+
+                    {success && (
+                        <Alert
+                            severity="success"
+                            sx={{
+                                mb: 3,
+                                borderRadius: '8px',
+                                animation: 'fadeIn 0.5s'
+                            }}
+                        >
+                            {success}
+                        </Alert>
+                    )}
 
                     <Box
                         component="form"
                         onSubmit={handleRegister}
-                        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
                     >
-                        {/* Full Name */}
-                        <FormControl>
-                            <FormLabel htmlFor="fullName">Full Name</FormLabel>
-                            <TextField
-                                error={fullNameError}
-                                helperText={fullNameErrorMessage}
-                                id="fullName"
-                                name="fullName"
-                                placeholder="John Smith"
-                                autoComplete="name"
-                                required
-                                fullWidth
-                                variant="outlined"
-                                color={fullNameError ? 'error' : 'primary'}
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                            />
-                        </FormControl>
+                        <Grid container spacing={3}>
+                            {/* Left column */}
+                            <Grid item xs={12} md={6}>
+                                {/* Full Name */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="fullName" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Full Name
+                                    </FormLabel>
+                                    <TextField
+                                        error={fullNameError}
+                                        helperText={fullNameErrorMessage}
+                                        id="fullName"
+                                        name="fullName"
+                                        placeholder="John Smith"
+                                        autoComplete="name"
+                                        required
+                                        fullWidth
+                                        variant="outlined"
+                                        color={fullNameError ? 'error' : 'primary'}
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Person />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
 
-                        {/* Phone (vabatahtlik) */}
-                        <FormControl>
-                            <FormLabel htmlFor="phone">Phone (optional)</FormLabel>
-                            <TextField
-                                id="phone"
-                                name="phone"
-                                placeholder="+123456789"
-                                autoComplete="tel"
-                                fullWidth
-                                variant="outlined"
-                                color="primary"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                            />
-                        </FormControl>
+                                {/* Email */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="email" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Email
+                                    </FormLabel>
+                                    <TextField
+                                        error={emailError}
+                                        helperText={emailErrorMessage}
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        placeholder="john@smith.com"
+                                        autoComplete="email"
+                                        required
+                                        fullWidth
+                                        variant="outlined"
+                                        color={emailError ? 'error' : 'primary'}
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Email />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
 
-                        {/* Address (vabatahtlik) */}
-                        <FormControl>
-                            <FormLabel htmlFor="address">Address (optional)</FormLabel>
-                            <TextField
-                                id="address"
-                                name="address"
-                                placeholder="Your address"
-                                fullWidth
-                                variant="outlined"
-                                color="primary"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            />
-                        </FormControl>
+                                {/* Phone (optional) */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="phone" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Phone (optional)
+                                    </FormLabel>
+                                    <TextField
+                                        id="phone"
+                                        name="phone"
+                                        placeholder="+123456789"
+                                        autoComplete="tel"
+                                        fullWidth
+                                        variant="outlined"
+                                        color="primary"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Phone />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
+                            </Grid>
 
-                        {/* Email (nõutud) */}
-                        <FormControl>
-                            <FormLabel htmlFor="email">Email</FormLabel>
-                            <TextField
-                                error={emailError}
-                                helperText={emailErrorMessage}
-                                id="email"
-                                type="email"
-                                name="email"
-                                placeholder="john@smith.com"
-                                autoComplete="email"
-                                required
-                                fullWidth
-                                variant="outlined"
-                                color={emailError ? 'error' : 'primary'}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </FormControl>
+                            {/* Right column */}
+                            <Grid item xs={12} md={6}>
+                                {/* Password */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="password" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Password
+                                    </FormLabel>
+                                    <TextField
+                                        error={passwordError}
+                                        helperText={passwordErrorMessage}
+                                        name="password"
+                                        placeholder="••••••"
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        autoComplete="new-password"
+                                        required
+                                        fullWidth
+                                        variant="outlined"
+                                        color={passwordError ? 'error' : 'primary'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Key />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="toggle password visibility"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        edge="end"
+                                                    >
+                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
 
-                        {/* Password (nõutud) */}
-                        <FormControl>
-                            <FormLabel htmlFor="password">Password</FormLabel>
-                            <TextField
-                                error={passwordError}
-                                helperText={passwordErrorMessage}
-                                name="password"
-                                placeholder="••••••"
-                                type="password"
-                                id="password"
-                                autoComplete="new-password"
-                                required
-                                fullWidth
-                                variant="outlined"
-                                color={passwordError ? 'error' : 'primary'}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </FormControl>
+                                {/* Confirm Password */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="confirmPassword" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Confirm Password
+                                    </FormLabel>
+                                    <TextField
+                                        error={confirmPasswordError}
+                                        helperText={confirmPasswordErrorMessage}
+                                        name="confirmPassword"
+                                        placeholder="••••••"
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        id="confirmPassword"
+                                        required
+                                        fullWidth
+                                        variant="outlined"
+                                        color={confirmPasswordError ? 'error' : 'primary'}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Key />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="toggle confirm password visibility"
+                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                        edge="end"
+                                                    >
+                                                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
 
-                        {/* Confirm Password (nõutud) */}
-                        <FormControl>
-                            <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
-                            <TextField
-                                error={confirmPasswordError}
-                                helperText={confirmPasswordErrorMessage}
-                                name="confirmPassword"
-                                placeholder="••••••"
-                                type="password"
-                                id="confirmPassword"
-                                required
-                                fullWidth
-                                variant="outlined"
-                                color={confirmPasswordError ? 'error' : 'primary'}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
-                        </FormControl>
+                                {/* Address (optional) */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="address" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Address (optional)
+                                    </FormLabel>
+                                    <TextField
+                                        id="address"
+                                        name="address"
+                                        placeholder="Your address"
+                                        fullWidth
+                                        variant="outlined"
+                                        color="primary"
+                                        value={address}
+                                        onChange={(e) => setAddress(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Home />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
+                            </Grid>
+                        </Grid>
 
-                        {/* Kasuta Affiliates */}
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={isAffiliateOwner}
-                                    onChange={(e) => setIsAffiliateOwner(e.target.checked)}
-                                    color="primary"
-                                />
-                            }
-                            label="Are you an Affiliate Owner?"
-                        />
-
-                        <Box display="flex" alignItems="center" gap={1}>
-                            <Checkbox
-                                checked={acceptedTerms}
-                                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        {/* Full width elements */}
+                        <Box sx={{ mt: 2 }}>
+                            {/* Affiliate Owner Checkbox */}
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={isAffiliateOwner}
+                                        onChange={(e) => setIsAffiliateOwner(e.target.checked)}
+                                        color="primary"
+                                    />
+                                }
+                                label="Are you an Affiliate Owner?"
+                                sx={{ mb: 1 }}
                             />
-                            <Typography>
-                                I have read and understand Terms and Conditions
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    openTerms();
+
+                            {/* Terms and Conditions */}
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={1}
+                                sx={{
+                                    mb: 3,
+                                    flexDirection: { xs: 'column', sm: 'row' },
+                                    alignItems: { xs: 'flex-start', sm: 'center' }
                                 }}
-                                size="small"
                             >
-                                Open Terms
-                            </Button>
+                                <Box display="flex" alignItems="center">
+                                    <Checkbox
+                                        checked={acceptedTerms}
+                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                        sx={{ mr: 1 }}
+                                    />
+                                    <Typography>
+                                        I have read and understand Terms and Conditions
+                                    </Typography>
+                                </Box>
+                                <Button
+                                    variant="outlined"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        openTerms();
+                                    }}
+                                    size="small"
+                                    sx={{
+                                        ml: { xs: 0, sm: 2 },
+                                        mt: { xs: 1, sm: 0 },
+                                        borderRadius: '8px',
+                                        textTransform: 'none'
+                                    }}
+                                >
+                                    Open Terms
+                                </Button>
+                            </Box>
+
+                            <StyledButton
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                disabled={isSubmitting || !acceptedTerms}
+                                sx={{ mb: 3 }}
+                            >
+                                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                            </StyledButton>
                         </Box>
 
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            disabled={!acceptedTerms}
-                        >
-                            Join Us
-                        </Button>
-                    </Box>
+                        <Divider sx={{ mb: 3 }}>or</Divider>
 
-                    <Divider>or</Divider>
-
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {/* Google
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={() => alert('Sign up with Google')}
-                            startIcon={<GoogleIcon />}
-                        >
-                            Sign up with Google
-                        </Button>
-                        */}
-
-                        <Typography sx={{ textAlign: 'center' }}>
-                            Already have an account?{' '}
-                            <Link href="/login" variant="body2">
-                                Sign in
-                            </Link>
-                        </Typography>
+                        <Box sx={{ textAlign: 'center' }}>
+                            <Typography>
+                                Already have an account?{' '}
+                                <Link to="/login" style={{ color: theme.palette.primary.main, fontWeight: 600, textDecoration: 'none' }}>
+                                    Sign in
+                                </Link>
+                            </Typography>
+                        </Box>
                     </Box>
                 </Card>
                 <ContractTermsModal
                     open={termsModalOpen}
                     onClose={() => setTermsModalOpen(false)}
-                    termsId={termstId}
+                    termsId={termsId}
                 />
             </SignUpContainer>
         </AppTheme>

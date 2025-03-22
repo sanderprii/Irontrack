@@ -7,23 +7,20 @@ import {
     List,
     ListItem,
     ListItemText,
-    IconButton,
-    Toolbar,
     Card,
     CardContent,
-    CircularProgress
+    CircularProgress,
+    Tabs,
+    Tab,
+    Paper
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-
-import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import {useEffect} from 'react';
+import {getAffiliate} from '../api/affiliateApi';
 
 // Kolm alamkomponenti, mille teed eraldi failides:
 import SendMessage from '../components/SendMessage';
 import SentMessage from '../components/SentMessage';
 import GroupsMessage from '../components/GroupsMessage';
-import {useEffect} from 'react';
-import {getAffiliate} from '../api/affiliateApi';
 
 const menuItems = [
     {id: 'send-message', label: 'Send Message (+)', component: SendMessage},
@@ -31,14 +28,11 @@ const menuItems = [
     {id: 'groups', label: 'Groups', component: GroupsMessage},
 ];
 
-// Näide: kui tahad, et vaikimisi oleks “sent-messages” avatud
+// Näide: kui tahad, et vaikimisi oleks "sent-messages" avatud
 export default function MessagePage() {
     const [activeComponent, setActiveComponent] = useState('sent-messages');
-    const [drawerOpen, setDrawerOpen] = useState(false);
     const [affiliate, setAffiliate] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-
-    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchAffiliate = async () => {
@@ -60,25 +54,19 @@ export default function MessagePage() {
 
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
-        setMenuOpen(false);
     };
 
     return (
         <Container
             maxWidth={false}
             sx={{
-
                 px: {xs: 0, sm: 0, md: 4},
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.default',
-
             }}
         >
-
-            {/* Mobile Menu Button */}
-
-
+            {/* Horisontaalne mobiilimenüü */}
             <Paper
                 sx={{
                     position: 'static',
@@ -86,61 +74,74 @@ export default function MessagePage() {
                     left: 0,
                     right: 0,
                     zIndex: 1300,
-
                     display: {xs: 'block', md: 'none'},
+                    overflow: 'hidden',
                 }}
+                elevation={1}
             >
-                <BottomNavigation
-                    showLabels
-                    value={activeComponent}
-                    onChange={(event, newValue) => {
-                        setActiveComponent(newValue);
-                        setMenuOpen(false);
-                    }}
+                <Box
                     sx={{
-                        backgroundColor: 'background.paper',
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                        height: 40,
+                        overflowX: 'auto',
+                        display: 'flex',
+                        width: '100%',
+                        WebkitOverflowScrolling: 'touch', // Parem kerimine iOS-il
+                        msOverflowStyle: 'none', // IE ja Edge jaoks
+                        scrollbarWidth: 'none', // Firefox jaoks
+                        '&::-webkit-scrollbar': { display: 'none' }, // Chrome, Safari ja Opera jaoks
+                        position: 'relative',
+                        '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            height: '100%',
+                            width: '20px',
+                            background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.9))',
+                            pointerEvents: 'none', // Et gradient ei takistaks klikke
+                        },
                     }}
                 >
-                    <BottomNavigationAction
-                        label="Menu"
-                        icon={<ArrowDropDownIcon/>}
-                        onClick={() => setMenuOpen(!menuOpen)}
+                    <Tabs
+                        value={activeComponent}
+                        onChange={(event, newValue) => setActiveComponent(newValue)}
+                        variant="scrollable"
+                        scrollButtons={false}
+                        TabIndicatorProps={{ style: { display: 'none' } }} // Peida indikaator
                         sx={{
-                            transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s',
-                        }}
-                    />
-                </BottomNavigation>
-
-                {menuOpen && (
-                    <Box
-                        sx={{
-                            backgroundColor: 'background.paper',
-                            borderTop: '1px solid',
-                            borderColor: 'divider',
-                            maxHeight: '500px',
-                            overflowY: 'auto',
+                            minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                            width: '100%',
+                            '& .MuiTabs-flexContainer': {
+                                width: '100%',
+                                display: 'flex',
+                                '& > *': {
+                                    flexGrow: 1, // Kõik tabid võrdselt laiaks kui ruumi on
+                                },
+                            },
+                            '& .MuiTab-root': {
+                                minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                                py: 0.75, // Vähendatud padding ülevalt ja alt
+                                textTransform: 'none',
+                            },
                         }}
                     >
-                        <List>
-                            {menuItems.map((item) => (
-                                <ListItem
-                                    button
-                                    key={item.id}
-                                    onClick={() => handleMenuClick(item.id)}
-                                >
-
-                                    <ListItemText primary={item.label}/>
-
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
-                )}
+                        {menuItems.map((item) => (
+                            <Tab
+                                key={item.id}
+                                label={item.label}
+                                value={item.id}
+                                sx={{
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 'auto',
+                                    fontWeight: activeComponent === item.id ? 'bold' : 'normal',
+                                    fontSize: '0.85rem', // Väiksem font, et sobituks madalama kõrgusega
+                                    px: 1, // Vähendatud külgmine padding
+                                }}
+                            />
+                        ))}
+                    </Tabs>
+                </Box>
             </Paper>
+
             <Box sx={{display: "flex", flexGrow: 1}}>
                 {/* Desktopi küljeriba */}
                 <Drawer
@@ -148,7 +149,6 @@ export default function MessagePage() {
                     sx={{
                         display: {xs: 'none', md: 'block'},
                         width: 240,
-
                         flexShrink: 0,
                         position: 'relative !important',
                     }}
@@ -165,6 +165,7 @@ export default function MessagePage() {
                                     button
                                     key={item.id}
                                     onClick={() => handleMenuClick(item.id)}
+                                    selected={activeComponent === item.id}
                                 >
                                     <ListItemText primary={item.label}/>
                                 </ListItem>
@@ -173,13 +174,13 @@ export default function MessagePage() {
                     </Box>
                 </Drawer>
 
-
                 {/* Põhisisu */}
                 <Box
                     sx={{
                         flexGrow: 1,
                         p: {xs: 0, sm: 0, md: 3},
                         backgroundColor: 'background.paper',
+                        mt: { xs: 1, md: 0 }, // Lisa väike vahe üleval mobiilivaates
                     }}
                 >
                     <Card sx={{backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2}}>
@@ -190,14 +191,15 @@ export default function MessagePage() {
                         ) : (
                             <CardContent>
                                 {/* Aktiivne alamkomponent saab affiliate propsina */}
-                                <ActiveComponent affiliate={affiliate.affiliate.id}
-                                affiliateEmail={affiliate.affiliate.email}/>
+                                <ActiveComponent
+                                    affiliate={affiliate.affiliate.id}
+                                    affiliateEmail={affiliate.affiliate.email}
+                                />
                             </CardContent>
                         )}
                     </Card>
                 </Box>
             </Box>
         </Container>
-
     );
 }

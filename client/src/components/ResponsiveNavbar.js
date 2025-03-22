@@ -119,7 +119,7 @@ export default function AppAppBar() {
                 {name: 'Classes', to: '/classes'},
                 {name: 'Members', to: '/members'},
             ];
-            rightLinks = [{name: 'Log Out', action: () => logout(navigate)}];
+
         }
     }
 

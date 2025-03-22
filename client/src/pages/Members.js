@@ -14,8 +14,11 @@ import {
     Button,
     CircularProgress,
     Drawer,
+    Tabs,
+    Tab,
+    Paper,
 } from "@mui/material";
-import {BottomNavigation, BottomNavigationAction, Paper} from '@mui/material';
+import {BottomNavigation, BottomNavigationAction} from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import {
     getMembers,
@@ -239,6 +242,85 @@ export default function Members() {
                 )}
             </Paper>
 
+            {/* Horisontaalne mobiilimenüü komponentidele (nähtav ainult kui liige on valitud) */}
+            {selectedMember && (
+                <Paper
+                    sx={{
+                        display: { xs: "block", md: "none" },
+                        position: "static",
+                        zIndex: 1050,
+                        width: "100%",
+                        left: 0,
+                        right: 0,
+                        overflow: 'hidden',
+                        marginTop: menuOpen ? 0 : 0, // Kohandame asukohta vastavalt sellele, kas members dropdown on avatud
+                    }}
+                    elevation={1}
+                >
+                    <Box
+                        sx={{
+                            overflowX: 'auto',
+                            display: 'flex',
+                            width: '100%',
+                            WebkitOverflowScrolling: 'touch', // Parem kerimine iOS-il
+                            msOverflowStyle: 'none', // IE ja Edge jaoks
+                            scrollbarWidth: 'none', // Firefox jaoks
+                            '&::-webkit-scrollbar': { display: 'none' }, // Chrome, Safari ja Opera jaoks
+                            position: 'relative',
+                            '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                right: 0,
+                                top: 0,
+                                height: '100%',
+                                width: '20px',
+                                background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.9))',
+                                pointerEvents: 'none', // Et gradient ei takistaks klikke
+                            },
+                        }}
+                    >
+                        <Tabs
+                            value={activeComponent}
+                            onChange={(event, newValue) => setActiveComponent(newValue)}
+                            variant="scrollable"
+                            scrollButtons={false}
+                            TabIndicatorProps={{ style: { display: 'none' } }} // Peida indikaator
+                            sx={{
+                                minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                                width: '100%',
+                                '& .MuiTabs-flexContainer': {
+                                    width: '100%',
+                                    display: 'flex',
+                                    '& > *': {
+                                        flexGrow: 1, // Kõik tabid võrdselt laiaks kui ruumi on
+                                    },
+                                },
+                                '& .MuiTab-root': {
+                                    minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                                    py: 0.75, // Vähendatud padding ülevalt ja alt
+                                    textTransform: 'none',
+                                },
+                            }}
+                        >
+                            {menuItems.map((item) => (
+                                <Tab
+                                    key={item.id}
+                                    label={item.label}
+                                    value={item.id}
+                                    sx={{
+                                        whiteSpace: 'nowrap',
+                                        minWidth: 'auto',
+                                        fontWeight: activeComponent === item.id ? 'bold' : 'normal',
+                                        fontSize: '0.85rem', // Väiksem font, et sobituks madalama kõrgusega
+                                        px: 1, // Vähendatud külgmine padding
+                                    }}
+                                />
+                            ))}
+                        </Tabs>
+                    </Box>
+                </Paper>
+            )}
+
             {/* Põhisisu: Desktopil vasakul Drawer, paremal komponendid */}
             <Box sx={{display: "flex", flexGrow: 1}}>
                 {/* Vasak paneel: Liikmete nimekiri ja otsing (desktop vaade) */}
@@ -301,7 +383,14 @@ export default function Members() {
                 </Drawer>
 
                 {/* Parempoolne paneel: valitud kasutaja profiil ja menüü vaated */}
-                <Box sx={{flexGrow: 1, p: {xs: 0, md: 3}}}>
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        p: {xs: 0, md: 3},
+                        // Lisa väike ruumi ülaossa horisontaalse menüü jaoks mobiilivaates
+                        mt: { xs: selectedMember ? 1 : 0, md: 0 }
+                    }}
+                >
                     {isLoadingMember ? (
                         <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
                             <CircularProgress/>
@@ -310,7 +399,8 @@ export default function Members() {
                         <Card>
                             <CardContent>
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12} md={3}>
+                                    {/* Desktop vaates näitame vasakul külgmenüüd */}
+                                    <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
                                         <Box sx={{textAlign: "center"}}>
                                             <Avatar
                                                 src={
@@ -327,7 +417,6 @@ export default function Members() {
                                             </Typography>
 
                                             {!selectedMember.isMember && (
-
                                                 <Button onClick={() => handleAddMember(selectedMember.id)}>
                                                     Add member
                                                 </Button>
@@ -346,6 +435,29 @@ export default function Members() {
                                             ))}
                                         </List>
                                     </Grid>
+
+                                    {/* Mobiilis näitame ainult profiilipilti ja nime */}
+                                    <Grid item xs={12} sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', mb: 1 }}>
+
+                                        <Typography variant="h6" sx={{mt: 1}}>
+                                            {selectedMember.fullName}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {selectedMember.role || "Member"}
+                                        </Typography>
+
+                                        {!selectedMember.isMember && (
+                                            <Button
+                                                onClick={() => handleAddMember(selectedMember.id)}
+                                                size="small"
+                                                sx={{ mt: 1 }}
+                                            >
+                                                Add member
+                                            </Button>
+                                        )}
+                                    </Grid>
+
+                                    {/* Komponendi sisu */}
                                     <Grid item xs={12} md={9}>
                                         <ActiveComponent
                                             user={selectedMember}

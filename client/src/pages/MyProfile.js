@@ -11,11 +11,12 @@ import {
     Box,
     Card,
     CardContent,
+    Tabs,
+    Tab,
+    Badge,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-
-import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Paper } from '@mui/material';
 
 import Statistics from '../components/Statistics';
 import PurchaseHistory from '../components/PurchaseHistory';
@@ -24,7 +25,7 @@ import ProfileEdit from '../components/ProfileEdit';
 import ChangePassword from '../components/ChangePassword';
 import ProfileView from '../components/ProfileView';
 import CreditView from '../components/CreditView';
-import UserContracts from '../components/UserContracts'; // <-- Importime komponendi
+import UserContracts from '../components/UserContracts';
 import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
 import TrainingPlans from '../components/TrainingPlans';
@@ -43,7 +44,6 @@ const menuItems = [
     { id: 'visit-history', label: 'Visit History', component: VisitHistory },
     { id: 'active-plans', label: 'Active Plans', component: ActivePlans },
     { id: 'credit', label: 'Credit', component: CreditView },
-    // UUS menüüelement
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
     { id: 'transactions', label: 'Transactions', component: Transactions },
 ];
@@ -51,7 +51,6 @@ const menuItems = [
 export default function MyProfile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [menuOpen, setMenuOpen] = useState(false);
     const [activeComponent, setActiveComponent] = useState('my-profile');
     const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -93,7 +92,6 @@ export default function MyProfile() {
     const handleMenuClick = (componentId) => {
         setActiveComponent(componentId);
         setDrawerOpen(false);
-        setMenuOpen(false);
     };
 
     const handleUploadProfilePicture = async (file) => {
@@ -183,6 +181,18 @@ export default function MyProfile() {
         );
     };
 
+    // Horisontaalse menüü Tab kuvamiseks, lisame punase indikaatori vajadusel
+    const renderTabLabel = (item) => {
+        if (item.id === 'user-contracts' && sentCount > 0) {
+            return (
+                <Badge badgeContent={sentCount} color="error">
+                    {item.label}
+                </Badge>
+            );
+        }
+        return item.label;
+    };
+
     return (
         <Container
             maxWidth={false}
@@ -194,6 +204,82 @@ export default function MyProfile() {
                 pt: 2,
             }}
         >
+            {/* Horisontaalne mobiilimenüü */}
+            <Paper
+                sx={{
+position: 'absolute',
+                    top: 48,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1300,
+                    display: { xs: 'block', md: 'none' },
+                    overflow: 'hidden',
+                }}
+                elevation={1}
+            >
+                <Box
+                    sx={{
+                        overflowX: 'auto',
+                        display: 'flex',
+                        width: '100%',
+                        WebkitOverflowScrolling: 'touch', // Parem kerimine iOS-il
+                        msOverflowStyle: 'none', // IE ja Edge jaoks
+                        scrollbarWidth: 'none', // Firefox jaoks
+                        '&::-webkit-scrollbar': { display: 'none' }, // Chrome, Safari ja Opera jaoks
+                        position: 'relative',
+                        '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            height: '100%',
+                            width: '20px',
+                            background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.9))',
+                            pointerEvents: 'none', // Et gradient ei takistaks klikke
+                        },
+                    }}
+                >
+                    <Tabs
+                        value={activeComponent}
+                        onChange={(event, newValue) => setActiveComponent(newValue)}
+                        variant="scrollable"
+                        scrollButtons={false}
+                        TabIndicatorProps={{ style: { display: 'none' } }} // Peida indikaator
+                        sx={{
+                            minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                            width: '100%',
+                            '& .MuiTabs-flexContainer': {
+                                width: '100%',
+                                display: 'flex',
+                                '& > *': {
+                                    flexGrow: 1, // Kõik tabid võrdselt laiaks kui ruumi on
+                                },
+                            },
+                            '& .MuiTab-root': {
+                                minHeight: '36px', // 25% madalam kui tavaline (48px -> 36px)
+                                py: 0.75, // Vähendatud padding ülevalt ja alt
+                                textTransform: 'none',
+                            },
+                        }}
+                    >
+                        {menuItems.map((item) => (
+                            <Tab
+                                key={item.id}
+                                label={renderTabLabel(item)}
+                                value={item.id}
+                                sx={{
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 'auto',
+                                    fontWeight: activeComponent === item.id ? 'bold' : 'normal',
+                                    fontSize: '0.85rem', // Väiksem font, et sobituks madalama kõrgusega
+                                    px: 1, // Vähendatud külgmine padding
+                                }}
+                            />
+                        ))}
+                    </Tabs>
+                </Box>
+            </Paper>
+
             {/* Sidebar Navigation - desktop */}
             <Drawer
                 variant="permanent"
@@ -216,6 +302,7 @@ export default function MyProfile() {
                                 button
                                 key={item.id}
                                 onClick={() => handleMenuClick(item.id)}
+                                selected={activeComponent === item.id}
                             >
                                 <ListItemText
                                     primary={
@@ -236,120 +323,13 @@ export default function MyProfile() {
                 </Box>
             </Drawer>
 
-            {/* Mobiilne menüüriba allapoole suunatud noolega */}
-            <Paper
-                sx={{
-                    position: 'fixed',
-                    top: 45,
-                    left: 0,
-                    right: 0,
-                    zIndex: 1300,
-                    display: { xs: 'block', md: 'none' },
-                }}
-            >
-                <BottomNavigation
-                    showLabels
-                    value={activeComponent}
-                    onChange={(event, newValue) => {
-                        setActiveComponent(newValue);
-                        setMenuOpen(false);
-                    }}
-                    sx={{
-                        backgroundColor: 'background.paper',
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                        height: 40,
-                    }}
-                >
-                    <BottomNavigationAction
-                        label="Menu"
-                        icon={<ArrowDropDownIcon />}
-                        onClick={() => setMenuOpen(!menuOpen)}
-                        sx={{
-                            transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s',
-                        }}
-                    />
-                </BottomNavigation>
-
-                {menuOpen && (
-                    <Box
-                        sx={{
-                            backgroundColor: 'background.paper',
-                            borderTop: '1px solid',
-                            borderColor: 'divider',
-                            maxHeight: '500px',
-                            overflowY: 'auto',
-                        }}
-                    >
-                        <List>
-                            {menuItems.map((item) => (
-                                <ListItem
-                                    button
-                                    key={item.id}
-                                    onClick={() => handleMenuClick(item.id)}
-                                >
-                                    <ListItemText
-                                        primary={
-                                            item.id === 'user-contracts' && sentCount > 0
-                                                ? `${item.label} (${sentCount})`
-                                                : item.label
-                                        }
-                                        sx={{
-                                            color:
-                                                item.id === 'user-contracts' && sentCount > 0
-                                                    ? 'red'
-                                                    : 'inherit',
-                                        }}
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
-                )}
-            </Paper>
-
-            {/* Mobile Drawer */}
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                sx={{ display: { xs: 'block', md: 'none' } }}
-            >
-                <Toolbar />
-                <Box sx={{ width: 240, p: 2 }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem
-                                button
-                                key={item.id}
-                                onClick={() => handleMenuClick(item.id)}
-                            >
-                                <ListItemText
-                                    primary={
-                                        item.id === 'user-contracts' && sentCount > 0
-                                            ? `${item.label} (${sentCount})`
-                                            : item.label
-                                    }
-                                    sx={{
-                                        color:
-                                            item.id === 'user-contracts' && sentCount > 0
-                                                ? 'red'
-                                                : 'inherit',
-                                    }}
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Drawer>
-
-            {/* Main Content */}
+            {/* Sisu kuvamiseks peame lisama pikema marginaali, et jätta ruumi fikseeritud menüüle */}
             <Box
                 sx={{
                     flexGrow: 1,
                     p: { xs: 0, sm: 0, md: 3 },
                     backgroundColor: 'background.default',
+                    mt: { xs: '36px', md: 0 }, // Lisa ülaservast ruumi mobiilivaates menüü jaoks
                 }}
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>

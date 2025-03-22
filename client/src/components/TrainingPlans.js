@@ -58,6 +58,7 @@ import {
     Check as CheckIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
+import WeightliftingPercentageCalculator from './WeightliftingPercentageCalculator';
 import { getTrainingPlans, getTrainingPlanById, createTrainingPlan, updateTrainingPlan, deleteTrainingPlan, addCommentToTrainingDay, updateSectorCompletion, addSectorToTraining } from '../api/trainingPlanApi';
 
 // YouTube video component
@@ -1121,9 +1122,14 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                         </DialogContent>
 
                         <DialogActions>
-                            <Button onClick={() => setViewOpen(false)} color="primary">
-                                Close
-                            </Button>
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <Box sx={{ flexGrow: 1 }}>
+                                    <WeightliftingPercentageCalculator />
+                                </Box>
+                                <Button onClick={() => setViewOpen(false)} color="primary">
+                                    Close
+                                </Button>
+                            </Box>
                         </DialogActions>
                     </>
                 ) : (

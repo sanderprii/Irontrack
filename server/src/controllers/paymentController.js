@@ -438,7 +438,17 @@ const checkPaymentStatus = async (req, res) => {
         // Verify token with your secret key
         const decoded = jwt.verify(token, affiliateSecretKey);
 
-        // Return payment status
+        // First update the database - using updateMany instead of update
+        await prisma.transactions.updateMany({
+            where: {
+                invoiceNumber: decoded.merchantReference
+            },
+            data: {
+                status: 'success'
+            }
+        });
+
+        // Only send response after database operation completes
         res.json({
             success: true,
             paymentStatus: decoded.paymentStatus,
@@ -446,9 +456,11 @@ const checkPaymentStatus = async (req, res) => {
             // Add any other fields you need
         });
     } catch (error) {
+        // This catches errors from both JWT verification and database operations
         res.status(400).json({
             success: false,
-            message: 'Invalid token'
+            message: 'Invalid token or database error',
+            error: error.message
         });
     }
 };

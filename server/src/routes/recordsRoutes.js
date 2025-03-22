@@ -15,4 +15,5 @@ router.post('/', ensureAuthenticatedJWT, recordsController.createRecord);
 // DELETE /api/records/:id
 router.delete('/:id', ensureAuthenticatedJWT, recordsController.deleteRecord);
 
+router.put('/:id', ensureAuthenticatedJWT, recordsController.updateRecord);
 module.exports = router;

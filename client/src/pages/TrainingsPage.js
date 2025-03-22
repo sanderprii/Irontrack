@@ -264,7 +264,7 @@ export default function TrainingsPage() {
         if (trainingType === 'WOD') {
             payload = {
                 ...payload,
-                wodName,
+                wodName: wodName.toUpperCase(),
                 wodType,
                 exercises: wodDescription,
                 score: wodScore,

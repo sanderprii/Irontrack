@@ -37,7 +37,8 @@ router.get("/search-affiliates", ensureAuthenticated, async (req, res) => {
         const affiliates = await prisma.affiliate.findMany({
             where: {
                 name: {
-                    contains: q
+                    contains: q,
+                    mode: 'insensitive'
                 },
             },
             select: { id: true, name: true },

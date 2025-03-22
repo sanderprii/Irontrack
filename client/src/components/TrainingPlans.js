@@ -166,7 +166,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
     const fetchTrainingPlans = async () => {
         try {
             setLoading(true);
-            const data = await getTrainingPlans();
+            const data = await getTrainingPlans(userId);
             setTrainingPlans(data);
         } catch (err) {
             setError('Failed to load training plans');

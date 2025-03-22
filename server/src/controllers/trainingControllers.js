@@ -23,7 +23,7 @@ exports.createTraining = async (req, res) => {
 
         const trainingData = {
             type,
-            wodName: wodName.toUpperCase() || null,
+            wodName: wodName || null,
             wodType: wodType || null,
             date: new Date(date),
             score: score || null,

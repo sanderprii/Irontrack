@@ -370,7 +370,7 @@ exports.acceptContract = async (req, res) => {
                     price: contract.paymentAmount,
                     purchasedAt: new Date(),
                     endDate: endDate,
-                    sessionsLeft: 999, // Piiramatu arv sessioone (lepingupõhine)
+                    sessionsLeft: 9999, // Piiramatu arv sessioone (lepingupõhine)
                     planId: 0
                 }
             });

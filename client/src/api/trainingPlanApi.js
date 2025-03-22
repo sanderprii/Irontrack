@@ -4,7 +4,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL;
 
 // Get all training plans (either created by or assigned to the current user)
-export const getTrainingPlans = async () => {
+export const getTrainingPlans = async (userId) => {
     try {
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
@@ -15,7 +15,8 @@ export const getTrainingPlans = async () => {
 
             },
             params: {
-                role: role
+                role: role,
+                selectedUserId: userId
             }
         });
         return response.data;

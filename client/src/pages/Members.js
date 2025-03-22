@@ -112,7 +112,7 @@ export default function Members() {
     useEffect(() => {
         const fetchSearchResults = async () => {
             if (searchQuery.length > 2) {
-                const results = await searchUsers(searchQuery);
+                const results = await searchUsers(searchQuery.toLowerCase());
                 setSearchResults(results || []);
             } else {
                 setSearchResults([]);

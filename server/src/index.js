@@ -19,6 +19,8 @@ const allowedOrigins = [
     'http://crossfittartu.localhost:3000',
     'https://www.crossfittartu.irontack.ee',
     'https://crossfittartu.irontrack.ee',
+    'http://crossfitviljandi.localhost:3000',
+    'https://www.crossfitviljandi.irontrack.ee',
 ];
 
 

@@ -6,6 +6,7 @@ exports.getTrainingPlans = async (req, res) => {
     try {
         const userId = req.user.id;
         const role = req.query.role;
+        const selectedUserId = req.query.selectedUserId;
 
 
         let trainingPlans;
@@ -13,10 +14,16 @@ exports.getTrainingPlans = async (req, res) => {
             // Trainers/affiliates see plans they created
             trainingPlans = await prisma.trainingPlan.findMany({
                 where: {
-                    creatorId: userId
+                    creatorId: parseInt(userId),
+                    userId: parseInt(selectedUserId),
                 },
                 include: {
                     user: {
+                        select: {
+                            fullName: true
+                        }
+                    },
+                    creator: {
                         select: {
                             fullName: true
                         }

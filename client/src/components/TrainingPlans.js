@@ -1038,15 +1038,23 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
                                                                     {commentOpen[day.id] && (
                                                                         <Box sx={{ mb: 3 }}>
-                                                                            <TextField
-                                                                                fullWidth
-                                                                                multiline
-                                                                                rows={3}
+                                                                            <TextareaAutosize
+                                                                                minRows={5}
+                                                                                maxRows={20}
                                                                                 label="Your Comment"
                                                                                 value={commentText}
                                                                                 onChange={(e) => setCommentText(e.target.value)}
                                                                                 variant="outlined"
-                                                                                sx={{ mb: 1 }}
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    padding: '10px',
+                                                                                    borderRadius: '4px',
+                                                                                    borderColor: '#AAAAAA',
+                                                                                    fontSize: '14px',
+                                                                                    lineHeight: '1.5',
+                                                                                    resize: 'vertical',
+                                                                                    fontFamily: 'inherit'
+                                                                                }}
                                                                             />
 
                                                                             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

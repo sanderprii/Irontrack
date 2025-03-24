@@ -197,7 +197,7 @@ exports.updateContract = async (req, res) => {
 exports.deleteContract = async (req, res) => {
     try {
         const { id } = req.params;
-        await prisma.contract.delete({ where: { id } });
+        await prisma.contract.delete({ where: { id: parseInt(id) } });
         res.json({ message: 'Contract deleted successfully' });
     } catch (error) {
         console.error('Error deleting contract:', error);

@@ -1,26 +1,7 @@
 const {PrismaClient} = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const getTodayWOD = async (req, res) => {
-    const { affiliateId, date } = req.query;
-    if (!date) return res.status(400).json({ error: "Date is required." });
-    const date1 = new Date(date);
-        date1.setHours(2, 0, 0, 0);
-    try {
-        const wod = await prisma.todayWOD.findFirst({
-            where: {
-                affiliateId: parseInt(affiliateId),
-                date: date1 }
-        });
 
-        if (!wod) return res.status(404).json({ error: "No WOD found for today." });
-
-        res.json(wod);
-    } catch (error) {
-        console.error("❌ Error fetching today's WOD:", error);
-        res.status(500).json({ error: "Failed to fetch today's WOD." });
-    }
-};
 
 // ✅ Fetch today's WOD
 const getWeekWODs = async (req, res) => {
@@ -115,6 +96,26 @@ const saveTodayWOD = async (req, res) => {
     }
 };
 
+const getTodayWOD = async (req, res) => {
+    const { affiliateId, date } = req.query;
+    if (!date) return res.status(400).json({ error: "Date is required." });
+    const date1 = new Date(date);
+    date1.setHours(2, 0, 0, 0);
+    try {
+        const wod = await prisma.todayWOD.findFirst({
+            where: {
+                affiliateId: parseInt(affiliateId),
+                date: date1 }
+        });
+
+        if (!wod) return res.status(404).json({ error: "No WOD found for today." });
+
+        res.json(wod);
+    } catch (error) {
+        console.error("❌ Error fetching today's WOD:", error);
+        res.status(500).json({ error: "Failed to fetch today's WOD." });
+    }
+};
 
 // ✅ Apply WOD to Today's Trainings
 const applyWODToTrainings = async (req, res) => {

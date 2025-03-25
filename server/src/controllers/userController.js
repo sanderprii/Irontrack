@@ -109,7 +109,7 @@ exports.editProfile = async (req, res) => {
             where: { id: userId },
             data: {
                 fullName: fullName || null,
-                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+
                 email: email || null,
                 phone: phone || null,
                 address: address || null,

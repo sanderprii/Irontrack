@@ -5,7 +5,18 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:auth": "playwright test tests/controllers/authController.test.js",
+    "test:affiliate": "playwright test tests/controllers/affiliateController.test.js",
+    "test:class": "playwright test tests/controllers/classController.test.js",
+    "test:contract": "playwright test tests/controllers/contractController.test.js",
+    "test:credit": "playwright test tests/controllers/creditController.test.js",
+    "test:wod": "playwright test tests/controllers/wodController.test.js",
+    "test:training": "playwright test tests/controllers/trainingController.test.js",
+    "test:user": "playwright test tests/controllers/userController.test.js",
+    "test:all": "node ./src/tests/run-all-tests.js",
+    "test:report": "playwright show-report"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +29,6 @@
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
@@ -32,5 +42,9 @@
     "sharp": "^0.33.5",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1",
+    "dotenv": "^16.4.7"
   }
 }

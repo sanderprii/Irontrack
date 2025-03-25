@@ -18,14 +18,6 @@ import {
     Divider,
     CircularProgress,
     Paper,
-    Tabs,
-    Tab,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Chip,
-    FormControlLabel,
-    Checkbox,
     Tooltip,
     useTheme,
     useMediaQuery,
@@ -35,7 +27,6 @@ import {
     ListItemIcon,
     ListItemButton,
     Container,
-    Badge
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -50,12 +41,10 @@ import {
     Timer as TimerIcon,
     DirectionsRun as DirectionsRunIcon,
     Comment as CommentIcon,
-    PlayArrow as PlayArrowIcon,
     ExpandMore as ExpandMoreIcon,
     ExpandLess as ExpandLessIcon,
     CalendarToday as CalendarIcon,
     Person as PersonIcon,
-    Check as CheckIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import WeightliftingPercentageCalculator from './WeightliftingPercentageCalculator';
@@ -152,7 +141,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
     // Plan view state
     const [viewOpen, setViewOpen] = useState(false);
     const [viewPlan, setViewPlan] = useState(null);
-    const [activeTab, setActiveTab] = useState(0);
+const [activeTab, setActiveTab] = useState(0);
     const [expandedDays, setExpandedDays] = useState({});
 
     // Comment state

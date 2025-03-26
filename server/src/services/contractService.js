@@ -219,9 +219,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
 
 async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
     try {
-
-
-        // Loo uus kanne transactions tabelisse
+        // Create a new transaction record
         const transaction = await prisma.transactions.create({
             data: {
                 amount: isPaymentHoliday ? contract.affiliate.paymentHolidayFee : contract.paymentAmount,
@@ -230,7 +228,7 @@ async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
                     ? `Payment holiday fee for contract #${contract.id}`
                     : `Monthly payment for contract #${contract.id}`,
                 type: "montonio",
-                status: "pending", // märgi alguses kui ootel
+                status: "pending", // mark as pending initially
                 contractId: contract.id,
                 user: {
                     connect: {
@@ -245,34 +243,17 @@ async function recordPendingPayment(contract, montonioUuid, isPaymentHoliday) {
             }
         });
 
-        // Veendu, et tabel on olemas
-        try {
-            await prisma.$executeRaw`
-                CREATE TABLE IF NOT EXISTS paymentMetadata (
-                                                               id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                               transactionId INTEGER NOT NULL,
-                                                               montonioUuid TEXT NOT NULL,
-                                                               contractId INTEGER NOT NULL,
-                                                               affiliateId INTEGER NOT NULL,
-                                                               isPaymentHoliday BOOLEAN NOT NULL DEFAULT FALSE,
-                                                               createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                                               UNIQUE(montonioUuid, contractId)
-                )
-            `;
-        } catch (err) {
-            console.error('Error ensuring paymentMetadata table exists:', err);
-        }
-
-        // Salvesta metaandmed
-        try {
-            await prisma.$executeRaw`
-                INSERT INTO paymentMetadata (transactionId, montonioUuid, contractId, affiliateId, isPaymentHoliday, createdAt)
-                VALUES (${transaction.id}, ${montonioUuid}, ${contract.id}, ${contract.affiliateId}, ${isPaymentHoliday}, ${new Date()})
-            `;
-
-         } catch (err) {
-            console.error('Error inserting payment metadata:', err);
-        }
+        // Since the table already exists, simply use the Prisma model
+        await prisma.paymentMetadata.create({
+            data: {
+                transactionId: transaction.id,
+                montonioUuid: montonioUuid,
+                contractId: contract.id,
+                affiliateId: contract.affiliateId,
+                isPaymentHoliday: isPaymentHoliday,
+                createdAt: new Date()
+            }
+        });
 
         return transaction;
     } catch (error) {

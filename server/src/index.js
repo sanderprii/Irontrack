@@ -207,6 +207,7 @@ const contractRoutes = require('./routes/contractRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const trainerRoutes = require('./routes/trainerRoutes');
 const trainingPlanRoutes = require('./routes/trainingPlanRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const { startScheduler } = require('./schedulers/contractChecker');
 
@@ -274,6 +275,7 @@ app.use('/api/contracts', contractRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/trainer', trainerRoutes);
 app.use('/api/training-plans', trainingPlanRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Lihtne test endpoint
 app.get('/api', (req, res) => {

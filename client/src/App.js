@@ -37,6 +37,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VerifyEmail from './components/VerifyEmail';
 import ResetPassword from './components/ResetPassword';
 import Checkin from './pages/Checkin';
+import Admin from './pages/Admin';
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -120,6 +121,7 @@ function App() {
                         <Route path="/verify-email" element={<VerifyEmail/>}/>
                         <Route path="/reset-password" element={<ResetPassword/>}/>
                         <Route path="/checkin" element={<Checkin/>}/>
+                        <Route path="/admin" element={<Admin/>}/>
                         {/* ✅ Lisa MarketingPage uue marsruudina */}
 
                     </Routes>

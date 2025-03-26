@@ -344,6 +344,8 @@ exports.updateRow = async (req, res) => {
     }
 };
 
+// Modify this function in server/src/controllers/adminController.js
+
 /**
  * Lisab tabelisse uue rea
  */
@@ -361,80 +363,209 @@ exports.addRow = async (req, res) => {
             return res.status(404).json({ error: 'Tabelit ei leitud' });
         }
 
-        // Kasutame Prisma API-d, kui võimalik
-        if (prisma[tableName] && typeof prisma[tableName].create === 'function') {
-            try {
-                console.log(`Kasutan Prisma API-d rea lisamiseks tabelisse ${tableName}`);
+        // Convert table name to both PascalCase and camelCase for Prisma
+        // Prisma models are PascalCase but accessed with camelCase
+        const pascalCaseTableName = tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase();
+        const camelCaseTableName = tableName.charAt(0).toLowerCase() + tableName.slice(1).toLowerCase();
 
-                const newRow = await prisma[tableName].create({
-                    data: rowData
+        // Use the correct table name based on what exists in the Prisma client
+        const prismaModelName = prisma[pascalCaseTableName] ? pascalCaseTableName :
+            (prisma[camelCaseTableName] ? camelCaseTableName : tableName);
+
+        // Force convert id to integer regardless of schema inspection
+        const convertedData = { ...rowData };
+
+        // These are common fields that are usually integers in databases
+        const integerFields = ['id', 'affiliateId', 'recipientId', 'userId', 'planId', 'contractId',
+            'trainerId', 'classId', 'trainingId', 'groupId', 'memberId', 'creditId'];
+
+        // Convert known integer fields from strings to integers
+        for (const field of integerFields) {
+            if (convertedData[field] !== undefined && convertedData[field] !== null && convertedData[field] !== '') {
+                convertedData[field] = parseInt(convertedData[field], 10);
+                console.log(`Converted ${field} from ${rowData[field]} to ${convertedData[field]}`);
+            }
+        }
+
+        // Handle empty strings
+        for (const key in convertedData) {
+            if (convertedData[key] === '') {
+                convertedData[key] = null;
+            }
+        }
+
+        // Remove createdAt if null to use default value from schema
+        if (convertedData.createdAt === null) {
+            delete convertedData.createdAt;
+        }
+
+        console.log('Converted data for insertion:', convertedData);
+
+        // Try to automatically set up relations based on ID fields
+        try {
+            console.log(`Trying to create row with relations for ${prismaModelName}`);
+
+            // Prepare data with relations
+            const dataWithRelations = { ...convertedData };
+            const relationData = {};
+
+            // Get common relation fields based on ID suffix
+            const possibleRelations = {};
+
+            for (const key in dataWithRelations) {
+                // Check if field ends with Id (excluding 'id' itself) to detect foreign keys
+                if (key !== 'id' && key.endsWith('Id')) {
+                    const relationName = key.slice(0, -2).toLowerCase(); // e.g., affiliateId -> affiliate
+                    possibleRelations[relationName] = dataWithRelations[key];
+                }
+            }
+
+            // Create relation objects
+            for (const [relation, id] of Object.entries(possibleRelations)) {
+                if (id !== null && id !== undefined) {
+                    // For a relation field like "affiliateId", add "affiliate: { connect: { id: X } }"
+                    relationData[relation] = {
+                        connect: { id }
+                    };
+                }
+            }
+
+            // Remove ID fields to avoid duplicate data
+            for (const key of Object.keys(possibleRelations)) {
+                const idField = `${key}Id`;
+                if (dataWithRelations[idField] !== undefined) {
+                    delete dataWithRelations[idField];
+                }
+            }
+
+            // Combine regular data with relation data
+            const finalData = {
+                ...dataWithRelations,
+                ...relationData
+            };
+
+            console.log('Final data with relations:', finalData);
+
+            const newRow = await prisma[prismaModelName].create({
+                data: finalData
+            });
+
+            console.log('Row creation successful with relations:', newRow);
+            return res.status(201).json(newRow);
+        } catch (relationError) {
+            console.error('Creation with relations failed:', relationError);
+            // Continue to next approach if this fails
+        }
+
+        // Try Prisma create without relations
+        if (prisma[prismaModelName] && typeof prisma[prismaModelName].create === 'function') {
+            try {
+                console.log(`Kasutan Prisma API-d rea lisamiseks tabelisse ${prismaModelName}`);
+
+                const newRow = await prisma[prismaModelName].create({
+                    data: convertedData
                 });
 
                 console.log('Rea lisamine õnnestus Prisma API-ga:', newRow);
                 return res.status(201).json(newRow);
             } catch (prismaError) {
                 console.error('Prisma API viga:', prismaError);
+                // Continue to next approach
             }
         }
 
-        // Kui Prisma API meetod ebaõnnestus, kasutame teist lähenemist
+        // Try Prisma createMany
         try {
             console.log('Kasutan otsest rea sisestamise meetodit');
 
-            // Otsene createMany või insert lähenemine
-            const result = await prisma[tableName].createMany({
-                data: [rowData],
+            const result = await prisma[prismaModelName].createMany({
+                data: [convertedData],
                 skipDuplicates: true
             });
 
             if (result && result.count > 0) {
-                // Loome tulemuse, mis sisaldab loodud rida
-                const createdRow = { ...rowData, id: result.count > 0 ? 'created' : 'failed' };
-                return res.status(201).json(createdRow);
+                // Return created row
+                return res.status(201).json({
+                    ...convertedData,
+                    _created: true,
+                    count: result.count
+                });
             }
 
             throw new Error('Rea loomine ei õnnestunud');
         } catch (directError) {
             console.error('Otsene sisestamine ebaõnnestus:', directError);
 
-            // Viimane katse kasutada genereeritud SQL päringut
-            // Kasutame korrektset template literal ja SQL süntaksit
+            // One last attempt without the id field if it might be auto-incremented
             try {
-                const columns = Object.keys(rowData);
-                const values = Object.values(rowData);
+                console.log('Proovime lisada ilma ID väljata (autoincrement võimalus)');
 
-                // Dünaamiliselt koostame SQL päringu, kasutades SQL injektsiooni vältivaid tehnikaid
-                let placeholders = '';
-                const sqlValues = [];
-
-                // Loome õigesti parameetrite järjekorranumbrid
-                for (let i = 0; i < values.length; i++) {
-                    if (i > 0) placeholders += ', ';
-                    placeholders += `$${i+1}`;
-                    sqlValues.push(values[i]);
+                const dataWithoutId = { ...convertedData };
+                if ('id' in dataWithoutId) {
+                    delete dataWithoutId.id;
                 }
 
-                // Valmistame ette Prisma SQL template päring
-                const insertQuery = `
-          INSERT INTO "${tableName}" (${columns.map(c => `"${c}"`).join(', ')})
-          VALUES (${placeholders})
-          RETURNING *
-        `;
+                // Try again with the relations approach but without ID
+                try {
+                    // Prepare data with relations
+                    const relationData = {};
 
-                console.log('SQL päring:', insertQuery);
-                console.log('Väärtused:', sqlValues);
+                    // Get common relation fields based on ID suffix
+                    const possibleRelations = {};
 
-                // Kasutame dünaamilist päringut sqlValues parameetritega
-                const result = await prisma.$executeRaw`${insertQuery}`;
+                    for (const key in dataWithoutId) {
+                        // Check if field ends with Id (excluding 'id' itself)
+                        if (key !== 'id' && key.endsWith('Id')) {
+                            const relationName = key.slice(0, -2).toLowerCase();
+                            possibleRelations[relationName] = dataWithoutId[key];
+                        }
+                    }
 
-                // Kuna me ei saa otseselt andmeid tagasi RETURNING kaudu $executeRaw meetodiga,
-                // siis loome lihtsalt tulemuse loodud andmetest
-                return res.status(201).json({ ...rowData, _created: true });
-            } catch (sqlError) {
-                console.error('SQL päring ebaõnnestus:', sqlError);
+                    // Create relation objects
+                    for (const [relation, id] of Object.entries(possibleRelations)) {
+                        if (id !== null && id !== undefined) {
+                            relationData[relation] = {
+                                connect: { id }
+                            };
+                        }
+                    }
+
+                    // Remove ID fields to avoid duplicate data
+                    for (const key of Object.keys(possibleRelations)) {
+                        const idField = `${key}Id`;
+                        if (dataWithoutId[idField] !== undefined) {
+                            delete dataWithoutId[idField];
+                        }
+                    }
+
+                    // Combine regular data with relation data
+                    const finalData = {
+                        ...dataWithoutId,
+                        ...relationData
+                    };
+
+                    const newRow = await prisma[prismaModelName].create({
+                        data: finalData
+                    });
+
+                    console.log('Rea lisamine õnnestus ilma ID-ta ja relatsioonidega:', newRow);
+                    return res.status(201).json(newRow);
+                } catch (finalRelationError) {
+                    console.error('Relatsioonidega lisamine ilma ID-ta ebaõnnestus:', finalRelationError);
+
+                    // Last attempt with plain data without ID
+                    const newRow = await prisma[prismaModelName].create({
+                        data: dataWithoutId
+                    });
+
+                    console.log('Rea lisamine õnnestus ilma ID-ta:', newRow);
+                    return res.status(201).json(newRow);
+                }
+            } catch (finalError) {
+                console.error('Kõik katsed ebaõnnestusid:', finalError);
                 return res.status(500).json({
-                    error: 'SQL viga: ' + sqlError.message,
-                    hint: 'Võimalik, et andmete formaat või primaarvõtme genereerimine ebaõnnestus'
+                    error: 'Rea lisamine ebaõnnestus kõigi meetoditega',
+                    details: finalError.message
                 });
             }
         }

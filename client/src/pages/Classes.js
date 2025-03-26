@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import {Container, Typography, Button, Box, Grid, useMediaQuery} from "@mui/material";
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
-import WODModal from "../components/WODModal";
+
 import ClassDetailsModal from "../components/ClassModal"; // ✅ Lisatud klassi detailide modal
 import { getClasses, deleteClass, createTraining, updateTraining, getClassAttendeesCount} from "../api/classesApi";
 import { getAffiliate } from "../api/affiliateApi";

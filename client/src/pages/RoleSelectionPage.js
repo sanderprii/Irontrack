@@ -51,6 +51,8 @@ const RoleSelectionPage = () => {
             navigate('/affiliate-owner');
         } else if (role === 'trainer') {
             navigate('/trainer');
+        } else if (role === 'checkin') {
+            navigate('/checkin');
         }
     };
 

@@ -15,6 +15,7 @@
     "test:wod": "playwright test tests/controllers/wodController.test.js",
     "test:training": "playwright test tests/controllers/trainingController.test.js",
     "test:user": "playwright test tests/controllers/userController.test.js",
+    "test:payment": "playwright test tests/controllers/paymentController.test.js",
     "test:all": "node ./src/tests/run-all-tests.js",
     "test:report": "playwright show-report"
   },

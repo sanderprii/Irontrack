@@ -36,6 +36,7 @@ import PrivacyApp from "./pages/Privacy-app"
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VerifyEmail from './components/VerifyEmail';
 import ResetPassword from './components/ResetPassword';
+import Checkin from './pages/Checkin';
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -70,6 +71,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<MarketingPage/>}/>
                             <Route path="/classes" element={<Classes/>}/>
+                            <Route path="/checkin" element={<Checkin/>}/>
                             {/* Lisa vajadusel teisi marsruute */}
                         </Routes>
                     </Box>
@@ -117,6 +119,7 @@ function App() {
                         <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                         <Route path="/verify-email" element={<VerifyEmail/>}/>
                         <Route path="/reset-password" element={<ResetPassword/>}/>
+                        <Route path="/checkin" element={<Checkin/>}/>
                         {/* ✅ Lisa MarketingPage uue marsruudina */}
 
                     </Routes>

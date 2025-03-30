@@ -69,14 +69,33 @@ export default function Statistics({ userId, affiliateId }) {
         homeAffiliateYearlyTrainings,
     } = stats;
 
-    // 1) Ringdiagramm (treeningute jaotus: WOD, Weightlifting, Cardio, Other)
+    // Function to get color based on training type
+    const getTrainingTypeColor = (type, isHover = false) => {
+        const colors = {
+            'WOD': { regular: '#1976d2', hover: '#2196f3' },
+            'Weightlifting': { regular: '#4caf50', hover: '#66bb6a' },
+            'Cardio': { regular: '#ff9800', hover: '#ffc107' },
+            'Rowing': { regular: '#9c27b0', hover: '#ba68c8' },
+            'Gymnastics': { regular: '#e91e63', hover: '#f06292' },
+            'Other': { regular: '#607d8b', hover: '#78909c' }
+        };
+
+        if (colors[type]) {
+            return isHover ? colors[type].hover : colors[type].regular;
+        }
+
+        // Default color for any types not in our list
+        return isHover ? '#78909c' : '#607d8b';
+    };
+
+    // 1) Ringdiagramm (treeningute jaotus: WOD, Weightlifting, Cardio, Rowing, Gymnastics, Other)
     const doughnutData = {
         labels: Object.keys(trainingTypeCounts),
         datasets: [
             {
                 data: Object.values(trainingTypeCounts),
-                backgroundColor: ['#1976d2', '#9c27b0', '#ff9800', '#4caf50'],
-                hoverBackgroundColor: ['#2196f3', '#ba68c8', '#ffc107', '#66bb6a'],
+                backgroundColor: Object.keys(trainingTypeCounts).map(type => getTrainingTypeColor(type)),
+                hoverBackgroundColor: Object.keys(trainingTypeCounts).map(type => getTrainingTypeColor(type, true)),
             },
         ],
     };

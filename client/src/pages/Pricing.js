@@ -197,7 +197,10 @@ export default function Pricing() {
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
                                     <Typography variant="body1">Member Tracking</Typography>
                                 </Box>
-
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add training plans to users</Typography>
+                                </Box>
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
                                     <Typography variant="body1">Payment Management</Typography>
@@ -210,6 +213,7 @@ export default function Pricing() {
                                     <CancelOutlinedIcon sx={{ color: "#f44336", mr: 1 }} />
                                     <Typography variant="body1">Contract Management</Typography>
                                 </Box>
+
                             </Box>
 
                             <Button variant="contained" color="primary" size="large" fullWidth sx={{ mt: 2 }} onClick={() => navigate("/register")}>
@@ -302,6 +306,10 @@ export default function Pricing() {
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
                                     <Typography variant="body1">Member Tracking</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                                    <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />
+                                    <Typography variant="body1">Add training plans to users</Typography>
                                 </Box>
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                                     <CheckCircleOutlineIcon sx={{ color: "#4caf50", mr: 1 }} />

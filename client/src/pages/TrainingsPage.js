@@ -44,6 +44,8 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import TimerIcon from '@mui/icons-material/Timer';
 import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
+import RowingIcon from '@mui/icons-material/Rowing';
+import SportsGymnasticsIcon from '@mui/icons-material/SportsGymnastics';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd';
@@ -111,6 +113,14 @@ const TypeChip = styled(Chip)(({ theme, trainingtype }) => {
             chipColor = 'rgba(255, 152, 0, 0.85)'; // Lighter orange
             textColor = '#000000'; // Black text for better contrast with orange
             break;
+        case 'Rowing':
+            chipColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+            textColor = '#FFFFFF';
+            break;
+        case 'Gymnastics':
+            chipColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+            textColor = '#FFFFFF';
+            break;
         default:
             chipColor = 'rgba(33, 150, 243, 0.85)'; // Lighter info blue
             textColor = '#FFFFFF';
@@ -135,6 +145,10 @@ const getTypeIcon = (type) => {
             return <FitnessCenterIcon />;
         case 'Cardio':
             return <DirectionsRunIcon />;
+        case 'Rowing':
+            return <RowingIcon />;
+        case 'Gymnastics':
+            return <SportsGymnasticsIcon />;
         default:
             return <SportsMartialArtsIcon />;
     }
@@ -328,6 +342,12 @@ export default function TrainingsPage() {
                 case 'Cardio':
                     bgColor = 'rgba(255, 152, 0, 0.85)'; // Orange
                     break;
+                case 'Rowing':
+                    bgColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+                    break;
+                case 'Gymnastics':
+                    bgColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+                    break;
                 default:
                     bgColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
             }
@@ -363,6 +383,12 @@ export default function TrainingsPage() {
             case 'Cardio':
                 backgroundColor = 'rgba(255, 152, 0, 0.85)'; // Orange
                 break;
+            case 'Rowing':
+                backgroundColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+                break;
+            case 'Gymnastics':
+                backgroundColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+                break;
             default:
                 backgroundColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
         }
@@ -392,6 +418,13 @@ export default function TrainingsPage() {
     async function handleSave() {
         if (!modalTraining) return;
 
+        // Prepare the data for submission
+        const trainingData = {
+            ...modalTraining,
+            // Make sure date is in the correct format
+            date: modalTraining.date?.split('T')[0] || modalTraining.date
+        };
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/training/${modalTraining.id}`, {
@@ -400,7 +433,7 @@ export default function TrainingsPage() {
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(modalTraining),
+                body: JSON.stringify(trainingData),
             });
             if (!response.ok) {
                 const resErr = await response.json();
@@ -419,7 +452,7 @@ export default function TrainingsPage() {
     async function handleAddToRecords() {
         if (!modalTraining) return;
         if (modalTraining.type !== 'WOD' || !modalTraining.wodName) return;
-alert('Adding to records');
+        alert('Adding to records');
         const recordData = {
             type: 'WOD',
             name: modalTraining.wodName,
@@ -456,7 +489,7 @@ alert('Adding to records');
         }));
     }
 
-    // For updating exercises in modal (assuming array)
+    // For updating exercises in modal
     function updateExercise(index, newValue) {
         setModalTraining((prev) => {
             const newExercises = [...(prev.exercises || [])];
@@ -532,6 +565,18 @@ alert('Adding to records');
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                     <DirectionsRunIcon sx={{ mr: 1 }} />
                                                     Cardio
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="Rowing">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <RowingIcon sx={{ mr: 1 }} />
+                                                    Rowing
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="Gymnastics">
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <SportsGymnasticsIcon sx={{ mr: 1 }} />
+                                                    Gymnastics
                                                 </Box>
                                             </MenuItem>
                                             <MenuItem value="Other">
@@ -661,7 +706,7 @@ alert('Adding to records');
                             )}
 
                             {/* Weightlifting, Cardio, Other */}
-                            {['Weightlifting', 'Cardio', 'Other'].includes(trainingType) && showOptions && (
+                            {['Weightlifting', 'Cardio', 'Rowing', 'Gymnastics', 'Other'].includes(trainingType) && showOptions && (
                                 <Box sx={{ mt: 3 }}>
                                     <Divider sx={{ my: 2 }} />
                                     <FormControl fullWidth>
@@ -733,7 +778,19 @@ alert('Adding to records');
                             trainingtype="Cardio"
                             size="medium"
                         />
-                        <TypeChip sx={{backgroundColor: 'yellow'}}
+                        <TypeChip
+                            label="Rowing"
+                            icon={<RowingIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="Rowing"
+                            size="medium"
+                        />
+                        <TypeChip
+                            label="Gymnastics"
+                            icon={<SportsGymnasticsIcon sx={{ color: 'inherit' }} />}
+                            trainingtype="Gymnastics"
+                            size="medium"
+                        />
+                        <TypeChip
                             label="Other"
                             icon={<SportsMartialArtsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Other"
@@ -851,45 +908,52 @@ alert('Adding to records');
                                 )}
 
                                 {/* Exercises */}
-                                {modalTraining.exercises?.length > 0 && (
+                                {modalTraining && (
                                     <Grid item xs={12}>
                                         <Typography variant="subtitle1" gutterBottom>
                                             Exercises:
                                         </Typography>
-                                        {modalTraining.exercises.map((ex, idx) => (
+                                        {isEditing ? (
+                                            <FormControl fullWidth>
+                                                <TextareaAutosize
+                                                    minRows={5}
+                                                    maxRows={20}
+                                                    value={typeof modalTraining.exercises === 'string' ?
+                                                        modalTraining.exercises :
+                                                        Array.isArray(modalTraining.exercises) ?
+                                                            modalTraining.exercises.map(ex => ex.exerciseData || '').join('\n') :
+                                                            ''}
+                                                    onChange={(e) => updateModalField('exercises', e.target.value)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '10px',
+                                                        borderRadius: '4px',
+                                                        borderColor: '#AAAAAA',
+                                                        fontSize: '14px',
+                                                        lineHeight: '1.5',
+                                                        resize: 'vertical',
+                                                        fontFamily: 'inherit'
+                                                    }}
+                                                />
+                                            </FormControl>
+                                        ) : (
                                             <Paper
-                                                key={idx}
                                                 elevation={1}
                                                 sx={{
                                                     mb: 2,
-                                                    p: 0,
+                                                    p: 2,
                                                     borderRadius: 1,
-                                                    overflow: 'hidden'
+                                                    minHeight: '100px',
+                                                    whiteSpace: 'pre-wrap'
                                                 }}
                                             >
-                                                {isEditing ? (
-                                                    <TextField
-                                                        fullWidth
-                                                        multiline
-                                                        minRows={4}
-                                                        value={ex.exerciseData || ''}
-                                                        onChange={(e) => updateExercise(idx, e.target.value)}
-                                                        variant="outlined"
-                                                        sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
-                                                    />
-                                                ) : (
-                                                    <Box
-                                                        sx={{
-                                                            p: 2,
-                                                            minHeight: '100px',
-                                                            whiteSpace: 'pre-wrap'
-                                                        }}
-                                                    >
-                                                        {ex.exerciseData || ''}
-                                                    </Box>
-                                                )}
+                                                {typeof modalTraining.exercises === 'string' ?
+                                                    modalTraining.exercises :
+                                                    Array.isArray(modalTraining.exercises) ?
+                                                        modalTraining.exercises.map(ex => ex.exerciseData || '').join('\n') :
+                                                        ''}
                                             </Paper>
-                                        ))}
+                                        )}
                                     </Grid>
                                 )}
                             </Grid>

@@ -14,10 +14,8 @@ The IronTrack Application is a web-based workout diary where you can add your wo
 | Add Workouts | ✅ | Users can add new workouts, including date, type, and duration. |
 | View Workouts | ✅ | All workouts are displayed in chronological order for the user. |
 | Delete Workouts | ✅ | Ability to remove added workouts. |
-| Filter Workouts | ❌ | Workouts can be filtered by date, type, and duration. |
 | Statistics and Analysis | ✅ | Display summaries and statistics of user workouts. |
 | Customizable Design | ✅ | Customizable UI design and colors via CSS. |
-| Notifications | ❌ | Reminders and notifications for regular training. |
 | Cloud Data Storage | ✅ | Cloud storage for workout data, allowing multi-device access. |
 | Gym Owner Accounts | ✅ | Gym owners can create accounts to manage their gym's workouts and services. |
 | Add Gym Workouts | ✅ | Gym owners can add workouts/classes to their gym's schedule. |
@@ -67,7 +65,7 @@ npm run build
 ## 📋 Technical Requirements
 - **Frontend:** React, Material.ui
 - **Backend:** Node.js, Express.js
-- **Database:** sqlite
+- **Database:** PosrtgreSQL, Prisma
 
 
 

@@ -458,16 +458,24 @@ exports.addSectorToTraining = async (req, res) => {
             return res.status(403).json({ error: 'You do not have permission to add this sector to your trainings.' });
         }
 
-        // Determine the training type based on sector type
+        // Map sector type to training type - now correctly handles all training types
         let trainingType;
         switch (sector.type) {
-            case 'Strength':
-                trainingType = 'Weightlifting';
-                break;
             case 'WOD':
                 trainingType = 'WOD';
                 break;
-            case 'Essentials':
+            case 'Weightlifting':
+                trainingType = 'Weightlifting';
+                break;
+            case 'Cardio':
+                trainingType = 'Cardio';
+                break;
+            case 'Rowing':
+                trainingType = 'Rowing';  // Now correctly maps Rowing
+                break;
+            case 'Gymnastics':
+                trainingType = 'Gymnastics';  // Now correctly maps Gymnastics
+                break;
             default:
                 trainingType = 'Other';
         }
@@ -475,10 +483,10 @@ exports.addSectorToTraining = async (req, res) => {
         // Create a new training
         const training = await prisma.training.create({
             data: {
-                type: trainingType,
+                type: trainingType,  // This will now be the correct type including Rowing/Gymnastics
                 date: new Date(),
-                wodName: sector.type === 'WOD' ? `${sector.trainingDay.trainingPlan.name} - ${sector.trainingDay.name}` : null,
-                wodType: sector.type === 'WOD' ? 'Training Plan' : null,
+                wodName: trainingType === 'WOD' ? `${sector.trainingDay.trainingPlan.name} - ${sector.trainingDay.name}` : null,
+                wodType: trainingType === 'WOD' ? 'Training Plan' : null,
                 userId,
                 exercises: {
                     create: {

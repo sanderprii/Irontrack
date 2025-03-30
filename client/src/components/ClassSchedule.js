@@ -8,6 +8,24 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
     // ✅ Sorteerime klassid ajaliselt (varasemad eespool)
     const sortedClasses = [...classes].sort((a, b) => new Date(a.time) - new Date(b.time));
 
+    // Function to get background color based on training type
+    const getBackgroundColor = (trainingType) => {
+        switch(trainingType) {
+            case "WOD":
+                return "#f0faff"; // hele-sinine
+            case "Weightlifting":
+                return "#f0fff5"; // hele-roheline
+            case "Cardio":
+                return "#fff5f5"; // hele-punane
+            case "Rowing":
+                return "#f9f0ff"; // hele-lilla
+            case "Gymnastics":
+                return "#fff0f9"; // hele-roosa
+            default:
+                return "background.paper";
+        }
+    };
+
     return (
         <Box sx={{ width: "100%" }}>
             {sortedClasses.length === 0 ? (
@@ -25,14 +43,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                         sx={{
                             cursor: "pointer",
                             ":hover": { boxShadow: 6 },
-                            bgcolor:
-                                cls.trainingType === "WOD"
-                                ? "#f0faff" // hele-sinine
-                                : cls.trainingType === "Weightlifting"
-                                    ? "#f0fff5" // hele-roheline
-                                    : cls.trainingType === "Cardio"
-                                        ? "#fff5f5" // hele-punane
-                                        : "background.paper",
+                            bgcolor: getBackgroundColor(cls.trainingType),
                             width: "100%",
                             mb: 2, // Lisame väikese vahe iga klassi vahele
                             p: weeklyView ? 1 : 2, // Weekly vaates väiksem padding

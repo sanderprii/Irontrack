@@ -44,12 +44,14 @@ exports.getStatistics = async (req, res) => {
             // soovi korral lisa tingimus trainingWhere.affiliateId = parseInt(affiliateId, 10);
         }
 
-        const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Other"];
+        const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Gymnastics", "Rowing", "Other"];
         const trainingTypeCounts = {
             WOD: 0,
             Weightlifting: 0,
             Cardio: 0,
             Other: 0,
+            Rowing: 0,
+            Gymnastics: 0,
         };
 
         // toome välja treeningud

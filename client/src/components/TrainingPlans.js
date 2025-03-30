@@ -27,6 +27,7 @@ import {
     ListItemIcon,
     ListItemButton,
     Container,
+    MenuItem,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -45,6 +46,8 @@ import {
     ExpandLess as ExpandLessIcon,
     CalendarToday as CalendarIcon,
     Person as PersonIcon,
+    Rowing as RowingIcon,
+    SportsGymnastics as SportsGymnasticsIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import WeightliftingPercentageCalculator from './WeightliftingPercentageCalculator';
@@ -141,7 +144,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
     // Plan view state
     const [viewOpen, setViewOpen] = useState(false);
     const [viewPlan, setViewPlan] = useState(null);
-const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState(0);
     const [expandedDays, setExpandedDays] = useState({});
 
     // Comment state
@@ -177,17 +180,7 @@ const [activeTab, setActiveTab] = useState(0);
             name: 'Day 1',
             sectors: [
                 {
-                    type: 'Strength',
-                    content: '',
-                    youtubeLinks: [{ url: '' }]
-                },
-                {
                     type: 'WOD',
-                    content: '',
-                    youtubeLinks: [{ url: '' }]
-                },
-                {
-                    type: 'Essentials',
                     content: '',
                     youtubeLinks: [{ url: '' }]
                 }
@@ -215,17 +208,7 @@ const [activeTab, setActiveTab] = useState(0);
             name: `Day ${dayNumber}`,
             sectors: [
                 {
-                    type: 'Strength',
-                    content: '',
-                    youtubeLinks: [{ url: '' }]
-                },
-                {
                     type: 'WOD',
-                    content: '',
-                    youtubeLinks: [{ url: '' }]
-                },
-                {
-                    type: 'Essentials',
                     content: '',
                     youtubeLinks: [{ url: '' }]
                 }
@@ -246,6 +229,31 @@ const [activeTab, setActiveTab] = useState(0);
     const handleSectorContentChange = (dayIndex, sectorIndex, content) => {
         const newDays = [...trainingDays];
         newDays[dayIndex].sectors[sectorIndex].content = content;
+        setTrainingDays(newDays);
+    };
+
+    const handleSectorTypeChange = (dayIndex, sectorIndex, newType) => {
+        const newDays = [...trainingDays];
+        newDays[dayIndex].sectors[sectorIndex].type = newType;
+        setTrainingDays(newDays);
+    };
+
+    const handleAddSector = (dayIndex) => {
+        const newDays = [...trainingDays];
+        newDays[dayIndex].sectors.push({
+            type: 'WOD',
+            content: '',
+            youtubeLinks: [{ url: '' }]
+        });
+        setTrainingDays(newDays);
+    };
+
+    const handleRemoveSector = (dayIndex, sectorIndex) => {
+        const newDays = [...trainingDays];
+        // Don't remove if it's the only sector
+        if (newDays[dayIndex].sectors.length <= 1) return;
+
+        newDays[dayIndex].sectors.splice(sectorIndex, 1);
         setTrainingDays(newDays);
     };
 
@@ -505,12 +513,17 @@ const [activeTab, setActiveTab] = useState(0);
     // Get icon for sector type
     const getSectorIcon = (type) => {
         switch (type) {
-            case 'Strength':
+            case 'Weightlifting':
                 return <FitnessCenterIcon />;
             case 'WOD':
                 return <TimerIcon />;
-            case 'Essentials':
+            case 'Cardio':
                 return <DirectionsRunIcon />;
+            case 'Rowing':
+                return <RowingIcon />;
+            case 'Gymnastics':
+                return <SportsGymnasticsIcon />;
+            case 'Other':
             default:
                 return <FitnessCenterIcon />;
         }
@@ -717,23 +730,43 @@ const [activeTab, setActiveTab] = useState(0);
                                         <Box sx={{ p: 3 }}>
                                             <Grid container spacing={3}>
                                                 {day.sectors.map((sector, sectorIndex) => (
-                                                    <Grid item xs={12} md={4} key={sectorIndex}>
+                                                    <Grid item xs={12} key={sectorIndex}>
                                                         <Paper
                                                             elevation={2}
                                                             sx={{
                                                                 p: 2,
-                                                                height: '100%',
                                                                 display: 'flex',
                                                                 flexDirection: 'column',
                                                                 position: 'relative',
                                                                 borderRadius: '8px',
                                                             }}
                                                         >
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                                {getSectorIcon(sector.type)}
-                                                                <Typography variant="h6" sx={{ ml: 1 }}>
-                                                                    {sector.type}
-                                                                </Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+                                                                <TextField
+                                                                    select
+                                                                    label="Sector Type"
+                                                                    value={sector.type}
+                                                                    onChange={(e) => handleSectorTypeChange(dayIndex, sectorIndex, e.target.value)}
+                                                                    sx={{ minWidth: 200 }}
+                                                                >
+                                                                    <MenuItem value="WOD">WOD</MenuItem>
+                                                                    <MenuItem value="Weightlifting">Weightlifting</MenuItem>
+                                                                    <MenuItem value="Cardio">Cardio</MenuItem>
+                                                                    <MenuItem value="Gymnastics">Gymnastics</MenuItem>
+                                                                    <MenuItem value="Rowing">Rowing</MenuItem>
+                                                                    <MenuItem value="Other">Other</MenuItem>
+                                                                </TextField>
+
+                                                                <Box>
+                                                                    <IconButton
+                                                                        color="error"
+                                                                        onClick={() => handleRemoveSector(dayIndex, sectorIndex)}
+                                                                        disabled={day.sectors.length <= 1}
+                                                                        sx={{ mr: 1 }}
+                                                                    >
+                                                                        <DeleteIcon />
+                                                                    </IconButton>
+                                                                </Box>
                                                             </Box>
 
                                                             <TextareaAutosize
@@ -753,9 +786,7 @@ const [activeTab, setActiveTab] = useState(0);
                                                                 }}
                                                             />
 
-                                                            <Typography variant="subtitle2" gutterBottom>
-                                                                YouTube Links:
-                                                            </Typography>
+
 
                                                             {sector.youtubeLinks.map((_, linkIndex) => (
                                                                 <YouTubeInput
@@ -778,6 +809,17 @@ const [activeTab, setActiveTab] = useState(0);
                                                         </Paper>
                                                     </Grid>
                                                 ))}
+
+                                                <Grid item xs={12}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        startIcon={<AddIcon />}
+                                                        onClick={() => handleAddSector(dayIndex)}
+                                                        fullWidth
+                                                    >
+                                                        Add New Sector
+                                                    </Button>
+                                                </Grid>
                                             </Grid>
                                         </Box>
                                     </Collapse>

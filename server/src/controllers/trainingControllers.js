@@ -142,21 +142,33 @@ exports.updateTraining = async (req, res) => {
             });
         }
 
+        // Prepare exercises data based on its type
+        let exercisesData = [];
+        if (typeof exercises === 'string') {
+            // If exercises is a string, split by newlines and create exercise objects
+            exercisesData = exercises.split('\n').map(line => ({
+                exerciseData: line.trim()
+            })).filter(ex => ex.exerciseData !== ''); // Remove empty lines
+        } else if (Array.isArray(exercises)) {
+            // If exercises is already an array, use it directly
+            exercisesData = exercises.map((ex) => ({
+                exerciseData: typeof ex === 'string' ? ex : ex.exerciseData || '',
+            }));
+        }
+        // If exercises is undefined or null, exercisesData remains an empty array
+
         // Uuendame training + exercises
-        // Vana kood: kustutab exercises ja loob uued
         const updatedTraining = await prisma.training.update({
             where: { id: trainingId },
             data: {
                 type,
                 date: new Date(date),
-                wodName: wodName.toUpperCase() || null,
+                wodName: wodName || null,
                 wodType,
                 score,
                 exercises: {
                     deleteMany: {}, // kustuta vanad
-                    create: exercises.map((ex) => ({
-                        exerciseData: ex.exerciseData || '',
-                    })),
+                    create: exercisesData,
                 },
             },
             include: { exercises: true },

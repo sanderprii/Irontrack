@@ -5,8 +5,20 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 app.set('trust proxy', 1);
-
+const util = require('util');
 require('dotenv').config();
+
+JSON.stringify = (function(originaalStringify) {
+    return function(väärtus, asendaja, tühimik) {
+        return originaalStringify(väärtus, function(võti, väärtus) {
+            // Teisenda BigInt stringiks
+            if (typeof väärtus === 'bigint') {
+                return väärtus.toString();
+            }
+            return asendaja ? asendaja(võti, väärtus) : väärtus;
+        }, tühimik);
+    };
+})(JSON.stringify);
 
 const path = require('path');
 
@@ -49,7 +61,14 @@ app.use(cors({
 
 // Lisa see enne marsruutide defineerimist
 app.use(express.static(path.join(__dirname, '../../client/build')));
-app.use(express.json());
+app.use(express.json({
+    replacer: (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    }
+}));
 // Middleware to handle subdomains
 
 app.use(async (req, res, next) => {

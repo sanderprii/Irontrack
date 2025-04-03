@@ -851,6 +851,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                 maxWidth="lg"
                 fullWidth
                 fullScreen={isMobile}
+
             >
                 {viewPlan ? (
                     <>
@@ -883,7 +884,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                             </Typography>
                         </DialogTitle>
 
-                        <DialogContent dividers>
+                        <DialogContent dividers sx={{p: 1}}>
                             {viewPlan.trainingDays?.length > 0 ? (
                                 <>
                                     {/* Display Days as Collapsible Sections */}
@@ -940,13 +941,13 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                                     </ListItemButton>
 
                                                     <Collapse in={expandedDays[dayIndex]} timeout="auto">
-                                                        <Box sx={{ p: 3 }}>
+                                                        <Box sx={{ p: 1 }}>
                                                             {day.sectors?.map((sector, sectorIndex) => (
                                                                 <Paper
                                                                     key={sectorIndex}
                                                                     elevation={1}
                                                                     sx={{
-                                                                        p: 3,
+                                                                        p: 2,
                                                                         mb: 3,
                                                                         borderRadius: '8px',
                                                                         border: '1px solid',

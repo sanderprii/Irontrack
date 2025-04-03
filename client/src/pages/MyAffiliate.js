@@ -1,4 +1,4 @@
-// src/pages/MyAffiliate.js
+// src/pages/MyAffiliate.js (updated)
 import React, { useState, useEffect } from 'react';
 import {
     Container,
@@ -24,12 +24,14 @@ import AffiliateView from '../components/AffiliateView';
 import FinanceView from '../components/FinanceView';
 import AffiliateContracts from '../components/AffiliateContracts';
 import UnpaidUsers from '../components/UnPaidUsers';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import { Paper } from '@mui/material';
 
 const pricingPlan = localStorage.getItem('pricingPlan');
 
 const menuItems = [
     { id: 'my-affiliate', label: 'My Affiliate', component: AffiliateView },
+    { id: 'analytics', label: 'Analytics', component: AnalyticsDashboard },
     { id: 'finance', label: 'Finance', component: FinanceView },
     ...(pricingPlan === 'premium' ? [
         { id: 'contracts', label: 'Contracts', component: AffiliateContracts },

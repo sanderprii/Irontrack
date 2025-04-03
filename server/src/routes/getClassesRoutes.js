@@ -130,6 +130,23 @@ router.post("/add-home-affiliate", ensureAuthenticated, async (req, res) => {
             data: { homeAffiliate: parseInt(affiliateId) },
         });
 
+        // if user is not member of the affiliate, add them
+        const userAffiliate = await prisma.members.findFirst({
+            where: {
+                userId: req.user?.id,
+                affiliateId: parseInt(affiliateId),
+            },
+        });
+
+        if (!userAffiliate) {
+            await prisma.members.create({
+                data: {
+                    userId: req.user?.id,
+                    affiliateId: parseInt(affiliateId),
+                },
+            });
+        }
+
         res.status(201).json({ message: "Added for Home gym!" });
     } catch (error) {
         console.error("Error adding Home gym:", error);

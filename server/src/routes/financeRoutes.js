@@ -43,12 +43,12 @@ router.get("/orders/:userId", ensureAuthenticated, async (req, res) => {
     }
 });
 
-// 📌 Endpoint, et saada tulu ja plaanide müügi andmed määratud perioodi jooksul
+// 📌 Endpoint to get revenue and transaction data for a specific affiliate
 router.get('/finance', ensureAuthenticated, async (req, res) => {
     try {
         const { startDate, endDate, affiliateId } = req.query;
 
-        // 📌 ✅ Vaikimisi kuupäevad
+        // 📌 Default date range (current year)
         const currentYear = new Date().getFullYear();
         const defaultStart = new Date(`${currentYear}-01-01`);
         const defaultEnd = new Date(`${currentYear}-12-31`);
@@ -56,57 +56,47 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
         const start = startDate ? new Date(startDate) : defaultStart;
         const end = endDate ? new Date(endDate) : defaultEnd;
 
-        // 📌 ✅ Leia kasutaja affiliateId(d)
-        let affiliateIds = parseInt(affiliateId)
+        // 📌 Ensure affiliateId is a number
+        const affiliateIds = parseInt(affiliateId);
 
-
-
-        if (affiliateIds.length === 0) {
+        if (!affiliateIds) {
             return res.status(403).json({ error: "No affiliate access" });
         }
 
-        // 📌 ✅ Leia tulu (revenue)
-        const revenue = await prisma.userPlan.aggregate({
-            _sum: { price: true }, // ⬅️ Kasuta _sum otse
+        // 📌 Calculate total revenue from transactions
+        const revenueResult = await prisma.transactions.aggregate({
+            _sum: { amount: true },
             where: {
-                purchasedAt: { gte: start, lte: end },
-                affiliateId: affiliateIds// ✅ Kasuta massiivi!
+                affiliateId: affiliateIds,
+                createdAt: { gte: start, lte: end },
+                decrease: true // Only count revenue-generating transactions
             }
         });
 
-        // 📌 ✅ Leia müüdud plaanid
-        const plansSold = await prisma.userPlan.groupBy({
-            by: ['planName'],
-            _count: { planName: true },
+        // 📌 Analyze transaction types and plans
+        const plansSold = await prisma.transactions.groupBy({
+            by: ['type', 'description'],
+            _count: { type: true },
             where: {
-                purchasedAt: { gte: start, lte: end },
-                affiliateId: affiliateIds
+                affiliateId: affiliateIds,
+                createdAt: { gte: start, lte: end },
+                decrease: true
             },
-            orderBy: { _count: { planName: 'desc' } }
+            orderBy: { _count: { type: 'desc' } }
         });
 
-        // 📌 ✅ Leia aktiivsed, aegunud ja kokku liikmed
-        const activeMembers = await prisma.userPlan.count({
+        // 📌 Calculate member statistics using Members table
+        const activeMembers = await prisma.members.count({
             where: {
-                endDate: { gte: new Date() },
-                affiliateId: affiliateIds
+                affiliateId: affiliateIds,
+                isActive: true
             }
         });
 
-        const expiredMembers = await prisma.userPlan.count({
+        const atRiskMembers = await prisma.members.count({
             where: {
-                userId: {
-                    notIn: (
-                        await prisma.userPlan.findMany({
-                            where: {
-                                endDate: { gte: new Date() },
-                                affiliateId: affiliateIds
-                            },
-                            select: { userId: true }
-                        })
-                    ).map(u => u.userId)
-                },
-                affiliateId: affiliateIds
+                affiliateId: affiliateIds,
+                atRisk: true
             }
         });
 
@@ -114,12 +104,12 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
             where: { affiliateId: affiliateIds }
         });
 
-        // 📌 ✅ Tagasta vastus
+        // 📌 Return response
         res.json({
-            revenue: revenue._sum.price || 0,
+            revenue: revenueResult._sum.amount || 0,
             plansSold,
             activeMembers,
-            expiredMembers,
+            atRiskMembers,
             totalMembers
         });
 

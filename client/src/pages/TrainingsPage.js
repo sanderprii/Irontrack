@@ -815,6 +815,7 @@ export default function TrainingsPage() {
                                 eventClick={handleEventClick}
                                 eventContent={renderEventContent}
                                 height="auto"
+                                firstDay={1}
                                 headerToolbar={{
                                     left: 'prev,next today',
                                     center: 'title',

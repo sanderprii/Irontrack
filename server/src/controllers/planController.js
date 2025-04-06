@@ -27,7 +27,12 @@ const getPlans = async (req, res) => {
 // ✅ POST: Uus plaan
 const createPlan = async (req, res) => {
     const ownerId = parseInt(req.user?.id);
-    const {name, validityDays, price, additionalData, sessions} = req.body;
+    const {name, trainingType, validityDays, price, additionalData, sessions} = req.body;
+let trainingTypeString = trainingType;
+    if (Array.isArray(trainingTypeString)) {
+        trainingTypeString = JSON.stringify(trainingTypeString);
+    }
+
 
     try {
         const affiliateId = await prisma.affiliate.findFirst({
@@ -38,6 +43,7 @@ const createPlan = async (req, res) => {
         const newPlan = await prisma.plan.create({
             data: {
                 name,
+                trainingType: trainingTypeString,
                 validityDays: parseInt(validityDays),
                 price: parseFloat(price),
                 additionalData,
@@ -57,7 +63,21 @@ const createPlan = async (req, res) => {
 const updatePlan = async (req, res) => {
     const ownerId = parseInt(req.user?.id);
     const planId = parseInt(req.params.id);
-    const {name, validityDays, price, additionalData, sessions} = req.body;
+    const {name, trainingType, validityDays, price, additionalData, sessions} = req.body;
+
+    let trainingTypeString = trainingType;
+    if (Array.isArray(trainingTypeString)) {
+        trainingTypeString = JSON.stringify(trainingTypeString);
+    } else if (typeof trainingTypeString === 'object' && trainingTypeString !== null) {
+        // Kui on objekt aga mitte massiiv, teisenda stringiks
+        trainingTypeString = JSON.stringify(trainingTypeString);
+    } else if (trainingTypeString === undefined || trainingTypeString === null) {
+        // Kui on undefined või null, kasuta null väärtust
+        trainingTypeString = null;
+    } else if (typeof trainingTypeString !== 'string') {
+        // Igaks juhuks, kui pole string, teisenda stringiks
+        trainingTypeString = String(trainingTypeString);
+    }
 
     try {
         const existingPlan = await prisma.plan.findUnique({where: {id: planId}});
@@ -70,6 +90,7 @@ const updatePlan = async (req, res) => {
             where: {id: planId},
             data: {
                 name,
+                trainingType: trainingTypeString,
                 validityDays: parseInt(validityDays),
                 price: parseFloat(price),
                 additionalData,
@@ -217,7 +238,7 @@ const buyPlan = async (req, res) => {
                     }
                 }
             });
-
+console.log("planData", planData);
             // Kasutaja plaani lisamine
             await prisma.userPlan.create({
                 data: {
@@ -230,7 +251,8 @@ const buyPlan = async (req, res) => {
                     validityDays: planData.validityDays,
                     sessionsLeft: planData.sessions,
                     planName: planData.name,
-                    contractId: parseInt(contractId)
+                    contractId: parseInt(contractId),
+                    trainingType: planData.trainingType,
                 }
             });
 

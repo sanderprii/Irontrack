@@ -110,6 +110,7 @@ router.get("/affiliate-plans", ensureAuthenticated, async (req, res) => {
                 sessions: true,
                 additionalData: true,
                 affiliateId: true,
+                trainingType: true,
             },
         });
 

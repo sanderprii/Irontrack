@@ -21,6 +21,8 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                 return "#f9f0ff"; // hele-lilla
             case "Gymnastics":
                 return "#fff0f9"; // hele-roosa
+                case "Open Gym":
+                return "#f5f0e1"; // hele-pruun
             default:
                 return "background.paper";
         }

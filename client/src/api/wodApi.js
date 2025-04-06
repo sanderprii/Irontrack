@@ -65,7 +65,7 @@ export const applyWODToTrainings = async (affiliateId, date) => {
         const token = localStorage.getItem("token");
         const formattedDate = new Date(date);
 
-        formattedDate.setHours(2, 0, 0, 0);
+
 
 
         const date1 = formattedDate.toISOString(); // ✅ Vormindatud ISO kuupäev

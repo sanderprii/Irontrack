@@ -62,7 +62,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
     }, [selectedClass]);
 
     // Dropdowni valikud - added Rowing and Gymnastics
-    const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Rowing", "Gymnastics", "Other"];
+    const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Rowing", "Gymnastics", "Open Gym", "Other"];
     const wodTypes = ["For Time", "EMOM", "AMRAP", "TABATA"];
 
     const formatDateForInput = (isoString) => {

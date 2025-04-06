@@ -1,31 +1,57 @@
-// ActivePlans.js
 import React, { useState, useEffect } from 'react';
 import {
-    Table, TableHead, TableRow, TableCell, TableBody,
-    Typography, Card, Button, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, Select, MenuItem, IconButton
+    Box,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography,
+    Card,
+    CardContent,
+    Divider,
+    Chip,
+    Grid,
+    Collapse,
+    IconButton,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Select,
+    MenuItem
 } from '@mui/material';
 import { getPlans, assignPlanToUser, updateUserPlan } from '../api/planApi';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import InfoIcon from '@mui/icons-material/Info';
+import AddIcon from '@mui/icons-material/Add';
+import EventIcon from '@mui/icons-material/Event';
 
-export default function ActivePlans({ userId, affiliateId }) {
-    const [plans, setPlans] = useState([]);          // Kasutaja aktiivsed (UserPlan) kirjed
-    const [affiliatePlans, setAffiliatePlans] = useState([]); // Kõik affiliate'i plaanid
+const ActivePlans = ({ userId, affiliateId }) => {
+    const [plans, setPlans] = useState([]);
+    const [affiliatePlans, setAffiliatePlans] = useState([]);
     const [selectedPlanId, setSelectedPlanId] = useState('');
     const [openModal, setOpenModal] = useState(false);
+    const [openRow, setOpenRow] = useState(null);
 
-    // Toome "edit-mode" jaoks
-    const [editRowId, setEditRowId] = useState(null); // userPlan.id
+    // Edit mode state
+    const [editRowId, setEditRowId] = useState(null);
     const [editData, setEditData] = useState({
-        planName: '',
-        price: '',
         sessionsLeft: '',
         endDate: '',
     });
 
     const token = localStorage.getItem('token');
     const API_URL = process.env.REACT_APP_API_URL;
+    const role = localStorage.getItem('role');
 
-    // Laeme kasutaja aktiivsed plaanid
+    // Load user's active plans
     const loadUserActivePlans = () => {
         fetch(`${API_URL}/user/user-purchase-history?userId=${userId}&affiliateId=${affiliateId}`, {
             headers: {
@@ -36,33 +62,64 @@ export default function ActivePlans({ userId, affiliateId }) {
             .then((res) => res.json())
             .then((data) => {
                 const now = new Date();
-                // filtrime välja kehtivad plaanid
+                // Filter active plans
                 const active = data.filter((p) => new Date(p.endDate) >= now);
                 setPlans(active);
             })
             .catch((err) => console.log('Error loading active plans:', err));
     };
 
-    // Esmane laadimine
+    // Initial loading
     useEffect(() => {
         loadUserActivePlans();
-    }, [token]);
+    }, [token, userId, affiliateId]);
 
-    // Laeme affiliate'i enda plaanid (Plan tabelist)
+    // Load affiliate plans
     useEffect(() => {
-        // Eeldame, et getPlans() tagastab KÕIK plaanid, aga tavaliselt on need ownerId järgi piiritletud
-        // kui su backend tekitab role=owner => whereClause.ownerId.
-        // Vaatad, kas see sobib su loogikaga.
-
         getPlans().then((allPlans) => {
-            // Filtreerime välja need, mis kuuluvad antud affiliate'ile (ownerId == affiliate's owner?)
-            // Või kui plaanil endal on ownerId = userId, see sõltub Sinu loogikast
             const activeAffiliatePlans = allPlans.filter((pl) => pl.active === true);
             setAffiliatePlans(activeAffiliatePlans);
         });
     }, []);
 
-    // Add Plan nupu vajutus -> avab modal
+    // Row click handler for expansion
+    const handleRowClick = (id) => {
+        if (openRow === id) {
+            setOpenRow(null);
+        } else {
+            setOpenRow(id);
+        }
+    };
+
+    // Format date for display
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    // Parse training types from JSON string
+    const parseTrainingTypes = (trainingTypeString) => {
+        try {
+            return JSON.parse(trainingTypeString);
+        } catch (e) {
+            return [];
+        }
+    };
+
+    // Calculate days left until expiration
+    const calculateDaysLeft = (endDate) => {
+        const today = new Date();
+        const expDate = new Date(endDate);
+        const diffTime = Math.abs(expDate - today);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    // Modal handlers
     const handleOpenModal = () => {
         setOpenModal(true);
     };
@@ -72,157 +129,360 @@ export default function ActivePlans({ userId, affiliateId }) {
         setSelectedPlanId('');
     };
 
-    // Modal -> Save -> määrame kasutajale valitud plaani
     const handleSaveModal = async () => {
         if (!selectedPlanId) return;
         await assignPlanToUser(Number(selectedPlanId), Number(userId), affiliateId);
         handleCloseModal();
-        // uuesti laeme
         loadUserActivePlans();
     };
 
-    // Edit-nupp -> paneme rida "edit" režiimi
-    const handleEdit = (row) => {
-        setEditRowId(row.id); // userPlan.id
+    // Edit mode handlers
+    const handleEdit = (e, row) => {
+        e.stopPropagation(); // Prevent row expansion when clicking edit
+        setEditRowId(row.id);
         setEditData({
-
             sessionsLeft: row.sessionsLeft || '',
             endDate: row.endDate ? new Date(row.endDate).toISOString().split('T')[0] : '',
         });
     };
 
-    // Kui input muutub
     const handleChange = (field, value) => {
         setEditData({ ...editData, [field]: value });
     };
 
-    // Salvestame muudatused
-    const handleSaveEdit = async (userPlanId) => {
-        // Vaatame, milliseid välju me uuendame
-        const body = {
+    const handleSaveEdit = async (e) => {
+        e.stopPropagation(); // Prevent row expansion when clicking save
 
+        const body = {
             sessionsLeft: Number(editData.sessionsLeft),
-            // Vaatame, kas endDate on string?
-            // Teisendame Date vormi, kui vaja
             endDate: editData.endDate ? new Date(editData.endDate) : null,
         };
 
-        await updateUserPlan(userPlanId, body);
-
-        // Lõpetame edit mode
+        await updateUserPlan(editRowId, body);
         setEditRowId(null);
         loadUserActivePlans();
     };
-  const role = localStorage.getItem('role');
+
+    const handleCancelEdit = (e) => {
+        e.stopPropagation(); // Prevent row expansion when clicking cancel
+        setEditRowId(null);
+    };
+
     return (
-        <Card sx={{ bgcolor: "background.paper", border: 'none', p: 2 }}>
-            <Typography variant="h5" sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+        <Box>
+            <Typography variant="h5" gutterBottom sx={{
+                ml: 2,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
                 Active Plans
                 {role === 'affiliate' && (
-                <Button variant="contained" onClick={handleOpenModal}>
-                    Add Plan
-                </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleOpenModal}
+                        startIcon={<AddIcon />}
+                        sx={{ mr: 2 }}
+                    >
+                        Add Plan
+                    </Button>
                 )}
             </Typography>
 
-            {plans.length === 0 ? (
-                <Typography>No active plans.</Typography>
-            ) : (
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Plan</TableCell>
-                            <TableCell>Start Date</TableCell>
-                            <TableCell>End Date</TableCell>
-                            <TableCell>Sessions Left</TableCell>
-                            <TableCell>Price</TableCell>
-                            {role === 'affiliate' && (
-                            <TableCell>Edit</TableCell>
-                            )}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {plans.map((p) => (
-                            <TableRow key={p.id}>
-                                {/* Kui see rida on edit-mode */}
-                                {editRowId === p.id ? (
-                                    <>
-                                        <TableCell>{p.planName}</TableCell>
-                                        <TableCell>
-                                            {new Date(p.purchasedAt).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            {/* endDate */}
-                                            <TextField
-                                                type="date"
-                                                size="small"
-                                                value={editData.endDate}
-                                                onChange={(e) => handleChange('endDate', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <TextField
-                                                type="number"
-                                                size="small"
-                                                value={editData.sessionsLeft}
-                                                onChange={(e) => handleChange('sessionsLeft', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{p.price} €</TableCell>
-                                        <TableCell>
-                                            <Button variant="outlined" onClick={() => handleSaveEdit(p.id)}>
-                                                Save
-                                            </Button>
-                                        </TableCell>
-                                    </>
-                                ) : (
-                                    <>
-                                        <TableCell>{p.planName}</TableCell>
-                                        <TableCell>{new Date(p.purchasedAt).toLocaleDateString()}</TableCell>
-                                        <TableCell>{new Date(p.endDate).toLocaleDateString()}</TableCell>
-                                        <TableCell>{p.sessionsLeft}</TableCell>
-                                        <TableCell>{p.price} €</TableCell>
-                                        {role === 'affiliate' && (
-                                        <TableCell>
-                                            <Button variant="text" onClick={() => handleEdit(p)}>
-                                                Edit
-                                            </Button>
-                                        </TableCell>
-                                        )}
-                                    </>
-                                )}
+            <Paper>
+                {plans.length === 0 ? (
+                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="body1">No active plans found.</Typography>
+                    </Box>
+                ) : (
+                    <Table>
+                        <TableHead>
+                            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                <TableCell width="50px"></TableCell>
+                                <TableCell>Plan Name</TableCell>
+                                <TableCell>Training Type</TableCell>
+                                <TableCell>Start Date</TableCell>
+                                <TableCell>End Date</TableCell>
+                                <TableCell>Price</TableCell>
+                                <TableCell>Sessions Left</TableCell>
+                                {role === 'affiliate' && <TableCell>Actions</TableCell>}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+                        </TableHead>
+                        <TableBody>
+                            {plans.map((plan) => {
+                                const isOpen = openRow === plan.id;
+                                const isEditing = editRowId === plan.id;
+                                const trainingTypes = parseTrainingTypes(plan.trainingType);
+                                const daysLeft = calculateDaysLeft(plan.endDate);
 
-            {/* Modal uue plaani lisamiseks (assign to user) */}
+                                return (
+                                    <React.Fragment key={plan.id}>
+                                        {/* Main Row */}
+                                        <TableRow
+                                            hover
+                                            onClick={() => !isEditing && handleRowClick(plan.id)}
+                                            sx={{ cursor: isEditing ? 'default' : 'pointer' }}
+                                        >
+                                            <TableCell>
+                                                <IconButton size="small" disabled={isEditing}>
+                                                    {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                </IconButton>
+                                            </TableCell>
+
+                                            <TableCell>{plan.planName}</TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                    {trainingTypes.map((type, index) => (
+                                                        <Chip
+                                                            key={index}
+                                                            label={type}
+                                                            size="small"
+                                                            color="primary"
+                                                            variant="outlined"
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </TableCell>
+
+                                            {isEditing ? (
+                                                <>
+                                                    <TableCell>{formatDate(plan.purchasedAt)}</TableCell>
+                                                    <TableCell>
+                                                        <TextField
+                                                            type="date"
+                                                            size="small"
+                                                            value={editData.endDate}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onChange={(e) => handleChange('endDate', e.target.value)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{plan.price} €</TableCell>
+                                                    <TableCell>
+                                                        <TextField
+                                                            type="number"
+                                                            size="small"
+                                                            value={editData.sessionsLeft}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onChange={(e) => handleChange('sessionsLeft', e.target.value)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Button
+                                                                size="small"
+                                                                variant="contained"
+                                                                color="primary"
+                                                                onClick={handleSaveEdit}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                size="small"
+                                                                variant="outlined"
+                                                                onClick={handleCancelEdit}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </Box>
+                                                    </TableCell>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <TableCell>{formatDate(plan.purchasedAt)}</TableCell>
+                                                    <TableCell>{formatDate(plan.endDate)}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 'bold' }}>{plan.price} €</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={plan.sessionsLeft === 9999 ? "Unlimited" : plan.sessionsLeft}
+                                                            color={plan.sessionsLeft > 5 ? "success" : plan.sessionsLeft > 0 ? "warning" : "error"}
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    {role === 'affiliate' && (
+                                                        <TableCell>
+                                                            <Button
+                                                                size="small"
+                                                                variant="outlined"
+                                                                onClick={(e) => handleEdit(e, plan)}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        </TableCell>
+                                                    )}
+                                                </>
+                                            )}
+                                        </TableRow>
+
+                                        {/* Detail Row */}
+                                        <TableRow>
+                                            <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
+                                                <Collapse in={isOpen && !isEditing} timeout="auto" unmountOnExit>
+                                                    <Box sx={{ margin: 2 }}>
+                                                        <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                            Plan Details
+                                                        </Typography>
+
+                                                        <Grid container spacing={3}>
+                                                            {/* Plan Overview Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <FitnessCenterIcon sx={{ mr: 1 }} />
+                                                                            Plan Overview
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Plan Name:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {plan.planName}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Price:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                    {plan.price} €
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Training Types:
+                                                                                </Typography>
+                                                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                                                    {trainingTypes.map((type, index) => (
+                                                                                        <Chip
+                                                                                            key={index}
+                                                                                            label={type}
+                                                                                            size="small"
+                                                                                            color="primary"
+                                                                                        />
+                                                                                    ))}
+                                                                                </Box>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Validity Period:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {plan.validityDays} days
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                            {/* Membership Status Card */}
+                                                            <Grid item xs={12} md={6}>
+                                                                <Card elevation={1} sx={{ height: '100%' }}>
+                                                                    <CardContent>
+                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                            <DateRangeIcon sx={{ mr: 1 }} />
+                                                                            Membership Status
+                                                                        </Typography>
+                                                                        <Divider sx={{ mb: 2 }} />
+
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Sessions Left:
+                                                                                </Typography>
+                                                                                <Chip
+                                                                                    label={plan.sessionsLeft === 9999 ? "Unlimited" : plan.sessionsLeft}
+                                                                                    color={plan.sessionsLeft > 5 ? "success" : plan.sessionsLeft > 0 ? "warning" : "error"}
+                                                                                />
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Start Date:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {new Date(plan.purchasedAt).toLocaleString()}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    End Date:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {new Date(plan.endDate).toLocaleString()}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Days Left:
+                                                                                </Typography>
+                                                                                <Chip
+                                                                                    label={`${daysLeft} days`}
+                                                                                    color={daysLeft > 14 ? "success" : daysLeft > 7 ? "warning" : "error"}
+                                                                                    size="small"
+                                                                                />
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </Grid>
+
+                                                        </Grid>
+                                                    </Box>
+                                                </Collapse>
+                                            </TableCell>
+                                        </TableRow>
+                                    </React.Fragment>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                )}
+            </Paper>
+
+            {/* Modal for adding new plan */}
             <Dialog open={openModal} onClose={handleCloseModal}>
                 <DialogTitle>Assign Plan to User</DialogTitle>
-                <DialogContent sx={{ minWidth: 300 }}>
-                    <Typography>Choose one of your affiliate plans:</Typography>
+                <DialogContent sx={{ minWidth: 300, pt: 2 }}>
+                    <Typography variant="body1" gutterBottom>
+                        Choose one of your affiliate plans:
+                    </Typography>
                     <Select
                         fullWidth
                         value={selectedPlanId}
                         onChange={(e) => setSelectedPlanId(e.target.value)}
-                        sx={{ mt: 2 }}
+                        sx={{ mt: 1 }}
                     >
                         <MenuItem value="">-- Please choose --</MenuItem>
                         {affiliatePlans.map((plan) => (
                             <MenuItem key={plan.id} value={plan.id}>
-                                {plan.name} (ID: {plan.id})
+                                {plan.name} ({plan.price} €)
                             </MenuItem>
                         ))}
                     </Select>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseModal}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSaveModal} disabled={!selectedPlanId}>
-                        Save
+                    <Button
+                        variant="contained"
+                        onClick={handleSaveModal}
+                        disabled={!selectedPlanId}
+                        startIcon={<AddIcon />}
+                    >
+                        Assign Plan
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Card>
+        </Box>
     );
-}
+};
+
+export default ActivePlans;

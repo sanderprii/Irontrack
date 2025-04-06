@@ -189,6 +189,7 @@ exports.getUserPlansByAffiliate = async (req, res) => {
             select: {
                 id: true,
                 planId: true,
+                trainingType: true,
                 planName: true,
                 validityDays: true,
                 price: true,
@@ -196,7 +197,7 @@ exports.getUserPlansByAffiliate = async (req, res) => {
                 endDate: true,
                 sessionsLeft: true,
                 contractId: true,
-
+                paymentHoliday: true,
             },
         });
         res.json(userPlans);

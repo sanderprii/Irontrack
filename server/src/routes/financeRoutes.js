@@ -8,9 +8,7 @@ const ensureAuthenticated = require("../middlewares/ensureAuthenticatedJWT");
 // 📌 GET: Kõik tellimused
 router.get("/orders", ensureAuthenticated, async (req, res) => {
     try {
-
         const affiliateIds = parseInt(req.query.affiliateId);
-
 
         const orders = await prisma.userPlan.findMany({
             where: { affiliateId: { in: Array.isArray(affiliateIds) ? affiliateIds : [affiliateIds] } },
@@ -63,17 +61,17 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
             return res.status(403).json({ error: "No affiliate access" });
         }
 
-        // 📌 Calculate total revenue from transactions
+        // 📌 Calculate total revenue from all transactions including credits
         const revenueResult = await prisma.transactions.aggregate({
             _sum: { amount: true },
             where: {
                 affiliateId: affiliateIds,
-                createdAt: { gte: start, lte: end },
-                decrease: true // Only count revenue-generating transactions
+                createdAt: { gte: start, lte: end }
+                // No filter on decrease or isCredit to include all transactions
             }
         });
 
-        // 📌 Analyze transaction types and plans
+        // 📌 Analyze transaction types and plans (keeping original filter for plans)
         const plansSold = await prisma.transactions.groupBy({
             by: ['type', 'description'],
             _count: { type: true },
@@ -85,7 +83,7 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
             orderBy: { _count: { type: 'desc' } }
         });
 
-        // 📌 Calculate member statistics using Members table
+        // 📌 Calculate member statistics
         const activeMembers = await prisma.members.count({
             where: {
                 affiliateId: affiliateIds,
@@ -93,10 +91,10 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
             }
         });
 
-        const atRiskMembers = await prisma.members.count({
+        const expiredMembers = await prisma.members.count({
             where: {
                 affiliateId: affiliateIds,
-                atRisk: true
+                isActive: false
             }
         });
 
@@ -104,12 +102,12 @@ router.get('/finance', ensureAuthenticated, async (req, res) => {
             where: { affiliateId: affiliateIds }
         });
 
-        // 📌 Return response
+        // 📌 Return response with total revenue including credits
         res.json({
             revenue: revenueResult._sum.amount || 0,
             plansSold,
             activeMembers,
-            atRiskMembers,
+            expiredMembers,
             totalMembers
         });
 

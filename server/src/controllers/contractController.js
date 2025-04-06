@@ -86,7 +86,6 @@ exports.getAllContracts = async (req, res) => {
  */
 exports.createContract = async (req, res) => {
     try {
-
         const {
             userId,
             contractType,
@@ -97,11 +96,16 @@ exports.createContract = async (req, res) => {
             paymentInterval,
             paymentDay,
             validUntil,
+            trainingTypes, // Extract trainingTypes from request
         } = req.body;
 
         const validUntilDate = new Date(validUntil);
 
-
+        // Store training types as a JSON string array instead of comma-separated string
+        // This matches the format in the database: ["WOD","Gymnastics","Weightlifting"]
+        const trainingType = Array.isArray(trainingTypes)
+            ? JSON.stringify(trainingTypes)
+            : null;
 
         const newContract = await prisma.contract.create({
             data: {
@@ -115,6 +119,7 @@ exports.createContract = async (req, res) => {
                 paymentInterval,
                 paymentDay,
                 validUntil: validUntilDate,
+                trainingType, // Use singular field name matching the schema
             },
         });
 
@@ -371,7 +376,8 @@ exports.acceptContract = async (req, res) => {
                     purchasedAt: new Date(),
                     endDate: endDate,
                     sessionsLeft: 9999, // Piiramatu arv sessioone (lepingupõhine)
-                    planId: 0
+                    planId: 0,
+                    trainingType: contract.trainingType
                 }
             });
         }

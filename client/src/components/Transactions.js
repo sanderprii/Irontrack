@@ -179,14 +179,7 @@ const Transactions = ({ user, affiliateId }) => {
                                                                             </Typography>
                                                                         </Box>
 
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Affiliate ID:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {tx.affiliateId}
-                                                                            </Typography>
-                                                                        </Box>
+
                                                                     </Box>
                                                                 </CardContent>
                                                             </Card>

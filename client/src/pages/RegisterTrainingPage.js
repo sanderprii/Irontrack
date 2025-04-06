@@ -13,12 +13,16 @@ import {
     Card,
     CardContent,
     CardActions,
-    Divider
+    Divider,
+    Chip,
+    Tooltip
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BusinessIcon from "@mui/icons-material/Business";
 import GroupsIcon from "@mui/icons-material/Groups";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import { styled } from "@mui/material/styles";
 import {
@@ -33,8 +37,6 @@ import {
 import {getUserProfile} from "../api/profileApi";
 
 import {getUserPlansByAffiliate} from "../api/profileApi";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -48,6 +50,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
     backgroundColor: theme.palette.background.default,
 }));
 
+// Improved styled card from Plans.js
 const StyledCard = styled(Card)(({ theme }) => ({
     padding: theme.spacing(3),
     display: "flex",
@@ -55,11 +58,51 @@ const StyledCard = styled(Card)(({ theme }) => ({
     gap: theme.spacing(3),
     textAlign: "center",
     backgroundColor: theme.palette.background.paper,
+    height: "100%",
     transition: "0.3s",
     "&:hover": {
         boxShadow: theme.shadows[5],
+        transform: "translateY(-4px)",
     },
 }));
+
+// Training type styles from Plans.js
+const trainingTypeColors = {
+    "All classes": "success",
+    "WOD": "primary",
+    "Weightlifting": "secondary",
+    "Cardio": "error",
+    "Rowing": "info",
+    "Gymnastics": "warning",
+    "Open Gym": "default",
+    "Other": "info"
+};
+
+const TrainingTypeChip = styled(Chip)(({ theme }) => ({
+    margin: theme.spacing(0.5),
+    fontWeight: 500,
+}));
+
+// Function to ensure training types are always in array format
+const ensureTrainingTypeArray = (trainingType) => {
+    if (!trainingType) return [];
+
+    if (Array.isArray(trainingType)) return trainingType;
+
+    // If it's a string that looks like JSON, try to parse it
+    if (typeof trainingType === 'string') {
+        try {
+            const parsed = JSON.parse(trainingType);
+            return Array.isArray(parsed) ? parsed : [trainingType];
+        } catch (e) {
+            // If JSON.parse fails, return the original string as a single-element array
+            return [trainingType];
+        }
+    }
+
+    // All other cases - return as a single-element array
+    return [trainingType];
+};
 
 const RegisterTrainingPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -68,7 +111,6 @@ const RegisterTrainingPage = () => {
     const [plans, setPlans] = useState([]);
     const [isHomeGym, setIsHomeGym] = useState(false);
     const [userPlans, setUserPlans] = useState([]);
-
 
     const navigate = useNavigate();
 
@@ -117,9 +159,14 @@ const RegisterTrainingPage = () => {
 
         try {
             const affiliatePlans = await fetchPlans(selectedAffiliate.ownerId);
-            setPlans(affiliatePlans);
+            // Process plans to ensure trainingType is in the correct format
+            const processedPlans = affiliatePlans.map(plan => ({
+                ...plan,
+                trainingType: ensureTrainingTypeArray(plan.trainingType)
+            }));
+            setPlans(processedPlans);
 
-           const getUserPlans = await getUserPlansByAffiliate(selectedAffiliate.id);
+            const getUserPlans = await getUserPlansByAffiliate(selectedAffiliate.id);
             setUserPlans(getUserPlans);
         } catch (error) {
             console.error("❌ Error loading plans:", error);
@@ -148,19 +195,25 @@ const RegisterTrainingPage = () => {
 
     const handleBuyPlan = async (plan) => {
         // NB! Siin edastame affiliateId ja plan-objekti state kaudu
-
         const userData = await getUserProfile();
-
 
         navigate("/checkout", {
             state: {
                 affiliate: selectedAffiliate, // kui vajad tervet affiliate objekti
-                 // kui vajad ainult affiliate.id
                 plan: plan,
                 contract: false,
                 userData: userData,
             }
         });
+    };
+
+    // Helper function to get plan description
+    const getPlanDescription = (plan) => {
+        if (plan.sessions === 9999) {
+            return "Unlimited sessions";
+        } else {
+            return `${plan.sessions} sessions`;
+        }
     };
 
     function getValidUntil(planId, userPlans) {
@@ -192,7 +245,6 @@ const RegisterTrainingPage = () => {
         return formatDateISOtoDDMMYYYY(latestPlan.endDate);
     }
 
-
     function formatDateISOtoDDMMYYYY(isoDateString) {
         if (!isoDateString) return null;
         const d = new Date(isoDateString);
@@ -201,7 +253,6 @@ const RegisterTrainingPage = () => {
         const year = d.getFullYear();
         return `${day}.${month}.${year}`;
     }
-
 
     return (
         <AppTheme>
@@ -355,39 +406,109 @@ const RegisterTrainingPage = () => {
                         </Box>
                     </Box>
                 )}
+
+                {/* Improved Plans Section */}
                 {plans.length > 0 && (
-                    <Box mt={4} sx={{  width: "100%", textAlign: "center" }}>
-                        <Typography variant="h5">Affiliate Plans</Typography>
-                        <Grid
-                            container
-                            spacing={0}
-                            sx={{ alignItems: "center", justifyContent: "center", width: "100%", m: 0, pl: '0' }}
+                    <Box mt={4} sx={{ width: "100%", textAlign: "center" }}>
+                        <Typography
+                            component="h2"
+                            variant="h4"
+                            sx={{
+                                color: "text.primary",
+                                fontWeight: "bold",
+                                mb: 2
+                            }}
                         >
+                            Available Plans
+                        </Typography>
+                        <Typography
+                            variant="body1"
+                            sx={{
+                                color: "text.secondary",
+                                maxWidth: "700px",
+                                mx: "auto",
+                                mb: 4
+                            }}
+                        >
+                            Choose a plan that best suits your needs. You can purchase multiple plans if needed.
+                        </Typography>
+
+                        <Grid container spacing={3} sx={{ alignItems: "stretch", width: "100%" }}>
                             {plans.map((plan) => {
                                 const validUntil = getValidUntil(plan.id, userPlans);
+                                const isPremium = plan.name === "Professional" || plan.name.toLowerCase().includes("premium");
 
                                 return (
                                     <Grid item xs={12} sm={6} md={4} key={plan.id}>
-                                        <StyledCard>
-                                            <CardContent>
-                                                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-                                                    {plan.name}
-                                                </Typography>
-                                                <Typography variant="h3" sx={{ mb: 1 }}>
-                                                    €{plan.price.toFixed(2)}
-                                                </Typography>
-                                                <Divider sx={{ my: 2 }} />
-                                                <Typography variant="subtitle2">
-                                                    Valid for {plan.validityDays} days
-                                                </Typography>
+                                        <StyledCard
+                                            sx={isPremium
+                                                ? {
+                                                    border: "none",
+                                                    boxShadow: "0 8px 12px hsla(220, 20%, 42%, 0.2)",
+                                                    bgcolor: "background.paper",
+                                                    p: 3,
+                                                    borderLeft: "5px solid #FFB347",
+                                                }
+                                                : {}}
+                                        >
+                                            <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                                                <Box sx={{ mb: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                                                    <Typography component="h3" variant="h5" fontWeight="bold">
+                                                        {plan.name}
+                                                    </Typography>
+                                                    {isPremium && <AutoAwesomeIcon color="warning" />}
+                                                </Box>
+                                                <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "center", mb: 2 }}>
+                                                    <Typography component="h3" variant="h2" fontWeight="bold">
+                                                        €{plan.price ? parseFloat(plan.price).toFixed(2) : "0.00"}
+                                                    </Typography>
+                                                </Box>
+
+                                                <Divider sx={{ my: 2, opacity: 0.8, borderColor: "divider" }} />
+
+                                                <Box sx={{ mb: 2, display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
+                                                    <CheckCircleRoundedIcon color="primary" />
+                                                    <Typography variant="body1">{plan.validityDays} days</Typography>
+                                                </Box>
+
+                                                <Box sx={{ mb: 2, display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
+                                                    <CheckCircleRoundedIcon color="primary" />
+                                                    <Typography variant="body1">{getPlanDescription(plan)}</Typography>
+                                                </Box>
+
+                                                {/* Training Types Section */}
+                                                <Box sx={{ mt: 2, mb: 3 }}>
+                                                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: "medium" }}>
+                                                        <FitnessCenterIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
+                                                        Included Training Types:
+                                                    </Typography>
+                                                    <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", minHeight: "70px" }}>
+                                                        {plan.trainingType && plan.trainingType.length > 0 ? (
+                                                            plan.trainingType.map((type, index) => (
+                                                                <Tooltip title={type} key={index}>
+                                                                    <TrainingTypeChip
+                                                                        label={type}
+                                                                        color={trainingTypeColors[type] || "default"}
+                                                                        size="small"
+                                                                    />
+                                                                </Tooltip>
+                                                            ))
+                                                        ) : (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                No training types specified
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                </Box>
 
                                                 {validUntil && (
-                                                    <Typography variant="body1" sx={{ mt: 1, fontWeight: "medium" }}>
-                                                        Valid until {validUntil}
-                                                    </Typography>
+                                                    <Box sx={{ mt: 2, mb: 1 }}>
+                                                        <Typography variant="body1" color="primary" sx={{ fontWeight: "medium" }}>
+                                                            Already active until {validUntil}
+                                                        </Typography>
+                                                    </Box>
                                                 )}
                                             </CardContent>
-
                                             <CardActions>
                                                 <Button
                                                     fullWidth
@@ -395,6 +516,10 @@ const RegisterTrainingPage = () => {
                                                     color="primary"
                                                     disabled={Boolean(validUntil)}
                                                     onClick={() => handleBuyPlan(plan, selectedAffiliate)}
+                                                    sx={{
+                                                        borderRadius: "20px",
+                                                        py: 1,
+                                                    }}
                                                 >
                                                     {validUntil ? "Already Active" : "Buy Plan"}
                                                 </Button>
@@ -406,7 +531,6 @@ const RegisterTrainingPage = () => {
                         </Grid>
                     </Box>
                 )}
-
             </StyledContainer>
         </AppTheme>
     );

@@ -1,5 +1,3 @@
-// src/components/FinanceView.js
-
 import React, { useState, useEffect } from "react";
 import {
     Container,
@@ -33,6 +31,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import PaymentIcon from '@mui/icons-material/Payment';
 import PersonIcon from '@mui/icons-material/Person';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import EventIcon from '@mui/icons-material/Event';
 
 export default function FinanceView() {
     const [orders, setOrders] = useState([]);
@@ -41,10 +42,11 @@ export default function FinanceView() {
     const [activeTab, setActiveTab] = useState("orders");
     const [affiliateId, setAffiliateId] = useState(null);
     const [expandedTransactionId, setExpandedTransactionId] = useState(null);
+    const [expandedOrderId, setExpandedOrderId] = useState(null); // New state for expanded order
     const [transactions, setTransactions] = useState([]);
     const [transactionSearchQuery, setTransactionSearchQuery] = useState("");
 
-    // Finance andmed
+    // Finance data
     const [revenue, setRevenue] = useState(0);
     const [activeMembers, setActiveMembers] = useState(0);
     const [expiredMembers, setExpiredMembers] = useState(0);
@@ -52,12 +54,12 @@ export default function FinanceView() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
-    // 1. Võtame alguses affiliate ID
+    // 1. Initial fetch of affiliate ID
     useEffect(() => {
         fetchAffiliateId();
     }, []);
 
-    // 2. Kui affiliate ID olemas, toome orders, finance ja transactions
+    // 2. Fetch data when affiliate ID is available
     useEffect(() => {
         if (affiliateId) {
             fetchOrders();
@@ -97,7 +99,7 @@ export default function FinanceView() {
             const params = new URLSearchParams();
             if (startDate) params.append("startDate", startDate);
             if (endDate) params.append("endDate", endDate);
-            params.append("affiliateId", affiliateId); // ✅ Lisatud affiliateId
+            params.append("affiliateId", affiliateId);
 
             const response = await getFinanceData(params);
 
@@ -137,15 +139,24 @@ export default function FinanceView() {
         }
     };
 
+    // Order handling - new handler for order expansion
+    const handleOrderClick = (orderId) => {
+        if (expandedOrderId === orderId) {
+            setExpandedOrderId(null); // collapse if already expanded
+        } else {
+            setExpandedOrderId(orderId); // expand the clicked order
+        }
+    };
+
     const handleTransactionSearchChange = (event) => {
         setTransactionSearchQuery(event.target.value || "");
     };
 
-    // Otsing, sorteerimine
+    // Search and sort
     const handleSearchChange = (event) => setSearchQuery(event.target.value || "");
     const handleSortChange = (event) => setSortBy(event.target.value);
 
-    // Kuupäeva filtrid
+    // Date filters
     const handleDateFilter = (e) => {
         e.preventDefault();
         fetchFinance();
@@ -163,7 +174,35 @@ export default function FinanceView() {
         fetchFinance();
     };
 
-    // Filter ja sort
+    // Calculate days left until expiration
+    const calculateDaysLeft = (endDate) => {
+        const today = new Date();
+        const expDate = new Date(endDate);
+        const diffTime = Math.abs(expDate - today);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    // Calculate status based on end date
+    const calculateStatus = (endDate) => {
+        const now = new Date();
+        const expDate = new Date(endDate);
+
+        if (expDate < now) {
+            return { label: "Expired", color: "error" };
+        }
+
+        const diffTime = Math.abs(expDate - now);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 7) {
+            return { label: "Expiring Soon", color: "warning" };
+        }
+
+        return { label: "Active", color: "success" };
+    };
+
+    // Filter and sort
     const filteredOrders = (orders || []).filter(order =>
         ((order?.user?.fullName.toLowerCase() ?? "").includes(searchQuery.toLowerCase())) ||
         ((order?.planName.toLowerCase() ?? "").includes(searchQuery.toLowerCase()))
@@ -196,7 +235,7 @@ export default function FinanceView() {
                 <Typography variant="h5" color="primary">Finance</Typography>
             </Box>
 
-            {/* Valik Orders vs Finance vs Transactions */}
+            {/* Tabs: Orders vs Finance vs Transactions */}
             <Box display="flex" justifyContent="center" mb={3}>
                 <Button
                     variant={activeTab === "orders" ? "contained" : "outlined"}
@@ -224,53 +263,277 @@ export default function FinanceView() {
                 </Button>
             </Box>
 
-            {/* Orders History */}
+            {/* REDESIGNED Orders History */}
             {activeTab === "orders" && (
                 <Box my={3}>
-                    <Typography variant="h6">Orders History</Typography>
-                    <TextField
-                        label="Search by user or plan..."
-                        fullWidth
-                        onChange={handleSearchChange}
-                        margin="normal"
-                    />
-                    <Select value={sortBy} onChange={handleSortChange} fullWidth>
-                        <MenuItem value="0">Sort by User</MenuItem>
-                        <MenuItem value="1">Sort by Plan</MenuItem>
-                        <MenuItem value="2">Sort by Price</MenuItem>
-                        <MenuItem value="3">Sort by Purchased Date</MenuItem>
-                    </Select>
+                    <Typography variant="h6" sx={{ mb: 2 }}>Orders History</Typography>
 
+                    {/* Search and Sort Controls */}
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={8}>
+                            <TextField
+                                label="Search by user or plan..."
+                                fullWidth
+                                onChange={handleSearchChange}
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Select
+                                value={sortBy}
+                                onChange={handleSortChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                            >
+                                <MenuItem value="0">Sort by User</MenuItem>
+                                <MenuItem value="1">Sort by Plan</MenuItem>
+                                <MenuItem value="2">Sort by Price</MenuItem>
+                                <MenuItem value="3">Sort by Purchased Date</MenuItem>
+                            </Select>
+                        </Grid>
+                    </Grid>
+
+                    {/* Orders Table with Expandable Rows */}
                     <TableContainer component={Paper} sx={{ mt: 2 }}>
                         <Table>
                             <TableHead>
-                                <TableRow>
+                                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                    <TableCell width="50px"></TableCell>
                                     <TableCell>User</TableCell>
                                     <TableCell>Plan</TableCell>
                                     <TableCell>Price (€)</TableCell>
                                     <TableCell>Purchased At</TableCell>
                                     <TableCell>Valid Until</TableCell>
-                                    <TableCell>Sessions Left</TableCell>
+                                    <TableCell>Status</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {sortedOrders.map(order => (
-                                    <TableRow key={order.id}>
-                                        <TableCell>{order.user.fullName}</TableCell>
-                                        <TableCell>{order.planName}</TableCell>
-                                        <TableCell>€{order.price.toFixed(2)}</TableCell>
-                                        <TableCell>{new Date(order.purchasedAt).toLocaleDateString()}</TableCell>
-                                        <TableCell>{new Date(order.endDate).toLocaleDateString()}</TableCell>
-                                        <TableCell>{order.sessionsLeft}</TableCell>
-                                    </TableRow>
-                                ))}
+                                {sortedOrders.map(order => {
+                                    const isOpen = expandedOrderId === order.id;
+                                    const status = calculateStatus(order.endDate);
+
+                                    return (
+                                        <React.Fragment key={order.id}>
+                                            {/* Main Order Row */}
+                                            <TableRow
+                                                hover
+                                                onClick={() => handleOrderClick(order.id)}
+                                                sx={{ cursor: 'pointer' }}
+                                            >
+                                                <TableCell>
+                                                    <IconButton size="small">
+                                                        {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                    </IconButton>
+                                                </TableCell>
+                                                <TableCell>{order.user.fullName}</TableCell>
+                                                <TableCell>{order.planName}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold' }}>€{order.price.toFixed(2)}</TableCell>
+                                                <TableCell>{new Date(order.purchasedAt).toLocaleDateString()}</TableCell>
+                                                <TableCell>{new Date(order.endDate).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={status.label}
+                                                        color={status.color}
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+
+                                            {/* Expanded Details Row */}
+                                            <TableRow>
+                                                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+                                                    <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                                                        <Box sx={{ margin: 2 }}>
+                                                            <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                                Order Details
+                                                            </Typography>
+
+                                                            <Grid container spacing={3}>
+                                                                {/* User Information Card */}
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Card elevation={1} sx={{ height: '100%' }}>
+                                                                        <CardContent>
+                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                <PersonIcon sx={{ mr: 1 }} />
+                                                                                Customer Information
+                                                                            </Typography>
+                                                                            <Divider sx={{ mb: 2 }} />
+
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Name:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {order.user.fullName}
+                                                                                    </Typography>
+                                                                                </Box>
+
+                                                                                {order.user.email && (
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Email:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {order.user.email}
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                )}
+
+
+                                                                            </Box>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </Grid>
+
+                                                                {/* Payment Information Card */}
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Card elevation={1} sx={{ height: '100%' }}>
+                                                                        <CardContent>
+                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                <PaymentIcon sx={{ mr: 1 }} />
+                                                                                Payment Information
+                                                                            </Typography>
+                                                                            <Divider sx={{ mb: 2 }} />
+
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Price:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                                                                                        €{order.price.toFixed(2)}
+                                                                                    </Typography>
+                                                                                </Box>
+
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Payment Date:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {new Date(order.purchasedAt).toLocaleString()}
+                                                                                    </Typography>
+                                                                                </Box>
+
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Status:
+                                                                                    </Typography>
+                                                                                    <Chip
+                                                                                        label={status.label}
+                                                                                        color={status.color}
+                                                                                    />
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </Grid>
+
+                                                                {/* Plan Details Card */}
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Card elevation={1}>
+                                                                        <CardContent>
+                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                <FitnessCenterIcon sx={{ mr: 1 }} />
+                                                                                Plan Details
+                                                                            </Typography>
+                                                                            <Divider sx={{ mb: 2 }} />
+
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Plan Name:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {order.planName}
+                                                                                    </Typography>
+                                                                                </Box>
+
+
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Sessions Left:
+                                                                                    </Typography>
+                                                                                    <Chip
+                                                                                        label={order.sessionsLeft === 9999 ? "Unlimited" : order.sessionsLeft}
+                                                                                        color={order.sessionsLeft > 5 ? "success" : order.sessionsLeft > 0 ? "warning" : "error"}
+                                                                                        size="small"
+                                                                                    />
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </Grid>
+
+                                                                {/* Membership Timeline Card */}
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Card elevation={1}>
+                                                                        <CardContent>
+                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                <DateRangeIcon sx={{ mr: 1 }} />
+                                                                                Membership Timeline
+                                                                            </Typography>
+                                                                            <Divider sx={{ mb: 2 }} />
+
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Start Date:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {new Date(order.purchasedAt).toLocaleString()}
+                                                                                    </Typography>
+                                                                                </Box>
+
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        End Date:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1">
+                                                                                        {new Date(order.endDate).toLocaleString()}
+                                                                                    </Typography>
+                                                                                </Box>
+
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        Days Left:
+                                                                                    </Typography>
+                                                                                    <Chip
+                                                                                        label={`${calculateDaysLeft(order.endDate)} days`}
+                                                                                        color={status.color}
+                                                                                        size="small"
+                                                                                    />
+                                                                                </Box>
+
+                                                                                {order.validityDays && (
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Validity Period:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {order.validityDays} days
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                )}
+                                                                            </Box>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Box>
+                                                    </Collapse>
+                                                </TableCell>
+                                            </TableRow>
+                                        </React.Fragment>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 </Box>
             )}
 
-            {/* Finance Section */}
+            {/* Finance Section - Unchanged */}
             {activeTab === "finance" && (
                 <Box my={4}>
                     <Typography variant="h6">Financial Summary</Typography>
@@ -317,7 +580,7 @@ export default function FinanceView() {
                 </Box>
             )}
 
-            {/* Transactions Section */}
+            {/* Transactions Section - Unchanged */}
             {activeTab === "transactions" && (
                 <Box my={3}>
                     <Typography variant="h6">Transactions</Typography>

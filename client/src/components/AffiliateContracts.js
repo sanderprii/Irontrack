@@ -25,7 +25,8 @@ import {
     Card,
     CardContent,
     Divider,
-    Chip
+    Chip,
+    Stack
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -33,7 +34,10 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import DescriptionIcon from '@mui/icons-material/Description';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EventIcon from '@mui/icons-material/Event';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import {getContracts, deleteContract, updateContract} from '../api/contractApi';
+import {sendMessage} from '../api/messageApi'; // Import sendMessage function
+import {getAffiliateById} from "../api/affiliateApi";
 import CreateContract from './CreateContract';
 import AddDefaultContractModal from './AddDefaultContractModal';
 import CheckIcon from "@mui/icons-material/Check";
@@ -172,11 +176,58 @@ export default function AffiliateContracts({affiliateId}) {
             return;
         }
 
-        const payload = {
-            status: 'Waiting for acceptance',
-        };
-        await updateContract(contract.id, payload);
-        await loadContracts();
+        try {
+            // Update contract status
+            const payload = {
+                status: 'Waiting for acceptance',
+            };
+            await updateContract(contract.id, payload);
+
+            // Get affiliate information for the email
+            const affiliateInfo = await getAffiliateById(affiliateId);
+
+            // Prepare email content
+            const emailSubject = `New Contract for Signature from ${affiliateInfo?.name || 'your affiliate'}`;
+            const emailBody = `
+            <p>Hello ${contract.user.fullName},</p>
+            
+            <p>You have received a new contract from ${affiliateInfo?.name || 'your affiliate'} 
+            that requires your signature.</p>
+            
+            <p><strong>Contract details:</strong></p>
+            <ul>
+                <li>Contract Type: ${contract.contractType || 'Standard Contract'}</li>
+                <li>Created Date: ${new Date(contract.createdAt).toLocaleDateString()}</li>
+                ${contract.paymentAmount ?
+                `<li>Payment Amount: ${contract.paymentAmount} €</li>` : ''}
+                ${contract.paymentInterval ?
+                `<li>Payment Interval: ${contract.paymentInterval}</li>` : ''}
+            </ul>
+            
+            <p>Please log in to your account to review and sign the contract.</p>
+            
+            <p>Thank you,<br>
+            ${affiliateInfo?.name || 'Your Affiliate'} Team</p>
+            `;
+
+            // Send notification email to the user
+            await sendMessage({
+                recipientType: 'user',
+                groupName: '', // Not needed for individual user
+                senderId: affiliateId,
+                recipientId: contract.userId, // User ID who should receive the contract
+                subject: emailSubject,
+                body: emailBody,
+                affiliateEmail: affiliateInfo?.email || 'info@affiliate.com'
+            });
+
+            // Reload contracts and show success message
+            await loadContracts();
+            alert('Contract sent successfully and notification email has been sent to the user.');
+        } catch (error) {
+            console.error('Error updating contract or sending email:', error);
+            alert('An error occurred while sending the contract. Please try again.');
+        }
     };
 
     // Handle delete contract with confirmation
@@ -194,6 +245,40 @@ export default function AffiliateContracts({affiliateId}) {
 
     const toggleRow = (id) => {
         setOpenRows((prev) => ({...prev, [id]: !prev[id]}));
+    };
+
+    // Get training types as an array
+    const getTrainingTypesArray = (trainingType) => {
+        if (!trainingType) return [];
+        try {
+            // Try to parse as JSON first (for the new format)
+            return JSON.parse(trainingType);
+        } catch (e) {
+            // Fallback for old format (comma-separated string)
+            return trainingType.split(',');
+        }
+    };
+
+    // Get color for training type chip
+    const getTrainingTypeColor = (type) => {
+        switch (type) {
+            case 'WOD':
+                return 'primary';
+            case 'Weightlifting':
+                return 'secondary';
+            case 'Rowing':
+                return 'success';
+            case 'Gymnastics':
+                return 'info';
+            case 'Open Gym':
+                return 'warning';
+            case 'Cardio':
+                return 'error';
+            case 'All classes':
+                return 'default';
+            default:
+                return 'default';
+        }
     };
 
     // PaymentHoliday uuendamise handler (kui affiliate klikkab Approved/Declined)
@@ -458,6 +543,31 @@ export default function AffiliateContracts({affiliateId}) {
                                                                                 color={contract.status === "accepted" ? "success" : contract.status === "draft" ? "primary" : "default"}
                                                                                 size="small"
                                                                             />
+                                                                        </Box>
+
+                                                                        {/* Training Types Section */}
+                                                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140, mt: 0.5 }}>
+                                                                                Training Types:
+                                                                            </Typography>
+                                                                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                                                                {getTrainingTypesArray(contract.trainingType).length > 0 ? (
+                                                                                    getTrainingTypesArray(contract.trainingType).map((type, index) => (
+                                                                                        <Chip
+                                                                                            key={index}
+                                                                                            label={type}
+                                                                                            color={getTrainingTypeColor(type)}
+                                                                                            size="small"
+                                                                                            icon={<FitnessCenterIcon />}
+                                                                                            sx={{ mb: 0.5 }}
+                                                                                        />
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                        No training types specified
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </Stack>
                                                                         </Box>
 
                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

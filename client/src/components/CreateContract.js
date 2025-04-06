@@ -14,12 +14,10 @@ import {
     Select,
     MenuItem,
     Box,
+    Chip,
 } from '@mui/material';
 
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-
+import InfoIcon from '@mui/icons-material/Info';
 import { createContract, getLatestContractTemplate } from '../api/contractApi';
 import { searchUsers } from '../api/membersApi';
 import TextareaAutosize from "@mui/material/TextareaAutosize";
@@ -34,6 +32,18 @@ export default function CreateContract({ open, onClose, affiliateId }) {
     // Lepingu põhiandmed
     const [contractType, setContractType] = useState('Monthly Membership');
     const [content, setContent] = useState('');
+
+    // Training types
+    const [trainingTypes, setTrainingTypes] = useState([]);
+    const trainingTypeOptions = [
+        'All classes',
+        'WOD',
+        'Weightlifting',
+        'Rowing',
+        'Gymnastics',
+        'Open Gym',
+        'Cardio'
+    ];
 
     // Uued väljad
     const [paymentType, setPaymentType] = useState('');
@@ -95,40 +105,40 @@ export default function CreateContract({ open, onClose, affiliateId }) {
             paymentInterval,
             paymentDay: paymentDay ? parseInt(paymentDay, 10) : null,
             validUntil,
+            trainingTypes, // Send as array, backend will convert to string
         };
 
         await createContract(payload);
         onClose();
     };
 
-    // Helper komponent tooltip ikooniga
+    // Improved helper component tooltip (compact version)
     const InfoTooltip = ({ title }) => (
-        <Tooltip
-            title={title}
-            arrow
-            placement="top"
-            enterTouchDelay={0}
-            leaveTouchDelay={1500}
+        <Box
+            component="span"
+            sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                mr: 1,
+                position: 'relative',
+                '&:hover::after': {
+                    content: `"${title}"`,
+                    position: 'absolute',
+                    top: '-24px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(97, 97, 97, 0.9)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    whiteSpace: 'nowrap',
+                    zIndex: 1000
+                }
+            }}
         >
-            <IconButton
-                size="small"
-                sx={{
-                    mr: 1,
-                    margin: 0,
-                    padding: 0,
-                    "&:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.04)"
-                    }
-                }}
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }}
-                tabIndex={0}
-            >
-                <HelpOutlineIcon fontSize="small" color="action" />
-            </IconButton>
-        </Tooltip>
+            <InfoIcon fontSize="small" color="action" sx={{ fontSize: '16px' }} />
+        </Box>
     );
 
     return (
@@ -141,7 +151,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
                 {/* Kasutaja otsing (Autocomplete) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Search for a member by their full name" />
+                    <InfoTooltip title="Search for a member" />
                     <Autocomplete
                         fullWidth
                         options={userOptions}
@@ -170,9 +180,37 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                     />
                 </Box>
 
+                {/* Training Types (Multi-select) */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <InfoTooltip title="Select available training types" />
+                    <Autocomplete
+                        multiple
+                        fullWidth
+                        options={trainingTypeOptions}
+                        value={trainingTypes}
+                        onChange={(event, newValue) => setTrainingTypes(newValue)}
+                        renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                                <Chip
+                                    label={option}
+                                    size="small"
+                                    {...getTagProps({ index })}
+                                />
+                            ))
+                        }
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Training Types"
+                                placeholder="Select training types"
+                            />
+                        )}
+                    />
+                </Box>
+
                 {/* Contract type */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Type of contract (e.g. Monthly Membership, Annual Membership)" />
+                    <InfoTooltip title="Type of contract" />
                     <TextField
                         label="Contract Type"
                         value={contractType}
@@ -181,11 +219,9 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                     />
                 </Box>
 
-
-
                 {/* Payment Amount */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Amount to be charged in each payment period" />
+                    <InfoTooltip title="Amount per period" />
                     <TextField
                         label="Payment Amount"
                         type="number"
@@ -197,7 +233,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
                 {/* Payment Interval (Select) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Frequency of payments (monthly or yearly)" />
+                    <InfoTooltip title="Frequency of payments" />
                     <FormControl fullWidth>
                         <InputLabel id="payment-interval-label">Payment Interval</InputLabel>
                         <Select
@@ -207,14 +243,13 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                             onChange={(e) => setPaymentInterval(e.target.value)}
                         >
                             <MenuItem value="month">Month</MenuItem>
-
                         </Select>
                     </FormControl>
                 </Box>
 
                 {/* Payment Day (1..28) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Day of the month when payment will be processed (1-28)" />
+                    <InfoTooltip title="Day of payment (1-28)" />
                     <TextField
                         label="Payment Day"
                         type="number"
@@ -227,7 +262,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
                 {/* Valid Until (kuupäev) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Date when the contract expires" />
+                    <InfoTooltip title="Expiration date" />
                     <TextField
                         label="Valid Until"
                         type="date"
@@ -235,14 +270,14 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                         onChange={(e) => setValidUntil(e.target.value)}
                         fullWidth
                         InputLabelProps={{
-                            shrink: true, // kuvab labeli korrektselt kuupäevavälja puhul
+                            shrink: true,
                         }}
                     />
                 </Box>
 
                 {/* Lepingu sisu (textarea) */}
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <InfoTooltip title="Full text content of the contract" />
+                    <InfoTooltip title="Contract text content" />
                     <FormControl fullWidth>
                         <TextareaAutosize
                             minRows={6}

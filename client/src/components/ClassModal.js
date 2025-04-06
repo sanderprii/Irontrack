@@ -61,7 +61,7 @@ export default function ClassModal({
                                        refreshClasses,
                                        attendeesCount,
                                        affiliateId,
-    affiliateEmail,
+                                       affiliateEmail,
                                        props
                                    }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -73,6 +73,9 @@ export default function ClassModal({
     // 👉 Registreerimiseks ja waitlistile vajalikud state'id
     const [userPlans, setUserPlans] = useState([]); // Hoiustab kasutaja plaane
     const [selectedPlanId, setSelectedPlanId] = useState(null); // Kasutaja valitud plaani ID
+    const [compatiblePlans, setCompatiblePlans] = useState([]); // ✅ New: Holds only plans compatible with class trainingType
+    const [hasAnyPlans, setHasAnyPlans] = useState(false); // ✅ New: Flag to check if user has any plans at all
+    const [hasCompatiblePlans, setHasCompatiblePlans] = useState(false); // ✅ New: Flag to check if user has compatible plans
 
     const [showScoreForm, setShowScoreForm] = useState(false);
     const [scoreType, setScoreType] = useState("rx");  // rx | sc | beg
@@ -224,12 +227,16 @@ export default function ClassModal({
         }
     }
 
+    // ✅ Updated: Filter plans based on both expiration date and training type compatibility
     async function loadUserPlans(affiliateId) {
         try {
             const plans = await getUserPlansByAffiliate(affiliateId);
 
-            // Filtreeri välja plaanid, mille endDate + 5 päeva on möödas
-            const filteredPlans = plans.filter(plan => {
+            // Set whether user has any plans at all
+            setHasAnyPlans(plans && plans.length > 0);
+
+            // Filter for expiration first
+            const timeValidPlans = plans.filter(plan => {
                 const planEndDate = new Date(plan.endDate).getTime();
                 let expiryTime = 0;
                 if (plan.contractId !== null) {
@@ -241,14 +248,62 @@ export default function ClassModal({
                 return new Date(cls.time).getTime() < expiryTime;
             });
 
-            setUserPlans(filteredPlans);
+            // Filter out plans with paymentHoliday set to true
+            const activePlans = timeValidPlans.filter(plan => !plan.paymentHoliday);
 
-            if (filteredPlans.length > 0) {
-                // Kui on vähemalt üks kehtiv plaan, pane esimene vaikimisi valituks
-                setSelectedPlanId(filteredPlans[0].id);
+            // Store all valid plans (regardless of training type)
+            setUserPlans(activePlans);
+
+            // Now filter for training type compatibility
+            const trainingTypeCompatiblePlans = activePlans.filter(plan => {
+                // Special case: If class has training type "Other", all plans are compatible
+                if (cls.trainingType === "Other") {
+                    return true;
+                }
+
+                try {
+                    // Parse the trainingType string into an array
+                    const trainingTypeArray = JSON.parse(plan.trainingType);
+                    // Check if the parsed array includes the class training type
+                    return Array.isArray(trainingTypeArray) &&
+                        trainingTypeArray.includes(cls.trainingType);
+                } catch (error) {
+                    console.error("Error parsing trainingType:", error);
+                    return false;
+                }
+            });
+
+            // Store compatible plans
+            setCompatiblePlans(trainingTypeCompatiblePlans);
+            setHasCompatiblePlans(trainingTypeCompatiblePlans.length > 0);
+
+            // Set the default selected plan to the first compatible plan if available
+            if (trainingTypeCompatiblePlans.length > 0) {
+                setSelectedPlanId(trainingTypeCompatiblePlans[0].id);
+            } else {
+                setSelectedPlanId(null);
             }
+
+            console.log("Class trainingType:", cls.trainingType);
+            console.log("All active plans:", activePlans);
+            console.log("Compatible plans:", trainingTypeCompatiblePlans);
+
+            // Debug: Log parsed training types
+            activePlans.forEach(plan => {
+                try {
+                    const parsedType = JSON.parse(plan.trainingType);
+                    console.log(`Plan ${plan.id} (${plan.planName}) - Training types:`, parsedType);
+                } catch (e) {
+                    console.error(`Error parsing training type for plan ${plan.id}:`, e);
+                }
+            });
+
         } catch (error) {
             console.error("Error loading user plans:", error);
+            setUserPlans([]);
+            setCompatiblePlans([]);
+            setHasAnyPlans(false);
+            setHasCompatiblePlans(false);
         }
     }
 
@@ -273,7 +328,7 @@ export default function ClassModal({
         setIsRegistered(response.enrolled);
     }
 
-    // ✅ Registreerimise funktsioon
+    // ✅ Updated: Check for plan compatibility before registration
     const handleRegister = async () => {
         try {
             if (!cls.freeClass) {
@@ -281,7 +336,15 @@ export default function ClassModal({
                     alert("Please select a plan first!");
                     return;
                 }
+
+                // Selected plan is already verified to be compatible when filling the dropdown
+                const selectedPlan = compatiblePlans.find(plan => plan.id === selectedPlanId);
+                if (!selectedPlan) {
+                    alert("Please select a valid plan for this class type!");
+                    return;
+                }
             }
+
             await registerForClass(cls.id, selectedPlanId, cls.affiliateId, cls.freeClass);
             // Kui õnnestub, uuendame osalejate nimekirja
             await fetchAttendees();
@@ -310,13 +373,20 @@ export default function ClassModal({
         }
     };
 
-    // ✅ Lisa ootejärjekorda
+    // ✅ Updated: Check for plan compatibility before adding to waitlist
     const handleAddToWaitlist = async () => {
         try {
             // Require plan selection for paid classes
             if (!cls.freeClass) {
                 if (!selectedPlanId) {
                     alert("Please select a plan first!");
+                    return;
+                }
+
+                // Verify that selected plan is compatible with class training type
+                const selectedPlan = compatiblePlans.find(plan => plan.id === selectedPlanId);
+                if (!selectedPlan) {
+                    alert("Selected plan is not compatible with this class type!");
                     return;
                 }
             }
@@ -447,6 +517,9 @@ export default function ClassModal({
                                 <strong>👥 Capacity:</strong> {attendeesCount} /{" "}
                                 {cls.memberCapacity}
                             </Typography>
+                            <Typography>
+                                <strong>🏃 Training Type:</strong> {cls.trainingType || "N/A"}
+                            </Typography>
                             {isClassFull && !isRegistered && !isInWaitlist && role === 'regular' && (
                                 <Typography color="error" sx={{mt: 1, fontWeight: "bold"}}>
                                     This class is full. You can join the waitlist.
@@ -531,8 +604,8 @@ export default function ClassModal({
                                     >
                                         Join Waitlist
                                     </Button>
-                                ) : userPlans && userPlans.length > 0 ? (
-                                    // For paid classes with available plans
+                                ) : hasCompatiblePlans ? (
+                                    // ✅ Updated: Only show compatible plans for the waitlist
                                     <Box display="flex" alignItems="center" gap={2}>
                                         <FormControl sx={{minWidth: 120}}>
                                             <InputLabel id="plan-select-label">Select Plan</InputLabel>
@@ -542,7 +615,7 @@ export default function ClassModal({
                                                 label="Select Plan"
                                                 onChange={(e) => setSelectedPlanId(e.target.value)}
                                             >
-                                                {userPlans.map((plan) => (
+                                                {compatiblePlans.map((plan) => (
                                                     <MenuItem key={plan.id} value={plan.id}>
                                                         {plan.planName} (Sessions left: {plan.sessionsLeft})
                                                     </MenuItem>
@@ -558,9 +631,14 @@ export default function ClassModal({
                                             Join Waitlist
                                         </Button>
                                     </Box>
+                                ) : hasAnyPlans ? (
+                                    // ✅ Updated: Show message for plans that don't match training type
+                                    <Typography color="error">
+                                        You have plans, but none are compatible with this {cls.trainingType} class type.
+                                    </Typography>
                                 ) : (
-                                    // If no plans available
-                                    <Typography color="red">
+                                    // If no plans available at all
+                                    <Typography color="error">
                                         You have no valid plans.{" "}
                                         <Button
                                             variant="outlined"
@@ -573,9 +651,20 @@ export default function ClassModal({
                                 )}
                             </>
                         ) : (
-                            // ✅ Kui kasutaja EI OLE registreeritud ja klass pole täis
+                            // ✅ Updated: For registration with compatible plans check
                             <>
-                                {userPlans && userPlans.length > 0 && cls.canRegister === true && cls.freeClass === false ? (
+                                {cls.freeClass ? (
+                                    // Free classes don't need plan selection
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        disabled={isClassOver}
+                                        onClick={handleRegister}
+                                    >
+                                        Register
+                                    </Button>
+                                ) : hasCompatiblePlans ? (
+                                    // Show only compatible plans in dropdown
                                     <Box display="flex" alignItems="center" gap={2}>
                                         <FormControl sx={{minWidth: 120}}>
                                             <InputLabel id="plan-select-label">Select Plan</InputLabel>
@@ -585,7 +674,7 @@ export default function ClassModal({
                                                 label="Select Plan"
                                                 onChange={(e) => setSelectedPlanId(e.target.value)}
                                             >
-                                                {userPlans.map((plan) => (
+                                                {compatiblePlans.map((plan) => (
                                                     <MenuItem key={plan.id} value={plan.id}>
                                                         {plan.planName} (Sessions left: {plan.sessionsLeft})
                                                     </MenuItem>
@@ -601,31 +690,25 @@ export default function ClassModal({
                                             Register
                                         </Button>
                                     </Box>
+                                ) : hasAnyPlans ? (
+                                    // User has plans but none are compatible with this class type
+                                    <Typography color="error">
+                                        {cls.trainingType !== "Other" ?
+                                            `You have plans, but none are compatible with this ${cls.trainingType} class type.` :
+                                            "You have no valid plans for this class."}
+                                    </Typography>
                                 ) : (
-                                    <>
-                                        {cls.canRegister === true && cls.freeClass === true ? (
-                                            <Button
-                                                variant="contained"
-                                                color="success"
-                                                disabled={isClassOver}
-                                                onClick={handleRegister}
-                                            >
-                                                Register
-                                            </Button>
-                                        ) : (
-                                            // ✅ Kui plaane pole
-                                            <Typography color="red">
-                                                You have no valid plans.{" "}
-                                                <Button
-                                                    variant="outlined"
-                                                    color="primary"
-                                                    onClick={() => alert("Go to buy plans page!")}
-                                                >
-                                                    Buy Plans
-                                                </Button>
-                                            </Typography>
-                                        )}
-                                    </>
+                                    // User has no plans at all
+                                    <Typography color="error">
+                                        You have no valid plans.{" "}
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => alert("Go to buy plans page!")}
+                                        >
+                                            Buy Plans
+                                        </Button>
+                                    </Typography>
                                 )}
                             </>
                         )}

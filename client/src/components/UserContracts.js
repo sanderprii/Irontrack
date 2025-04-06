@@ -23,7 +23,8 @@ import {
     CardContent,
     Divider,
     Chip,
-    Grid
+    Grid,
+    Stack
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -35,6 +36,7 @@ import EventIcon from '@mui/icons-material/Event';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import {
     getUserContracts,
@@ -85,6 +87,40 @@ export default function UserContracts({ user, affiliateId }) {
         }
     };
 
+    // Get training types as an array
+    const getTrainingTypesArray = (trainingType) => {
+        if (!trainingType) return [];
+        try {
+            // Try to parse as JSON first (for the new format)
+            return JSON.parse(trainingType);
+        } catch (e) {
+            // Fallback for old format (comma-separated string)
+            return trainingType.split(',');
+        }
+    };
+
+    // Get color for training type chip
+    const getTrainingTypeColor = (type) => {
+        switch (type) {
+            case 'WOD':
+                return 'primary';
+            case 'Weightlifting':
+                return 'secondary';
+            case 'Rowing':
+                return 'success';
+            case 'Gymnastics':
+                return 'info';
+            case 'Open Gym':
+                return 'warning';
+            case 'Cardio':
+                return 'error';
+            case 'All classes':
+                return 'default';
+            default:
+                return 'default';
+        }
+    };
+
     const toggleRow = (id) => {
         setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
@@ -123,8 +159,9 @@ export default function UserContracts({ user, affiliateId }) {
                     id: 'contract-payment', // Spetsiaalne identifikaator lepingu maksete jaoks
                     name: `${contract.paymentType || 'Monthly'} Contract Payment`,
                     price: contract.paymentAmount,
+                    trainingType: contract.trainingType,
                     affiliateId: parsedAffiliateId, // Kasuta parsitud ID-d
-                    validityDays: 30, // Standardne 30-päevane kehtivus esimesele maksele
+                    validityDays: 31, // Standardne 30-päevane kehtivus esimesele maksele
                     sessions: 999, // Piisavalt suur arv, et kasutaja saaks käia nii palju kui tahab
                 },
                 affiliate: {
@@ -499,6 +536,31 @@ export default function UserContracts({ user, affiliateId }) {
                                                                                 <Typography variant="body1">
                                                                                     {contract.id}
                                                                                 </Typography>
+                                                                            </Box>
+
+                                                                            {/* Training Types Section */}
+                                                                            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140, mt: 0.5 }}>
+                                                                                    Training Types:
+                                                                                </Typography>
+                                                                                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                                                                    {getTrainingTypesArray(contract.trainingType).length > 0 ? (
+                                                                                        getTrainingTypesArray(contract.trainingType).map((type, index) => (
+                                                                                            <Chip
+                                                                                                key={index}
+                                                                                                label={type}
+                                                                                                color={getTrainingTypeColor(type)}
+                                                                                                size="small"
+                                                                                                icon={<FitnessCenterIcon />}
+                                                                                                sx={{ mb: 0.5 }}
+                                                                                            />
+                                                                                        ))
+                                                                                    ) : (
+                                                                                        <Typography variant="body2" color="text.secondary">
+                                                                                            No training types specified
+                                                                                        </Typography>
+                                                                                    )}
+                                                                                </Stack>
                                                                             </Box>
 
                                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

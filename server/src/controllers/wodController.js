@@ -99,21 +99,33 @@ const saveTodayWOD = async (req, res) => {
 const getTodayWOD = async (req, res) => {
     const { affiliateId, date } = req.query;
     if (!date) return res.status(400).json({ error: "Date is required." });
-    const date1 = new Date(date);
-    date1.setHours(2, 0, 0, 0);
+
     try {
+        // Parsime kuupäeva ja loome alguse ja lõpu kuupäeva objektid
+        const dateObj = new Date(date);
+        const startOfDay = new Date(dateObj);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(dateObj);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Otsime WOD-i, mille kuupäev on sama päeva sees
         const wod = await prisma.todayWOD.findFirst({
             where: {
                 affiliateId: parseInt(affiliateId),
-                date: date1 }
+                date: {
+                    gte: startOfDay,
+                    lte: endOfDay
+                }
+            }
         });
 
-        if (!wod) return res.status(404).json({ error: "No WOD found for today." });
+        if (!wod) return res.status(404).json({ error: "No WOD found for this date." });
 
         res.json(wod);
     } catch (error) {
-        console.error("❌ Error fetching today's WOD:", error);
-        res.status(500).json({ error: "Failed to fetch today's WOD." });
+        console.error("❌ Error fetching WOD:", error);
+        res.status(500).json({ error: "Failed to fetch WOD." });
     }
 };
 
@@ -123,22 +135,42 @@ const applyWODToTrainings = async (req, res) => {
     const affiliateId = req.body.affiliateId;
     if (!date) return res.status(400).json({error: "Date is required."});
 
+    const affiliateIds = parseInt(affiliateId);
 
-
-    const affiliateIds = parseInt(affiliateId)
     try {
-        const wod = await prisma.todayWOD.findFirst({where: {date: date, affiliateId: affiliateIds}});
+        // Määrame päeva alguse ja lõpu ajad
+        const dateObj = new Date(date);
+        const startOfDay = new Date(dateObj);
+        startOfDay.setHours(0, 0, 0, 0);
 
-        if (!wod) return res.status(404).json({error: "No WOD found for today."});
+        const endOfDay = new Date(dateObj);
+        endOfDay.setHours(23, 59, 59, 999);
 
-        const endDate = new Date(new Date(date).setDate(new Date(date).getDate() + 1));
+        // Otsime WOD-i selle kuupäeva järgi, kellaaegasid arvestamata
+        const wod = await prisma.todayWOD.findFirst({
+            where: {
+                date: {
+                    gte: startOfDay,
+                    lte: endOfDay
+                },
+                affiliateId: affiliateIds
+            }
+        });
+
+        if (!wod) return res.status(404).json({error: "No WOD found for this date."});
+
+        // Määrame päeva alguse ja lõpu kõikide treeningute jaoks,
+        // et saaks kõik selle päeva treeningud kätte
+        const nextDay = new Date(dateObj);
+        nextDay.setDate(dateObj.getDate() + 1);
+        nextDay.setHours(0, 0, 0, 0);
 
         // Apply WOD to all classes with `trainingType: "WOD"`
         await prisma.classSchedule.updateMany({
             where: {
                 time: {
-                    gte: date,
-                    lt: endDate
+                    gte: startOfDay,
+                    lt: nextDay
                 },
                 trainingType: "WOD",
                 affiliateId: affiliateIds
@@ -150,7 +182,7 @@ const applyWODToTrainings = async (req, res) => {
             }
         });
 
-        res.json({message: "WOD applied to all today's trainings!"});
+        res.json({message: "WOD applied to all trainings for this date!"});
     } catch (error) {
         console.error("❌ Error applying WOD to trainings:", error);
         res.status(500).json({error: "Failed to apply WOD to trainings."});

@@ -422,57 +422,7 @@ const CreditView = ({ user, affiliateId }) => {
                                                         </Card>
                                                     </Grid>
 
-                                                    {/* Additional Information Card */}
-                                                    <Grid item xs={12}>
-                                                        <Card elevation={1}>
-                                                            <CardContent>
-                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                    <InfoIcon sx={{ mr: 1 }} />
-                                                                    Additional Information
-                                                                </Typography>
-                                                                <Divider sx={{ mb: 2 }} />
 
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Affiliate ID:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {entry.affiliateId || 'N/A'}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Credit ID:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {entry.creditId || 'N/A'}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </Grid>
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Plan ID:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {entry.planId || 'N/A'}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Member ID:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {entry.memberId || 'N/A'}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </CardContent>
-                                                        </Card>
-                                                    </Grid>
                                                 </Grid>
                                             </Box>
                                         </Collapse>

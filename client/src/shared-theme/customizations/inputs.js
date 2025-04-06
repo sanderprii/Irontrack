@@ -371,6 +371,7 @@ export const inputsCustomizations = {
         '&::placeholder': {
           opacity: 0.7,
           color: gray[500],
+            fontSize: 16,
         },
       },
     },

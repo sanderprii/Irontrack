@@ -252,7 +252,7 @@ console.log("planData", planData);
                     sessionsLeft: planData.sessions,
                     planName: planData.name,
                     contractId: parseInt(contractId),
-                    trainingType: planData.trainingType,
+                    trainingType: JSON.stringify(planData.trainingType)
                 }
             });
 

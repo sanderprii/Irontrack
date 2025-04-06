@@ -83,8 +83,7 @@ export default function AppAppBar() {
         leftLinks = [
             {name: 'Home', to: '/'},
             {name: 'Pricing', to: '/pricing'},
-            {name: 'About', to: '/about'},
-            {name: 'Privacy Policy', to: '/privacy-policy'},
+
         ];
         rightLinks = [
             {name: 'Log In', to: '/login'},
@@ -364,6 +363,7 @@ export default function AppAppBar() {
                         left: 0,
                         right: 0,
                         borderTop: 1,
+
                         borderColor: 'divider',
                         zIndex: 1201, // pisut suurem kui AppBar (mui default 1100+)
                     }}
@@ -373,6 +373,7 @@ export default function AppAppBar() {
                         value={currentValue}
                         onChange={handleBottomNavChange}
                         sx={{
+pb: 1,
                             // Stilistika, nt kui aktiivsel itemil tahad teist värvi ikooni
                             // ja top borderit vms, saad vastavaid MUI-teemasid override'ida
                             // või kasutada sx-stiili.

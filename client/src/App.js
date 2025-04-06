@@ -12,7 +12,7 @@ import './App.css';
 // Impordi muud komponendid
 import ResponsiveNavbar from './components/ResponsiveNavbar';
 import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
+
 import TrainingsPage from './pages/TrainingsPage';
 import RecordsPage from './pages/RecordsPage';
 import FindUsersPage from './pages/FindUsersPage';
@@ -102,7 +102,7 @@ function App() {
                 >
                     <Routes>
                         <Route path="/" element={<HomeRedirect/>}/>
-                        <Route path="/about" element={<AboutPage/>}/>
+
                         <Route path="/trainings" element={<TrainingsPage/>}/>
                         <Route path="/records" element={<RecordsPage/>}/>
                         <Route path="/find-users" element={<FindUsersPage/>}/>

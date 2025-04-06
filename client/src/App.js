@@ -6,7 +6,8 @@ import Box from '@mui/material/Box';
 // ✅ Impordi AppTheme
 import AppTheme from './shared-theme/AppTheme';
 import {AuthContext} from './context/AuthContext';
-
+import { Helmet } from 'react-helmet-async';
+import './App.css';
 
 // Impordi muud komponendid
 import ResponsiveNavbar from './components/ResponsiveNavbar';
@@ -85,12 +86,18 @@ function App() {
         <HelmetProvider>
             <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
                 <CssBaseline/>
+                <Helmet>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                </Helmet>
                 <ResponsiveNavbar/>
                 <Box
                     sx={{
                         // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
                         // jätame ekraani alla tühja ruumi
                         pb: '56px',
+                        width: '100%',
+                        minHeight: 'calc(100vh - 56px)', // Lahuta bottom nav kõrgus
+                        overflowX: 'hidden'
                     }}
                 >
                     <Routes>

@@ -72,6 +72,15 @@ export default function AppAppBar() {
     // et näidata kas ülemist menüüd (desktop) või alumist nav'i (mobiil).
     const isMobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
+    // Function to determine navigation based on role
+    const getNavigationPath = () => {
+        if (role === 'regular') return '/training-diary';
+        if (role === 'affiliate') return '/affiliate-owner';
+        if (role === 'trainer') return '/trainer';
+        if (role === 'checkin') return '/checkin';
+        return '/';
+    };
+
     // --------------------------------
     // ÜLEMINE NAV-BAR: Desktopi menüü
     // --------------------------------
@@ -118,7 +127,10 @@ export default function AppAppBar() {
                 {name: 'Classes', to: '/classes'},
                 {name: 'Members', to: '/members'},
             ];
-
+        } else if (role === 'checkin') {
+            leftLinks = [
+                {name: 'Check-in', to: '/checkin'},
+            ];
         }
     }
 
@@ -149,6 +161,10 @@ export default function AppAppBar() {
         bottomNavItems = [
             {value: '/classes', label: 'Classes', icon: <ClassIcon/>},
             {value: '/members', label: 'Members', icon: <GroupIcon/>},
+        ];
+    } else if (isLoggedIn && role === 'checkin') {
+        bottomNavItems = [
+            {value: '/checkin', label: 'Check-in', icon: <PersonIcon/>},
         ];
     }
 
@@ -192,7 +208,7 @@ export default function AppAppBar() {
                                 src="/favicon.png"
                                 alt="App Logo"
                                 style={{height: '40px', cursor: 'pointer'}}
-                                onClick={() => navigate(role === 'regular' ? '/training-diary' : role === 'affiliate' ? '/affiliate-owner' : role === 'trainer' ? '/trainer' : '/')}
+                                onClick={() => navigate(getNavigationPath())}
                             />
                         </Box>
                         {role === null && (
@@ -228,8 +244,6 @@ export default function AppAppBar() {
 
                         {/* Paremal: Logout-nupp */}
                         <HelpIcon color="primary"
-
-
                                   onClick={() => navigate('/help')}/>
                         {isLoggedIn ? (
                             <IconButton color="primary" onClick={() => logout(navigate)} sx={{mr: 1}}>
@@ -250,7 +264,7 @@ export default function AppAppBar() {
                             src="/logo2.png"
                             alt="Irontrack Logo"
                             style={{height: '50px', cursor: 'pointer'}}
-                            onClick={() => navigate(role === 'regular' ? '/training-diary' : role === 'affiliate' ? '/affiliate-owner' : role === 'trainer' ? '/trainer' : '/')}
+                            onClick={() => navigate(getNavigationPath())}
                         />
 
 
@@ -303,7 +317,6 @@ export default function AppAppBar() {
                     <Box sx={{display: {xs: 'none', md: 'flex'}, gap: 1, mr: 2}}>
                         <HelpIcon color="primary"
                                   sx={{margin: 1, pt: 1}}
-
                                   onClick={() => navigate('/help')}/>
                         {rightLinks.map((link) =>
                             link.action ? (
@@ -334,7 +347,6 @@ export default function AppAppBar() {
                             <IconButton
                                 color="primary"
                                 onClick={() => logout(navigate)}
-
                             >
                                 <LogoutIcon/>
                             </IconButton>
@@ -363,7 +375,6 @@ export default function AppAppBar() {
                         left: 0,
                         right: 0,
                         borderTop: 1,
-
                         borderColor: 'divider',
                         zIndex: 1201, // pisut suurem kui AppBar (mui default 1100+)
                     }}
@@ -373,7 +384,7 @@ export default function AppAppBar() {
                         value={currentValue}
                         onChange={handleBottomNavChange}
                         sx={{
-pb: 1,
+                            pb: 1,
                             // Stilistika, nt kui aktiivsel itemil tahad teist värvi ikooni
                             // ja top borderit vms, saad vastavaid MUI-teemasid override'ida
                             // või kasutada sx-stiili.

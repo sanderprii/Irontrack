@@ -74,16 +74,7 @@ export default function CheckInModal({
 
     if (!cls) return null;
 
-    function getFlagColor(flag) {
-        switch (flag) {
-            case "red":
-                return "#ff0000";
-            case "yellow":
-                return "gold";
-            default:
-                return "green";
-        }
-    }
+
 
     const isClassOver = new Date(cls.time) < new Date();
 
@@ -198,14 +189,7 @@ export default function CheckInModal({
                                                 {attendee.fullName}
                                             </Typography>
 
-                                            {attendee.userNotes?.map((note, index) =>
-                                                note.flag ? (
-                                                    <FlagIcon
-                                                        key={index}
-                                                        style={{fill: getFlagColor(note.flag)}}
-                                                    />
-                                                ) : null
-                                            )}
+
                                         </Box>
                                     }
                                 />

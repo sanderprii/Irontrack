@@ -244,23 +244,37 @@ const getClassAttendees = async (req, res) => {
         if (attendees.length === 0) {
             return res.status(200).json({message: "No attendees found."});
         } else {
+            // Kogu attendee userIds massiiv
+            const attendeeUserIds = attendees.map(att => att.userId);
 
-            // võta iga attendee kohta usernote userId järgi
+            // Leia kõik userNoted, mis on seotud nende userIdega
             const userNotes = await prisma.userNote.findMany({
-                where: {userId: parseInt(attendees.map(att => att.userId))}
+                where: {
+                    userId: {
+                        in: attendeeUserIds
+                    }
+                }
             });
 
+            // Loo kaart userNotes-te sidumiseks õigete userIdega
+            const userNotesMap = userNotes.reduce((acc, note) => {
+                if (!acc[note.userId]) {
+                    acc[note.userId] = [];
+                }
+                acc[note.userId].push(note);
+                return acc;
+            }, {});
 
-            res.json(attendees.map(att => ({
+            // Koosta vastus, kus igal kasutajal on ainult tema enda märkmed
+            const response = attendees.map(att => ({
                 userId: att.user.id,
                 fullName: att.user.fullName,
                 checkIn: att.checkIn,
-                // pane terve usernote sisse. ühel useril võib olla mitu usernote
-                userNotes: userNotes
+                // Lisa ainult selle kasutaja märkmed
+                userNotes: userNotesMap[att.user.id] || []
+            }));
 
-
-            })));
-
+            res.json(response);
         }
     } catch (error) {
         console.error("❌ Error fetching attendees:", error);

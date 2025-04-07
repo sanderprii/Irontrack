@@ -4,6 +4,7 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    DialogContentText,
     Button,
     TextField,
     Typography,
@@ -52,6 +53,12 @@ export default function CreateContract({ open, onClose, affiliateId }) {
     const [paymentDay, setPaymentDay] = useState(1);
     const [validUntil, setValidUntil] = useState('');
 
+    // Dialog states
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState('');
+    const [validationError, setValidationError] = useState('');
+
     // Laeme default contract template, kui modal avaneb
     useEffect(() => {
         if (open) {
@@ -60,10 +67,27 @@ export default function CreateContract({ open, onClose, affiliateId }) {
     }, [open]);
 
     const loadTemplate = async () => {
-        const template = await getLatestContractTemplate(affiliateId);
-        if (template?.content) {
-            setContent(template.content);
+        try {
+            const template = await getLatestContractTemplate(affiliateId);
+            if (template?.content) {
+                setContent(template.content);
+            }
+        } catch (error) {
+            console.error('Error loading contract template:', error);
+            showErrorMessage('Failed to load contract template.');
         }
+    };
+
+    // Show success message via dialog
+    const showSuccessMessage = (message) => {
+        setDialogMessage(message);
+        setSuccessDialogOpen(true);
+    };
+
+    // Show error message via dialog
+    const showErrorMessage = (message) => {
+        setDialogMessage(message);
+        setErrorDialogOpen(true);
     };
 
     // Otsime kasutajaid iga kord, kui userQuery muutub
@@ -90,26 +114,44 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
     // Lepingu salvestamine
     const handleSave = async () => {
+        // Reset any validation errors
+        setValidationError('');
+
+        // Check if a user is selected
         if (!selectedUser) {
-            alert('Please select a user!');
+            setValidationError('Please select a user!');
             return;
         }
-        // Koostame payload, kus on lisaks uued väljad
-        const payload = {
-            affiliateId,
-            userId: selectedUser.id, // eeldame, et user-objektil on 'id'
-            contractType,
-            content,
-            paymentType,
-            paymentAmount: paymentAmount ? parseFloat(paymentAmount) : null,
-            paymentInterval,
-            paymentDay: paymentDay ? parseInt(paymentDay, 10) : null,
-            validUntil,
-            trainingTypes, // Send as array, backend will convert to string
-        };
 
-        await createContract(payload);
-        onClose();
+        try {
+            // Koostame payload, kus on lisaks uued väljad
+            const payload = {
+                affiliateId,
+                userId: selectedUser.id, // eeldame, et user-objektil on 'id'
+                contractType,
+                content,
+                paymentType,
+                paymentAmount: paymentAmount ? parseFloat(paymentAmount) : null,
+                paymentInterval,
+                paymentDay: paymentDay ? parseInt(paymentDay, 10) : null,
+                validUntil,
+                trainingTypes, // Send as array, backend will convert to string
+            };
+
+            await createContract(payload);
+
+            // Show success message
+            showSuccessMessage('Contract created successfully!');
+
+            // Close on success after a short delay
+            setTimeout(() => {
+                setSuccessDialogOpen(false);
+                onClose();
+            }, 1500);
+        } catch (error) {
+            console.error('Error creating contract:', error);
+            showErrorMessage('Failed to create contract. Please try again.');
+        }
     };
 
     // Improved helper component tooltip (compact version)
@@ -148,6 +190,13 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                 <Typography variant="body2" sx={{ mb: 2 }}>
                     Fill the fields to create a new contract.
                 </Typography>
+
+                {/* Display validation error if any */}
+                {validationError && (
+                    <Box sx={{ color: 'error.main', mb: 2, mt: 1, p: 1, bgcolor: '#ffebee', borderRadius: 1 }}>
+                        {validationError}
+                    </Box>
+                )}
 
                 {/* Kasutaja otsing (Autocomplete) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -280,7 +329,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                     <InfoTooltip title="Contract text content" />
                     <FormControl fullWidth>
                         <TextareaAutosize
-                            minRows={6}
+                            minRows={10}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             style={{
@@ -306,6 +355,42 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                     Save Contract
                 </Button>
             </DialogActions>
+
+            {/* Success Dialog */}
+            <Dialog
+                open={successDialogOpen}
+                onClose={() => setSuccessDialogOpen(false)}
+            >
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Error Dialog */}
+            <Dialog
+                open={errorDialogOpen}
+                onClose={() => setErrorDialogOpen(false)}
+            >
+                <DialogTitle>Error</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setErrorDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 }

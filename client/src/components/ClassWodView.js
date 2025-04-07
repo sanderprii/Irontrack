@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Container, Box, Typography, Button, Grid, Card, CardContent, Divider } from "@mui/material";
+import {
+    Container, Box, Typography, Button, Grid, Card, CardContent, Divider,
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
+} from "@mui/material";
 import { getWeekWODs, applyWODToTrainings } from "../api/wodApi";
 import WODModal from "./WODModal";
 
@@ -8,6 +11,10 @@ export default function ClassWodView({ affiliateId, onClose }) {
     const [weekWODs, setWeekWODs] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [isWODModalOpen, setWODModalOpen] = useState(false);
+
+    // New state variables for confirmation dialog
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [wodToApply, setWodToApply] = useState(null);
 
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -46,9 +53,31 @@ export default function ClassWodView({ affiliateId, onClose }) {
         setWODModalOpen(true);
     };
 
-    const handleApplyWOD = async (date) => {
-        await applyWODToTrainings(affiliateId, date);
-        fetchWeekWODs();
+    // Open confirmation dialog instead of directly applying WOD
+    const handleOpenConfirmDialog = (date) => {
+        setWodToApply(date);
+        setConfirmDialogOpen(true);
+    };
+
+    // Close confirmation dialog
+    const handleCloseConfirmDialog = () => {
+        setConfirmDialogOpen(false);
+        setWodToApply(null);
+    };
+
+    // Apply WOD after confirmation
+    const handleConfirmApplyWOD = async () => {
+        if (!wodToApply) return;
+
+        try {
+            await applyWODToTrainings(affiliateId, wodToApply);
+            fetchWeekWODs();
+            handleCloseConfirmDialog();
+            // You could add a success message or notification here
+        } catch (error) {
+            console.error("Error applying WOD:", error);
+            // You could add error handling here
+        }
     };
 
     return (
@@ -69,7 +98,6 @@ export default function ClassWodView({ affiliateId, onClose }) {
                         Next Week
                     </Button>
                 </Box>
-
             </Box>
 
             {/* WOD-de kuvamine päevade kaupa */}
@@ -116,8 +144,12 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                             + Add WOD
                                         </Button>
                                         {wod && (
-                                            <Button size="small" variant="contained" color="secondary" onClick={() => {handleApplyWOD(dayDate)
-                                                alert("WOD applied to trainings!")}}>
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                color="secondary"
+                                                onClick={() => handleOpenConfirmDialog(dayDate)}
+                                            >
                                                 Apply WOD
                                             </Button>
                                         )}
@@ -137,6 +169,27 @@ export default function ClassWodView({ affiliateId, onClose }) {
                 selectedAffiliateId={affiliateId}
                 refreshWODs={fetchWeekWODs}
             />
+
+            {/* Confirmation Dialog for applying WOD */}
+            <Dialog
+                open={confirmDialogOpen}
+                onClose={handleCloseConfirmDialog}
+            >
+                <DialogTitle>Confirm Action</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to apply this WOD to all trainings? This action will update all related training sessions.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseConfirmDialog} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmApplyWOD} color="secondary">
+                        Apply
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 }

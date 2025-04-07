@@ -13,6 +13,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     FormControl,
     InputLabel,
@@ -184,6 +185,15 @@ export default function TrainingsPage() {
     // Form section visibility
     const [formExpanded, setFormExpanded] = useState(true);
 
+    // Dialog states
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState('');
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
+    const [confirmDialogMessage, setConfirmDialogMessage] = useState('');
+
     // Theme and responsive design
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -194,6 +204,26 @@ export default function TrainingsPage() {
     useEffect(() => {
         loadTrainings();
     }, []);
+
+    // Show success message
+    const showSuccessMessage = (message) => {
+        setDialogMessage(message);
+        setSuccessDialogOpen(true);
+    };
+
+    // Show error message
+    const showErrorMessage = (message) => {
+        setDialogMessage(message);
+        setErrorDialogOpen(true);
+    };
+
+    // Show confirmation dialog
+    const showConfirmDialog = (title, message, onConfirm) => {
+        setConfirmDialogTitle(title);
+        setConfirmDialogMessage(message);
+        setConfirmAction(() => onConfirm);
+        setConfirmDialogOpen(true);
+    };
 
     async function loadTrainings() {
         try {
@@ -303,13 +333,11 @@ export default function TrainingsPage() {
             });
             const result = await response.json();
             if (!response.ok) {
-                setError(result.error || 'Error creating training');
+                showErrorMessage(result.error || 'Error creating training');
                 return;
             }
             // If server returns updated training list, set it:
             setTrainings(result.trainings || []);
-            // or re-fetch everything:
-            // loadTrainings();
 
             // Clear form
             setTrainingType('');
@@ -321,8 +349,11 @@ export default function TrainingsPage() {
             setExercises('');
             setShowOptions(false);
             setError('');
+
+            // Show success message
+            showSuccessMessage('Training created successfully!');
         } catch (error) {
-            setError('Error: ' + error.message);
+            showErrorMessage('Error: ' + error.message);
         }
     }
 
@@ -406,8 +437,20 @@ export default function TrainingsPage() {
     }
 
     function closeModal() {
-        setModalOpen(false);
-        setModalTraining(null);
+        if (isEditing) {
+            showConfirmDialog(
+                "Discard Changes",
+                "Are you sure you want to close without saving your changes?",
+                () => {
+                    setModalOpen(false);
+                    setModalTraining(null);
+                    setIsEditing(false);
+                }
+            );
+        } else {
+            setModalOpen(false);
+            setModalTraining(null);
+        }
     }
 
     // --- 7) Edit / Save in modal ---
@@ -437,14 +480,15 @@ export default function TrainingsPage() {
             });
             if (!response.ok) {
                 const resErr = await response.json();
-                setError('Error: ' + (resErr.error || 'Unknown'));
+                showErrorMessage('Error: ' + (resErr.error || 'Unknown'));
                 return;
             }
             setIsEditing(false);
             closeModal();
-            loadTrainings();
+            await loadTrainings();
+            showSuccessMessage("Training updated successfully!");
         } catch (err) {
-            setError('Error saving training: ' + err.message);
+            showErrorMessage('Error saving training: ' + err.message);
         }
     }
 
@@ -452,33 +496,38 @@ export default function TrainingsPage() {
     async function handleAddToRecords() {
         if (!modalTraining) return;
         if (modalTraining.type !== 'WOD' || !modalTraining.wodName) return;
-        alert('Adding to records');
-        const recordData = {
-            type: 'WOD',
-            name: modalTraining.wodName,
-            date: modalTraining.date,
-            score: modalTraining.score,
-        };
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/records`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(recordData),
-            });
-            if (!response.ok) {
-                const resErr = await response.json();
-                setError('Error: ' + (resErr.error || 'Could not add to records'));
-                return;
+
+        showConfirmDialog(
+            "Add to Records",
+            "Are you sure you want to add this WOD to your records?",
+            async () => {
+                const recordData = {
+                    type: 'WOD',
+                    name: modalTraining.wodName,
+                    date: modalTraining.date,
+                    score: modalTraining.score,
+                };
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_URL}/records`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(recordData),
+                    });
+                    if (!response.ok) {
+                        const resErr = await response.json();
+                        showErrorMessage('Error: ' + (resErr.error || 'Could not add to records'));
+                        return;
+                    }
+                    showSuccessMessage('WOD added to records successfully!');
+                } catch (err) {
+                    showErrorMessage('Error: ' + err.message);
+                }
             }
-            // Show success alert instead of regular alert
-            setError(''); // Clear any existing errors
-        } catch (err) {
-            setError('Error: ' + err.message);
-        }
+        );
     }
 
     // Update modal training field
@@ -997,6 +1046,70 @@ export default function TrainingsPage() {
                             color="inherit"
                         >
                             {isEditing ? "Cancel" : "Close"}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Success Dialog */}
+                <Dialog
+                    open={successDialogOpen}
+                    onClose={() => setSuccessDialogOpen(false)}
+                >
+                    <DialogTitle>Success</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            {dialogMessage}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                            OK
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Error Dialog */}
+                <Dialog
+                    open={errorDialogOpen}
+                    onClose={() => setErrorDialogOpen(false)}
+                >
+                    <DialogTitle>Error</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            {dialogMessage}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setErrorDialogOpen(false)} color="primary">
+                            OK
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Confirmation Dialog */}
+                <Dialog
+                    open={confirmDialogOpen}
+                    onClose={() => setConfirmDialogOpen(false)}
+                >
+                    <DialogTitle>{confirmDialogTitle}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            {confirmDialogMessage}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (confirmAction) confirmAction();
+                                setConfirmDialogOpen(false);
+                            }}
+                            color="primary"
+                            variant="contained"
+                        >
+                            Confirm
                         </Button>
                     </DialogActions>
                 </Dialog>

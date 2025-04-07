@@ -59,6 +59,19 @@ export default function AffiliateContracts({affiliateId}) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [defaultModalOpen, setDefaultModalOpen] = useState(false);
 
+    // Confirmation dialogs
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [contractToDelete, setContractToDelete] = useState(null);
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
+    // Payment holiday confirm dialog
+    const [phConfirmOpen, setPhConfirmOpen] = useState(false);
+    const [phIdToUpdate, setPhIdToUpdate] = useState(null);
+    const [phNewStatus, setPhNewStatus] = useState('');
+
     // Lisame oleku dialoogi ja endDate haldamiseks
     const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
     const [newEndDate, setNewEndDate] = useState("");
@@ -172,7 +185,7 @@ export default function AffiliateContracts({affiliateId}) {
     const handleUpdate = async (contract) => {
         // Kui leping on juba 'sent', ei uuenda
         if (contract.status === 'Waiting for acceptance' || contract.status === 'accepted') {
-            alert('Contract is already sent');
+            showErrorMessage('Contract is already sent');
             return;
         }
 
@@ -223,24 +236,50 @@ export default function AffiliateContracts({affiliateId}) {
 
             // Reload contracts and show success message
             await loadContracts();
-            alert('Contract sent successfully and notification email has been sent to the user.');
+            showSuccessMessage('Contract sent successfully and notification email has been sent to the user.');
         } catch (error) {
             console.error('Error updating contract or sending email:', error);
-            alert('An error occurred while sending the contract. Please try again.');
+            showErrorMessage('An error occurred while sending the contract. Please try again.');
         }
     };
 
-    // Handle delete contract with confirmation
-    const handleDelete = async (contract) => {
-        if (window.confirm('Are you sure you want to delete this contract?')) {
-            try {
-                await deleteContract(contract.id);
-                await loadContracts(); // Reload contracts after deletion
-            } catch (error) {
-                console.error('Error deleting contract:', error);
-                alert('Failed to delete contract');
-            }
+    // Show success message via dialog
+    const showSuccessMessage = (message) => {
+        setSuccessMessage(message);
+        setSuccessDialogOpen(true);
+    };
+
+    // Show error message via dialog
+    const showErrorMessage = (message) => {
+        setErrorMessage(message);
+        setErrorDialogOpen(true);
+    };
+
+    // Open delete confirmation dialog
+    const handleOpenDeleteConfirm = (contract) => {
+        setContractToDelete(contract);
+        setDeleteConfirmOpen(true);
+    };
+
+    // Close delete confirmation dialog
+    const handleCloseDeleteConfirm = () => {
+        setDeleteConfirmOpen(false);
+        setContractToDelete(null);
+    };
+
+    // Handle delete after confirmation
+    const handleConfirmDelete = async () => {
+        if (!contractToDelete) return;
+
+        try {
+            await deleteContract(contractToDelete.id);
+            await loadContracts(); // Reload contracts after deletion
+            showSuccessMessage("Contract successfully deleted.");
+        } catch (error) {
+            console.error('Error deleting contract:', error);
+            showErrorMessage("Failed to delete contract. Please try again.");
         }
+        handleCloseDeleteConfirm();
     };
 
     const toggleRow = (id) => {
@@ -281,20 +320,37 @@ export default function AffiliateContracts({affiliateId}) {
         }
     };
 
-    // PaymentHoliday uuendamise handler (kui affiliate klikkab Approved/Declined)
-    const handleUpdatePhStatus = async (phId, newStatus) => {
+    // Open payment holiday status confirmation dialog
+    const handleOpenPhConfirm = (phId, status) => {
+        setPhIdToUpdate(phId);
+        setPhNewStatus(status);
+        setPhConfirmOpen(true);
+    };
+
+    // Close payment holiday status confirmation dialog
+    const handleClosePhConfirm = () => {
+        setPhConfirmOpen(false);
+        setPhIdToUpdate(null);
+        setPhNewStatus('');
+    };
+
+    // Handle payment holiday status update after confirmation
+    const handleConfirmPhUpdate = async () => {
+        if (!phIdToUpdate || !phNewStatus) return;
+
         try {
-            const result = await updatePaymentHoliday(phId, { accepted: newStatus });
+            const result = await updatePaymentHoliday(phIdToUpdate, { accepted: phNewStatus });
             if (result && result.success) {
-                alert(`Payment holiday set to "${newStatus}" successfully!`);
+                showSuccessMessage(`Payment holiday set to "${phNewStatus}" successfully!`);
                 await loadContracts();
             } else {
-                alert('Error updating payment holiday status!');
+                showErrorMessage('Error updating payment holiday status!');
             }
         } catch (error) {
             console.error('Error updating payment holiday:', error);
-            alert('Error updating payment holiday!');
+            showErrorMessage('Error updating payment holiday!');
         }
+        handleClosePhConfirm();
     };
 
     // Funktsioon dialoogi avamiseks
@@ -321,14 +377,20 @@ export default function AffiliateContracts({affiliateId}) {
     };
 
     const handleDeActivate = async (contractData) => {
-        const payload = {
-            affiliateId: contractData.affiliateId,
-            userId: contractData.userId,
-            endDate: contractData.endDate, // Võtame endDate otse objektist
-            action: 'change end date',
-        };
-        await updateContract(contractData.id, payload);
-        await loadContracts();
+        try {
+            const payload = {
+                affiliateId: contractData.affiliateId,
+                userId: contractData.userId,
+                endDate: contractData.endDate, // Võtame endDate otse objektist
+                action: 'change end date',
+            };
+            await updateContract(contractData.id, payload);
+            await loadContracts();
+            showSuccessMessage('Contract end date successfully updated!');
+        } catch (error) {
+            console.error('Error updating contract end date:', error);
+            showErrorMessage('Failed to update contract end date.');
+        }
     };
 
     return (
@@ -445,7 +507,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                         size="small"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleDelete(contract);
+                                                            handleOpenDeleteConfirm(contract);
                                                         }}
                                                         aria-label="Delete Contract"
                                                     >
@@ -458,7 +520,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                     size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleDelete(contract);
+                                                        handleOpenDeleteConfirm(contract);
                                                     }}
                                                     aria-label="Delete Contract"
                                                 >
@@ -468,11 +530,9 @@ export default function AffiliateContracts({affiliateId}) {
                                                 <IconButton
                                                     color="secondary"
                                                     size="small"
-                                                    onClick={async (e) => {
+                                                    onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (window.confirm('Are you sure you want to change end date on this contract?')) {
-                                                            handleOpenDeactivateDialog(contract);
-                                                        }
+                                                        handleOpenDeactivateDialog(contract);
                                                     }}
                                                     aria-label="Change End Date"
                                                 >
@@ -708,7 +768,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                                                                         color="success"
                                                                                                         onClick={(e) => {
                                                                                                             e.stopPropagation();
-                                                                                                            handleUpdatePhStatus(ph.id, 'approved');
+                                                                                                            handleOpenPhConfirm(ph.id, 'approved');
                                                                                                         }}
                                                                                                     >
                                                                                                         <CheckIcon />
@@ -717,7 +777,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                                                                         color="error"
                                                                                                         onClick={(e) => {
                                                                                                             e.stopPropagation();
-                                                                                                            handleUpdatePhStatus(ph.id, 'declined');
+                                                                                                            handleOpenPhConfirm(ph.id, 'declined');
                                                                                                         }}
                                                                                                     >
                                                                                                         <CloseIcon />
@@ -776,6 +836,7 @@ export default function AffiliateContracts({affiliateId}) {
                 </Table>
             </Paper>
 
+            {/* Dialog: End Date */}
             <Dialog
                 open={openDeactivateDialog}
                 onClose={handleCancelDeactivate}
@@ -832,6 +893,87 @@ export default function AffiliateContracts({affiliateId}) {
                     }}
                 />
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={handleCloseDeleteConfirm}
+            >
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this contract? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDeleteConfirm} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDelete} color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Payment Holiday Status Confirmation Dialog */}
+            <Dialog
+                open={phConfirmOpen}
+                onClose={handleClosePhConfirm}
+            >
+                <DialogTitle>Confirm Status Change</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to {phNewStatus === 'approved' ? 'approve' : 'decline'} this payment holiday request?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClosePhConfirm} color="primary">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmPhUpdate}
+                        color={phNewStatus === 'approved' ? 'success' : 'error'}
+                    >
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Success Dialog */}
+            <Dialog
+                open={successDialogOpen}
+                onClose={() => setSuccessDialogOpen(false)}
+            >
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {successMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Error Dialog */}
+            <Dialog
+                open={errorDialogOpen}
+                onClose={() => setErrorDialogOpen(false)}
+            >
+                <DialogTitle>Error</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {errorMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setErrorDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

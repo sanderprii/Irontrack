@@ -36,6 +36,7 @@ import UserContracts from "../components/UserContracts";
 import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
 import TrainingPlans from '../components/TrainingPlans';
+import ContactNotes from "../components/ContactNotes";
 
 export default function Members() {
     const [members, setMembers] = useState([]);
@@ -62,6 +63,7 @@ export default function Members() {
         {id: "credit", label: "Credit", component: CreditView},
         {id: "contracts", label: "Contracts", component: UserContracts},
         {id: "transactions", label: "Transactions", component: Transactions},
+        {id: "contact-notes", label: "Contact Notes", component: ContactNotes},
     ];
 
     useEffect(() => {

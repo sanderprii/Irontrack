@@ -1,7 +1,19 @@
 import React, {useState, useEffect, useCallback} from "react";
 import { useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
-import {Container, Typography, Button, Box, Grid, useMediaQuery} from "@mui/material";
+import {
+    Container,
+    Typography,
+    Button,
+    Box,
+    Grid,
+    useMediaQuery,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
+} from "@mui/material";
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
 
@@ -37,6 +49,13 @@ export default function Classes() {
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const [userRole, setUserRole] = useState(null);
 
+    // Dialog states
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [classToDelete, setClassToDelete] = useState(null);
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState('');
+
     useEffect(() => {
         const affiliateIdLocalStorage = localStorage.getItem("affiliateId");
 
@@ -69,9 +88,17 @@ export default function Classes() {
         setUserRole(role);
     }, []);
 
+    // Show success message
+    const showSuccessMessage = (message) => {
+        setDialogMessage(message);
+        setSuccessDialogOpen(true);
+    };
 
-
-
+    // Show error message
+    const showErrorMessage = (message) => {
+        setDialogMessage(message);
+        setErrorDialogOpen(true);
+    };
 
     const fetchClasses = useCallback(async () => {
 
@@ -179,48 +206,66 @@ export default function Classes() {
 
     // ✅ Funktsioon treeningu salvestamiseks
     const handleSaveTraining = async (trainingData) => {
-
-
         if (!affiliateId) {
             console.error("❌ Cannot save training: affiliateId is null");
+            showErrorMessage("Cannot save training: missing affiliate ID");
             return;
         }
 
         if (!trainingData || typeof trainingData !== "object") {
             console.error("❌ Invalid training data:", trainingData);
+            showErrorMessage("Invalid training data provided");
             return;
         }
 
         try {
             if (trainingData.id) {
-
                 await updateTraining(trainingData.id, trainingData); // ✅ Teeme update
+                showSuccessMessage("Training updated successfully!");
             } else {
-
                 await createTraining(affiliateId, trainingData); // ✅ Loome uue klassi
+                showSuccessMessage("New training created successfully!");
             }
 
             setTrainingModalOpen(false);
             fetchClasses(); // ✅ Uuenda klasside nimekirja
         } catch (error) {
             console.error("❌ Error saving training:", error);
+            showErrorMessage("Error saving training: " + (error.message || "Unknown error"));
         }
     };
-
-
-
 
     const handleEditTraining = (training) => {
         setSelectedTraining(training);
         setTrainingModalOpen(true);
     };
 
-    const handleDeleteClass = async (classId) => {
-        if (window.confirm("Are you sure you want to delete this class?")) {
-            await deleteClass(classId);
+    // Open delete confirmation dialog
+    const handleOpenDeleteConfirm = (classId) => {
+        setClassToDelete(classId);
+        setConfirmDialogOpen(true);
+    };
+
+    // Delete class after confirmation
+    const handleConfirmDeleteClass = async () => {
+        if (!classToDelete) return;
+
+        try {
+            await deleteClass(classToDelete);
             fetchClasses();
             setClassModalOpen(false);
+            showSuccessMessage("Class deleted successfully!");
+        } catch (error) {
+            console.error("❌ Error deleting class:", error);
+            showErrorMessage("Error deleting class: " + (error.message || "Unknown error"));
         }
+        setConfirmDialogOpen(false);
+        setClassToDelete(null);
+    };
+
+    // Handle the delete button click
+    const handleDeleteClass = (classId) => {
+        handleOpenDeleteConfirm(classId);
     };
 
     const handleEditClass = (cls) => {
@@ -232,8 +277,6 @@ export default function Classes() {
         setSelectedClass(cls);
         setClassModalOpen(true);
     };
-
-
 
     useEffect(() => {
 
@@ -265,9 +308,6 @@ export default function Classes() {
 
             </Box>
 
-
-
-
             {/* ✅ Kuvab kas WOD vaate või klasside vaate */}
             {showWODView ? (
                 <ClassWodView affiliateId={affiliateId} selectedAffiliateId={affiliateId} currentDate={currentDate} onClose={() => setShowWODView(false)} />
@@ -292,9 +332,6 @@ export default function Classes() {
                                 {showWeekly ? "As Day" : "Show Weekly"}
                             </Button>
                         )}
-
-
-
 
                         <Button variant="contained" color="secondary" onClick={handleNextWeek}>
                             Next Week
@@ -381,7 +418,63 @@ export default function Classes() {
                 attendeesCount={attendeesCount[selectedClass?.id]}
                 affiliateId={affiliateId}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={confirmDialogOpen}
+                onClose={() => setConfirmDialogOpen(false)}
+            >
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this class? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDeleteClass} color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Success Dialog */}
+            <Dialog
+                open={successDialogOpen}
+                onClose={() => setSuccessDialogOpen(false)}
+            >
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Error Dialog */}
+            <Dialog
+                open={errorDialogOpen}
+                onClose={() => setErrorDialogOpen(false)}
+            >
+                <DialogTitle>Error</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setErrorDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
-
 }

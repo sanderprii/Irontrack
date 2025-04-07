@@ -50,6 +50,7 @@ model User {
   createdTrainingPlans  TrainingPlan[]     @relation("CreatedPlans")
   assignedTrainingPlans TrainingPlan[]     @relation("AssignedPlans")
   sectorComments        SectorComment[]
+  contactNotes          ContactNote[]
 }
 
 model Message {
@@ -298,6 +299,7 @@ model Affiliate {
   contractLogs      ContractLogs[]
   plans             Plan[]
   affiliateApiKeys  AffiliateApiKeys[]
+  contactNotes      ContactNote[]
 }
 
 model AffiliateApiKeys {
@@ -483,4 +485,14 @@ model SectorComment {
   userId        Int
   user          User        @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())
+}
+
+model ContactNote {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  affiliateId Int
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  note        String
+  createdAt   DateTime  @default(now())
 }

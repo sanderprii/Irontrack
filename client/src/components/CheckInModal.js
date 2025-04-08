@@ -16,7 +16,7 @@ import {
     Divider,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import FlagIcon from "@mui/icons-material/Flag";
+
 import LeaderboardModal from "./LeaderboardModal";
 // Import API functions
 import {
@@ -33,13 +33,9 @@ export default function CheckInModal({
                                          affiliateId,
                                      }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
-    const [userRole, setUserRole] = useState(null);
     const [attendees, setAttendees] = useState([]);
 
-    useEffect(() => {
-        const role = localStorage.getItem("role");
-        setUserRole(role);
-    }, []);
+
 
     // Fetch attendees when modal opens and we have a class ID
     useEffect(() => {
@@ -70,13 +66,7 @@ export default function CheckInModal({
         }
     };
 
-
-
     if (!cls) return null;
-
-
-
-    const isClassOver = new Date(cls.time) < new Date();
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>

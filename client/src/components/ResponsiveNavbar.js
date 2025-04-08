@@ -1,7 +1,6 @@
 import * as React from 'react';
-import {useContext, useState} from 'react';
+import {useContext} from 'react';
 import {AuthContext} from '../context/AuthContext';
-import {ThemeContext} from '../shared-theme/AppTheme';
 import {Link, useNavigate, useLocation} from 'react-router-dom';
 
 // MUI komponendid
@@ -10,18 +9,10 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
-import Drawer from '@mui/material/Drawer';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-// MUI ikoonid
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import Brightness4Icon from '@mui/icons-material/Brightness4'; // 🌙 Dark mode icon
-import Brightness7Icon from '@mui/icons-material/Brightness7'; // ☀️ Light mode icon
+
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'; // Trainings
 import AssignmentIcon from '@mui/icons-material/Assignment';       // Records
 import AddBoxIcon from '@mui/icons-material/AddBox';               // Register for Training
@@ -56,15 +47,10 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
 
 export default function AppAppBar() {
     const {isLoggedIn, role, logout} = useContext(AuthContext);
-    const {mode, toggleTheme} = useContext(ThemeContext);
+
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Avatud/ suletud mobiilne Drawer menüü (hamburger)
-    const [open, setOpen] = useState(false);
-    const toggleDrawer = (newOpen) => () => {
-        setOpen(newOpen);
-    };
 
     const pricingPlan = localStorage.getItem('pricingPlan');
 

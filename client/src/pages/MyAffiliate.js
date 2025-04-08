@@ -4,21 +4,15 @@ import {
     Container,
     Card,
     CardContent,
-    Typography,
-    Avatar,
-    Button,
     Drawer,
     List,
     ListItem,
     ListItemText,
-    IconButton,
-    Toolbar,
     CircularProgress,
     Box,
     Tabs,
     Tab,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import { getAffiliate, updateAffiliate } from '../api/affiliateApi';
 import AffiliateView from '../components/AffiliateView';
 import FinanceView from '../components/FinanceView';

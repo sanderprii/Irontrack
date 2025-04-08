@@ -14,7 +14,6 @@ import {
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AffiliateEdit from './AffiliateEdit';
 import { uploadAffiliateLogo } from '../api/logoApi';
 import LocationOnIcon from "@mui/icons-material/LocationOn";

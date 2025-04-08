@@ -51,7 +51,7 @@
     } from "../api/classesApi";
     import {getUserPlansByAffiliate, getUserProfile} from "../api/profileApi";
     import {getMemberInfo} from "../api/membersApi";
-    import TextareaAutosize from "@mui/material/TextareaAutosize";
+
     
     export default function ClassModal({
                                            open,
@@ -72,7 +72,7 @@
         const [isProfileOpen, setProfileOpen] = useState(false);
     
         // 👉 Registreerimiseks ja waitlistile vajalikud state'id
-        const [userPlans, setUserPlans] = useState([]); // Hoiustab kasutaja plaane
+
         const [selectedPlanId, setSelectedPlanId] = useState(null); // Kasutaja valitud plaani ID
         const [compatiblePlans, setCompatiblePlans] = useState([]); // ✅ New: Holds only plans compatible with class trainingType
         const [hasAnyPlans, setHasAnyPlans] = useState(false); // ✅ New: Flag to check if user has any plans at all
@@ -258,10 +258,7 @@
     
                 // Filter out plans with paymentHoliday set to true
                 const activePlans = timeValidPlans.filter(plan => !plan.paymentHoliday);
-    
-                // Store all valid plans (regardless of training type)
-                setUserPlans(activePlans);
-    
+
                 // Now filter for training type compatibility
                 const trainingTypeCompatiblePlans = activePlans.filter(plan => {
                     // Special case: If class has training type "Other", all plans are compatible
@@ -292,15 +289,13 @@
                     setSelectedPlanId(null);
                 }
     
-                console.log("Class trainingType:", cls.trainingType);
-                console.log("All active plans:", activePlans);
-                console.log("Compatible plans:", trainingTypeCompatiblePlans);
+
     
                 // Debug: Log parsed training types
                 activePlans.forEach(plan => {
                     try {
                         const parsedType = JSON.parse(plan.trainingType);
-                        console.log(`Plan ${plan.id} (${plan.planName}) - Training types:`, parsedType);
+
                     } catch (e) {
                         console.error(`Error parsing training type for plan ${plan.id}:`, e);
                     }
@@ -308,7 +303,7 @@
     
             } catch (error) {
                 console.error("Error loading user plans:", error);
-                setUserPlans([]);
+
                 setCompatiblePlans([]);
                 setHasAnyPlans(false);
                 setHasCompatiblePlans(false);
@@ -516,8 +511,6 @@
         };
     
         const isClassOver = new Date(cls.time) < new Date();
-    
-        const role = localStorage.getItem("role");
 
         return (
             <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>

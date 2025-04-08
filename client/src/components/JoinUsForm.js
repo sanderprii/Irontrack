@@ -81,7 +81,6 @@ const StyledButton = styled(Button)(({ theme }) => ({
 export default function JoinUsForm() {
     const navigate = useNavigate();
     const theme = useTheme();
-    const isMediumScreen = useMediaQuery(theme.breakpoints.up('md'));
 
     // Form state
     const [fullName, setFullName] = useState('');

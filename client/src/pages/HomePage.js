@@ -5,11 +5,9 @@ import {
     Typography,
     Button,
     Grid,
-    Paper,
     Stack,
     Card,
     CardContent,
-    Divider,
     useTheme,
     useMediaQuery,
     alpha

@@ -55,7 +55,7 @@ const HomeRedirect = () => {
 };
 
 function App() {
-    const [token, setToken] = useState(localStorage.getItem('token') || null);
+
     const hostname = window.location.hostname;
 
     // Check if we're on a subdomain
@@ -107,13 +107,13 @@ function App() {
                         <Route path="/records" element={<RecordsPage/>}/>
                         <Route path="/find-users" element={<FindUsersPage/>}/>
                         <Route path="/register-training" element={<RegisterTrainingPage/>}/>
-                        <Route path="/my-profile" element={<MyProfile token={token}/>}/>
+                        <Route path="/my-profile" element={<MyProfile/>}/>
                         <Route path="/login" element={<LoginForm/>}/>
                         <Route path="/register" element={<JoinUsForm/>}/>
                         <Route path="/select-role" element={<RoleSelectionPage/>}/>
                         <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
                         <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
-                        <Route path="/my-affiliate" element={<MyAffiliate token={token}/>}/>
+                        <Route path="/my-affiliate" element={<MyAffiliate/>}/>
                         <Route path="/classes" element={<Classes/>}/>
                         <Route path="/members" element={<Members/>}/>
                         <Route path="/plans" element={<Plans/>}/>

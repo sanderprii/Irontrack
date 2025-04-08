@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Grid, CircularProgress, Paper } from '@mui/material';
+import { Container, Typography, Grid, CircularProgress, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getAffiliate } from '../api/affiliateApi'; // Import the getAffiliate function
 

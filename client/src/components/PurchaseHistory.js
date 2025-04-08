@@ -19,10 +19,8 @@ import {
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import PaymentIcon from '@mui/icons-material/Payment';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import EventIcon from '@mui/icons-material/Event';
 import InfoIcon from '@mui/icons-material/Info';
+import PaymentIcon from "@mui/icons-material/Payment";
 
 export default function PurchaseHistory({ userId, affiliateId }) {
     const [purchases, setPurchases] = useState([]);

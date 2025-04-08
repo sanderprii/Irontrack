@@ -20,8 +20,6 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import EventIcon from '@mui/icons-material/Event';
-import PersonIcon from '@mui/icons-material/Person';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 
 import {getUserAttendees} from '../api/profileApi'; // Sinu olemasolev API-funktsioon
@@ -56,7 +54,17 @@ export default function VisitHistory({user, affiliateId}) {
             try {
                 // Kasutame sinu profiili-API funktsiooni getUserAttendees(affiliateId, userId)
                 const data = await getUserAttendees(affiliateId, user.id);
-                setAttendances(Array.isArray(data) ? data : []);
+
+                // Sorteeri tulemus uuemast vanemaks
+                const sortedData = Array.isArray(data)
+                    ? data.sort((a, b) => {
+                        const dateA = a.classSchedule?.time ? new Date(a.classSchedule.time) : new Date(0);
+                        const dateB = b.classSchedule?.time ? new Date(b.classSchedule.time) : new Date(0);
+                        return dateB - dateA; // Tagurpidi järjestus (uuemad eespool)
+                    })
+                    : [];
+
+                setAttendances(sortedData);
             } catch (err) {
                 console.error('Error fetching visit history:', err);
                 setAttendances([]);

@@ -4,16 +4,16 @@ import {
     Box, Grid, Paper, Typography, Card, CardContent, CardHeader,
     Divider, CircularProgress, Button, Chip, Avatar, Badge,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    List, ListItem, ListItemText, ListItemAvatar, ListItemSecondaryAction,
-    Alert, IconButton, Tab, Tabs, Tooltip, LinearProgress
+    List, ListItem, ListItemText, ListItemAvatar,
+    Alert, Tab, Tabs, Tooltip, LinearProgress
 } from '@mui/material';
 import {
-    ArrowUpward, ArrowDownward, Warning, Error, Info,
-    TrendingUp, TrendingDown, AccessTime, Person,
-    CalendarToday, AttachMoney, Group, Refresh
+    Warning, Error, Info,
+    TrendingUp, AccessTime, Person,
+    CalendarToday, AttachMoney, Refresh
 } from '@mui/icons-material';
 import { analyticsApi } from '../api/analyticsApi';
-import { Line, Bar, Pie, Radar } from 'react-chartjs-2';
+import { Line, Bar, Pie } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
     CategoryScale,

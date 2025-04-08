@@ -18,18 +18,12 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 // MUI ikoonid
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import StoreIcon from "@mui/icons-material/Store";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import PaymentIcon from "@mui/icons-material/Payment";
 import DescriptionIcon from "@mui/icons-material/Description";
-import StarIcon from "@mui/icons-material/Star";
 import SEO from "../components/SEO";
 
 // Värvipalett

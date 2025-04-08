@@ -21,7 +21,6 @@ import {
     TableHead,
     TableRow,
     Chip,
-    Divider,
     Card,
     CardContent,
     CircularProgress

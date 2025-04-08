@@ -5,8 +5,6 @@ import {
     List,
     ListItem,
     ListItemText,
-    IconButton,
-    Toolbar,
     CircularProgress,
     Box,
     Card,
@@ -15,7 +13,6 @@ import {
     Tab,
     Badge,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import { Paper } from '@mui/material';
 
 import Statistics from '../components/Statistics';

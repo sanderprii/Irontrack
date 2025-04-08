@@ -14,7 +14,6 @@ import {
     Chip,
     Grid,
     Collapse,
-    IconButton,
     Button,
     Dialog,
     DialogTitle,
@@ -29,9 +28,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DateRangeIcon from '@mui/icons-material/DateRange';
-import InfoIcon from '@mui/icons-material/Info';
 import AddIcon from '@mui/icons-material/Add';
-import EventIcon from '@mui/icons-material/Event';
+import IconButton from "@mui/material/IconButton";
 
 const ActivePlans = ({ userId, affiliateId }) => {
     const [plans, setPlans] = useState([]);

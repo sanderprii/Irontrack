@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
-    Paper,
     Table,
     TableBody,
     TableCell,
@@ -25,7 +24,6 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import InfoIcon from '@mui/icons-material/Info';
 import { getUserCredits, getCreditHistory, addCredit } from '../api/creditApi';
 
 const CreditView = ({ user, affiliateId }) => {

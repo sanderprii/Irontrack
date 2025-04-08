@@ -19,7 +19,7 @@ module.exports = defineConfig({
     reporter: 'html',
 
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:5000',
         trace: 'on-first-retry',
     },
 
@@ -30,10 +30,5 @@ module.exports = defineConfig({
         },
     ],
 
-    // Run your local dev server before starting the tests
-    webServer: {
-        command: 'npm start',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-    },
+  
 });

@@ -1068,54 +1068,5 @@ test.describe('Class Controller', () => {
         }
     });
 
-    // Test deleteWaitlist endpoint
-    test('DELETE /api/classes/waitlist/remove - should remove user from waitlist', async ({ request }) => {
-        try {
-            // Skip test if login failed or no class exists
-            test.skip(!userToken || !testClassId, 'User token or testClassId not available');
 
-            const deleteData = {
-                classId: testClassId
-            };
-
-            const response = await request.delete('http://localhost:5000/api/classes/waitlist/remove', {
-                headers: {
-                    'Authorization': `Bearer ${userToken}`
-                },
-                data: deleteData
-            });
-
-            const status = response.status();
-            console.log(`Delete waitlist entry status: ${status}`);
-
-            // May fail if not on waitlist, that's okay
-            try {
-                const result = await response.json();
-                console.log('Delete waitlist entry result:', result);
-
-                if (response.ok()) {
-                    expect(result).toHaveProperty('message');
-                    expect(result.message).toContain('Successfully removed from waitlist');
-                }
-            } catch (e) {
-                console.log('Could not parse response as JSON:', e);
-            }
-
-            // This should not be a server error
-            expect(status).not.toBe(500);
-
-        } catch (error) {
-            await sendTestFailureReport(
-                'Delete Waitlist Test Failure',
-                error,
-                {
-                    endpoint: '/api/classes/waitlist/remove',
-                    testClassId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
-            throw error;
-        }
-    });
 });

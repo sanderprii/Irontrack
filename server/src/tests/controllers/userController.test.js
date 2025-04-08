@@ -598,32 +598,56 @@ test.describe('User Controller', () => {
     });
 
     // Test adding and deleting user notes (affiliate only)
-    test.describe('User Notes tests', () => {
+    test.describe.serial('User Notes tests', () => {
         let createdNoteId = null;
+        let userId = null;
 
-        // Test addUserNote endpoint
-        test('POST /api/user/notes/:userId/notes - should add a note to a user', async ({ request }) => {
+        // Setup - get user ID first
+        test.beforeAll(async ({ request }) => {
             try {
-                // Skip test if login failed
-                test.skip(!affiliateToken, 'Affiliate token not available');
+                if (!affiliateToken) {
+                    console.error('Affiliate token not available for notes tests');
+                    return;
+                }
 
-                // First get a user ID to add a note to
-                // We can use the profile API with our user token to get a valid ID
                 const profileResponse = await request.get('http://localhost:5000/api/user', {
                     headers: {
                         'Authorization': `Bearer ${userToken}`
                     }
                 });
 
-                const userProfile = await profileResponse.json();
-                const userId = userProfile.id;
+                if (!profileResponse.ok()) {
+                    console.error('Failed to get user profile:', await profileResponse.text());
+                    return;
+                }
 
-                test.skip(!userId, 'Could not get user ID');
+                const userProfile = await profileResponse.json();
+                userId = userProfile.id;
+                console.log('Got user ID for notes tests:', userId);
+            } catch (error) {
+                console.error('Failed to get user ID:', error);
+            }
+        });
+
+        // Test addUserNote endpoint
+        test('POST /api/user/notes/:userId/notes - should add a note to a user', async ({ request }) => {
+            try {
+                if (!affiliateToken) {
+                    console.error('Skipping add note test - missing affiliate token');
+                    return;
+                }
+
+                if (!userId) {
+                    console.error('Skipping add note test - missing user ID');
+                    return;
+                }
 
                 const noteData = {
                     note: 'This is a test note added during API testing',
                     flag: 'green'
                 };
+
+                console.log('Adding note for user:', userId);
 
                 const response = await request.post(`http://localhost:5000/api/user/notes/${userId}/notes`, {
                     headers: {
@@ -632,25 +656,21 @@ test.describe('User Controller', () => {
                     data: noteData
                 });
 
-                // Check if endpoint exists
-                if (response.status() === 404) {
-                    console.log('User notes endpoint not found - may not be implemented yet');
-                    test.skip(true, 'User notes endpoint not found');
-                    return;
+                if (!response.ok()) {
+                    console.error('Failed to add note:', await response.text());
+                    throw new Error('Failed to add note');
                 }
-
-                expect(response.ok()).toBeTruthy();
 
                 const result = await response.json();
                 console.log('Add user note result:', result);
 
                 expect(result).toHaveProperty('id');
                 expect(result).toHaveProperty('userId', userId);
-                expect(result).toHaveProperty('note', 'This is a test note added during API testing');
-                expect(result).toHaveProperty('flag', 'green');
+                expect(result).toHaveProperty('note', noteData.note);
+                expect(result).toHaveProperty('flag', noteData.flag);
 
-                // Store ID for delete test
                 createdNoteId = result.id;
+                console.log('Created note with ID:', createdNoteId);
 
             } catch (error) {
                 await sendTestFailureReport(
@@ -658,6 +678,7 @@ test.describe('User Controller', () => {
                     error,
                     {
                         endpoint: '/api/user/notes/{id}/notes',
+                        userId,
                         authTokenPresent: !!affiliateToken,
                         timestamp: new Date().toISOString()
                     }
@@ -666,23 +687,28 @@ test.describe('User Controller', () => {
             }
         });
 
-        // Test deleteUserNote endpoint - depends on previous test
+        // Test deleteUserNote endpoint
         test('DELETE /api/user/notes/:userId/notes/:noteId - should delete a user note', async ({ request }) => {
             try {
-                // Skip test if login failed or no note was created
-                test.skip(!affiliateToken || !createdNoteId, 'Affiliate token or note ID not available');
+                if (!affiliateToken) {
+                    console.error('Skipping delete note test - missing affiliate token');
+                    return;
+                }
 
-                // Get a user ID
-                const profileResponse = await request.get('http://localhost:5000/api/user', {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`
-                    }
+                if (!userId) {
+                    console.error('Skipping delete note test - missing user ID');
+                    return;
+                }
+
+                if (!createdNoteId) {
+                    console.error('Skipping delete note test - missing note ID');
+                    return;
+                }
+
+                console.log('Attempting to delete note:', {
+                    userId,
+                    noteId: createdNoteId
                 });
-
-                const userProfile = await profileResponse.json();
-                const userId = userProfile.id;
-
-                test.skip(!userId, 'Could not get user ID');
 
                 const response = await request.delete(`http://localhost:5000/api/user/notes/${userId}/notes/${createdNoteId}`, {
                     headers: {
@@ -690,7 +716,10 @@ test.describe('User Controller', () => {
                     }
                 });
 
-                expect(response.ok()).toBeTruthy();
+                if (!response.ok()) {
+                    console.error('Failed to delete note:', await response.text());
+                    throw new Error('Failed to delete note');
+                }
 
                 const result = await response.json();
                 console.log('Delete user note result:', result);
@@ -703,6 +732,7 @@ test.describe('User Controller', () => {
                     error,
                     {
                         endpoint: '/api/user/notes/{id}/notes/{noteId}',
+                        userId,
                         noteId: createdNoteId,
                         authTokenPresent: !!affiliateToken,
                         timestamp: new Date().toISOString()

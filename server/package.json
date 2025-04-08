@@ -16,6 +16,19 @@
     "test:training": "playwright test tests/controllers/trainingController.test.js",
     "test:user": "playwright test tests/controllers/userController.test.js",
     "test:payment": "playwright test tests/controllers/paymentController.test.js",
+    "test:admin": "playwright test tests/controllers/adminController.test.js",
+    "test:defaultWOD": "playwright test tests/controllers/defaultWOD.test.js",
+    "test:groups": "playwright test tests/controllers/groupsController.test.js",
+    "test:logo": "playwright test tests/controllers/logoController.test.js",
+    "test:message": "playwright test tests/controllers/messageController.test.js",
+    "test:statistics": "playwright test tests/controllers/statisticsController.test.js",
+    "test:leaderboard": "playwright test tests/controllers/leaderboardController.test.js",
+    "test:trainer": "playwright test tests/controllers/trainerController.test.js",
+    "test:records": "playwright test tests/controllers/recordsController.test.js",
+    "test:trainingPlan": "playwright test tests/controllers/trainingPlanController.test.js",
+    "test:analytics": "playwright test tests/controllers/analyticsController.test.js",
+    "test:plan": "playwright test tests/controllers/planController.test.js",
+    "test:contactNote": "playwright test tests/controllers/contactNoteController.test.js",
     "test:all": "node ./src/tests/run-all-tests.js",
     "test:report": "playwright show-report"
   },
@@ -45,7 +58,6 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
     "dotenv": "^16.4.7"
   }
 }

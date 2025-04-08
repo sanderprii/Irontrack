@@ -7,22 +7,20 @@ require('dotenv').config();
  */
 module.exports = defineConfig({
     testDir: './src/tests',
-    globalSetup: './src/tests/setup.js',
-    globalTeardown: './src/tests/teardown.js',
-    timeout: 30000, // 30 seconds
-    fullyParallel: false, // Run tests in order
+    testMatch: '**/*.test.js',
+    timeout: 30000,
+    expect: {
+        timeout: 5000
+    },
+    fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : 1, // Run one at a time for API tests
+    workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
 
     use: {
-        baseURL: 'http://localhost:5000',
+        baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
-        extraHTTPHeaders: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        },
     },
 
     projects: [
@@ -34,9 +32,8 @@ module.exports = defineConfig({
 
     // Run your local dev server before starting the tests
     webServer: {
-        command: 'node src/index.js',
-        url: 'http://localhost:5000/api',
+        command: 'npm start',
+        url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
-        timeout: 30000, // Increased timeout for server start
     },
 });

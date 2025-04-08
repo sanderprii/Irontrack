@@ -461,56 +461,108 @@ const getClassAttendeesCount = async (req, res) => {
 
 // ✅ Kasutaja registreerumine klassi
 const registerForClass = async (req, res) => {
-    const {classId, planId, affiliateId, freeClass} = req.body;
+    const {classId, planId} = req.body;
     const userId = req.user?.id;
 
-    console.log("freeClass (type):", freeClass, typeof freeClass);
+    if (!classId || !userId) {
+        return res.status(400).json({error: "Class ID and User ID required"});
+    }
+
     try {
-
-        if (freeClass) {
-            await prisma.classAttendee.create({
-                data: {
-
-                    checkIn: false,
-
-                    userPlanId: 0,
-                    classSchedule: {connect: {id: classId}},
-                    user: {connect: {id: userId}},
-                    affiliate: {connect: {id: parseInt(affiliateId)}}
-                },
-            });
-            return res.status(200).json({message: "Successfully registered!"});
-        } else {
-
-            const plan = await prisma.userPlan.findUnique({
-                where: {id: planId},
-            });
-
-            if (!plan || plan.sessionsLeft <= 0) {
-                return res.status(400).json({error: "Invalid or expired plan"});
+        // Get class details
+        const classInfo = await prisma.classSchedule.findUnique({
+            where: {id: parseInt(classId)},
+            select: {
+                memberCapacity: true,
+                freeClass: true,
+                affiliateId: true
             }
+        });
 
-
-            await prisma.classAttendee.create({
-                data: {
-                    userId,
-                    classId,
-                    checkIn: false,
-                    userPlanId: planId,
-                    affiliateId: parseInt(affiliateId)
-                },
-            });
-
-            await prisma.userPlan.update({
-                where: {id: planId},
-                data: {sessionsLeft: plan.sessionsLeft - 1},
-            });
-            res.status(200).json({message: "Successfully registered!"});
+        if (!classInfo) {
+            return res.status(404).json({error: "Class not found"});
         }
 
+        // Check if user is already registered
+        const existingRegistration = await prisma.classAttendee.findUnique({
+            where: {
+                classId_userId: {
+                    classId: parseInt(classId),
+                    userId: parseInt(userId)
+                }
+            }
+        });
+
+        if (existingRegistration) {
+            return res.status(400).json({error: "You are already registered for this class"});
+        }
+
+        // Check if class is full
+        const enrolledCount = await prisma.classAttendee.count({
+            where: {classId: parseInt(classId)}
+        });
+
+        if (enrolledCount >= classInfo.memberCapacity) {
+            return res.status(400).json({error: "Class is full"});
+        }
+
+        // For free classes, we can register directly
+        if (classInfo.freeClass) {
+            await prisma.classAttendee.create({
+                data: {
+                    userId: parseInt(userId),
+                    classId: parseInt(classId),
+                    checkIn: false,
+                    userPlanId: 0,
+                    affiliateId: classInfo.affiliateId
+                }
+            });
+
+            return res.status(200).json({message: "Successfully registered!"});
+        }
+
+        // For paid classes, verify the plan
+        if (!planId) {
+            return res.status(400).json({error: "Plan ID required for paid classes"});
+        }
+
+        const plan = await prisma.userPlan.findFirst({
+            where: {
+                id: parseInt(planId),
+                userId: parseInt(userId),
+                affiliateId: classInfo.affiliateId
+            }
+        });
+
+        if (!plan) {
+            return res.status(400).json({error: "Invalid plan"});
+        }
+
+        if (plan.sessionsLeft <= 0) {
+            return res.status(400).json({error: "No sessions left in the selected plan"});
+        }
+
+        // Create registration and update plan sessions in a transaction
+        await prisma.$transaction([
+            prisma.classAttendee.create({
+                data: {
+                    userId: parseInt(userId),
+                    classId: parseInt(classId),
+                    checkIn: false,
+                    userPlanId: parseInt(planId),
+                    affiliateId: classInfo.affiliateId
+                }
+            }),
+            prisma.userPlan.update({
+                where: {id: parseInt(planId)},
+                data: {sessionsLeft: {decrement: 1}}
+            })
+        ]);
+
+        res.status(200).json({message: "Successfully registered!"});
     } catch (error) {
         console.error("❌ Error registering for class:", error);
-        res.status(500).json({error: "Failed to register for class."});
+        res.status(500).json({error: "Failed to register for class"});
     }
 };
 
@@ -681,18 +733,24 @@ console.log('userId', userId)
 
 const checkClassScore = async (req, res) => {
     try {
-        const {classId} = req.query;
+        const { classId } = req.query;
         const userId = req.user?.id;
 
+        if (!classId) {
+            return res.status(400).json({ error: "Class ID is required" });
+        }
+
+        if (!userId) {
+            return res.status(401).json({ error: "User not authenticated" });
+        }
+
         const existing = await prisma.classLeaderboard.findFirst({
-            where: {classId: parseInt(classId), userId},
+            where: { classId: parseInt(classId), userId },
         });
 
         if (!existing) {
-            return res.json({hasScore: false});
+            return res.json({ hasScore: false });
         }
-
-
 
         res.json({
             hasScore: true,
@@ -701,26 +759,33 @@ const checkClassScore = async (req, res) => {
         });
     } catch (error) {
         console.error("Error checking class score:", error);
-        res.status(500).json({error: "Failed to check class score"});
+        res.status(500).json({ error: "Failed to check class score" });
     }
 };
 
 const addClassScore = async (req, res) => {
     try {
-        const {classData, scoreType, score} = req.body;
-        const userId = req.user.id;
-console.log('userIdadd', userId)
-        // Kontrolli, kas see rida juba eksisteerib
-        const existing = await prisma.classLeaderboard.findFirst({
-            where: {classId: parseInt(classData.id), userId},
-        });
-        if (existing) {
-            return res
-                .status(400)
-                .json({error: "Score already exists. Please update instead."});
+        const { classData, scoreType, score } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: "User not authenticated" });
         }
 
-        // Loo uus kirje
+        if (!classData?.id || !scoreType || score === undefined) {
+            return res.status(400).json({ error: "Missing required fields: classData.id, scoreType, or score" });
+        }
+
+        // Check if this score already exists
+        const existing = await prisma.classLeaderboard.findFirst({
+            where: { classId: parseInt(classData.id), userId },
+        });
+
+        if (existing) {
+            return res.status(400).json({ error: "Score already exists. Please update instead." });
+        }
+
+        // Create new score
         await prisma.classLeaderboard.create({
             data: {
                 classId: parseInt(classData.id),
@@ -730,29 +795,29 @@ console.log('userIdadd', userId)
             },
         });
 
-        await prisma.training.create(
-            {
+        // Create training record if class data is complete
+        if (classData.trainingType && classData.time) {
+            await prisma.training.create({
                 data: {
                     userId: userId,
                     type: classData.trainingType,
                     score: score,
                     date: classData.time,
-                    wodName: classData.wodName,
-                    wodType: classData.wodType,
-                    exercises: {
+                    wodName: classData.wodName || null,
+                    wodType: classData.wodType || null,
+                    exercises: classData.description ? {
                         create: {
                             exerciseData: classData.description,
-
                         }
-                    }
+                    } : undefined
                 }
-            }
-        )
+            });
+        }
 
-        res.status(200).json({message: "Score added successfully."});
+        res.status(200).json({ message: "Score added successfully." });
     } catch (error) {
         console.error("Error adding class score:", error);
-        res.status(500).json({error: "Failed to add class score"});
+        res.status(500).json({ error: "Failed to add class score" });
     }
 };
 
@@ -822,9 +887,32 @@ const getWaitlist = async (req, res) => {
 
 const createWaitlist = async (req, res) => {
     const {classId, userPlanId} = req.body;
-    const userId = req.user?.id
+    const userId = req.user?.id;
     if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required"});
+    
     try {
+        // First check if the class is full
+        const classInfo = await prisma.classSchedule.findUnique({
+            where: { id: parseInt(classId) },
+            select: { 
+                memberCapacity: true,
+                freeClass: true,
+                affiliateId: true 
+            }
+        });
+
+        if (!classInfo) {
+            return res.status(404).json({ error: "Class not found" });
+        }
+
+        const enrolledCount = await prisma.classAttendee.count({
+            where: { classId: parseInt(classId) }
+        });
+
+        if (enrolledCount < classInfo.memberCapacity) {
+            return res.status(400).json({ error: "Class is not full" });
+        }
+
         // Check if user is already in waitlist
         const existingWaitlist = await prisma.waitlist.findUnique({
             where: {
@@ -839,12 +927,13 @@ const createWaitlist = async (req, res) => {
             return res.status(400).json({error: "You are already in the waitlist for this class"});
         }
 
-        // Verify that the user plan exists and belongs to this user
-        if (userPlanId) {
+        // For free classes, we don't need to verify the plan
+        if (!classInfo.freeClass && userPlanId) {
             const plan = await prisma.userPlan.findFirst({
                 where: {
                     id: parseInt(userPlanId),
-                    userId: parseInt(userId)
+                    userId: parseInt(userId),
+                    affiliateId: classInfo.affiliateId
                 }
             });
 
@@ -862,7 +951,7 @@ const createWaitlist = async (req, res) => {
             data: {
                 classId: parseInt(classId),
                 userId: parseInt(userId),
-                userPlanId: userPlanId ? parseInt(userPlanId) : 0, // 0 for free classes
+                userPlanId: userPlanId ? parseInt(userPlanId) : 0 // 0 for free classes
             }
         });
 
@@ -870,12 +959,12 @@ const createWaitlist = async (req, res) => {
             message: "Successfully added to waitlist",
             waitlistEntry
         });
+
     } catch (error) {
-        console.error("Error adding to waitlist:", error);
+        console.error("❌ Error adding to waitlist:", error);
         res.status(500).json({error: "Failed to add to waitlist"});
     }
-
-}
+};
 
 const deleteWaitlist = async (req, res) => {
     const {classId} = req.body;

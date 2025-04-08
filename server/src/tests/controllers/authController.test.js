@@ -24,6 +24,14 @@ async function loginUser(request, email, password) {
     }
 }
 
+test.beforeEach(async ({ request }) => {
+    // Log in before each test to ensure we have a valid token
+    authToken = await loginUser(request, 'c@c.c', 'cccccc');
+    if (!authToken) {
+        console.error('Failed to obtain auth token in beforeEach');
+    }
+});
+
 test.describe('Authentication Controller', () => {
 
     test('POST /api/auth/login - should login with test user', async ({ request }) => {
@@ -49,9 +57,6 @@ test.describe('Authentication Controller', () => {
             expect(responseBody.user).toHaveProperty('id');
             expect(responseBody.user).toHaveProperty('email', 'c@c.c');
 
-            // Store the token for subsequent tests
-            authToken = responseBody.token;
-
         } catch (error) {
             // Send email on test failure with detailed information
             await sendTestFailureReport(
@@ -70,8 +75,9 @@ test.describe('Authentication Controller', () => {
 
     test('GET /api/auth/me - should retrieve user profile with token', async ({ request }) => {
         try {
-            // Skip if login test failed
-            test.skip(!authToken, 'Auth token not available');
+            if (!authToken) {
+                throw new Error('Auth token not available');
+            }
 
             const meResponse = await request.get('http://localhost:5000/api/auth/me', {
                 headers: {

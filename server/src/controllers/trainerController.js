@@ -25,8 +25,8 @@ const getTrainerAffiliates = async (req, res) => {
         console.error("❌ Error loading trainer affiliates:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 
 module.exports = {
-    getTrainerAffiliates,
+    getTrainerAffiliates
 };

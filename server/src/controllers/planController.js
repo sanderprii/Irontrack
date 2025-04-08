@@ -251,7 +251,7 @@ console.log("planData", planData);
                     validityDays: planData.validityDays,
                     sessionsLeft: planData.sessions,
                     planName: planData.name,
-                    contractId: parseInt(contractId),
+                    contractId: contractId ? parseInt(contractId) : null,
                     trainingType: JSON.stringify(planData.trainingType)
                 }
             });

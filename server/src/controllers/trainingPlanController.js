@@ -8,6 +8,9 @@ exports.getTrainingPlans = async (req, res) => {
         const role = req.query.role;
         const selectedUserId = req.query.selectedUserId;
 
+        if (!selectedUserId) {
+            return res.status(400).json({ error: 'Selected user ID is required.' });
+        }
 
         let trainingPlans;
         if (role === 'affiliate' || role === 'trainer') {
@@ -129,9 +132,22 @@ exports.createTrainingPlan = async (req, res) => {
         const { name, userId, trainingDays } = req.body;
         const creatorId = req.user.id;
 
+        // Validate required fields
+        if (!name || !userId || !trainingDays || !Array.isArray(trainingDays)) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
 
-        // Verify the user has permission to create training plans
-
+        // Validate training days
+        for (const day of trainingDays) {
+            if (!day.name || !day.sectors || !Array.isArray(day.sectors)) {
+                return res.status(400).json({ error: 'Invalid training day format.' });
+            }
+            for (const sector of day.sectors) {
+                if (!sector.type || !sector.content) {
+                    return res.status(400).json({ error: 'Invalid sector format.' });
+                }
+            }
+        }
 
         const trainingPlan = await prisma.trainingPlan.create({
             data: {
@@ -146,9 +162,9 @@ exports.createTrainingPlan = async (req, res) => {
                                 type: sector.type,
                                 content: sector.content,
                                 youtubeLinks: {
-                                    create: sector.youtubeLinks.filter(link => link.url.trim()).map(link => ({
+                                    create: sector.youtubeLinks?.filter(link => link.url?.trim())?.map(link => ({
                                         url: link.url
-                                    }))
+                                    })) || []
                                 }
                             }))
                         }
@@ -171,6 +187,9 @@ exports.createTrainingPlan = async (req, res) => {
         res.status(201).json(trainingPlan);
     } catch (error) {
         console.error('Error creating training plan:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'A training plan with this name already exists.' });
+        }
         res.status(500).json({ error: 'Failed to create training plan.' });
     }
 };
@@ -181,6 +200,11 @@ exports.updateTrainingPlan = async (req, res) => {
         const planId = parseInt(req.params.id, 10);
         const userId = req.user.id;
         const { name, trainingDays } = req.body;
+
+        // Validate required fields
+        if (!name || !trainingDays || !Array.isArray(trainingDays)) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
 
         // Find existing plan
         const existingPlan = await prisma.trainingPlan.findUnique({
@@ -207,88 +231,33 @@ exports.updateTrainingPlan = async (req, res) => {
             return res.status(403).json({ error: 'You do not have permission to update this training plan.' });
         }
 
-        // First update plan name
-        await prisma.trainingPlan.update({
-            where: { id: planId },
-            data: { name }
+        // Delete all existing training days and their related records
+        await prisma.trainingDay.deleteMany({
+            where: { trainingPlanId: planId }
         });
 
-        // For each training day in the request...
-        for (const day of trainingDays) {
-            if (day.id) {
-                // Update existing day
-                await prisma.trainingDay.update({
-                    where: { id: day.id },
-                    data: { name: day.name }
-                });
-
-                // For each sector in the day...
-                for (const sector of day.sectors) {
-                    if (sector.id) {
-                        // Update existing sector
-                        await prisma.trainingSector.update({
-                            where: { id: sector.id },
-                            data: {
-                                type: sector.type,
-                                content: sector.content,
-                            }
-                        });
-
-                        // Delete any existing YouTube links for this sector
-                        await prisma.sectorYoutubeLink.deleteMany({
-                            where: { trainingSectorId: sector.id }
-                        });
-
-                        // Add the new YouTube links
-                        for (const link of sector.youtubeLinks) {
-                            await prisma.sectorYoutubeLink.create({
-                                data: {
-                                    url: link.url,
-                                    trainingSectorId: sector.id
-                                }
-                            });
-                        }
-                    } else {
-                        // Create new sector
-                        await prisma.trainingSector.create({
-                            data: {
-                                type: sector.type,
-                                content: sector.content,
-                                trainingDayId: day.id,
-                                youtubeLinks: {
-                                    create: sector.youtubeLinks.map(link => ({
-                                        url: link.url
-                                    }))
-                                }
-                            }
-                        });
-                    }
-                }
-            } else {
-                // Create new day
-                await prisma.trainingDay.create({
-                    data: {
+        // Update plan name and create new training days
+        const updatedPlan = await prisma.trainingPlan.update({
+            where: { id: planId },
+            data: {
+                name,
+                trainingDays: {
+                    create: trainingDays.map(day => ({
                         name: day.name,
-                        trainingPlanId: planId,
                         sectors: {
                             create: day.sectors.map(sector => ({
                                 type: sector.type,
                                 content: sector.content,
                                 youtubeLinks: {
-                                    create: sector.youtubeLinks.map(link => ({
+                                    create: sector.youtubeLinks?.filter(link => link.url?.trim())?.map(link => ({
                                         url: link.url
-                                    }))
+                                    })) || []
                                 }
                             }))
                         }
-                    }
-                });
-            }
-        }
-
-        // Return the updated plan
-        const updatedPlan = await prisma.trainingPlan.findUnique({
-            where: { id: planId },
+                    }))
+                }
+            },
             include: {
                 trainingDays: {
                     include: {
@@ -305,6 +274,9 @@ exports.updateTrainingPlan = async (req, res) => {
         res.json(updatedPlan);
     } catch (error) {
         console.error('Error updating training plan:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'A training plan with this name already exists.' });
+        }
         res.status(500).json({ error: 'Failed to update training plan.' });
     }
 };
@@ -324,8 +296,8 @@ exports.deleteTrainingPlan = async (req, res) => {
             return res.status(404).json({ error: 'Training plan not found.' });
         }
 
-        // Only the user to whom the plan is assigned can delete it
-        if (existingPlan.userId !== userId) {
+        // Both the creator and the assigned user can delete the plan
+        if (existingPlan.creatorId !== userId && existingPlan.userId !== userId) {
             return res.status(403).json({ error: 'You do not have permission to delete this training plan.' });
         }
 
@@ -344,11 +316,15 @@ exports.deleteTrainingPlan = async (req, res) => {
 // Add a comment to a training day
 exports.addComment = async (req, res) => {
     try {
-        const trainingDayId = parseInt(req.params.id, 10);
-        const { content } = req.body;
+        const { trainingDayId, content } = req.body;
         const userId = req.user.id;
 
-        // Find the training day
+        // Validate required fields
+        if (!trainingDayId || !content) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
+
+        // Check if training day exists
         const trainingDay = await prisma.trainingDay.findUnique({
             where: { id: trainingDayId },
             include: {
@@ -360,24 +336,16 @@ exports.addComment = async (req, res) => {
             return res.status(404).json({ error: 'Training day not found.' });
         }
 
-        // Check if the user has access to this training day
+        // Check if user has access to this training day
         if (trainingDay.trainingPlan.creatorId !== userId && trainingDay.trainingPlan.userId !== userId) {
             return res.status(403).json({ error: 'You do not have permission to add comments to this training day.' });
         }
 
-        // Create the comment
-        const comment = await prisma.sectorComment.create({
+        const comment = await prisma.comment.create({
             data: {
                 content,
-                trainingDayId,
-                userId
-            },
-            include: {
-                user: {
-                    select: {
-                        fullName: true
-                    }
-                }
+                userId,
+                trainingDayId
             }
         });
 
@@ -391,11 +359,15 @@ exports.addComment = async (req, res) => {
 // Mark a sector as complete
 exports.completeSector = async (req, res) => {
     try {
-        const sectorId = parseInt(req.params.id, 10);
+        const { sectorId, completed } = req.body;
         const userId = req.user.id;
-        const { completed } = req.body;
 
-        // Find the sector
+        // Validate required fields
+        if (!sectorId || typeof completed !== 'boolean') {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
+
+        // Check if sector exists
         const sector = await prisma.trainingSector.findUnique({
             where: { id: sectorId },
             include: {
@@ -411,97 +383,70 @@ exports.completeSector = async (req, res) => {
             return res.status(404).json({ error: 'Sector not found.' });
         }
 
-        // Check if the user is the one to whom the plan is assigned
-        if (sector.trainingDay.trainingPlan.userId !== userId) {
-            return res.status(403).json({ error: 'You do not have permission to mark this sector as complete.' });
+        // Check if user has access to this sector
+        if (sector.trainingDay.trainingPlan.creatorId !== userId && sector.trainingDay.trainingPlan.userId !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to update this sector.' });
         }
 
-        // Update the sector
         const updatedSector = await prisma.trainingSector.update({
             where: { id: sectorId },
-            data: {
-                completed
-            }
+            data: { completed }
         });
 
         res.json(updatedSector);
     } catch (error) {
-        console.error('Error completing sector:', error);
-        res.status(500).json({ error: 'Failed to complete sector.' });
+        console.error('Error updating sector:', error);
+        res.status(500).json({ error: 'Failed to update sector.' });
     }
 };
 
-// Add a sector to the user's trainings
-exports.addSectorToTraining = async (req, res) => {
+// Add a sector to a training day
+exports.addSector = async (req, res) => {
     try {
-        const sectorId = parseInt(req.params.id, 10);
+        const { trainingDayId, type, content, youtubeLinks } = req.body;
         const userId = req.user.id;
 
-        // Find the sector with all its details
-        const sector = await prisma.trainingSector.findUnique({
-            where: { id: sectorId },
+        // Validate required fields
+        if (!trainingDayId || !type || !content) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
+
+        // Check if training day exists
+        const trainingDay = await prisma.trainingDay.findUnique({
+            where: { id: trainingDayId },
             include: {
-                trainingDay: {
-                    include: {
-                        trainingPlan: true
-                    }
-                }
+                trainingPlan: true
             }
         });
 
-        if (!sector) {
-            return res.status(404).json({ error: 'Sector not found.' });
+        if (!trainingDay) {
+            return res.status(404).json({ error: 'Training day not found.' });
         }
 
-        // Check if the user is the one to whom the plan is assigned
-        if (sector.trainingDay.trainingPlan.userId !== userId) {
-            return res.status(403).json({ error: 'You do not have permission to add this sector to your trainings.' });
+        // Check if user has access to this training day
+        if (trainingDay.trainingPlan.creatorId !== userId && trainingDay.trainingPlan.userId !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to add sectors to this training day.' });
         }
 
-        // Map sector type to training type - now correctly handles all training types
-        let trainingType;
-        switch (sector.type) {
-            case 'WOD':
-                trainingType = 'WOD';
-                break;
-            case 'Weightlifting':
-                trainingType = 'Weightlifting';
-                break;
-            case 'Cardio':
-                trainingType = 'Cardio';
-                break;
-            case 'Rowing':
-                trainingType = 'Rowing';  // Now correctly maps Rowing
-                break;
-            case 'Gymnastics':
-                trainingType = 'Gymnastics';  // Now correctly maps Gymnastics
-                break;
-            default:
-                trainingType = 'Other';
-        }
-
-        // Create a new training
-        const training = await prisma.training.create({
+        const sector = await prisma.trainingSector.create({
             data: {
-                type: trainingType,  // This will now be the correct type including Rowing/Gymnastics
-                date: new Date(),
-                wodName: trainingType === 'WOD' ? `${sector.trainingDay.trainingPlan.name} - ${sector.trainingDay.name}` : null,
-                wodType: trainingType === 'WOD' ? 'Training Plan' : null,
-                userId,
-                exercises: {
-                    create: {
-                        exerciseData: sector.content
-                    }
+                type,
+                content,
+                trainingDayId,
+                youtubeLinks: {
+                    create: youtubeLinks?.filter(link => link.url?.trim())?.map(link => ({
+                        url: link.url
+                    })) || []
                 }
             },
             include: {
-                exercises: true
+                youtubeLinks: true
             }
         });
 
-        res.status(201).json(training);
+        res.status(201).json(sector);
     } catch (error) {
-        console.error('Error adding sector to training:', error);
-        res.status(500).json({ error: 'Failed to add sector to training.' });
+        console.error('Error adding sector:', error);
+        res.status(500).json({ error: 'Failed to add sector.' });
     }
 };

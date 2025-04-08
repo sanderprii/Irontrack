@@ -61,7 +61,7 @@ test.describe('Affiliate Controller', () => {
             // Skip test if login failed
             test.skip(!authToken, 'Auth token not available');
 
-            const response = await request.get('http://localhost:5000/api/my-affiliate', {
+            const response = await request.get('http://localhost:5000/api/my-affiliate/my-affiliate', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -201,16 +201,22 @@ test.describe('Affiliate Controller', () => {
                 paymentHolidayFee: 10
             };
 
-            const response = await request.post('http://localhost:5000/api/affiliate', {
+            console.log('Sending request to create affiliate with data:', newAffiliateData);
+            console.log('Using auth token:', authToken);
+
+            const response = await request.put('http://localhost:5000/api/my-affiliate/affiliate', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 },
                 data: newAffiliateData
             });
 
-            expect(response.ok()).toBeTruthy();
-
+            console.log('Response status:', response.status());
+            console.log('Response headers:', response.headers());
             const responseBody = await response.json();
+            console.log('Response body:', responseBody);
+
+            expect(response.ok()).toBeTruthy();
             expect(responseBody).toHaveProperty('message');
             expect(responseBody.message).toContain('created successfully');
 
@@ -254,7 +260,7 @@ test.describe('Affiliate Controller', () => {
                 paymentHolidayFee: 15
             };
 
-            const response = await request.post('http://localhost:5000/api/affiliate', {
+            const response = await request.put('http://localhost:5000/api/my-affiliate/affiliate', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 },
@@ -272,9 +278,8 @@ test.describe('Affiliate Controller', () => {
                 console.log("Couldn't parse response body:", e);
             }
 
-            // See test võib ebaõnnestuda, kui serveri API töötleb uuendamist teisiti
-            // Kontrollime ainult, et staatus ei ole 500 (serveriviga)
-            expect(status).not.toBe(500);
+            // Server should return 200 for successful update
+            expect(status).toBe(200);
 
         } catch (error) {
             await sendTestFailureReport(
@@ -298,7 +303,7 @@ test.describe('Affiliate Controller', () => {
             // Skip test if login failed or no affiliate exists
             test.skip(!authToken || !affiliateId, 'Auth token or affiliate ID not available');
 
-            const response = await request.get(`http://localhost:5000/api/affiliate?id=${affiliateId}`, {
+            const response = await request.get(`http://localhost:5000/api/my-affiliate/affiliateById?id=${affiliateId}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -345,26 +350,18 @@ test.describe('Affiliate Controller', () => {
             // Skip test if login failed
             test.skip(!authToken, 'Auth token not available');
 
-            const response = await request.get('http://localhost:5000/api/affiliate', {
+            const response = await request.get('http://localhost:5000/api/my-affiliate/affiliateById', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
             });
 
-            // Server tagastab 404, mitte 400, kui ID puudub
-            expect(response.status()).toBe(404);
+            // Server returns 400 Bad Request when ID is missing
+            expect(response.status()).toBe(400);
 
-            // Logime vastuse teksti, et näha mida server päriselt tagastab
-            const responseText = await response.text();
-            console.log(`Missing ID response: ${responseText.substring(0, 100)}...`);
-
-            // Kui tegu on HTML vastusega, ärme ürita JSON-it parsida
-            if (!responseText.trim().startsWith('<')) {
-                const responseBody = JSON.parse(responseText);
-                expect(responseBody).toHaveProperty('error');
-            } else {
-                console.log('Response is HTML, not attempting to parse as JSON');
-            }
+            const responseBody = await response.json();
+            expect(responseBody).toHaveProperty('error');
+            expect(responseBody.error).toContain('required');
 
         } catch (error) {
             await sendTestFailureReport(
@@ -384,7 +381,7 @@ test.describe('Affiliate Controller', () => {
     // Test unauthorized access
     test('GET /api/my-affiliate - should reject requests without valid token', async ({ request }) => {
         try {
-            const response = await request.get('http://localhost:5000/api/my-affiliate', {
+            const response = await request.get('http://localhost:5000/api/my-affiliate/my-affiliate', {
                 headers: {
                     'Authorization': 'Bearer invalid-token'
                 }

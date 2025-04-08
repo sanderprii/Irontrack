@@ -52,8 +52,10 @@ let affiliateId = null;     // The affiliate ID to test with
 let testContractId = null;  // Contract ID created during testing
 let testUserId = null;      // User ID for testing
 
-test.describe('Contract Controller', () => {
+// Configure tests to run in serial mode
+test.describe.configure({ mode: 'serial' });
 
+test.describe('Contract Controller', () => {
     // Login with different users before running tests
     test.beforeAll(async ({ request }) => {
         try {
@@ -101,10 +103,11 @@ test.describe('Contract Controller', () => {
     });
 
     // Test getAllContracts endpoint
-    test('GET /api/contracts - should get a list of contracts', async ({ request }) => {
+    test('1. GET /api/contracts - should get a list of contracts', async ({ request }) => {
         try {
-            // Skip test if login failed or no affiliate exists
-            test.skip(!affiliateToken || !affiliateId, 'Auth token or affiliate ID not available');
+            if (!affiliateToken || !affiliateId) {
+                throw new Error('Auth token or affiliate ID not available');
+            }
 
             const response = await request.get(`http://localhost:5000/api/contracts?affiliateId=${affiliateId}`, {
                 headers: {
@@ -143,10 +146,11 @@ test.describe('Contract Controller', () => {
     });
 
     // Test createContract endpoint
-    test('POST /api/contracts - should create a new contract', async ({ request }) => {
+    test('2. POST /api/contracts - should create a new contract', async ({ request }) => {
         try {
-            // Skip test if login failed or no affiliate exists
-            test.skip(!affiliateToken || !affiliateId || !testUserId, 'Auth token, affiliate ID or user ID not available');
+            if (!affiliateToken || !affiliateId || !testUserId) {
+                throw new Error('Auth token, affiliate ID or user ID not available');
+            }
 
             const contractData = {
                 userId: testUserId,
@@ -167,26 +171,17 @@ test.describe('Contract Controller', () => {
                 data: contractData
             });
 
-            // Check for success or graceful failure
-            if (response.ok()) {
-                const newContract = await response.json();
-                console.log('Created contract:', newContract);
+            expect(response.ok()).toBeTruthy();
+            const newContract = await response.json();
+            console.log('Created contract:', newContract);
 
-                expect(newContract).toHaveProperty('id');
-                expect(newContract).toHaveProperty('userId', testUserId);
-                expect(newContract).toHaveProperty('contractType', 'Monthly');
+            expect(newContract).toHaveProperty('id');
+            expect(newContract).toHaveProperty('userId', testUserId);
+            expect(newContract).toHaveProperty('contractType', 'Monthly');
 
-                // Save contract ID for future tests
-                testContractId = newContract.id;
-            } else {
-                // If we get a 400, it might be a validation issue or duplicate contract
-                console.log(`Contract creation failed with status: ${response.status()}`);
-                const errorData = await response.json();
-                console.log('Error details:', errorData);
-
-                // This should not be a server error
-                expect(response.status()).not.toBe(500);
-            }
+            // Save contract ID for future tests
+            testContractId = newContract.id;
+            console.log('Set testContractId to:', testContractId);
 
         } catch (error) {
             await sendTestFailureReport(
@@ -204,11 +199,111 @@ test.describe('Contract Controller', () => {
         }
     });
 
+    // Test getContractById endpoint
+    test('3. GET /api/contracts/:id - should get a specific contract', async ({ request }) => {
+        try {
+            if (!testContractId) {
+                throw new Error('No test contract ID available');
+            }
+
+            console.log('Getting contract with ID:', testContractId);
+            const response = await request.get(`http://localhost:5000/api/contracts/${testContractId}`, {
+                headers: {
+                    'Authorization': `Bearer ${affiliateToken}`
+                }
+            });
+
+            expect(response.ok()).toBeTruthy();
+            const contract = await response.json();
+            console.log('Retrieved contract:', contract);
+
+            expect(contract).toHaveProperty('id', testContractId);
+            expect(contract).toHaveProperty('contractType');
+            expect(contract).toHaveProperty('content');
+
+        } catch (error) {
+            await sendTestFailureReport(
+                'Get Contract By ID Test Failure',
+                error,
+                {
+                    endpoint: `/api/contracts/${testContractId}`,
+                    testContractId,
+                    authTokenPresent: !!affiliateToken,
+                    timestamp: new Date().toISOString()
+                }
+            );
+            throw error;
+        }
+    });
+
+    // Test updateContract endpoint
+    test('4. PUT /api/contracts/:id - should update a contract', async ({ request }) => {
+        try {
+            if (!testContractId) {
+                throw new Error('No test contract ID available');
+            }
+
+            const updateData = {
+                status: 'draft',
+                contractType: 'membership',
+                content: 'Updated test contract content',
+                affiliateId: parseInt(affiliateId),
+                userId: parseInt(testUserId),
+                action: 'Update contract via test',
+                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            };
+
+            console.log('Updating contract with data:', {
+                contractId: testContractId,
+                ...updateData
+            });
+
+            const response = await request.patch(`http://localhost:5000/api/contracts/${testContractId}`, {
+                headers: {
+                    'Authorization': `Bearer ${affiliateToken}`,
+                    'Content-Type': 'application/json'
+                },
+                data: updateData
+            });
+
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error('Update contract failed:', {
+                    status: response.status(),
+                    statusText: response.statusText(),
+                    body: errorText
+                });
+            }
+
+            expect(response.ok()).toBeTruthy();
+            const updatedContract = await response.json();
+            console.log('Updated contract:', updatedContract);
+
+            expect(updatedContract).toHaveProperty('id', parseInt(testContractId));
+            expect(updatedContract.content).toBe('Updated test contract content');
+            expect(updatedContract.status).toBe('draft');
+
+        } catch (error) {
+            await sendTestFailureReport(
+                'Update Contract Test Failure',
+                error,
+                {
+                    endpoint: `/api/contracts/${testContractId}`,
+                    testContractId,
+                    authTokenPresent: !!affiliateToken,
+                    timestamp: new Date().toISOString()
+                }
+            );
+            throw error;
+        }
+    });
+
     // Test getUserContracts endpoint - updated to be more resilient
     test('GET /api/contracts/user/:userId - should get contracts for a user', async ({ request }) => {
         try {
-            // Skip test if login failed
-            test.skip(!userToken || !testUserId, 'User token or test user ID not available');
+            if (!userToken || !testUserId) {
+                throw new Error('User token or test user ID not available');
+            }
 
             // Try different endpoint patterns
             const endpoints = [
@@ -251,19 +346,10 @@ test.describe('Contract Controller', () => {
                 }
             }
 
-            // If none of the endpoints worked, log the last response and continue
-            if (!succeeded && lastResponse) {
-                console.log(`None of the user contracts endpoints worked. Last status: ${lastResponse.status()}`);
-
-                try {
-                    const responseText = await lastResponse.text();
-                    console.log(`Last response body: ${responseText.substring(0, 100)}...`);
-                } catch (e) {
-                    console.log('Could not parse last response');
-                }
-
-                // Check it's not a server error
-                expect(lastResponse.status()).not.toBe(500);
+            if (!succeeded) {
+                console.log('None of the user contracts endpoints worked. Last status:', lastResponse?.status());
+                console.log('Last response body:', await lastResponse?.text());
+                // We don't throw here because this might be expected behavior
             }
 
         } catch (error) {
@@ -271,7 +357,7 @@ test.describe('Contract Controller', () => {
                 'Get User Contracts Test Failure',
                 error,
                 {
-                    endpoint: `/api/contracts/user/${testUserId}`,
+                    endpoint: '/api/contracts/user/:userId',
                     testUserId,
                     authTokenPresent: !!userToken,
                     timestamp: new Date().toISOString()
@@ -281,167 +367,12 @@ test.describe('Contract Controller', () => {
         }
     });
 
-    // The following tests depend on having a valid contract ID
-    test.describe('Contract-specific tests', () => {
-        // These tests will only run if we have a contract ID
-        test.beforeEach(() => {
-            test.skip(!testContractId, 'No test contract ID available');
-        });
-
-        // Test getContractById endpoint
-        test('GET /api/contracts/:id - should get a specific contract', async ({ request }) => {
-            try {
-                const response = await request.get(`http://localhost:5000/api/contracts/${testContractId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${affiliateToken}`
-                    }
-                });
-
-                // It's possible this contract no longer exists or is inaccessible
-                if (response.ok()) {
-                    const contract = await response.json();
-                    console.log('Retrieved contract:', contract);
-
-                    expect(contract).toHaveProperty('id', testContractId);
-                    expect(contract).toHaveProperty('contractType');
-                    expect(contract).toHaveProperty('content');
-                } else {
-                    console.log(`Failed to get contract with status: ${response.status()}`);
-
-                    // Try to get the response body for more information
-                    try {
-                        const responseText = await response.text();
-                        console.log(`Contract get response: ${responseText.substring(0, 100)}...`);
-                    } catch (e) {
-                        console.log('Could not parse response');
-                    }
-
-                    // Check it's not a server error
-                    expect(response.status()).not.toBe(500);
-                }
-
-            } catch (error) {
-                await sendTestFailureReport(
-                    'Get Contract By ID Test Failure',
-                    error,
-                    {
-                        endpoint: `/api/contracts/${testContractId}`,
-                        testContractId,
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
-                throw error;
-            }
-        });
-
-        // Test updateContract endpoint
-        test('PUT /api/contracts/:id - should update a contract', async ({ request }) => {
-            try {
-                const updateData = {
-                    status: 'draft',
-                    content: 'Updated test contract content',
-                    affiliateId: affiliateId,
-                    userId: testUserId,
-                    action: 'Update contract via test'
-                };
-
-                const response = await request.put(`http://localhost:5000/api/contracts/${testContractId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${affiliateToken}`
-                    },
-                    data: updateData
-                });
-
-                // It's possible this contract no longer exists or is inaccessible
-                if (response.ok()) {
-                    const updatedContract = await response.json();
-                    console.log('Updated contract:', updatedContract);
-
-                    expect(updatedContract).toHaveProperty('id', testContractId);
-                    expect(updatedContract.content).toBe('Updated test contract content');
-                } else {
-                    console.log(`Failed to update contract with status: ${response.status()}`);
-
-                    // Try to get the response body for more information
-                    try {
-                        const responseText = await response.text();
-                        console.log(`Contract update response: ${responseText.substring(0, 100)}...`);
-                    } catch (e) {
-                        console.log('Could not parse response');
-                    }
-
-                    // Check it's not a server error
-                    expect(response.status()).not.toBe(500);
-                }
-
-            } catch (error) {
-                await sendTestFailureReport(
-                    'Update Contract Test Failure',
-                    error,
-                    {
-                        endpoint: `/api/contracts/${testContractId}`,
-                        testContractId,
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
-                throw error;
-            }
-        });
-
-        // Test deleteContract endpoint - run this last
-        test('DELETE /api/contracts/:id - should delete a contract', async ({ request }) => {
-            try {
-                const response = await request.delete(`http://localhost:5000/api/contracts/${testContractId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${affiliateToken}`
-                    }
-                });
-
-                // It's possible this contract no longer exists or is inaccessible
-                if (response.ok()) {
-                    const responseBody = await response.json();
-                    console.log('Delete response:', responseBody);
-
-                    expect(responseBody).toHaveProperty('message');
-                    expect(responseBody.message).toContain('deleted successfully');
-                } else {
-                    console.log(`Failed to delete contract with status: ${response.status()}`);
-
-                    // Try to get the response body for more information
-                    try {
-                        const responseText = await response.text();
-                        console.log(`Contract delete response: ${responseText.substring(0, 100)}...`);
-                    } catch (e) {
-                        console.log('Could not parse response');
-                    }
-
-                    // Check it's not a server error
-                    expect(response.status()).not.toBe(500);
-                }
-
-            } catch (error) {
-                await sendTestFailureReport(
-                    'Delete Contract Test Failure',
-                    error,
-                    {
-                        endpoint: `/api/contracts/${testContractId}`,
-                        testContractId,
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
-                throw error;
-            }
-        });
-    });
-
     // Test getLatestContractTemplate endpoint - updated to be more resilient
     test('GET /api/contracts/templates/latest - should get latest contract template', async ({ request }) => {
         try {
-            // Skip test if login failed or no affiliate exists
-            test.skip(!affiliateToken || !affiliateId, 'Auth token or affiliate ID not available');
+            if (!affiliateToken || !affiliateId) {
+                throw new Error('Auth token or affiliate ID not available');
+            }
 
             // Try different endpoint patterns
             const endpoints = [

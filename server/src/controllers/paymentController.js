@@ -29,6 +29,23 @@ const createMontonioPayment = async (req, res) => {
         const userPhone = userData?.phone || '';
         const userFullName = userData?.fullName || '';
 
+        // Ensure amount is a valid number
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount < 0.01) {
+            return res.status(400).json({
+                success: false,
+                message: "Amount must be a valid number greater than or equal to 0.01"
+            });
+        }
+
+        // Ensure orderId is provided
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                message: "Order ID is required"
+            });
+        }
+
         if (!affiliateId) {
             return res.status(400).json({
                 success: false,
@@ -43,7 +60,6 @@ const createMontonioPayment = async (req, res) => {
                 message: "Invalid affiliateId format - must be a number"
             });
         }
-
 
         const affiliateApiKeys = await prisma.affiliateApiKeys.findFirst({
             where: {
@@ -61,23 +77,6 @@ const createMontonioPayment = async (req, res) => {
 
         affiliateAccessKey = affiliateApiKeys.accessKey;
         affiliateSecretKey = affiliateApiKeys.secretKey;
-
-        // Ensure amount is a valid number
-        const parsedAmount = parseFloat(amount);
-        if (isNaN(parsedAmount) || parsedAmount < 0.01) {
-            return res.status(400).json({
-                success: false,
-                message: "Amount must be a valid number greater than or equal to 0.01"
-            });
-        }
-
-        // Ensure orderId is provided
-        if (!orderId) {
-            return res.status(400).json({
-                success: false,
-                message: "Order ID is required"
-            });
-        }
 
         // Format amount to have exactly 2 decimal places
         const formattedAmount = parsedAmount.toFixed(2);

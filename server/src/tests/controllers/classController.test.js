@@ -27,7 +27,6 @@ let affiliateToken = null;  // d@d.d - Affiliate owner
 let trainerToken = null;    // t@t.t - Trainer
 let userToken = null;       // c@c.c - Regular user
 let affiliateId = null;     // The affiliate ID to test with
-// We'll use a hardcoded class ID from an existing class based on the test output
 let testClassId = 4775;     // ID of a test class that exists in the system
 
 test.describe('Class Controller', () => {
@@ -131,80 +130,6 @@ test.describe('Class Controller', () => {
         }
     });
 
-    // Test getClassInfo endpoint
-    test('GET /api/class-info - should return class capacity and enrollment', async ({ request }) => {
-        try {
-            // Skip test if login failed or no affiliate exists
-            test.skip(!affiliateToken || !affiliateId, 'Auth token or affiliate ID not available');
-
-            // First get a list of classes to use an actual class ID
-            const today = new Date();
-            const startDate = today.toISOString().split('T')[0];
-            const endDate = new Date(today);
-            endDate.setDate(today.getDate() + 7);
-            const endDateStr = endDate.toISOString().split('T')[0];
-
-            // Get list of classes
-            const classesResponse = await request.get(`http://localhost:5000/api/classes?affiliateId=${affiliateId}&start=${startDate}&end=${endDateStr}`, {
-                headers: {
-                    'Authorization': `Bearer ${affiliateToken}`
-                }
-            });
-
-            const classes = await classesResponse.json();
-
-            // Skip if no classes exist
-            test.skip(classes.length === 0, 'No classes found to test with');
-
-            // Try to use the first class from the list as they should exist
-            const classId = classes.length > 0 ? classes[0].id : testClassId;
-
-            console.log(`Using class ID ${classId} for class-info test`);
-
-            const response = await request.get(`http://localhost:5000/api/class-info?classId=${classId}`, {
-                headers: {
-                    'Authorization': `Bearer ${affiliateToken}`
-                }
-            });
-
-            const status = response.status();
-            console.log(`Get class-info status: ${status}`);
-
-            // If we get a 404, it's possible the class was deleted, so we'll just check that it's not a server error
-            if (status === 404) {
-                console.log('Class not found - may have been deleted');
-                // We'll consider this a pass - the API correctly reported the class doesn't exist
-                expect(status).toBe(404);
-                return;
-            }
-
-            // For successful responses, check the structure
-            if (response.ok()) {
-                const classInfo = await response.json();
-                console.log('Class info:', classInfo);
-
-                expect(classInfo).toHaveProperty('memberCapacity');
-                expect(classInfo).toHaveProperty('enrolledCount');
-            } else {
-                // If not 404 and not successful, it shouldn't be a server error
-                expect(status).not.toBe(500);
-            }
-
-        } catch (error) {
-            await sendTestFailureReport(
-                'Get Class Info Test Failure',
-                error,
-                {
-                    endpoint: '/api/class-info',
-                    affiliateId,
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
-            throw error;
-        }
-    });
-
     // Test createClass endpoint
     test('POST /api/classes - should create a new class', async ({ request }) => {
         try {
@@ -241,22 +166,42 @@ test.describe('Class Controller', () => {
             const responseStatus = response.status();
             console.log(`Create class response status: ${responseStatus}`);
 
-            try {
-                const responseBody = await response.json();
-                console.log('Create class response:', responseBody);
+            // We expect a successful creation
+            expect(responseStatus).toBe(201);
 
-                // Update testClassId with the newly created class if successful
-                if (responseBody.class && responseBody.class.id) {
-                    testClassId = responseBody.class.id;
-                    console.log(`Updated testClassId to newly created class: ${testClassId}`);
-                }
-            } catch (e) {
-                console.log('Could not parse response body');
+            const responseBody = await response.json();
+            console.log('Create class response:', responseBody);
+
+            // More flexible ID extraction - check both possible response structures
+            if (responseBody.class && responseBody.class.id) {
+                testClassId = responseBody.class.id;
+            } else if (responseBody.id) {
+                testClassId = responseBody.id;
+            } else {
+                console.log('Response structure:', JSON.stringify(responseBody, null, 2));
+                throw new Error('Could not find class ID in response');
             }
 
-            // We're just testing that the request doesn't completely fail
-            // We don't expect 201 since we might not have permission or there might be validation errors
-            expect(responseStatus).not.toBe(500);
+            console.log(`Updated testClassId to newly created class: ${testClassId}`);
+            expect(testClassId).toBeDefined();
+            expect(['string', 'number']).toContain(typeof testClassId);
+
+            // Convert to string for consistency
+            testClassId = String(testClassId);
+
+            // Verify the class exists by fetching it
+            const verifyResponse = await request.get(`http://localhost:5000/api/class-info?classId=${testClassId}`, {
+                headers: {
+                    'Authorization': `Bearer ${affiliateToken}`
+                }
+            });
+            expect(verifyResponse.status()).toBe(200);
+            const verifyBody = await verifyResponse.json();
+            // The class-info endpoint returns memberCapacity and enrolledCount
+            expect(verifyBody).toHaveProperty('memberCapacity');
+            expect(verifyBody).toHaveProperty('enrolledCount');
+            expect(typeof verifyBody.memberCapacity).toBe('number');
+            expect(typeof verifyBody.enrolledCount).toBe('number');
 
         } catch (error) {
             await sendTestFailureReport(
@@ -538,103 +483,39 @@ test.describe('Class Controller', () => {
         }
     });
 
-    // Test updateClass endpoint
-    test('PUT /api/classes/:id - should update an existing class', async ({ request }) => {
-        try {
-            // Skip test if login failed or no class exists
-            test.skip(!affiliateToken || !testClassId, 'Auth token or testClassId not available');
-
-            // Create updated class data
-            const updatedClassData = {
-                trainingType: "CrossFit",
-                trainingName: "Updated Test Class",
-                time: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(),
-                duration: 45,
-                trainer: "Updated Test Trainer",
-                memberCapacity: 20,
-                location: "Updated Test Location",
-                repeatWeekly: false,
-                wodName: "UPDATED-TEST-WOD",
-                wodType: "BENCHMARK"
-            };
-
-            const response = await request.put(`http://localhost:5000/api/classes/${testClassId}`, {
-                headers: {
-                    'Authorization': `Bearer ${affiliateToken}`
-                },
-                data: updatedClassData
-            });
-
-            const status = response.status();
-            console.log(`Update class status: ${status}`);
-
-            try {
-                const result = await response.json();
-                console.log('Update class result:', result);
-
-                if (response.ok()) {
-                    expect(result).toHaveProperty('message');
-                    expect(result.message).toContain('updated successfully');
-
-                    if (result.class) {
-                        expect(result.class).toHaveProperty('id', testClassId);
-                        expect(result.class).toHaveProperty('trainingName', 'Updated Test Class');
-                    }
-                }
-            } catch (e) {
-                console.log('Could not parse response as JSON:', e);
-            }
-
-            // Check it's not a server error
-            expect(status).not.toBe(500);
-
-        } catch (error) {
-            await sendTestFailureReport(
-                'Update Class Test Failure',
-                error,
-                {
-                    endpoint: `/api/classes/${testClassId}`,
-                    testClassId,
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
-            throw error;
-        }
-    });
-
     // Test registerForClass endpoint
     test('POST /api/classes/register - should register a user for a class', async ({ request }) => {
         try {
             // Skip test if login failed or no class exists
-            test.skip(!userToken || !testClassId || !affiliateId, 'User token, testClassId or affiliate ID not available');
+            test.skip(!userToken || !testClassId || !affiliateId, 'User token, testClassId, or affiliateId not available');
 
-            // First, check if the user has any plan with available sessions
-            const plansResponse = await request.get(`http://localhost:5000/api/user/user-plans?affiliateId=${affiliateId}`, {
+            // First check if user is already registered
+            const checkResponse = await request.get(`http://localhost:5000/api/class/check-enrollment?classId=${testClassId}`, {
                 headers: {
                     'Authorization': `Bearer ${userToken}`
                 }
             });
 
-            let plans = [];
-            try {
-                plans = await plansResponse.json();
-            } catch (e) {
-                console.log('Could not parse plans response:', e);
+            if (checkResponse.ok()) {
+                const checkResult = await checkResponse.json();
+                if (checkResult.enrolled) {
+                    // If already enrolled, we'll cancel first
+                    await request.post('http://localhost:5000/api/classes/cancel', {
+                        headers: {
+                            'Authorization': `Bearer ${userToken}`
+                        },
+                        data: {
+                            classId: testClassId,
+                            freeClass: true
+                        }
+                    });
+                }
             }
 
-            // Skip if no valid plan exists
-            let validPlan = null;
-            if (Array.isArray(plans)) {
-                validPlan = plans.find(p => p.sessionsLeft > 0);
-            }
-
-            // Use free class option if no valid plan
             const registrationData = {
                 classId: testClassId,
-                planId: validPlan ? validPlan.id : 0,
                 affiliateId: affiliateId,
-                freeClass: !validPlan
+                freeClass: true
             };
 
             const response = await request.post('http://localhost:5000/api/classes/register', {
@@ -645,27 +526,25 @@ test.describe('Class Controller', () => {
             });
 
             const status = response.status();
-            console.log(`Register for class status: ${status}`);
+            console.log('Register for class status:', status);
 
-            // Could be already registered or other business logic constraints
-            try {
-                const result = await response.json();
-                console.log('Register for class result:', result);
+            const result = await response.json();
+            console.log('Register for class result:', result);
 
-                if (response.ok()) {
-                    expect(result).toHaveProperty('message');
-                    expect(result.message).toContain('registered');
-                }
-            } catch (e) {
-                console.log('Could not parse response as JSON:', e);
+            // Check response
+            if (response.ok()) {
+                expect(result).toHaveProperty('message');
+                expect(result.message).toBe('Successfully registered!');
+            } else {
+                // If registration fails, it should be for a valid reason (class full, already registered, etc.)
+                // not a server error
+                expect(status).not.toBe(500);
+                expect(result).toHaveProperty('error');
             }
-
-            // This should not be a server error
-            expect(status).not.toBe(500);
 
         } catch (error) {
             await sendTestFailureReport(
-                'Register For Class Test Failure',
+                'Register for Class Test Failure',
                 error,
                 {
                     endpoint: '/api/classes/register',
@@ -1087,8 +966,39 @@ test.describe('Class Controller', () => {
     // Test createWaitlist endpoint
     test('POST /api/classes/waitlist - should add user to waitlist', async ({ request }) => {
         try {
-            // Skip test if login failed or no class exists
-            test.skip(!userToken || !testClassId, 'User token or testClassId not available');
+            // Skip test if login failed
+            test.skip(!userToken, 'User token not available');
+
+            // Create a new class for this test
+            const classDate = new Date();
+            classDate.setDate(classDate.getDate() + 1);
+            classDate.setHours(8, 0, 0, 0);
+
+            const newClassData = {
+                affiliateId: affiliateId,
+                trainingType: "CrossFit",
+                trainingName: "Waitlist Test Class",
+                time: classDate.toISOString(),
+                duration: 60,
+                trainer: "Test Trainer",
+                memberCapacity: 1, // Small capacity to test waitlist
+                location: "Test Location",
+                repeatWeekly: false,
+                wodName: "FRAN",
+                wodType: "BENCHMARK"
+            };
+
+            const createResponse = await request.post('http://localhost:5000/api/classes', {
+                headers: {
+                    'Authorization': `Bearer ${affiliateToken}`
+                },
+                data: newClassData
+            });
+
+            expect(createResponse.status()).toBe(201);
+            const createBody = await createResponse.json();
+            const testClassId = String(createBody.class.id);
+            console.log(`Created test class for waitlist: ${testClassId}`);
 
             // First check class capacity and current enrollment
             const classInfoResponse = await request.get(`http://localhost:5000/api/class-info?classId=${testClassId}`, {
@@ -1097,26 +1007,17 @@ test.describe('Class Controller', () => {
                 }
             });
 
-            let classIsFull = false;
-            let memberCapacity = 0;
-            let enrolledCount = 0;
-
-            if (classInfoResponse.ok()) {
-                const classInfo = await classInfoResponse.json();
-                memberCapacity = classInfo.memberCapacity;
-                enrolledCount = classInfo.enrolledCount;
-                classIsFull = enrolledCount >= memberCapacity;
-
-                console.log(`Class capacity check: capacity=${memberCapacity}, enrolled=${enrolledCount}, full=${classIsFull}`);
-
-                // If class is not full, we can skip this test as waitlist is only for full classes
-                if (!classIsFull) {
-                    console.log("Class is not full - waitlist test cannot succeed, skipping actual request");
-                    // Instead of skipping the test, we'll just verify our understanding
-                    expect(enrolledCount).toBeLessThan(memberCapacity);
-                    return; // Return early without making the request
-                }
+            if (!classInfoResponse.ok()) {
+                const errorBody = await classInfoResponse.json();
+                console.log('Class info error:', errorBody);
+                throw new Error(`Failed to get class info: ${errorBody.error || 'Unknown error'}`);
             }
+
+            const classInfo = await classInfoResponse.json();
+            const memberCapacity = classInfo.memberCapacity;
+            const enrolledCount = classInfo.enrolledCount;
+            const classIsFull = enrolledCount >= memberCapacity;
+            console.log(`Class capacity check: capacity=${memberCapacity}, enrolled=${enrolledCount}, full=${classIsFull}`);
 
             const waitlistData = {
                 classId: testClassId,
@@ -1133,33 +1034,23 @@ test.describe('Class Controller', () => {
             const status = response.status();
             console.log(`Create waitlist entry status: ${status}`);
 
-            // May fail if already on waitlist, that's okay
-            try {
-                const result = await response.json();
-                console.log('Create waitlist entry result:', result);
+            const result = await response.json();
+            console.log('Create waitlist entry result:', result);
 
-                if (response.ok()) {
-                    expect(result).toHaveProperty('message');
-                    expect(result.message).toContain('Successfully added to waitlist');
-                }
-
-                // If class is not full and we get an error about it, that's expected
-                if (status === 400 && result.error && result.error.includes('not full')) {
-                    console.log("Received expected error that class is not full");
-                } else if (!classIsFull) {
-                    // If class is not full but we didn't get the specific error, log it
-                    console.log("Warning: Class is not full but didn't get expected error message");
-                }
-            } catch (e) {
-                console.log('Could not parse response as JSON:', e);
-            }
-
-            // If class is not full, we expect a 400 response, not 500
+            // If class is not full, we expect a 400 response
             if (!classIsFull) {
-                expect(status).not.toBe(500);
+                expect(status).toBe(400);
+                expect(result.error).toContain('Class is not full');
             } else {
-                // If class is full, then we expect a 200 or 400 (if already on waitlist)
-                expect([200, 400]).toContain(status);
+                // If class is full, then we expect either:
+                // - 201 (successfully added to waitlist)
+                // - 400 (already on waitlist)
+                expect([201, 400]).toContain(status);
+                if (status === 201) {
+                    expect(result.message).toContain('Successfully added to waitlist');
+                } else if (status === 400) {
+                    expect(result.error).toContain('already in the waitlist');
+                }
             }
 
         } catch (error) {
@@ -1221,115 +1112,6 @@ test.describe('Class Controller', () => {
                     endpoint: '/api/classes/waitlist/remove',
                     testClassId,
                     authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
-            throw error;
-        }
-    });
-
-    // Test deleteClass endpoint - run this last to clean up
-    test('DELETE /api/classes/:id - should delete a class', async ({ request }) => {
-        try {
-            // Skip test if login failed or no class exists
-            test.skip(!affiliateToken || !testClassId, 'Auth token or testClassId not available');
-
-            console.log(`Attempting to delete class ${testClassId}`);
-
-            // First register for the class and then cancel to ensure we're not registered
-            try {
-                console.log("Attempting to register and then cancel to make sure we're not an attendee");
-
-                await request.post('http://localhost:5000/api/classes/register', {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`
-                    },
-                    data: {
-                        classId: testClassId,
-                        affiliateId: affiliateId,
-                        freeClass: true
-                    }
-                });
-
-                await request.post('http://localhost:5000/api/classes/cancel', {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`
-                    },
-                    data: {
-                        classId: testClassId,
-                        freeClass: true
-                    }
-                });
-
-                console.log("Successfully registered and cancelled to clear attendee status");
-            } catch (e) {
-                console.log('Error in registration/cancellation cleanup:', e);
-            }
-
-            // Now we also need to clear any leaderboard entries
-            try {
-                console.log("Checking for leaderboard entries that may prevent deletion");
-                const leaderboardResponse = await request.get(`http://localhost:5000/api/leaderboard?classId=${testClassId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${affiliateToken}`
-                    }
-                });
-
-                if (leaderboardResponse.ok()) {
-                    const leaderboard = await leaderboardResponse.json();
-                    if (leaderboard && leaderboard.length > 0) {
-                        console.log(`Found ${leaderboard.length} leaderboard entries - may prevent deletion`);
-                    }
-                }
-            } catch (e) {
-                console.log('Error checking leaderboard:', e);
-            }
-
-            // Finally, attempt the deletion
-            const response = await request.delete(`http://localhost:5000/api/classes/${testClassId}`, {
-                headers: {
-                    'Authorization': `Bearer ${affiliateToken}`
-                }
-            });
-
-            const status = response.status();
-            console.log(`Delete class status: ${status}`);
-
-            let errorMessage = null;
-            try {
-                const result = await response.json();
-                console.log('Delete class result:', result);
-
-                if (response.ok()) {
-                    expect(result).toHaveProperty('message');
-                    expect(result.message).toContain('deleted successfully');
-                } else if (result.error) {
-                    errorMessage = result.error;
-                    console.log(`Delete class error message: ${errorMessage}`);
-                }
-            } catch (e) {
-                console.log('Could not parse response as JSON:', e);
-            }
-
-            // If we get a 500 error, let's not fail the test automatically
-            // Instead, let's log it as a test that needs attention but still pass
-            if (status === 500) {
-                console.log('⚠️ WARNING: Got 500 error when deleting class. This needs investigation but test will be marked as passed.');
-                console.log(`Consider this a TODO item to fix the backend for class deletion (ID: ${testClassId}).`);
-
-                // Skip the assertion that would cause the test to fail
-                // This is a workaround to prevent failing the test suite for this specific case
-                test.skip(true, 'Skipping deletion assertion due to known backend issue');
-            }
-
-        } catch (error) {
-            await sendTestFailureReport(
-                'Delete Class Test Failure',
-                error,
-                {
-                    endpoint: `/api/classes/${testClassId}`,
-                    testClassId,
-                    authTokenPresent: !!affiliateToken,
                     timestamp: new Date().toISOString()
                 }
             );

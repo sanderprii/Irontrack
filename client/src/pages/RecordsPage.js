@@ -99,7 +99,7 @@ export default function RecordsPage() {
     const [recordScore, setRecordScore] = useState('');
     const [recordWeight, setRecordWeight] = useState('');
     const [recordTime, setRecordTime] = useState('');
-
+    const [recordComment, setRecordComment] = useState('');
     // Track existing record names for the dropdown
     const [existingNames, setExistingNames] = useState([]);
 
@@ -162,6 +162,7 @@ export default function RecordsPage() {
         setRecordScore('');
         setRecordWeight('');
         setRecordTime('');
+        setRecordComment('');
         setAddModalOpen(true);
     };
 
@@ -228,6 +229,7 @@ export default function RecordsPage() {
                 type: recordType,
                 name: finalName.toUpperCase(),
                 date: recordDate,
+                comment: recordComment
             };
 
             // vastavalt tüübile
@@ -526,6 +528,16 @@ export default function RecordsPage() {
                                 placeholder="Format: mm:ss"
                             />
                         )}
+                        <TextField
+                            label="Comment (Optional)"
+                            value={recordComment}
+                            onChange={(e) => setRecordComment(e.target.value)}
+                            fullWidth
+                            margin="normal"
+                            multiline
+                            rows={2}
+                            placeholder="Add notes about this record..."
+                        />
                     </DialogContent>
 
                     <DialogActions sx={{ px: 3, pb: 3 }}>

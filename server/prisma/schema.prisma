@@ -191,15 +191,16 @@ model Exercise {
 }
 
 model Record {
-  id     Int       @id @default(autoincrement())
-  type   String?
-  name   String?
-  date   DateTime?
-  score  String?
-  weight Float?
-  time   String?
-  userId Int
-  user   User      @relation(fields: [userId], references: [id])
+  id      Int       @id @default(autoincrement())
+  type    String?
+  name    String?
+  date    DateTime?
+  score   String?
+  weight  Float?
+  time    String?
+  comment String?
+  userId  Int
+  user    User      @relation(fields: [userId], references: [id])
 }
 
 model defaultWOD {

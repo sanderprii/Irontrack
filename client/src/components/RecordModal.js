@@ -204,7 +204,8 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                 date: formatDate(r.date),
                 value: floatVal,
                 displayValue: rawValue,
-                fullDate: r.date
+                fullDate: r.date,
+                comment: r.comment
             };
         });
     }, [allRecords, recordType]);
@@ -576,6 +577,7 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                                                         recordType === 'Cardio' ? 'Time' : 'Score'}
                                                 </TableCell>
                                                 <TableCell>Change</TableCell>
+                                                <TableCell>Comment</TableCell>
                                                 <TableCell align="right">Actions</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -606,6 +608,18 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                                                                     }
                                                                     icon={getTrendIcon(change)}
                                                                 />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {record.comment && (
+                                                                <Typography variant="body2" sx={{
+                                                                    maxWidth: 200,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {record.comment}
+                                                                </Typography>
                                                             )}
                                                         </TableCell>
                                                         <TableCell align="right">

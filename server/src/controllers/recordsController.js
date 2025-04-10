@@ -47,6 +47,7 @@ exports.getRecordsByName = async (req, res) => {
                 score: true,
                 weight: true,
                 time: true,
+                comment: true,
             },
         });
 
@@ -73,6 +74,7 @@ exports.getRecordStats = async (req, res) => {
                 score: true,
                 weight: true,
                 time: true,
+                comment: true,
             },
         });
 
@@ -165,7 +167,7 @@ exports.getRecordStats = async (req, res) => {
 
 // POST /api/records
 exports.createRecord = async (req, res) => {
-    const { type, name, date, score, weight, time } = req.body;
+    const { type, name, date, score, weight, time, comment } = req.body;
 
     try {
         const userId = req.user.id; // JWT
@@ -178,6 +180,7 @@ exports.createRecord = async (req, res) => {
             score: score || null,
             weight: weight ? parseFloat(weight) : null,
             time: time || null,
+            comment: comment || null,
         };
 
         await prisma.record.create({ data: recordData });
@@ -192,7 +195,7 @@ exports.createRecord = async (req, res) => {
 // PUT /api/records/:id
 exports.updateRecord = async (req, res) => {
     const recordId = parseInt(req.params.id, 10);
-    const { date, score, weight, time } = req.body;
+    const { date, score, weight, time, comment } = req.body;
 
     try {
         const userId = req.user.id;
@@ -212,6 +215,7 @@ exports.updateRecord = async (req, res) => {
             score: score !== undefined ? score : undefined,
             weight: weight !== undefined ? parseFloat(weight) : undefined,
             time: time !== undefined ? time : undefined,
+            comment: comment !== undefined ? comment : undefined,
         };
 
         // Remove undefined fields

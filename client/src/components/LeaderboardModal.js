@@ -18,10 +18,11 @@ import {
     Box,
     Alert,
     CircularProgress,
-    DialogContentText
+    DialogContentText,
+    TextField
 } from "@mui/material";
 import { getClassLeaderboard } from "../api/leaderboardApi";
-import { getUserProfile } from "../api/profileApi"; // Add this import
+import { getUserProfile } from "../api/profileApi";
 
 export default function LeaderboardModal({ open, onClose, classId, cls }) {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -34,6 +35,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
     const [error, setError] = useState("");
     const [userScore, setUserScore] = useState(null);
     const [userFullName, setUserFullName] = useState("");
+    const [comment, setComment] = useState(""); // New state for comment
 
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -98,6 +100,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
     // Show confirmation dialog
     const handleOpenConfirmation = () => {
         setError("");
+        setComment(""); // Reset comment when opening dialog
 
         // Re-check if we have the user's score
         if (userFullName && leaderboard && leaderboard.length > 0) {
@@ -114,13 +117,14 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
         setConfirmDialogOpen(true);
     };
 
-    // Close confirmation dialog
+    // Handle closing the dialog
     const handleCloseConfirmation = () => {
         setConfirmDialogOpen(false);
         setError("");
+        setComment("");
     };
 
-    // Handle saving the record automatically
+    // Handle saving the record with comment
     const handleConfirmAddRecord = async () => {
         try {
             // Double check that user has a score
@@ -134,12 +138,13 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
             // Format the date from the class time
             const classDate = new Date(cls.time).toISOString().split('T')[0];
 
-            // Create the record object with the user's existing score
+            // Create the record object with the user's existing score and comment
             const payload = {
                 type: "WOD",
                 name: cls.wodName ? cls.wodName.toUpperCase() : "WOD",
                 date: classDate,
-                score: userScore.score
+                score: userScore.score,
+                comment: comment // Add the comment to the payload
             };
 
             const token = localStorage.getItem('token');
@@ -259,7 +264,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
                 <Button onClick={onClose} color="secondary">Close</Button>
             </DialogActions>
 
-            {/* Confirmation Dialog */}
+            {/* Confirmation Dialog with Comment Field */}
             <Dialog open={confirmDialogOpen} onClose={handleCloseConfirmation}>
                 <DialogTitle>Add to Records</DialogTitle>
                 <DialogContent>
@@ -281,6 +286,19 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
                                 <Typography><strong>Your Score:</strong> {userScore.score}</Typography>
                                 <Typography><strong>Type:</strong> {userScore.scoreType?.toUpperCase()}</Typography>
                             </Box>
+
+                            {/* New Comment Field */}
+                            <TextField
+                                label="Add Comment (Optional)"
+                                multiline
+                                rows={3}
+                                fullWidth
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                margin="normal"
+                                placeholder="Enter any notes about your performance..."
+                                disabled={addingRecord}
+                            />
                         </>
                     ) : (
                         <DialogContentText>

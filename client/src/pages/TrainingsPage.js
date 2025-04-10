@@ -189,6 +189,10 @@ export default function TrainingsPage() {
     const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
     const [confirmDialogMessage, setConfirmDialogMessage] = useState('');
 
+    // New Add to Records with Comment dialog states
+    const [addToRecordsDialogOpen, setAddToRecordsDialogOpen] = useState(false);
+    const [recordComment, setRecordComment] = useState('');
+
     // Theme and responsive design
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -487,42 +491,48 @@ export default function TrainingsPage() {
         }
     }
 
-    // Add to records if WOD
-    async function handleAddToRecords() {
+    // Add to records if WOD - MODIFIED
+    function handleAddToRecords() {
         if (!modalTraining) return;
         if (modalTraining.type !== 'WOD' || !modalTraining.wodName) return;
 
-        showConfirmDialog(
-            "Add to Records",
-            "Are you sure you want to add this WOD to your records?",
-            async () => {
-                const recordData = {
-                    type: 'WOD',
-                    name: modalTraining.wodName,
-                    date: modalTraining.date,
-                    score: modalTraining.score,
-                };
-                try {
-                    const token = localStorage.getItem('token');
-                    const response = await fetch(`${API_URL}/records`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(recordData),
-                    });
-                    if (!response.ok) {
-                        const resErr = await response.json();
-                        showErrorMessage('Error: ' + (resErr.error || 'Could not add to records'));
-                        return;
-                    }
-                    showSuccessMessage('WOD added to records successfully!');
-                } catch (err) {
-                    showErrorMessage('Error: ' + err.message);
-                }
+        // Reset comment and open the new dialog
+        setRecordComment('');
+        setAddToRecordsDialogOpen(true);
+    }
+
+    // New function to handle the actual record submission with comment
+    async function submitAddToRecords() {
+        const recordData = {
+            type: 'WOD',
+            name: modalTraining.wodName,
+            date: modalTraining.date,
+            score: modalTraining.score,
+            comment: recordComment // Include the comment
+        };
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/records`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(recordData),
+            });
+
+            if (!response.ok) {
+                const resErr = await response.json();
+                showErrorMessage('Error: ' + (resErr.error || 'Could not add to records'));
+                return;
             }
-        );
+
+            showSuccessMessage('WOD added to records successfully!');
+            setAddToRecordsDialogOpen(false);
+        } catch (err) {
+            showErrorMessage('Error: ' + err.message);
+        }
     }
 
     // Update modal training field
@@ -1041,6 +1051,55 @@ export default function TrainingsPage() {
                             color="inherit"
                         >
                             {isEditing ? "Cancel" : "Close"}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* New Add to Records Dialog with Comment Field */}
+                <Dialog
+                    open={addToRecordsDialogOpen}
+                    onClose={() => setAddToRecordsDialogOpen(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle>Add to Records</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText sx={{ mb: 2 }}>
+                            Do you want to add this WOD to your records?
+                        </DialogContentText>
+
+                        <Box sx={{ mt: 2 }}>
+                            <Typography><strong>WOD:</strong> {modalTraining?.wodName ? modalTraining.wodName.toUpperCase() : "WOD"}</Typography>
+                            <Typography><strong>Date:</strong> {modalTraining ? new Date(modalTraining.date).toLocaleDateString() : ""}</Typography>
+                            <Typography><strong>Score:</strong> {modalTraining?.score || ""}</Typography>
+                            <Typography><strong>Type:</strong> {modalTraining?.wodType?.toUpperCase() || ""}</Typography>
+                        </Box>
+
+                        {/* Comment Field */}
+                        <TextField
+                            label="Comment (Optional)"
+                            multiline
+                            rows={3}
+                            fullWidth
+                            value={recordComment}
+                            onChange={(e) => setRecordComment(e.target.value)}
+                            margin="normal"
+                            placeholder="Enter any notes about your performance..."
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            onClick={() => setAddToRecordsDialogOpen(false)}
+                            color="inherit"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={submitAddToRecords}
+                        >
+                            Confirm
                         </Button>
                     </DialogActions>
                 </Dialog>

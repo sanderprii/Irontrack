@@ -156,7 +156,7 @@ export const createMontonioPayment = async (
     returnUrl, userData
 ) => {
     const finalAmount = Math.max(planData.price - appliedCredit, 0);
-    console.log("Creating Montonio payment with affiliateId:", affiliateId);
+
     // Only proceed with payment if there's an amount to pay
     if (finalAmount === 0) {
         return { is_fully_credited: true };

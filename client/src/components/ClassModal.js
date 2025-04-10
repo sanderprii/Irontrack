@@ -147,11 +147,7 @@
                 const user = await getUserProfile();
                 const userId = user.id;
     
-                console.log("Checking waitlist status:", {
-                    userId,
-                    waitlist,
-                    classId: cls.id
-                });
+
     
                 if (waitlist && waitlist.length > 0) {
                     // Use explicit type conversion to ensure correct comparison
@@ -160,7 +156,7 @@
                         return itemUserId === userId;
                     });
     
-                    console.log("User in waitlist:", userInWaitlist);
+
                     setIsInWaitlist(userInWaitlist);
                 } else {
                     setIsInWaitlist(false);
@@ -234,30 +230,42 @@
                 alert("Failed to save score");
             }
         }
-    
-        // ✅ Updated: Filter plans based on both expiration date and training type compatibility
+
+
+        // ✅ Updated: Filter plans based on expiration date, training type compatibility and available sessions
         async function loadUserPlans(affiliateId) {
             try {
                 const plans = await getUserPlansByAffiliate(affiliateId);
-    
+
                 // Set whether user has any plans at all
                 setHasAnyPlans(plans && plans.length > 0);
-    
+
                 // Filter for expiration first
                 const timeValidPlans = plans.filter(plan => {
                     const planEndDate = new Date(plan.endDate).getTime();
                     let expiryTime = 0;
                     if (plan.contractId !== null) {
-                        const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 päeva millisekundites
+                        const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
                         expiryTime = planEndDate + fiveDaysInMs;
                     } else {
                         expiryTime = planEndDate;
                     }
                     return new Date(cls.time).getTime() < expiryTime;
                 });
-    
-                // Filter out plans with paymentHoliday set to true
-                const activePlans = timeValidPlans.filter(plan => !plan.paymentHoliday);
+
+                // Filter out:
+                // 1. Plans with paymentHoliday set to true
+                // 2. Plans with no sessions left (sessionsLeft === 0)
+                const activePlans = timeValidPlans.filter(plan => {
+                    // Skip plans on payment holiday
+                    if (plan.paymentHoliday) return false;
+
+                    // Skip plans with no sessions left
+                    if (plan.sessionsLeft === 0) return false;
+
+                    // Include all other plans
+                    return true;
+                });
 
                 // Now filter for training type compatibility
                 const trainingTypeCompatiblePlans = activePlans.filter(plan => {
@@ -265,10 +273,18 @@
                     if (cls.trainingType === "Other") {
                         return true;
                     }
-    
+
                     try {
                         // Parse the trainingType string into an array
                         const trainingTypeArray = JSON.parse(plan.trainingType);
+
+                        // Special case: If plan has "All classes" training type,
+                        // it's compatible with any class
+                        if (Array.isArray(trainingTypeArray) &&
+                            trainingTypeArray.includes("All classes")) {
+                            return true;
+                        }
+
                         // Check if the parsed array includes the class training type
                         return Array.isArray(trainingTypeArray) &&
                             trainingTypeArray.includes(cls.trainingType);
@@ -277,30 +293,27 @@
                         return false;
                     }
                 });
-    
+
                 // Store compatible plans
                 setCompatiblePlans(trainingTypeCompatiblePlans);
                 setHasCompatiblePlans(trainingTypeCompatiblePlans.length > 0);
-    
+
                 // Set the default selected plan to the first compatible plan if available
                 if (trainingTypeCompatiblePlans.length > 0) {
                     setSelectedPlanId(trainingTypeCompatiblePlans[0].id);
                 } else {
                     setSelectedPlanId(null);
                 }
-    
 
-    
                 // Debug: Log parsed training types
                 activePlans.forEach(plan => {
                     try {
                         const parsedType = JSON.parse(plan.trainingType);
-
                     } catch (e) {
-                        console.error(`Error parsing training type for plan ${plan.id}:`, e);
+                        console.error(`Error parsing trainingType for plan ${plan.id}:`, e);
                     }
                 });
-    
+
             } catch (error) {
                 console.error("Error loading user plans:", error);
 

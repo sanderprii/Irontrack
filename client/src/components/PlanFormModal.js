@@ -68,7 +68,7 @@ export default function PlanFormModal({ open, onClose, onSave, plan }) {
         onSave(form);
     };
 
-    console.log("Current form trainingType:", form.trainingType); // For debugging
+
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth>

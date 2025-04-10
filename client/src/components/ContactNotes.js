@@ -47,29 +47,24 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
     const hasPermission = userRole === 'affiliate' || userRole === 'trainer';
 
     useEffect(() => {
-        console.log("ContactNotes component mounted with:", {
-            user,
-            userId: userId || (user?.id || user?.userId),
-            affiliateId,
-            hasPermission
-        });
+
 
         // Use either provided userId or get it from user object
         const targetUserId = userId || (user?.id || user?.userId);
 
         if (!hasPermission) {
-            console.log("User doesn't have permission to view notes");
+
             return;
         }
 
         if (!targetUserId) {
-            console.log("No user ID available");
+
             setError("Kasutaja ID puudub, ei saa märkmeid laadida");
             return;
         }
 
         if (!affiliateId) {
-            console.log("No affiliate ID available");
+
             setError("Klubi ID puudub, ei saa märkmeid laadida");
             return;
         }
@@ -82,9 +77,9 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
         setError(null);
 
         try {
-            console.log(`Fetching notes for user ${targetUserId} in affiliate ${affiliateId}`);
+
             const data = await getContactNotes(affiliateId, targetUserId);
-            console.log('Notes received:', data);
+
             setNotes(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('❌ Error fetching contact notes:', err);
@@ -110,7 +105,7 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
         }
 
         try {
-            console.log(`Adding note for user ${targetUserId} in affiliate ${affiliateId}`);
+
             await addContactNote(affiliateId, targetUserId, newNote);
             setNewNote('');
             await fetchNotes(targetUserId);
@@ -143,7 +138,7 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
         const targetUserId = userId || (user?.id || user?.userId);
 
         try {
-            console.log(`Updating note ${editingNote}`);
+
             await updateContactNote(editingNote, editedContent);
             setEditingNote(null);
             await fetchNotes(targetUserId);
@@ -176,7 +171,7 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
         const targetUserId = userId || (user?.id || user?.userId);
 
         try {
-            console.log(`Deleting note ${noteToDelete}`);
+
             await deleteContactNote(noteToDelete);
             setDeleteConfirmOpen(false);
             setNoteToDelete(null);

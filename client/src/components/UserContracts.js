@@ -149,7 +149,7 @@ export default function UserContracts({ user, affiliateId }) {
             return;
         }
 
-        console.log("Navigating to checkout with affiliateId:", parsedAffiliateId);
+
 
         // Suuname kasutaja checkout lehele lepingu andmetega
         navigate('/checkout', {

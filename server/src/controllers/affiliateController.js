@@ -26,7 +26,7 @@ const getMyAffiliate = async (req, res) => {
         });
 
         if (!affiliate) {
-            console.log("❌ No affiliate found for this user");
+
             return res.json({ noAffiliate: true });
         }
 

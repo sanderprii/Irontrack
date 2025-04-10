@@ -59,7 +59,6 @@ async function processContractPayments() {
         );
 
         if (pendingTransactions.length > 0) {
-            console.log('Found pending transactions for contracts:', pendingTransactions.map(t => t.contractId));
 
             // Märgi lepingud lõpetatuks
             await prisma.contract.updateMany({
@@ -178,7 +177,7 @@ async function checkAndApplyUserCredit(userId, affiliateId, paymentAmount) {
             });
         }
 
-        console.log(`Applied ${appliedCredit}€ credit for user ${userId}, remaining amount: ${remainingAmount}€`);
+
         return {appliedCredit, remainingAmount};
     } catch (error) {
         console.error('Error checking user credit:', error);
@@ -190,7 +189,7 @@ async function checkAndApplyUserCredit(userId, affiliateId, paymentAmount) {
 async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
     try {
         if (isPaymentHoliday) {
-            console.log(`Payment holiday for contract ${contractId}`);
+
 
             await prisma.userPlan.update({
                 where: {contractId: contractId},
@@ -210,7 +209,7 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
         });
 
         if (!userPlan) {
-            console.log(`No UserPlan found for contract ${contractId}`);
+
             return false;
         }
 
@@ -224,7 +223,7 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
             data: {endDate: newEndDate}
         });
 
-        console.log(`Updated UserPlan ${userPlan.id} end date to ${newEndDate.toISOString()}`);
+
         return true;
     } catch (error) {
         console.error(`Error updating UserPlan for contract ${contractId}:`, error);
@@ -262,7 +261,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
         let isPaymentHoliday = false;
 
         if (paymentHoliday) {
-            console.log(`Payment holiday found for contract ${contract.id} in ${currentMonth}`);
+
             // Kasuta payment holiday fee summat, kui see on olemas
             originalPaymentAmount = contract.affiliate.paymentHolidayFee || 0;
             isPaymentHoliday = true;
@@ -295,7 +294,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
 
         // STSENAARIUM 1: Täielikult krediidiga tasumine
         if (remainingAmount <= 0) {
-            console.log(`Full payment for contract ${contract.id} covered by credit: ${appliedCredit}€`);
+
 
             try {
                 // Registreeri edukas makse
@@ -312,7 +311,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
                     }
                 });
 
-                console.log(`Created transaction ${transaction.id} for credit payment`);
+
 
                 // Uuenda UserPlan lõppkuupäeva
                 await updateUserPlanDueDate(contract.id, isPaymentHoliday);
@@ -431,7 +430,7 @@ async function recordPendingPayment(
             }
         });
 
-        console.log(`Recorded pending payment for contract ${contract.id}, transaction ${transaction.id}`);
+
         return transaction;
     } catch (error) {
         console.error('Error recording pending payment:', error);
@@ -514,16 +513,83 @@ async function sendPaymentEmail(
     }`;
 
     // Add early payment information to the email body
+    const earlyNotificationHtml = isEarlyNotification
+        ? `<p>This is an early payment notification. Your payment is due on ${formattedDueDate}.</p>`
+        : '';
+
     const earlyNotificationText = isEarlyNotification
         ? `This is an early payment notification. Your payment is due on ${formattedDueDate}.\n\n`
         : '';
 
     // Add credit application information
+    const creditHtml = appliedCredit > 0
+        ? `
+        <p>Your available credit of €${appliedCredit} has been applied to this payment, reducing the amount due.</p>
+        <table style="width: 100%; max-width: 400px; margin: 15px 0; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px 0;">Original amount:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: bold;">€${originalAmount}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0;">Credit applied:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: bold;">€${appliedCredit}</td>
+            </tr>
+            <tr style="border-top: 1px solid #ddd;">
+                <td style="padding: 8px 0;">Remaining to pay:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: bold;">€${remainingAmount}</td>
+            </tr>
+        </table>
+        `
+        : '';
+
     const creditText = appliedCredit > 0
         ? `\nYour available credit of €${appliedCredit} has been applied to this payment, reducing the amount due.\n\nOriginal amount: €${originalAmount}\nCredit applied: €${appliedCredit}\nRemaining to pay: €${remainingAmount}\n\n`
         : '';
 
-    const emailBody = isPaymentHoliday
+    // Create payment button
+    const paymentButton = `
+    <div style="margin: 25px 0;">
+        <a href="${paymentUrl}" style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; text-align: center;">Make Payment</a>
+    </div>
+    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">If the button doesn't work, please copy and paste this link into your browser:<br>
+    <a href="${paymentUrl}" style="color: #d4af37; word-break: break-all;">${paymentUrl}</a></p>
+    `;
+
+    // HTML email body
+    const emailHtmlBody = isPaymentHoliday
+        ? `
+        <p>Dear ${contract.user.fullName},</p>
+        
+        ${earlyNotificationHtml}
+        <p>This is a payment holiday month for your subscription with ${contract.affiliate.name}.</p>
+        
+        <p>A reduced fee of €${originalAmount} is due for ${currentMonth}.</p>
+        ${creditHtml}
+        
+        <p>Please use the following link to complete your payment:</p>
+        ${paymentButton}
+        
+        <p>The payment link is valid for 36 days.</p>
+        
+        <p>Thank you!<br>
+        IronTrack Team</p>
+        `
+        : `
+        <p>Dear ${contract.user.fullName},</p>
+        
+        ${earlyNotificationHtml}
+        <p>Your monthly payment of €${originalAmount} for ${contract.affiliate.name} is due.</p>
+        ${creditHtml}
+        
+        <p>Please use the following link to complete your payment:</p>
+        ${paymentButton}
+        
+        <p>Thank you!<br>
+        IronTrack Team</p>
+        `;
+
+    // Plain text email body (fallback)
+    const emailTextBody = isPaymentHoliday
         ? `
     Dear ${contract.user.fullName},
     
@@ -538,7 +604,7 @@ async function sendPaymentEmail(
     
     Thank you!
     IronTrack Team
-  `
+    `
         : `
     Dear ${contract.user.fullName},
     
@@ -551,14 +617,14 @@ async function sendPaymentEmail(
     
     Thank you!
     IronTrack Team
-  `;
+    `;
 
     await sendMessage({
         recipientType: 'user',
         senderId: contract.affiliateId,
         recipientId: contract.userId,
         subject: emailSubject,
-        body: emailBody,
+        body: emailHtmlBody, // Using HTML version for body
         affiliateEmail: contract.affiliate.email
     });
 }
@@ -570,7 +636,7 @@ const handleMontonioWebhook = async (req, res) => {
         const {orderToken} = req.body;
 
         if (!orderToken) {
-            console.log('No order token provided');
+
             return res.status(200).json({success: false, message: 'No order token provided'});
         }
 
@@ -580,12 +646,12 @@ const handleMontonioWebhook = async (req, res) => {
             decodedToken = jwt.decode(orderToken);
 
             if (!decodedToken || !decodedToken.paymentLinkUuid) {
-                console.log('Invalid token format or missing UUID');
+
                 return res.status(200).json({success: false, message: 'Invalid token format'});
             }
 
             const orderUuid = decodedToken.paymentLinkUuid;
-            console.log(`Processing webhook for order UUID: ${orderUuid}`);
+
 
             // Find payment metadata
             const paymentMetadata = await prisma.paymentMetadata.findFirst({
@@ -593,7 +659,7 @@ const handleMontonioWebhook = async (req, res) => {
             });
 
             if (!paymentMetadata) {
-                console.log(`No payment metadata found for UUID ${orderUuid}, processing as regular payment`);
+
                 return res.status(200).json({
                     success: true,
                     message: `Processing as regular payment - no contract metadata found`
@@ -629,7 +695,7 @@ const handleMontonioWebhook = async (req, res) => {
 
             // Process based on payment status
             if (paymentStatus === 'PAID') {
-                console.log(`Payment for transaction ${transactionId} is PAID`);
+
 
                 // 1. Update transaction status
                 await prisma.transactions.update({
@@ -645,7 +711,7 @@ const handleMontonioWebhook = async (req, res) => {
                     message: `Payment processed successfully for contract ${contractId}`
                 });
             } else if (paymentStatus === 'VOIDED' || paymentStatus === 'ABANDONED') {
-                console.log(`Payment for transaction ${transactionId} is ${paymentStatus}`);
+
 
                 // Mark transaction as cancelled
                 await prisma.transactions.update({
@@ -658,7 +724,7 @@ const handleMontonioWebhook = async (req, res) => {
                     message: `Payment ${paymentStatus.toLowerCase()} for contract ${contractId}`
                 });
             } else {
-                console.log(`Unhandled payment status: ${paymentStatus}`);
+
                 return res.status(200).json({
                     success: true,
                     message: `Received payment status: ${paymentStatus}`

@@ -89,7 +89,7 @@ test.describe('Credit Controller', () => {
             expect(response.ok()).toBeTruthy();
 
             const credits = await response.json();
-            console.log('User credits:', credits);
+
 
             expect(Array.isArray(credits)).toBeTruthy();
 

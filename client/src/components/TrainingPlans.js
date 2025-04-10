@@ -326,8 +326,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                     return dayObj;
                 });
 
-                console.log('Updating existing plan with ID:', selectedPlan.id);
-                console.log('Update data includes day IDs:', planData.trainingDays.map(d => d.id));
+
                 await updateTrainingPlan(selectedPlan.id, planData);
             } else {
                 // For new plans, no need to include IDs
@@ -342,7 +341,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                     }))
                 }));
 
-                console.log('Creating new plan');
+
                 await createTrainingPlan(planData);
             }
 
@@ -358,7 +357,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
     const handlePlanClick = async (plan) => {
         try {
-            console.log('Viewing plan with ID:', plan.id);
+
             setViewOpen(true);
             setLoading(true);
             setActiveTab(0);

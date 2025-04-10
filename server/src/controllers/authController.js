@@ -25,7 +25,7 @@ const sendEmail = async (to, subject, htmlContent, textContent) => {
             .setText(textContent || htmlContent.replace(/<[^>]*>/g, ''));
 
         const response = await mailerSend.email.send(emailParams);
-        console.log("Email sent successfully:", response);
+
         return true;
     } catch (error) {
         console.error("Failed to send email:", error);

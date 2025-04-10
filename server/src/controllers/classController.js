@@ -302,7 +302,7 @@ const checkInAttendee = async (req, res) => {
 
 const deleteAttendee = async (req, res) => {
     const { classId, freeClass, userId } = req.body;
-console.log('body', req.body)
+
 
     try {
         // First, find the registration outside of the transaction
@@ -715,7 +715,7 @@ IronTrack Team
 const checkUserEnrollment = async (req, res) => {
     const classId = parseInt(req.query.classId);
     const userId = req.user.id;
-console.log('userId', userId)
+
     try {
         const enrollment = await prisma.classAttendee.findFirst({
             where: {

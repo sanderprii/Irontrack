@@ -238,7 +238,7 @@ const buyPlan = async (req, res) => {
                     }
                 }
             });
-console.log("planData", planData);
+
             // Kasutaja plaani lisamine
             await prisma.userPlan.create({
                 data: {

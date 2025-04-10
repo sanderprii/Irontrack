@@ -2,6 +2,8 @@
 
 const { PrismaClient } = require("@prisma/client");
 const { MailerSend, EmailParams, Recipient, Sender } = require("mailersend");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 // Initsialiseerime Prisma klient
@@ -15,11 +17,156 @@ const mailerSend = new MailerSend({
 // Loome saatja
 const defaultSender = new Sender("info@irontrack.ee", "IronTrack");
 
+// Logo faili sisselugemine attachmendina
+const logoPath = path.join(__dirname, "logo2.png");
+
+// E-kirja mall
+const createEmailTemplate = (subject, body) => {
+    const currentYear = new Date().getFullYear();
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* General style */
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    
+    /* Email container */
+    .email-container {
+      max-width: 600px;
+      margin: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Logo area */
+    .logo-area {
+      background-color: #ffffff;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .logo-area img {
+      height: 40px;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(to right, #1a1a1a, #2d2d2d);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 3px solid #d4af37; /* Golden line */
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    /* Content */
+    .content {
+      padding: 30px 25px;
+      background-color: white;
+      color: #333;
+    }
+    
+    /* CTA button */
+    .cta-button {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 12px 25px;
+      background-color: #d4af37; /* Golden/yellow color */
+      color: #1a1a1a;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    /* Footer */
+    .footer {
+      background-color: #1a1a1a;
+      color: #999;
+      padding: 15px;
+      text-align: center;
+      font-size: 12px;
+    }
+    
+    .footer p {
+      margin: 5px 0;
+    }
+    
+    .social-links {
+      margin: 10px 0;
+    }
+    
+    .social-links a {
+      color: #d4af37;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    
+    /* Mobile optimization */
+    @media screen and (max-width: 600px) {
+      .header h1 {
+        font-size: 20px;
+      }
+      
+      .content {
+        padding: 20px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <!-- Logo area -->
+    <div class="logo-area">
+      <img src="cid:logo" alt="IronTrack Logo" />
+    </div>
+    
+    <!-- Header -->
+    <div class="header">
+      <h1>${subject}</h1>
+    </div>
+    
+    <!-- Content -->
+    <div class="content">
+      ${body}
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <p>© ${currentYear} IronTrack. All rights reserved.</p>
+      
+      
+      
+      
+      <p>IronTrack - Sports Club Management Platform</p>
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
 // Lihtsustatud e-kirja saatmise funktsioon MailerSend kaudu
 const sendEmailViaMailerSend = async (params) => {
     try {
-        console.log("Saadan e-kirja MailerSend kaudu:", params.recipients);
 
+
+        // Create EmailParams object
         const emailParams = new EmailParams()
             .setFrom(params.from)
             .setTo(params.recipients)
@@ -28,75 +175,56 @@ const sendEmailViaMailerSend = async (params) => {
             .setHtml(params.html)
             .setText(params.text);
 
+        // Try to add logo attachment if exists
+        try {
+            if (fs.existsSync(logoPath)) {
+                const logoAttachment = fs.readFileSync(logoPath);
+                const base64Logo = logoAttachment.toString('base64');
+
+                // Use the correct method based on MailerSend library
+                // For newer versions, use setAttachments
+                emailParams.setAttachments([
+                    {
+                        content: base64Logo,
+                        filename: 'logo2.png',
+                        disposition: 'inline',
+                        id: 'logo'
+                    }
+                ]);
+
+            } else {
+                console.log("Logo file not found at:", logoPath);
+            }
+        } catch (logoError) {
+            console.error("Error adding logo:", logoError);
+            // Continue sending the email without logo
+        }
+
         const response = await mailerSend.email.send(emailParams);
-        console.log("E-kiri edukalt saadetud:", response);
+
         return response;
     } catch (error) {
-        console.error("E-kirja saatmine ebaõnnestus:", error);
+        console.error("Failed to send email:", error);
         throw error;
     }
 };
 
-// Express controller - HTTP päringu töötlemine
+// Express controller - HTTP request processing
 const sendMessage = async (req, res) => {
     try {
-        console.log("Request body:", req.body);
 
-        // Ekstraktime andmed req.body objektist
+
+        // Extract data from req.body object
         let { recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail } = req.body;
 
-        // Loome HTML sisu
-        const htmlContent = `
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      .email-container {
-        max-width: 600px;
-        margin: auto;
-        font-family: Arial, sans-serif;
-      }
-      .header {
-        background: #4CAF50;
-        color: white;
-        padding: 20px;
-        text-align: center;
-      }
-      .content {
-        padding: 20px;
-        justify-content: center;
-        align-items: center;
-      }
-      .footer {
-        background: #f4f4f4;
-        color: #555;
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="email-container">
-      <div class="header">
-        <h1>${subject}</h1>
-      </div>
-      <div class="content">
-        ${body}
-      </div>
-      <div class="footer">
-        <p>See on automaatne teade, palun ära vasta sellele.</p>
-      </div>
-    </div>
-  </body>
-</html>
-`;
+        // Create HTML content using new template
+        const htmlContent = createEmailTemplate(subject, body);
 
-        // Vaikimisi väärtus recipientId-le
+        // Default value for recipientId
         let finalRecipientId = recipientId;
 
         if (recipientType === 'user') {
-            // Otsi kasutaja email
+            // Find user email
             let recipientEmail = null;
             if (recipientId) {
                 const recipientUser = await prisma.user.findUnique({
@@ -109,10 +237,10 @@ const sendMessage = async (req, res) => {
                 }
                 recipientEmail = recipientUser.email;
             } else {
-                recipientEmail = "test@example.com"; // Või viska viga
+                recipientEmail = "test@example.com"; // Or throw an error
             }
 
-            // Valmista MailerSend e-kiri
+            // Prepare MailerSend email
             const params = {
                 from: defaultSender,
                 recipients: [new Recipient(recipientEmail)],
@@ -123,16 +251,16 @@ const sendMessage = async (req, res) => {
             };
 
             try {
-                // Saada e-kiri MailerSend kaudu
+                // Send email via MailerSend
                 await sendEmailViaMailerSend(params);
             } catch (emailError) {
-                console.error("E-kirja saatmine ebaõnnestus:", emailError);
-                // Jätkame andmebaasi salvestamisega
+                console.error("Failed to send email:", emailError);
+                // Continue with database saving
             }
         }
 
         if (recipientType === 'group') {
-            // 2. Otsi grupi liikmed
+            // 2. Find group members
             const groupId = await prisma.messageGroup.findFirst({
                 where: { groupName: groupName, affiliateId: senderId },
             });
@@ -143,7 +271,7 @@ const sendMessage = async (req, res) => {
                     .json({ error: "Group not found in the database." });
             }
 
-            // Määrame finalRecipientId grupi ID-ks
+            // Set finalRecipientId to group ID
             finalRecipientId = groupId.id;
 
             const groupMembers = await prisma.userMessageGroup.findMany({
@@ -151,7 +279,7 @@ const sendMessage = async (req, res) => {
                 include: { user: true },
             });
 
-            // 3. Saada kõigile grupi liikmetele kiri
+            // 3. Send email to all group members
             for (const member of groupMembers) {
                 const params = {
                     from: defaultSender,
@@ -165,14 +293,14 @@ const sendMessage = async (req, res) => {
                 try {
                     await sendEmailViaMailerSend(params);
                 } catch (emailError) {
-                    console.error("E-kirja saatmine grupiliikmele ebaõnnestus:", emailError);
-                    // Jätka ülejäänud liikmetega
+                    console.error("Failed to send email to group member:", emailError);
+                    // Continue with remaining members
                 }
             }
         }
 
         if (recipientType === "allMembers") {
-            // Määrame finalRecipientId väärtuseks 0 allMembers tüübi jaoks
+            // Set finalRecipientId to 0 for allMembers type
             finalRecipientId = 0;
 
             const affiliateMembers = await prisma.members.findMany({
@@ -193,20 +321,13 @@ const sendMessage = async (req, res) => {
                 try {
                     await sendEmailViaMailerSend(params);
                 } catch (emailError) {
-                    console.error("E-kirja saatmine liikmele ebaõnnestus:", emailError);
-                    // Jätka ülejäänud liikmetega
+                    console.error("Failed to send email to member:", emailError);
+                    // Continue with remaining members
                 }
             }
         }
 
-        // Salvesta teade andmebaasi - ainult üks kord
-        console.log("Salvestan andmebaasi:", {
-            recipientType,
-            affiliateId: senderId,
-            recipientId: finalRecipientId,
-            subject,
-            body
-        });
+
 
         const savedMessage = await prisma.message.create({
             data: {
@@ -228,7 +349,41 @@ const sendMessage = async (req, res) => {
     }
 };
 
-// Ülejäänud funktsioonid
+// Täienda samamoodi sendMessageToAffiliate funktsioon
+const sendMessageToAffiliate = async (req, res) => {
+    try {
+        const { senderEmail, affiliateEmail, subject, body } = req.body;
+
+        // Use new HTML template
+        const htmlContent = createEmailTemplate(subject, body);
+
+        // Testing email
+        const testingEmail = process.env.VERIFIED_EMAIL || "info@irontrack.ee";
+
+        const params = {
+            from: defaultSender,
+            recipients: [new Recipient(testingEmail)], // For testing - change later to: affiliateEmail
+            replyTo: new Sender(senderEmail, "Reply To"),
+            subject: subject,
+            html: htmlContent,
+            text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
+        };
+
+        try {
+            await sendEmailViaMailerSend(params);
+        } catch (emailError) {
+            console.error("Failed to send email:", emailError);
+            // Continue with response
+        }
+
+        res.status(200).json({ message: "Email sent successfully" });
+    } catch (error) {
+        console.error("Error sending email to affiliate:", error);
+        res.status(500).json({ error: "Failed to send email to affiliate" });
+    }
+};
+
+// Ülejäänud funktsioonid jäävad samaks
 const getAllMessages = async (req, res) => {
     try {
         const messages = await prisma.message.findMany();
@@ -293,81 +448,6 @@ const getSentMessages = async (req, res) => {
     } catch (error) {
         console.error('Error in getSentMessages:', error);
         res.status(500).json({ error: 'Failed to get sent messages' });
-    }
-};
-
-const sendMessageToAffiliate = async (req, res) => {
-    try {
-        const { senderEmail, affiliateEmail, subject, body } = req.body;
-        const htmlContent = `
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      .email-container {
-        max-width: 600px;
-        margin: auto;
-        font-family: Arial, sans-serif;
-      }
-      .header {
-        background: #4CAF50;
-        color: white;
-        padding: 20px;
-        text-align: center;
-      }
-      .content {
-        padding: 20px;
-        justify-content: center;
-        align-items: center;
-      }
-      .footer {
-        background: #f4f4f4;
-        color: #555;
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="email-container">
-      <div class="header">
-        <h1>${subject}</h1>
-      </div>
-      <div class="content">
-        ${body}
-      </div>
-      <div class="footer">
-        <p>See on automaatne teade, palun ära vasta sellele.</p>
-      </div>
-    </div>
-  </body>
-</html>
-`;
-
-        // Saaja email testimiseks
-        const testingEmail = process.env.VERIFIED_EMAIL || "info@irontrack.ee";
-
-        const params = {
-            from: defaultSender,
-            recipients: [new Recipient(testingEmail)], // Testimiseks - muuda hiljem: affiliateEmail
-            replyTo: new Sender(senderEmail, "Reply To"),
-            subject: subject,
-            html: htmlContent,
-            text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
-        };
-
-        try {
-            await sendEmailViaMailerSend(params);
-        } catch (emailError) {
-            console.error("E-kirja saatmine ebaõnnestus:", emailError);
-            // Jätkame vastuse saatmisega
-        }
-
-        res.status(200).json({ message: "Email sent successfully" });
-    } catch (error) {
-        console.error("Error sending email to affiliate:", error);
-        res.status(500).json({ error: "Failed to send email to affiliate" });
     }
 };
 

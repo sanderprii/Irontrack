@@ -213,7 +213,7 @@ export default function Checkout(props) {
             if (savedPlanData) {
                 try {
                     parsedPlanData = JSON.parse(savedPlanData);
-                    console.log("Loaded plan data from localStorage:", parsedPlanData);
+
                     if (parsedPlanData) {
                         setPlanData(parsedPlanData);
                         if (parsedPlanData.id === 'contract-payment') {
@@ -271,7 +271,7 @@ export default function Checkout(props) {
                 // Check payment status
                 checkPaymentStatus(orderToken)
                     .then(response => {
-                        console.log('Payment status response:', response);
+
                         if (response.paymentStatus === 'PAID') {
                             setPaymentSuccess(true);
                             setActiveStep(steps.length); // Move to last step
@@ -289,7 +289,7 @@ export default function Checkout(props) {
                             setTimeout(() => {
                                 // Kui tegemist on lepingumaksega
                                 if (currentIsContractPayment && currentContract?.id) {
-                                    console.log("Processing contract payment...");
+
 
                                     // Aktsepteeri leping ilma buyPlan-i kutsumata
                                     acceptContract(currentContract.id, {
@@ -300,7 +300,7 @@ export default function Checkout(props) {
                                         paymentCompleted: true
                                     })
                                         .then(() => {
-                                            console.log("Contract accepted successfully after payment");
+
                                             setInvoiceNumber(currentMerchantReference || "N/A");
                                         })
                                         .catch(error => {
@@ -319,7 +319,7 @@ export default function Checkout(props) {
                                 }
                                 // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
                                 else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
-                                    console.log("Processing regular plan purchase...");
+
                                     buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference)
                                         .then(response => {
                                             setInvoiceNumber(response.invoiceNumber);
@@ -458,15 +458,7 @@ export default function Checkout(props) {
     // Arvutame uue kogusumma, millest lahutatakse rakendatud krediit
     const totalPrice = Math.max((planData?.price || 0) - appliedCredit, 0);
 
-    // Debugging info
-    console.log('Current state:', {
-        planData,
-        affiliateInfo,
-        contract,
-        appliedCredit,
-        userData,
-        isContractPayment
-    });
+
 
     // Lisa laadimise ja vigade käsitlemise renderdus
     if (loading) {

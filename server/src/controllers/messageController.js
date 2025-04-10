@@ -432,15 +432,24 @@ const getSentMessages = async (req, res) => {
         }
 
         const result = messages.map((msg) => {
+            // First, replace common HTML line break elements with newline characters
+            let processedBody = msg.body
+                .replace(/<br\s*\/?>/gi, '\n')        // Replace <br> tags with newlines
+                .replace(/<\/p><p>/gi, '\n\n')        // Replace paragraph breaks with double newlines
+                .replace(/<div><\/div>/gi, '\n')      // Replace empty divs with newlines
+                .replace(/<\/div><div>/gi, '\n');     // Replace div breaks with newlines
+
+            // Then remove all remaining HTML tags
+            processedBody = processedBody.replace(/<[^>]*>/g, '');
+
             return {
                 id: msg.id,
                 subject: msg.subject,
-                body: msg.body,
+                body: processedBody,
                 createdAt: msg.createdAt,
                 recipientId: msg.recipientId,
                 recipientFullName: msg.fullName,
                 recipientType: msg.recipientType,
-                body: msg.body,
             };
         });
 

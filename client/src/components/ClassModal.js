@@ -1028,6 +1028,7 @@
                     open={isLeaderboardOpen}
                     onClose={() => setLeaderboardOpen(false)}
                     classId={cls.id}
+                    cls={cls}
                 />
                 <ProfileModal
                     open={isProfileOpen}

@@ -8,7 +8,7 @@ const siteUrl = 'https://www.irontrack.ee';
 const pages = [
     '/',
     '/pricing',
-    '/about',
+
     // Lisa siia rohkem lehti
 ];
 

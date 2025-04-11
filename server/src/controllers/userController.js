@@ -322,3 +322,77 @@ exports.getUserAttendees = async (req, res) => {
         res.status(500).json({ error: 'Server error fetching user attendees.' });
     }
 };
+
+// Get all family members for the current user
+exports.getFamilyMembers = async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const familyMembers = await prisma.familyMember.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json(familyMembers);
+    } catch (error) {
+        console.error('Error fetching family members:', error);
+        res.status(500).json({ error: 'Failed to fetch family members.' });
+    }
+};
+
+// Add a new family member
+exports.addFamilyMember = async (req, res) => {
+    const userId = req.user.id;
+    const { fullName } = req.body;
+
+    if (!fullName || !fullName.trim()) {
+        return res.status(400).json({ error: 'Full name is required.' });
+    }
+
+    try {
+        const newFamilyMember = await prisma.familyMember.create({
+            data: {
+                userId,
+                fullName: fullName.trim()
+            }
+        });
+
+        res.status(201).json(newFamilyMember);
+    } catch (error) {
+        console.error('Error adding family member:', error);
+        res.status(500).json({ error: 'Failed to add family member.' });
+    }
+};
+
+// Delete a family member
+exports.deleteFamilyMember = async (req, res) => {
+    const userId = req.user.id;
+    const familyMemberId = parseInt(req.params.id);
+
+    if (isNaN(familyMemberId)) {
+        return res.status(400).json({ error: 'Invalid family member ID.' });
+    }
+
+    try {
+        // Ensure the family member belongs to the current user
+        const familyMember = await prisma.familyMember.findFirst({
+            where: {
+                id: familyMemberId,
+                userId
+            }
+        });
+
+        if (!familyMember) {
+            return res.status(404).json({ error: 'Family member not found or does not belong to this user.' });
+        }
+
+        await prisma.familyMember.delete({
+            where: { id: familyMemberId }
+        });
+
+        res.json({ message: 'Family member deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting family member:', error);
+        res.status(500).json({ error: 'Failed to delete family member.' });
+    }
+};

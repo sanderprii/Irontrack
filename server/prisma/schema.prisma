@@ -51,6 +51,16 @@ model User {
   assignedTrainingPlans TrainingPlan[]     @relation("AssignedPlans")
   sectorComments        SectorComment[]
   contactNotes          ContactNote[]
+  familyMembers         FamilyMember[]
+}
+
+model FamilyMember {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+  fullName String
+
+  createdAt DateTime @default(now())
 }
 
 model Message {
@@ -323,16 +333,17 @@ model AffiliateTrainer {
 }
 
 model ClassAttendee {
-  id            Int           @id @default(autoincrement())
-  classId       Int
-  classSchedule ClassSchedule @relation(fields: [classId], references: [id])
-  userId        Int
-  user          User          @relation(fields: [userId], references: [id])
-  userPlanId    Int
-  createdAt     DateTime      @default(now())
-  checkIn       Boolean       @default(false)
-  affiliateId   Int
-  affiliate     Affiliate     @relation(fields: [affiliateId], references: [id])
+  id             Int           @id @default(autoincrement())
+  classId        Int
+  classSchedule  ClassSchedule @relation(fields: [classId], references: [id])
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
+  userPlanId     Int
+  createdAt      DateTime      @default(now())
+  checkIn        Boolean       @default(false)
+  affiliateId    Int
+  affiliate      Affiliate     @relation(fields: [affiliateId], references: [id])
+  isFamilyMember Boolean       @default(false)
 
   @@unique([classId, userId]) // vältimaks duplikaatregistratsioone
 }

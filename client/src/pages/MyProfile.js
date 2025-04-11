@@ -26,6 +26,7 @@ import UserContracts from '../components/UserContracts';
 import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
 import TrainingPlans from '../components/TrainingPlans';
+import FamilyMembers from '../components/FamilyMembers';
 
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../api/profileApi';
 import { uploadProfilePicture } from '../api/logoApi';
@@ -33,6 +34,7 @@ import { getUserContracts } from '../api/contractApi';
 
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
+    { id: 'family-members', label: 'Family Members', component: FamilyMembers },
     { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
     { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
     { id: 'change-password', label: 'Change Password', component: ChangePassword },

@@ -688,13 +688,7 @@
                                         // If no plans available at all
                                         <Typography color="error">
                                             You have no valid plans.{" "}
-                                            <Button
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => alert("Go to buy plans page!")}
-                                            >
-                                                Buy Plans
-                                            </Button>
+
                                         </Typography>
                                     )}
                                 </>
@@ -749,13 +743,7 @@
                                         // User has no plans at all
                                         <Typography color="error">
                                             You have no valid plans.{" "}
-                                            <Button
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={() => alert("Go to buy plans page!")}
-                                            >
-                                                Buy Plans
-                                            </Button>
+
                                         </Typography>
                                     )}
                                 </>

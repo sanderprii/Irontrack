@@ -132,6 +132,7 @@ exports.getStatistics = async (req, res) => {
                 where: {
                     userId: userIdNum,
                     checkIn: true,
+                    isFamilyMember: false, // Exclude family member attendances
                     classSchedule: {
                         affiliateId: homeAffiliateId,
                     },
@@ -185,6 +186,7 @@ exports.getAllStatistics = async (req, res) => {
                 time: {
                     lt: new Date(),
                 },
+
             },
         });
         const recordCount = await prisma.record.count();

@@ -238,7 +238,7 @@ const getClassAttendees = async (req, res) => {
     try {
         const attendees = await prisma.classAttendee.findMany({
             where: {classId},
-            include: {user: {select: {id: true, fullName: true}},}
+            include: {user: {select: {id: true, fullName: true}}}
         });
 
         if (attendees.length === 0) {
@@ -256,6 +256,29 @@ const getClassAttendees = async (req, res) => {
                 }
             });
 
+            // Get all family member IDs from attendees
+            const familyMemberIds = attendees
+                .filter(att => att.isFamilyMember && att.familyMemberId)
+                .map(att => att.familyMemberId);
+
+            // Fetch family members if we have any
+            let familyMemberMap = {};
+            if (familyMemberIds.length > 0) {
+                const familyMembers = await prisma.familyMember.findMany({
+                    where: {
+                        id: {
+                            in: familyMemberIds
+                        }
+                    }
+                });
+
+                // Create a map of family member ID to full name
+                familyMemberMap = familyMembers.reduce((acc, member) => {
+                    acc[member.id] = member.fullName;
+                    return acc;
+                }, {});
+            }
+
             // Loo kaart userNotes-te sidumiseks õigete userIdega
             const userNotesMap = userNotes.reduce((acc, note) => {
                 if (!acc[note.userId]) {
@@ -266,13 +289,26 @@ const getClassAttendees = async (req, res) => {
             }, {});
 
             // Koosta vastus, kus igal kasutajal on ainult tema enda märkmed
-            const response = attendees.map(att => ({
-                userId: att.user.id,
-                fullName: att.user.fullName,
-                checkIn: att.checkIn,
-                // Lisa ainult selle kasutaja märkmed
-                userNotes: userNotesMap[att.user.id] || []
-            }));
+            const response = attendees.map(att => {
+                // Determine display name
+                let displayName = att.user.fullName;
+
+                // If this is a family member registration and we have the family member info
+                if (att.isFamilyMember && att.familyMemberId && familyMemberMap[att.familyMemberId]) {
+                    displayName = familyMemberMap[att.familyMemberId];
+                }
+
+                return {
+                    userId: att.user.id,
+                    fullName: displayName,
+                    registrantName: att.user.fullName, // Original account owner name
+                    checkIn: att.checkIn,
+                    isFamilyMember: att.isFamilyMember || false,
+                    familyMemberId: att.familyMemberId || null,
+                    // Lisa ainult selle kasutaja märkmed
+                    userNotes: userNotesMap[att.user.id] || []
+                };
+            });
 
             res.json(response);
         }
@@ -301,17 +337,17 @@ const checkInAttendee = async (req, res) => {
 };
 
 const deleteAttendee = async (req, res) => {
-    const { classId, freeClass, userId } = req.body;
+    const {classId, freeClass, userId} = req.body;
 
 
     try {
         // First, find the registration outside of the transaction
         const registration = await prisma.classAttendee.findFirst({
-            where: { userId: parseInt(userId), classId: parseInt(classId) },
+            where: {userId: parseInt(userId), classId: parseInt(classId)},
         });
 
         if (!registration) {
-            return res.status(404).json({ error: "Registration not found" });
+            return res.status(404).json({error: "Registration not found"});
         }
 
         // Initialize variables we'll need later
@@ -322,24 +358,24 @@ const deleteAttendee = async (req, res) => {
         await prisma.$transaction(async (tx) => {
             // Delete the registration
             await tx.classAttendee.delete({
-                where: { id: registration.id },
+                where: {id: registration.id},
             });
 
             if (!freeClass) {
                 // Return session to user
                 await tx.userPlan.update({
-                    where: { id: registration.userPlanId },
-                    data: { sessionsLeft: { increment: 1 } },
+                    where: {id: registration.userPlanId},
+                    data: {sessionsLeft: {increment: 1}},
                 });
             }
 
             // Check if there's anyone in the waitlist
             const waitlistEntries = await tx.waitlist.findMany({
-                where: { classId: parseInt(classId) },
-                orderBy: { createdAt: 'asc' },
+                where: {classId: parseInt(classId)},
+                orderBy: {createdAt: 'asc'},
                 include: {
                     user: true,
-                    userPlan: true
+                    userPlan: true,
                 },
                 take: 1 // Get the first (earliest) entry
             });
@@ -350,7 +386,7 @@ const deleteAttendee = async (req, res) => {
                 // Check if their plan is still valid (for paid classes)
                 if (!freeClass && nextPerson.userPlanId > 0) {
                     const plan = await tx.userPlan.findUnique({
-                        where: { id: nextPerson.userPlanId }
+                        where: {id: nextPerson.userPlanId}
                     });
 
                     if (!plan || plan.sessionsLeft <= 0) {
@@ -362,28 +398,35 @@ const deleteAttendee = async (req, res) => {
 
                 // Get class and affiliate information
                 classInfo = await tx.classSchedule.findUnique({
-                    where: { id: parseInt(classId) },
+                    where: {id: parseInt(classId)},
                     include: {
                         affiliate: true
                     }
                 });
+                let isFamilyMember = false;
+                if (nextPerson.userPlan.familyMemberId > 0) {
+                    isFamilyMember = true;
+                }
 
-                // Register the person from waitlist
+                // Register the person from waitlist, including family member info
                 await tx.classAttendee.create({
                     data: {
                         userId: nextPerson.userId,
                         classId: parseInt(classId),
                         checkIn: false,
                         userPlanId: nextPerson.userPlanId,
-                        affiliateId: classInfo.affiliateId
+                        affiliateId: classInfo.affiliateId,
+                        isFamilyMember: isFamilyMember || false,
+                        familyMemberId: nextPerson.userPlan.familyMemberId || null
+
                     },
                 });
 
                 // If it's a paid class, decrease the sessions count
                 if (!freeClass && nextPerson.userPlanId > 0) {
                     await tx.userPlan.update({
-                        where: { id: nextPerson.userPlanId },
-                        data: { sessionsLeft: { decrement: 1 } },
+                        where: {id: nextPerson.userPlanId},
+                        data: {sessionsLeft: {decrement: 1}},
                     });
                 }
 
@@ -414,7 +457,7 @@ Dear ${nextPerson.user.fullName},
 Good news! A spot has opened up in the class "${classInfo.trainingName}" scheduled for ${new Date(classInfo.time).toLocaleString()}.
 
 You have been automatically registered for this class from the waitlist.
-
+${nextPerson.familyMember ? `This registration is for your family member.` : ''}
 
 Time: ${new Date(classInfo.time).toLocaleString()}
 Trainer: ${classInfo.trainer || 'N/A'}
@@ -426,8 +469,6 @@ IronTrack Team
                 affiliateEmail: classInfo.affiliate.email
             };
 
-
-
             try {
                 // Use your sendMessage function
                 await sendMessage(emailData);
@@ -437,13 +478,12 @@ IronTrack Team
             }
         }
 
-        res.status(200).json({ message: "Registration cancelled successfully!" });
+        res.status(200).json({message: "Registration cancelled successfully!"});
     } catch (error) {
         console.error("❌ Error canceling registration:", error);
-        res.status(500).json({ error: "Failed to cancel registration." });
+        res.status(500).json({error: "Failed to cancel registration."});
     }
 };
-
 
 // classes anttendees count
 const getClassAttendeesCount = async (req, res) => {
@@ -458,15 +498,38 @@ const getClassAttendeesCount = async (req, res) => {
     }
 };
 
-
-// ✅ Kasutaja registreerumine klassi
+// UPDATED: Kasutaja registreerumine klassi with family member support
+// UPDATED: Kasutaja registreerumine klassi with family member support
 const registerForClass = async (req, res) => {
-    const {classId, planId} = req.body;
+    const {classId, planId, isFamilyMember, familyMemberId} = req.body;
     const userId = req.user?.id;
 
     if (!classId || !userId) {
         return res.status(400).json({error: "Class ID and User ID required"});
     }
+
+    // Validate familyMember boolean and familyMemberId if familyMember is true
+
+
+    if (isFamilyMember) {
+        if (!familyMemberId) {
+            return res.status(400).json({error: "Family member ID is required when booking for a family member"});
+        }
+
+        // Verify the family member belongs to this user
+        const validFamilyMember = await prisma.familyMember.findFirst({
+            where: {
+                id: parseInt(familyMemberId),
+                userId: parseInt(userId)
+            }
+        });
+
+        if (!validFamilyMember) {
+            return res.status(400).json({error: "Invalid family member selected"});
+        }
+
+    }
+
 
     try {
         // Get class details
@@ -484,17 +547,21 @@ const registerForClass = async (req, res) => {
         }
 
         // Check if user is already registered
-        const existingRegistration = await prisma.classAttendee.findUnique({
+        const existingRegistration = await prisma.classAttendee.findFirst({
             where: {
-                classId_userId: {
-                    classId: parseInt(classId),
-                    userId: parseInt(userId)
-                }
+                classId: parseInt(classId),
+                userId: parseInt(userId),
+                isFamilyMember: isFamilyMember,
+                familyMemberId: familyMemberId
             }
         });
 
         if (existingRegistration) {
-            return res.status(400).json({error: "You are already registered for this class"});
+            return res.status(400).json({
+                error: isFamilyMember
+                    ? "This family member is already registered for this class"
+                    : "You are already registered for this class"
+            });
         }
 
         // Check if class is full
@@ -505,7 +572,7 @@ const registerForClass = async (req, res) => {
         if (enrolledCount >= classInfo.memberCapacity) {
             return res.status(400).json({error: "Class is full"});
         }
-
+        console.log()
         // For free classes, we can register directly
         if (classInfo.freeClass) {
             await prisma.classAttendee.create({
@@ -514,7 +581,9 @@ const registerForClass = async (req, res) => {
                     classId: parseInt(classId),
                     checkIn: false,
                     userPlanId: 0,
-                    affiliateId: classInfo.affiliateId
+                    affiliateId: classInfo.affiliateId,
+                    isFamilyMember: Boolean(isFamilyMember),
+                    familyMemberId: parseInt(familyMemberId) || null
                 }
             });
 
@@ -530,7 +599,8 @@ const registerForClass = async (req, res) => {
             where: {
                 id: parseInt(planId),
                 userId: parseInt(userId),
-                affiliateId: classInfo.affiliateId
+                affiliateId: classInfo.affiliateId,
+
             }
         });
 
@@ -550,7 +620,9 @@ const registerForClass = async (req, res) => {
                     classId: parseInt(classId),
                     checkIn: false,
                     userPlanId: parseInt(planId),
-                    affiliateId: classInfo.affiliateId
+                    affiliateId: classInfo.affiliateId,
+                    isFamilyMember: isFamilyMember,
+                    familyMemberId: familyMemberId,
                 }
             }),
             prisma.userPlan.update({
@@ -566,20 +638,19 @@ const registerForClass = async (req, res) => {
     }
 };
 
-// In your classController.js file, modify your cancelRegistration function as follows:
-
+// UPDATED: In your classController.js file, modify your cancelRegistration function with family member support
 const cancelRegistration = async (req, res) => {
-    const { classId, freeClass } = req.body;
+    const {classId, freeClass} = req.body;
     const userId = req.user.id;
 
     try {
         // First, find the registration outside of the transaction
         const registration = await prisma.classAttendee.findFirst({
-            where: { userId: parseInt(userId), classId: parseInt(classId) },
+            where: {userId: parseInt(userId), classId: parseInt(classId)},
         });
 
         if (!registration) {
-            return res.status(404).json({ error: "Registration not found" });
+            return res.status(404).json({error: "Registration not found"});
         }
 
         // Initialize variables we'll need later
@@ -590,21 +661,21 @@ const cancelRegistration = async (req, res) => {
         await prisma.$transaction(async (tx) => {
             // Delete the registration
             await tx.classAttendee.delete({
-                where: { id: registration.id },
+                where: {id: registration.id},
             });
 
             if (!freeClass) {
                 // Return session to user
                 await tx.userPlan.update({
-                    where: { id: registration.userPlanId },
-                    data: { sessionsLeft: { increment: 1 } },
+                    where: {id: registration.userPlanId},
+                    data: {sessionsLeft: {increment: 1}},
                 });
             }
 
             // Check if there's anyone in the waitlist
             const waitlistEntries = await tx.waitlist.findMany({
-                where: { classId: parseInt(classId) },
-                orderBy: { createdAt: 'asc' },
+                where: {classId: parseInt(classId)},
+                orderBy: {createdAt: 'asc'},
                 include: {
                     user: true,
                     userPlan: true
@@ -618,7 +689,7 @@ const cancelRegistration = async (req, res) => {
                 // Check if their plan is still valid (for paid classes)
                 if (!freeClass && nextPerson.userPlanId > 0) {
                     const plan = await tx.userPlan.findUnique({
-                        where: { id: nextPerson.userPlanId }
+                        where: {id: nextPerson.userPlanId}
                     });
 
                     if (!plan || plan.sessionsLeft <= 0) {
@@ -630,28 +701,33 @@ const cancelRegistration = async (req, res) => {
 
                 // Get class and affiliate information
                 classInfo = await tx.classSchedule.findUnique({
-                    where: { id: parseInt(classId) },
+                    where: {id: parseInt(classId)},
                     include: {
                         affiliate: true
                     }
                 });
-
-                // Register the person from waitlist
+                let isFamilyMember = false;
+                if (nextPerson.userPlan.familyMemberId > 0) {
+                    isFamilyMember = true;
+                }
+                // Register the person from waitlist with family member info
                 await tx.classAttendee.create({
                     data: {
                         userId: nextPerson.userId,
                         classId: parseInt(classId),
                         checkIn: false,
                         userPlanId: nextPerson.userPlanId,
-                        affiliateId: classInfo.affiliateId
+                        affiliateId: classInfo.affiliateId,
+                        isFamilyMember: isFamilyMember || false,
+                        familyMemberId: nextPerson.userPlan.familyMemberId || null
                     },
                 });
 
                 // If it's a paid class, decrease the sessions count
                 if (!freeClass && nextPerson.userPlanId > 0) {
                     await tx.userPlan.update({
-                        where: { id: nextPerson.userPlanId },
-                        data: { sessionsLeft: { decrement: 1 } },
+                        where: {id: nextPerson.userPlanId},
+                        data: {sessionsLeft: {decrement: 1}},
                     });
                 }
 
@@ -671,6 +747,10 @@ const cancelRegistration = async (req, res) => {
 
         // Send email notification outside of the transaction
         if (nextPerson && classInfo) {
+            // Determine if this is for a family member
+            const recipientText = nextPerson.familyMember ?
+                "This registration is for your family member." : "";
+
             const emailData = {
                 recipientType: 'user',
                 senderId: classInfo.affiliateId,
@@ -682,7 +762,7 @@ Dear ${nextPerson.user.fullName},
 Good news! A spot has opened up in the class "${classInfo.trainingName}" scheduled for ${new Date(classInfo.time).toLocaleString()}.
 
 You have been automatically registered for this class from the waitlist.
-
+${recipientText}
 
 Time: ${new Date(classInfo.time).toLocaleString()}
 Trainer: ${classInfo.trainer || 'N/A'}
@@ -694,8 +774,6 @@ IronTrack Team
                 affiliateEmail: classInfo.affiliate.email
             };
 
-
-
             try {
                 // Use your sendMessage function
                 await sendMessage(emailData);
@@ -705,12 +783,13 @@ IronTrack Team
             }
         }
 
-        res.status(200).json({ message: "Registration cancelled successfully!" });
+        res.status(200).json({message: "Registration cancelled successfully!"});
     } catch (error) {
         console.error("❌ Error canceling registration:", error);
-        res.status(500).json({ error: "Failed to cancel registration." });
+        res.status(500).json({error: "Failed to cancel registration."});
     }
 };
+
 // ✅ Kontrolli, kas kasutaja on klassis registreeritud
 const checkUserEnrollment = async (req, res) => {
     const classId = parseInt(req.query.classId);
@@ -733,23 +812,23 @@ const checkUserEnrollment = async (req, res) => {
 
 const checkClassScore = async (req, res) => {
     try {
-        const { classId } = req.query;
+        const {classId} = req.query;
         const userId = req.user?.id;
 
         if (!classId) {
-            return res.status(400).json({ error: "Class ID is required" });
+            return res.status(400).json({error: "Class ID is required"});
         }
 
         if (!userId) {
-            return res.status(401).json({ error: "User not authenticated" });
+            return res.status(401).json({error: "User not authenticated"});
         }
 
         const existing = await prisma.classLeaderboard.findFirst({
-            where: { classId: parseInt(classId), userId },
+            where: {classId: parseInt(classId), userId},
         });
 
         if (!existing) {
-            return res.json({ hasScore: false });
+            return res.json({hasScore: false});
         }
 
         res.json({
@@ -759,30 +838,30 @@ const checkClassScore = async (req, res) => {
         });
     } catch (error) {
         console.error("Error checking class score:", error);
-        res.status(500).json({ error: "Failed to check class score" });
+        res.status(500).json({error: "Failed to check class score"});
     }
 };
 
 const addClassScore = async (req, res) => {
     try {
-        const { classData, scoreType, score } = req.body;
+        const {classData, scoreType, score} = req.body;
         const userId = req.user?.id;
 
         if (!userId) {
-            return res.status(401).json({ error: "User not authenticated" });
+            return res.status(401).json({error: "User not authenticated"});
         }
 
         if (!classData?.id || !scoreType || score === undefined) {
-            return res.status(400).json({ error: "Missing required fields: classData.id, scoreType, or score" });
+            return res.status(400).json({error: "Missing required fields: classData.id, scoreType, or score"});
         }
 
         // Check if this score already exists
         const existing = await prisma.classLeaderboard.findFirst({
-            where: { classId: parseInt(classData.id), userId },
+            where: {classId: parseInt(classData.id), userId},
         });
 
         if (existing) {
-            return res.status(400).json({ error: "Score already exists. Please update instead." });
+            return res.status(400).json({error: "Score already exists. Please update instead."});
         }
 
         // Create new score
@@ -814,10 +893,10 @@ const addClassScore = async (req, res) => {
             });
         }
 
-        res.status(200).json({ message: "Score added successfully." });
+        res.status(200).json({message: "Score added successfully."});
     } catch (error) {
         console.error("Error adding class score:", error);
-        res.status(500).json({ error: "Failed to add class score" });
+        res.status(500).json({error: "Failed to add class score"});
     }
 };
 
@@ -845,8 +924,6 @@ const updateClassScore = async (req, res) => {
             },
         });
 
-
-
         res.status(200).json({message: "Score updated successfully."});
     } catch (error) {
         console.error("Error updating class score:", error);
@@ -854,7 +931,7 @@ const updateClassScore = async (req, res) => {
     }
 };
 
-// Get waitlist for a class
+// UPDATED: Get waitlist for a class with family member info
 const getWaitlist = async (req, res) => {
     const {classId} = req.query;
 
@@ -885,46 +962,76 @@ const getWaitlist = async (req, res) => {
     }
 };
 
+// UPDATED: Create waitlist entry with family member support
 const createWaitlist = async (req, res) => {
-    const {classId, userPlanId} = req.body;
+    const {classId, userPlanId, familyMember, familyMemberId} = req.body;
     const userId = req.user?.id;
-    if (!classId || !userId) return res.status(400).json({error: "Class ID and User ID required"});
-    
+
+    if (!classId || !userId) {
+        return res.status(400).json({error: "Class ID and User ID required"});
+    }
+
+    // Validate familyMember boolean and familyMemberId if familyMember is true
+    const isFamilyMember = familyMember === true;
+    let familyId = null;
+
+    if (isFamilyMember) {
+        if (!familyMemberId) {
+            return res.status(400).json({error: "Family member ID is required when booking for a family member"});
+        }
+
+        // Verify the family member belongs to this user
+        const validFamilyMember = await prisma.familyMember.findFirst({
+            where: {
+                id: parseInt(familyMemberId),
+                userId: parseInt(userId)
+            }
+        });
+
+        if (!validFamilyMember) {
+            return res.status(400).json({error: "Invalid family member selected"});
+        }
+
+        familyId = parseInt(familyMemberId);
+    }
+
     try {
         // First check if the class is full
         const classInfo = await prisma.classSchedule.findUnique({
-            where: { id: parseInt(classId) },
-            select: { 
+            where: {id: parseInt(classId)},
+            select: {
                 memberCapacity: true,
                 freeClass: true,
-                affiliateId: true 
+                affiliateId: true
             }
         });
 
         if (!classInfo) {
-            return res.status(404).json({ error: "Class not found" });
+            return res.status(404).json({error: "Class not found"});
         }
 
         const enrolledCount = await prisma.classAttendee.count({
-            where: { classId: parseInt(classId) }
+            where: {classId: parseInt(classId)}
         });
 
         if (enrolledCount < classInfo.memberCapacity) {
-            return res.status(400).json({ error: "Class is not full" });
+            return res.status(400).json({error: "Class is not full"});
         }
 
         // Check if user is already in waitlist
-        const existingWaitlist = await prisma.waitlist.findUnique({
+        const existingWaitlist = await prisma.waitlist.findFirst({
             where: {
-                classId_userId: {
-                    classId: parseInt(classId),
-                    userId: parseInt(userId)
-                }
+                classId: parseInt(classId),
+                userId: parseInt(userId),
             }
         });
 
         if (existingWaitlist) {
-            return res.status(400).json({error: "You are already in the waitlist for this class"});
+            return res.status(400).json({
+                error: isFamilyMember
+                    ? "This family member is already in the waitlist for this class"
+                    : "You are already in the waitlist for this class"
+            });
         }
 
         // For free classes, we don't need to verify the plan
@@ -933,7 +1040,8 @@ const createWaitlist = async (req, res) => {
                 where: {
                     id: parseInt(userPlanId),
                     userId: parseInt(userId),
-                    affiliateId: classInfo.affiliateId
+                    affiliateId: classInfo.affiliateId,
+
                 }
             });
 
@@ -946,12 +1054,13 @@ const createWaitlist = async (req, res) => {
             }
         }
 
-        // Add user to waitlist
+        // Add user to waitlist with family member info
         const waitlistEntry = await prisma.waitlist.create({
             data: {
                 classId: parseInt(classId),
                 userId: parseInt(userId),
-                userPlanId: userPlanId ? parseInt(userPlanId) : 0 // 0 for free classes
+                userPlanId: userPlanId ? parseInt(userPlanId) : 0, // 0 for free classes
+
             }
         });
 
@@ -997,5 +1106,7 @@ module.exports = {
     addClassScore,
     updateClassScore,
     checkClassScore,
-    getWaitlist, createWaitlist, deleteWaitlist
+    getWaitlist,
+    createWaitlist,
+    deleteWaitlist
 };

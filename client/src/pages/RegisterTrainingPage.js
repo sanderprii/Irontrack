@@ -15,7 +15,16 @@ import {
     CardActions,
     Divider,
     Chip,
-    Tooltip
+    Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormHelperText
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -34,9 +43,9 @@ import {
     checkHomeAffiliate
 } from "../api/getClassesApi";
 
-import {getUserProfile} from "../api/profileApi";
-
-import {getUserPlansByAffiliate} from "../api/profileApi";
+import { getUserProfile } from "../api/profileApi";
+import { getUserPlansByAffiliate } from "../api/profileApi";
+import { getFamilyMembers } from "../api/familyApi"; // Import the family API
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -111,12 +120,28 @@ const RegisterTrainingPage = () => {
     const [plans, setPlans] = useState([]);
     const [isHomeGym, setIsHomeGym] = useState(false);
     const [userPlans, setUserPlans] = useState([]);
+    const [userData, setUserData] = useState(null);
+
+    // Family members state
+    const [familyMembers, setFamilyMembers] = useState([]);
+    const [showFamilyMemberDialog, setShowFamilyMemberDialog] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [selectedFamilyMember, setSelectedFamilyMember] = useState("self"); // Default to "self"
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        const getUserHomeGym = async () => {
+        const loadInitialData = async () => {
             try {
+                // Fetch user data
+                const profile = await getUserProfile();
+                setUserData(profile);
+
+                // Fetch family members
+                const members = await getFamilyMembers();
+                setFamilyMembers(members);
+
+                // Check for home gym
                 const userHomeAffiliate = await checkHomeAffiliate();
                 if (userHomeAffiliate) {
                     setIsHomeGym(true);
@@ -125,11 +150,11 @@ const RegisterTrainingPage = () => {
                     loadAffiliatePlans(affiliateData.affiliate.id);
                 }
             } catch (error) {
-                console.error("❌ Error fetching user home gym:", error);
+                console.error("❌ Error fetching initial data:", error);
             }
         };
 
-        getUserHomeGym();
+        loadInitialData();
     }, []);
 
     const handleSearchChange = async (e) => {
@@ -193,16 +218,48 @@ const RegisterTrainingPage = () => {
         }
     };
 
-    const handleBuyPlan = async (plan) => {
-        // NB! Siin edastame affiliateId ja plan-objekti state kaudu
-        const userData = await getUserProfile();
+    // Modified Buy Plan handler to check for family members
+    const handleBuyPlan = (plan) => {
+        if (familyMembers.length > 0) {
+            // If user has family members, show the selection dialog
+            setSelectedPlan(plan);
+            setShowFamilyMemberDialog(true);
+        } else {
+            // If no family members, proceed directly to checkout
+            proceedToCheckout(plan, false, null);
+        }
+    };
 
+    // Handler for family member selection
+    const handleFamilyMemberSelection = (event) => {
+        setSelectedFamilyMember(event.target.value);
+    };
+
+    // Handler for confirming family member selection
+    const handleDialogConfirm = () => {
+        const isFamilyMember = selectedFamilyMember !== "self";
+        const familyMemberId = isFamilyMember ? selectedFamilyMember : null;
+
+        proceedToCheckout(selectedPlan, isFamilyMember, familyMemberId);
+        setShowFamilyMemberDialog(false);
+    };
+
+    // Handler for canceling family member selection
+    const handleDialogCancel = () => {
+        setSelectedFamilyMember("self");
+        setShowFamilyMemberDialog(false);
+    };
+
+    // Helper function to navigate to checkout
+    const proceedToCheckout = (plan, isFamilyMember, familyMemberId) => {
         navigate("/checkout", {
             state: {
-                affiliate: selectedAffiliate, // kui vajad tervet affiliate objekti
+                affiliate: selectedAffiliate,
                 plan: plan,
                 contract: false,
                 userData: userData,
+                familyMember: isFamilyMember,
+                familyMemberId: familyMemberId
             }
         });
     };
@@ -515,7 +572,7 @@ const RegisterTrainingPage = () => {
                                                     variant="contained"
                                                     color="primary"
                                                     disabled={Boolean(validUntil)}
-                                                    onClick={() => handleBuyPlan(plan, selectedAffiliate)}
+                                                    onClick={() => handleBuyPlan(plan)}
                                                     sx={{
                                                         borderRadius: "20px",
                                                         py: 1,
@@ -531,6 +588,44 @@ const RegisterTrainingPage = () => {
                         </Grid>
                     </Box>
                 )}
+
+                {/* Family Member Selection Dialog */}
+                <Dialog open={showFamilyMemberDialog} onClose={handleDialogCancel}>
+                    <DialogTitle>Select Plan Recipient</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1" gutterBottom sx={{ my: 2 }}>
+                            Please select who this plan is for:
+                        </Typography>
+                        <FormControl fullWidth sx={{ mt: 2 }}>
+                            <InputLabel id="family-member-select-label">Recipient</InputLabel>
+                            <Select
+                                labelId="family-member-select-label"
+                                id="family-member-select"
+                                value={selectedFamilyMember}
+                                label="Recipient"
+                                onChange={handleFamilyMemberSelection}
+                            >
+                                <MenuItem value="self">{userData?.fullName || "Yourself"}</MenuItem>
+                                {familyMembers.map((member) => (
+                                    <MenuItem key={member.id} value={member.id}>
+                                        {member.fullName}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>
+                                Select for whom you're purchasing this plan.
+                            </FormHelperText>
+                        </FormControl>
+                    </DialogContent>
+                    <DialogActions sx={{ px: 3, pb: 3 }}>
+                        <Button onClick={handleDialogCancel} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleDialogConfirm} color="primary" variant="contained">
+                            Continue
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </StyledContainer>
         </AppTheme>
     );

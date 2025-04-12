@@ -55,12 +55,13 @@ model User {
 }
 
 model FamilyMember {
-  id       Int    @id @default(autoincrement())
-  userId   Int
-  user     User   @relation(fields: [userId], references: [id])
-  fullName String
-
-  createdAt DateTime @default(now())
+  id               Int             @id @default(autoincrement())
+  userId           Int
+  user             User            @relation(fields: [userId], references: [id])
+  fullName         String
+  createdAt        DateTime        @default(now())
+  classAttendances ClassAttendee[]
+  userplans        UserPlan[]
 }
 
 model Message {
@@ -262,21 +263,23 @@ model Plan {
 }
 
 model UserPlan {
-  id             Int        @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   userId         Int
-  user           User       @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
   contractId     Int?
-  contract       Contract?  @relation(fields: [contractId], references: [id])
+  contract       Contract?     @relation(fields: [contractId], references: [id])
   affiliateId    Int
   planId         Int // kui tahad viidata Plan.id-le
   trainingType   String?
-  paymentHoliday Boolean?   @default(false)
+  paymentHoliday Boolean?      @default(false)
   planName       String
   validityDays   Int
   price          Float
-  purchasedAt    DateTime   @default(now())
+  purchasedAt    DateTime      @default(now())
   endDate        DateTime
   sessionsLeft   Int
+  familyMemberId Int?
+  familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
   waitlist       Waitlist[]
 }
 
@@ -344,6 +347,8 @@ model ClassAttendee {
   affiliateId    Int
   affiliate      Affiliate     @relation(fields: [affiliateId], references: [id])
   isFamilyMember Boolean       @default(false)
+  familyMemberId Int?
+  familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
 
   @@unique([classId, userId]) // vältimaks duplikaatregistratsioone
 }

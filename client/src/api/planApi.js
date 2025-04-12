@@ -65,10 +65,10 @@ export const deletePlan = async (planId) => {
     }
 };
 
-export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment) => {
+export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment, isFamilyMember, familyMemberId) => {
     try {
 
-        const data = { planData, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment };
+        const data = { planData, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment, isFamilyMember, familyMemberId };
         const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/plans/buy-plan/${currentAffiliateId}`, {
             method: "POST",

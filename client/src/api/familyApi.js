@@ -1,7 +1,10 @@
 // api/familyApi.js
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Get family members for the current user
+/**
+ * Fetches all family members for the current user
+ * @returns {Array} List of family members
+ */
 export const getFamilyMembers = async () => {
     try {
         const token = localStorage.getItem('token');
@@ -13,14 +16,23 @@ export const getFamilyMembers = async () => {
             },
         });
 
-        return response.ok ? await response.json() : [];
+        if (!response.ok) {
+            console.error('Error response:', await response.text());
+            return [];
+        }
+
+        return await response.json();
     } catch (error) {
         console.error('Error fetching family members:', error);
         return [];
     }
 };
 
-// Add a new family member
+/**
+ * Adds a new family member
+ * @param {string} fullName - The full name of the family member
+ * @returns {Object} The newly created family member
+ */
 export const addFamilyMember = async (fullName) => {
     try {
         const token = localStorage.getItem('token');
@@ -34,7 +46,9 @@ export const addFamilyMember = async (fullName) => {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to add family member');
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(errorText || 'Failed to add family member');
         }
 
         return await response.json();
@@ -44,7 +58,11 @@ export const addFamilyMember = async (fullName) => {
     }
 };
 
-// Delete a family member
+/**
+ * Deletes a family member
+ * @param {number} id - The ID of the family member to delete
+ * @returns {boolean} True if successfully deleted
+ */
 export const deleteFamilyMember = async (id) => {
     try {
         const token = localStorage.getItem('token');
@@ -57,7 +75,9 @@ export const deleteFamilyMember = async (id) => {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to delete family member');
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(errorText || 'Failed to delete family member');
         }
 
         return true;
@@ -65,4 +85,10 @@ export const deleteFamilyMember = async (id) => {
         console.error('Error deleting family member:', error);
         throw error;
     }
+};
+
+export default {
+    getFamilyMembers,
+    addFamilyMember,
+    deleteFamilyMember
 };

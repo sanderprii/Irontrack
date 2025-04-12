@@ -211,6 +211,7 @@ const getTopMembersByCheckIns = async (req, res) => {
                 AND ca."checkIn" = true
                 AND ca."createdAt" >= ${startDate}
                 AND ca."createdAt" <= ${endDate}
+                AND ca."isFamilyMember" = false
             WHERE m."affiliateId" = ${affiliateId} 
               AND m."isActive" = true
             GROUP BY m."userId", u."fullName"

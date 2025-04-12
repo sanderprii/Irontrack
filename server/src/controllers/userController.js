@@ -27,8 +27,18 @@ exports.getVisitHistory = async (req, res) => {
     try {
         const visits = await prisma.classAttendee.findMany({
             where: { userId },
-            include: { classSchedule: true },
-            orderBy: { classId: 'desc' }
+            include: {
+                classSchedule: true,
+                    familyMember: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                        }
+                    }
+
+            },
+            orderBy: { classId: 'desc' },
+
         });
         res.json(visits);
     } catch (error) {
@@ -42,18 +52,35 @@ exports.getPurchaseHistory = async (req, res) => {
     const userId = req.query.userId;
     const affiliateId = req.query.affiliateId;
     try {
-
         if(!isNaN(affiliateId)) {
             const purchases = await prisma.userPlan.findMany({
-                where: { userId: parseInt(userId), affiliateId: parseInt(affiliateId) },
-                orderBy: { id: 'desc' }
+                where: {
+                    userId: parseInt(userId),
+                    affiliateId: parseInt(affiliateId)
+                },
+                orderBy: { id: 'desc' },
+                include: {
+                    familyMember: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                        }
+                    }
+                }
             });
             res.json(purchases);
         } else {
-
             const plans = await prisma.userPlan.findMany({
                 where: {userId: parseInt(userId)},
-                orderBy: {id: 'desc'}
+                orderBy: {id: 'desc'},
+                include: {
+                    familyMember: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                        }
+                    }
+                }
             });
             res.json(plans);
         }
@@ -108,7 +135,7 @@ exports.editProfile = async (req, res) => {
         await prisma.user.update({
             where: { id: userId },
             data: {
-                fullName: fullName || null,
+                fullName: fullName.toUpperCase() || null,
 
                 email: email || null,
                 phone: phone || null,
@@ -198,6 +225,13 @@ exports.getUserPlansByAffiliate = async (req, res) => {
                 sessionsLeft: true,
                 contractId: true,
                 paymentHoliday: true,
+                familyMemberId: true,
+                familyMember: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                    },
+                }
             },
         });
         res.json(userPlans);
@@ -281,6 +315,8 @@ exports.getUserAttendees = async (req, res) => {
                 id: true,
                 classId: true,
                 userId: true,
+                isFamilyMember: true,
+                familyMemberId: true,
                 classSchedule: {
                     select: {
                         id: true,
@@ -304,13 +340,44 @@ exports.getUserAttendees = async (req, res) => {
             },
         });
 
-        // Liidame leaderboard info
+        // Get family member IDs from attendees
+        const familyMemberIds = userAttendees
+            .filter(att => att.isFamilyMember && att.familyMemberId)
+            .map(att => att.familyMemberId);
+
+        // Fetch family members if needed
+        let familyMemberMap = {};
+        if (familyMemberIds.length > 0) {
+            const familyMembers = await prisma.familyMember.findMany({
+                where: {
+                    id: {
+                        in: familyMemberIds
+                    }
+                }
+            });
+
+            // Create a map of family member ID to full name
+            familyMemberMap = familyMembers.reduce((acc, member) => {
+                acc[member.id] = member.fullName;
+                return acc;
+            }, {});
+        }
+
+        // Liidame leaderboard info ja family member info
         const combinedData = userAttendees.map((attendee) => {
             const lbEntries = userClassLeaderboard.filter(
                 (lb) => lb.classId === attendee.classId
             );
+
+            // Add family member name if applicable
+            let familyMemberName = null;
+            if (attendee.isFamilyMember && attendee.familyMemberId && familyMemberMap[attendee.familyMemberId]) {
+                familyMemberName = familyMemberMap[attendee.familyMemberId];
+            }
+
             return {
                 ...attendee,
+                familyMemberName, // Add the family member name to the response
                 leaderboard: lbEntries,
             };
         });
@@ -353,7 +420,7 @@ exports.addFamilyMember = async (req, res) => {
         const newFamilyMember = await prisma.familyMember.create({
             data: {
                 userId,
-                fullName: fullName.trim()
+                fullName: fullName.trim().toUpperCase(),
             }
         });
 

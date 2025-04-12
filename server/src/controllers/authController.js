@@ -60,7 +60,7 @@ exports.register = async (req, res) => {
             data: {
                 email,
                 password: hashedPassword,
-                fullName,
+                fullName: fullName.toUpperCase(),
                 phone,
                 address,
                 affiliateOwner: affiliateOwner || false,

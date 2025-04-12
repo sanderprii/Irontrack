@@ -132,8 +132,12 @@ const buyPlan = async (req, res) => {
     const affiliateId = parseInt(req.params.affiliateId) || parseInt(req.body.planData.affiliateId);
     const userId = parseInt(req.user?.id);
     const contract = req.body.contract;
+    const isFamilyMember = req.body.isFamilyMember;
+    const familyMemberId = req.body.familyMemberId;
     let merchantReference = req.body.currentMerchantReference;
 
+    console.log("familyMemberId", familyMemberId);
+    console.log("isFamilyMember", isFamilyMember);
 
     try {
 
@@ -175,6 +179,7 @@ const buyPlan = async (req, res) => {
                     }
                 });
             }
+
 
             const getMember = await prisma.members.findFirst({
                 where: {userId: userId, affiliateId: affiliateId}
@@ -252,7 +257,8 @@ const buyPlan = async (req, res) => {
                     sessionsLeft: planData.sessions,
                     planName: planData.name,
                     contractId: contractId ? parseInt(contractId) : null,
-                    trainingType: JSON.stringify(planData.trainingType)
+                    trainingType: JSON.stringify(planData.trainingType),
+                    familyMemberId: parseInt(familyMemberId) || null,
                 }
             });
 

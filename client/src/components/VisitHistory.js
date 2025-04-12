@@ -159,6 +159,16 @@ export default function VisitHistory({user, affiliateId}) {
                                                                     <Divider sx={{ mb: 2 }} />
 
                                                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                        {att.familyMemberName && (
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
+                                                                                    Family Member:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {att.familyMemberName}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        )}
                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 120 }}>
                                                                                 Name:

@@ -191,7 +191,7 @@ export const deleteAttendee = async (classId, freeClass, userId) => {
     }
 };
 
-export const registerForClass = async (classId, planId, affiliateId, freeClass) => {
+export const registerForClass = async (classId, planId, affiliateId, freeClass, isFamilyMember, familyMemberId) => {
     try {
         const token = localStorage.getItem("token");
 
@@ -206,6 +206,8 @@ export const registerForClass = async (classId, planId, affiliateId, freeClass) 
                 planId,
                 affiliateId,
                 freeClass,
+                isFamilyMember,
+                familyMemberId,
             }),
         });
 

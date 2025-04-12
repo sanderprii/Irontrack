@@ -15,7 +15,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
-import AddressForm from '../components/AddressForm';
 import Info from '../components/Info';
 import InfoMobile from '../components/InfoMobile';
 import PaymentForm from '../components/PaymentForm';
@@ -25,7 +24,6 @@ import AppTheme from '../shared-theme/AppTheme';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
 
 import {buyPlan, getUserCredit, createMontonioPayment, checkPaymentStatus} from "../api/planApi";
-import {sendMessage} from "../api/messageApi";
 import {acceptContract} from "../api/contractApi";
 
 // Sammude nimed
@@ -76,6 +74,8 @@ export default function Checkout(props) {
     const [userData, setUserData] = useState(null);
     const [merchantReference, setMerchantReference] = useState(null);
     const [isContractPayment, setIsContractPayment] = useState(false);
+    const [isFamilyMember, setIsFamilyMember] = useState(false);
+    const [familyMemberId, setFamilyMemberId] = useState(null);
 
     // Lae andmed localStorage'ist esimesel renderil
     useEffect(() => {
@@ -85,6 +85,8 @@ export default function Checkout(props) {
         const contractData = location.state?.contract;
         const userData = location.state?.userData;
         const isContractPmt = location.state?.isContractPayment;
+        const familyMember = location.state?.familyMember;
+        const familyMemberId = location.state?.familyMemberId;
 
         if (plan) {
             setPlanData(plan);
@@ -108,6 +110,15 @@ export default function Checkout(props) {
         if (userData) {
             setUserData(userData);
             localStorage.setItem('checkout_userData', JSON.stringify(userData));
+        }
+        if (familyMember) {
+            setIsFamilyMember(true);
+            localStorage.setItem('checkout_familyMember', JSON.stringify(familyMember));
+        }
+
+        if (familyMemberId) {
+            setFamilyMemberId(familyMemberId);
+            localStorage.setItem('checkout_familyMemberId', JSON.stringify(familyMemberId));
         }
 
         if (isContractPmt) {
@@ -169,6 +180,30 @@ export default function Checkout(props) {
             }
         }
 
+        if (!familyMember) {
+            const savedFamilyMember = localStorage.getItem('checkout_familyMember');
+            if (savedFamilyMember) {
+                try {
+                    const parsedFamilyMember = JSON.parse(savedFamilyMember);
+                    setIsFamilyMember(parsedFamilyMember);
+                } catch (error) {
+                    console.error('Error parsing saved family member', error);
+                }
+            }
+        }
+
+        if (!familyMemberId) {
+            const savedFamilyMemberId = localStorage.getItem('checkout_familyMemberId');
+            if (savedFamilyMemberId) {
+                try {
+                    const parsedFamilyMemberId = JSON.parse(savedFamilyMemberId);
+                    setFamilyMemberId(parsedFamilyMemberId);
+                } catch (error) {
+                    console.error('Error parsing saved family member ID', error);
+                }
+            }
+        }
+
         if (!isContractPmt) {
             const savedIsContractPayment = localStorage.getItem('checkout_isContractPayment');
             if (savedIsContractPayment === 'true') {
@@ -202,12 +237,18 @@ export default function Checkout(props) {
             const savedContract = localStorage.getItem('checkout_contract');
             const savedUserData = localStorage.getItem('checkout_userData');
             const savedIsContractPayment = localStorage.getItem('checkout_isContractPayment') === 'true';
+            const savedFamilyMember = localStorage.getItem('checkout_familyMember');
+            const savedFamilyMemberId = localStorage.getItem('checkout_familyMemberId');
+
 
             let parsedPlanData = null;
             let parsedAppliedCredit = 0;
             let parsedAffiliateInfo = null;
             let parsedContract = null;
             let parsedUserData = null;
+            let parsedIsContractPayment = false;
+            let parsedFamilyMember = null;
+            let parsedFamilyMemberId = null;
 
             // Parse saved data
             if (savedPlanData) {
@@ -267,6 +308,28 @@ export default function Checkout(props) {
                 }
             }
 
+            if (savedFamilyMember) {
+                try {
+                    parsedFamilyMember = JSON.parse(savedFamilyMember);
+                    if (parsedFamilyMember) {
+                        setIsFamilyMember(parsedFamilyMember);
+                    }
+                } catch (error) {
+                    console.error('Error parsing saved family member', error);
+                }
+            }
+
+            if (savedFamilyMemberId) {
+                try {
+                    parsedFamilyMemberId = JSON.parse(savedFamilyMemberId);
+                    if (parsedFamilyMemberId) {
+                        setFamilyMemberId(parsedFamilyMemberId);
+                    }
+                } catch (error) {
+                    console.error('Error parsing saved family member ID', error);
+                }
+            }
+
             setTimeout(() => {
                 // Check payment status
                 checkPaymentStatus(orderToken)
@@ -285,6 +348,8 @@ export default function Checkout(props) {
                             const currentUserData = userData || parsedUserData;
                             const currentIsContractPayment = isContractPayment || savedIsContractPayment || (currentPlanData?.id === 'contract-payment');
                             const currentMerchantReference = response.merchantReference || merchantReference;
+                            const currentFamilyMember = isFamilyMember || parsedFamilyMember;
+                            const currentFamilyMemberId = familyMemberId || parsedFamilyMemberId;
 
                             setTimeout(() => {
                                 // Kui tegemist on lepingumaksega
@@ -315,12 +380,15 @@ export default function Checkout(props) {
                                             localStorage.removeItem('checkout_appliedCredit');
                                             localStorage.removeItem('checkout_userData');
                                             localStorage.removeItem('checkout_isContractPayment');
+                                            localStorage.removeItem('checkout_familyMember');
+                                            localStorage.removeItem('checkout_familyMemberId');
                                         });
                                 }
                                 // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
                                 else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
-
-                                    buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference)
+                                    console.log("familyMemberId", currentFamilyMemberId);
+                                    console.log("currentFamilyMember", currentFamilyMember);
+                                    buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference, currentIsContractPayment, currentFamilyMember, currentFamilyMemberId)
                                         .then(response => {
                                             setInvoiceNumber(response.invoiceNumber);
 
@@ -331,6 +399,9 @@ export default function Checkout(props) {
                                             localStorage.removeItem('checkout_appliedCredit');
                                             localStorage.removeItem('checkout_userData');
                                             localStorage.removeItem('checkout_isContractPayment');
+                                            localStorage.removeItem('checkout_familyMember');
+                                            localStorage.removeItem('checkout_familyMemberId');
+
                                         })
                                         .catch(error => {
                                             console.error("Error finalizing plan purchase:", error);
@@ -408,10 +479,20 @@ export default function Checkout(props) {
                     setInvoiceNumber("Credit-" + new Date().getTime());
                 } else {
                     // Tavalise paketi ostu puhul kutsu buyPlan
-                    const response = await buyPlan(planData, affiliateInfo?.id, appliedCredit, contract);
+                    console.log("familyMemberId", familyMemberId);
+                    console.log("isFamilyMember", isFamilyMember);
+                    const response = await buyPlan(planData, affiliateInfo?.id, appliedCredit, contract, null, null, isFamilyMember, familyMemberId);
                     setPaymentSuccess(true);
                     setActiveStep(activeStep + 1);
                     setInvoiceNumber(response.invoiceNumber);
+                    localStorage.removeItem('checkout_planData');
+                    localStorage.removeItem('checkout_affiliateInfo');
+                    localStorage.removeItem('checkout_contract');
+                    localStorage.removeItem('checkout_appliedCredit');
+                    localStorage.removeItem('checkout_userData');
+                    localStorage.removeItem('checkout_isContractPayment');
+                    localStorage.removeItem('checkout_familyMember');
+                    localStorage.removeItem('checkout_familyMemberId');
                 }
             } else {
                 // Kui maksta on vaja Montonio kaudu
@@ -457,7 +538,6 @@ export default function Checkout(props) {
 
     // Arvutame uue kogusumma, millest lahutatakse rakendatud krediit
     const totalPrice = Math.max((planData?.price || 0) - appliedCredit, 0);
-
 
 
     // Lisa laadimise ja vigade käsitlemise renderdus

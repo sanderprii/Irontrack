@@ -306,8 +306,7 @@ export default function UserContracts({ user, affiliateId }) {
                     <Table>
                         <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableRow>
-                                <TableCell width={50}></TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+
                                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Affiliate Name</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
@@ -325,12 +324,7 @@ export default function UserContracts({ user, affiliateId }) {
                                             onClick={() => toggleRow(contract.id)}
                                             sx={{ cursor: 'pointer' }}
                                         >
-                                            <TableCell>
-                                                <IconButton size="small">
-                                                    {isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                </IconButton>
-                                            </TableCell>
-                                            <TableCell>{contract.id}</TableCell>
+
                                             <TableCell>
                                                 {formatDate(contract.createdAt)}
                                             </TableCell>

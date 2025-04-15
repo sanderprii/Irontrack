@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
     Container,
     Typography,
-    TextField,
     Box,
     Button,
     List,
@@ -24,7 +23,13 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    FormHelperText
+    FormHelperText,
+    Paper,
+    InputAdornment,
+    Avatar,
+    ListItemIcon,
+    Fade,
+    alpha
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -32,6 +37,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SearchIcon from "@mui/icons-material/Search";
 
 import { styled } from "@mui/material/styles";
 import {
@@ -45,7 +51,7 @@ import {
 
 import { getUserProfile } from "../api/profileApi";
 import { getUserPlansByAffiliate } from "../api/profileApi";
-import { getFamilyMembers } from "../api/familyApi"; // Import the family API
+import { getFamilyMembers } from "../api/familyApi";
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -113,6 +119,17 @@ const ensureTrainingTypeArray = (trainingType) => {
     return [trainingType];
 };
 
+// Enhanced Search Result Item
+const SearchResultItem = styled(ListItem)(({ theme }) => ({
+    padding: theme.spacing(1.5, 2),
+    transition: 'background-color 0.2s ease',
+    '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
+    borderRadius: theme.shape.borderRadius,
+    margin: theme.spacing(0.5, 0),
+}));
+
 const RegisterTrainingPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [suggestions, setSuggestions] = useState([]);
@@ -156,6 +173,17 @@ const RegisterTrainingPage = () => {
 
         loadInitialData();
     }, []);
+
+    // Get affiliate initials for avatar
+    const getAffiliateInitials = (name) => {
+        if (!name) return "??";
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
 
     const handleSearchChange = async (e) => {
         setSearchQuery(e.target.value);
@@ -318,25 +346,88 @@ const RegisterTrainingPage = () => {
                     Register for Training
                 </Typography>
 
-                {/* Search Affiliate */}
-                <TextField
-                    label="Search Affiliate"
-                    fullWidth
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    margin="normal"
-                />
-                <List>
-                    {suggestions.map((affiliate) => (
-                        <ListItem
-                            key={affiliate.id}
-                            button
-                            onClick={() => handleAffiliateSelect(affiliate)}
-                        >
-                            <ListItemText primary={affiliate.name} />
-                        </ListItem>
-                    ))}
-                </List>
+                {/* Improved Search Affiliate UI */}
+                <Box sx={{ width: "100%", maxWidth: "600px", mb: 4 }}>
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            borderRadius: 2,
+                            transition: "all 0.3s ease",
+                            '&:hover': {
+                                boxShadow: 3
+                            }
+                        }}
+                    >
+                        <Box sx={{ p: 0.5 }}>
+                            <Box
+                                component="input"
+                                placeholder="Search Affiliate..."
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                                sx={{
+                                    width: "100%",
+                                    border: "none",
+                                    p: 2,
+                                    pl: 5,
+                                    fontSize: "1rem",
+                                    outline: "none",
+                                    background: `url('${SearchIcon}') no-repeat left 12px center`,
+                                    backgroundSize: "20px"
+                                }}
+                            />
+                            <SearchIcon sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "action.active" }} />
+                        </Box>
+                    </Paper>
+
+                    {/* Enhanced Search Results */}
+                    {suggestions.length > 0 && (
+                        <Fade in={suggestions.length > 0}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    mt: 1,
+                                    borderRadius: 2,
+                                    overflow: 'hidden',
+                                    maxHeight: 350,
+                                    overflowY: 'auto'
+                                }}
+                            >
+                                <List sx={{ p: 1 }}>
+                                    {suggestions.map((affiliate, index) => (
+                                        <React.Fragment key={affiliate.id}>
+                                            <SearchResultItem
+                                                button
+                                                onClick={() => handleAffiliateSelect(affiliate)}
+                                            >
+                                                <ListItemIcon>
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: 'primary.main',
+                                                            width: 40,
+                                                            height: 40
+                                                        }}
+                                                    >
+                                                        {getAffiliateInitials(affiliate.name)}
+                                                    </Avatar>
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 500 }}>
+                                                            {affiliate.name}
+                                                        </Typography>
+                                                    }
+
+                                                />
+                                                <FitnessCenterIcon color="action" sx={{ ml: 2 }} />
+                                            </SearchResultItem>
+                                            {index < suggestions.length - 1 && <Divider variant="inset" component="li" />}
+                                        </React.Fragment>
+                                    ))}
+                                </List>
+                            </Paper>
+                        </Fade>
+                    )}
+                </Box>
 
                 {/* Affiliate Info */}
                 {selectedAffiliate && (

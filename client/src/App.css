@@ -104,3 +104,15 @@ input, textarea, select, button {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Add these lines to your existing App.css */
+
+/* Help prevent browser's default pull behavior */
+html {
+  overscroll-behavior-y: contain;
+}
+
+/* This helps with smooth scrolling on iOS */
+* {
+  -webkit-overflow-scrolling: touch;
+}

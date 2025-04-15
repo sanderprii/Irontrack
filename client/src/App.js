@@ -99,13 +99,10 @@ function App() {
     // Function to refresh the application data
     const handleRefresh = useCallback(async () => {
         try {
-            console.log("Refresh started...");
+            console.log("Refresh started");
 
-            // Show notification
-            setShowRefreshMessage(true);
-
-            // Wait a bit for the user to see the effect
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Simple delay to show the refreshing effect
+            await new Promise(resolve => setTimeout(resolve, 800));
 
             // Refresh the page
             window.location.reload();
@@ -167,16 +164,10 @@ function App() {
                 <PullToRefresh onRefresh={handleRefresh}>
                     <Box
                         sx={{
-                            // If mobile view and user is logged in (bottom nav is visible)
-                            // leave space at the bottom of the screen
                             pb: '56px',
                             width: '100%',
-                            height: isPWA ? '100%' : 'auto',
-                            minHeight: 'calc(100vh - 56px)', // Subtract bottom nav height
-                            overflowX: 'hidden',
-                            // In PWA mode, we need separate access to Y-scrolling
-                            overflowY: isPWA ? 'auto' : 'visible',
-                            WebkitOverflowScrolling: 'touch' // Important for iOS
+                            minHeight: 'calc(100vh - 56px)',
+                            overflowX: 'hidden'
                         }}
                     >
                         <Routes>

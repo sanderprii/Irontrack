@@ -12,46 +12,9 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const pulling = useRef(false);
     const distanceThreshold = 70;
 
-    // PWA detection - using multiple methods for better compatibility
-    const isPwa = () => {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-            window.matchMedia('(display-mode: fullscreen)').matches ||
-            window.navigator.standalone === true ||
-            document.referrer.includes('android-app://');
-    };
-
-    useEffect(() => {
-        // Apply specific styles for PWA mode
-        if (isPwa()) {
-            document.documentElement.style.overscrollBehavior = 'none';
-            document.body.style.overscrollBehavior = 'none';
-
-            // iOS-specific fix
-            if (window.navigator.standalone === true) {
-                document.body.style.position = 'fixed';
-                document.body.style.width = '100%';
-                document.body.style.height = '100%';
-            }
-        }
-
-        return () => {
-            // Clean up styles
-            if (isPwa()) {
-                document.documentElement.style.overscrollBehavior = '';
-                document.body.style.overscrollBehavior = '';
-
-                if (window.navigator.standalone === true) {
-                    document.body.style.position = '';
-                    document.body.style.width = '';
-                    document.body.style.height = '';
-                }
-            }
-        };
-    }, []);
-
-    // Set up touch handlers directly on the document for PWA
     useEffect(() => {
         const handleTouchStart = (e) => {
+            // Only start pulling if we're at the top of the page
             if (window.scrollY <= 5) {
                 startY.current = e.touches[0].clientY;
                 currentY.current = startY.current;
@@ -65,7 +28,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
             currentY.current = e.touches[0].clientY;
             const pullDistance = currentY.current - startY.current;
 
-            // Only handle pull-down when at the top of the page
+            // Only show visual indicator when pulling down
             if (pullDistance > 0 && window.scrollY <= 5) {
                 // Calculate progress as a percentage
                 const newProgress = Math.min(1, pullDistance / distanceThreshold);
@@ -76,8 +39,8 @@ const PullToRefresh = ({ onRefresh, children }) => {
                     containerRef.current.style.transform = `translateY(${Math.min(pullDistance / 2.5, distanceThreshold)}px)`;
                 }
 
-                // Important: In PWA mode we need to prevent default to avoid system behaviors
-                if (isPwa() || pullDistance > 10) {
+                // If pulling significantly, prevent default to avoid system behaviors
+                if (pullDistance > 10) {
                     e.preventDefault();
                 }
             }
@@ -121,39 +84,24 @@ const PullToRefresh = ({ onRefresh, children }) => {
         };
 
         // Set up event listeners
-        if (typeof window !== 'undefined') {
-            // For PWA mode, attach to document
-            if (isPwa()) {
-                document.addEventListener('touchstart', handleTouchStart, { passive: true });
-                document.addEventListener('touchmove', handleTouchMove, { passive: false });
-                document.addEventListener('touchend', handleTouchEnd);
-            }
-            // For regular mode, attach to the container
-            else if (containerRef.current) {
-                containerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
-                containerRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
-                containerRef.current.addEventListener('touchend', handleTouchEnd);
-            }
+        if (containerRef.current) {
+            containerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
+            containerRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
+            containerRef.current.addEventListener('touchend', handleTouchEnd);
         }
 
         // Clean up
         return () => {
-            if (typeof window !== 'undefined') {
-                if (isPwa()) {
-                    document.removeEventListener('touchstart', handleTouchStart);
-                    document.removeEventListener('touchmove', handleTouchMove);
-                    document.removeEventListener('touchend', handleTouchEnd);
-                } else if (containerRef.current) {
-                    containerRef.current.removeEventListener('touchstart', handleTouchStart);
-                    containerRef.current.removeEventListener('touchmove', handleTouchMove);
-                    containerRef.current.removeEventListener('touchend', handleTouchEnd);
-                }
+            if (containerRef.current) {
+                containerRef.current.removeEventListener('touchstart', handleTouchStart);
+                containerRef.current.removeEventListener('touchmove', handleTouchMove);
+                containerRef.current.removeEventListener('touchend', handleTouchEnd);
             }
         };
     }, [onRefresh]);
 
     return (
-        <Box sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+        <Box ref={containerRef} sx={{ position: 'relative', width: '100%' }}>
             {/* Pull indicator */}
             <Box
                 sx={{
@@ -161,16 +109,13 @@ const PullToRefresh = ({ onRefresh, children }) => {
                     top: 0,
                     left: 0,
                     width: '100%',
-                    height: refreshing ? '50px' : '0',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    backgroundColor: 'transparent',
-                    transition: refreshing ? 'height 0.2s ease-out' : 'none',
-                    overflow: 'hidden',
-                    zIndex: 999,
+                    padding: '8px 0',
                     opacity: refreshing ? 1 : pullProgress,
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    zIndex: 1000
                 }}
             >
                 <Box
@@ -186,7 +131,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 >
                     {refreshing ? (
                         <>
-                            <CircularProgress size={16} thickness={4} />
+                            <CircularProgress size={16} />
                             <Typography variant="caption">Refreshing...</Typography>
                         </>
                     ) : (
@@ -197,20 +142,8 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 </Box>
             </Box>
 
-            {/* Content container */}
-            <Box
-                ref={containerRef}
-                sx={{
-                    width: '100%',
-                    height: '100%',
-                    willChange: 'transform',
-                    overflowX: 'hidden',
-                    overflowY: 'auto',
-                    WebkitOverflowScrolling: 'touch' // Important for iOS
-                }}
-            >
-                {children}
-            </Box>
+            {/* Content */}
+            {children}
         </Box>
     );
 };

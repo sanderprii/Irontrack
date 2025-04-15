@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useCallback} from 'react';
 import {HelmetProvider} from 'react-helmet-async';
 import {Routes, Route, Navigate} from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -39,6 +39,7 @@ import VerifyEmail from './components/VerifyEmail';
 import ResetPassword from './components/ResetPassword';
 import Checkin from './pages/Checkin';
 import Admin from './pages/Admin';
+import PullToRefresh from './components/PullToRefresh';
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -55,6 +56,21 @@ const HomeRedirect = () => {
 };
 
 function App() {
+    // Funktsioon, mis värskendab rakendust
+    const handleRefresh = useCallback(async () => {
+        // Siin võid teha erinevaid toiminguid, nagu:
+        // 1. Andmete uuesti laadimine API-st
+        // 2. Lehe taaskäivitamine (window.location.reload())
+        // 3. Rakenduse oleku uuendamine
+
+        // Lihtne näide: Ootame 1 sekund ja värsendame lehe
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                window.location.reload();
+                resolve();
+            }, 1000);
+        });
+    }, []);
 
     const hostname = window.location.hostname;
 
@@ -90,49 +106,52 @@ function App() {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
                 </Helmet>
                 <ResponsiveNavbar/>
-                <Box
-                    sx={{
-                        // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
-                        // jätame ekraani alla tühja ruumi
-                        pb: '56px',
-                        width: '100%',
-                        minHeight: 'calc(100vh - 56px)', // Lahuta bottom nav kõrgus
-                        overflowX: 'hidden'
-                    }}
-                >
-                    <Routes>
-                        <Route path="/" element={<HomeRedirect/>}/>
+                {/* Mähime kogu rakenduse sisu PullToRefresh komponendiga */}
+                <PullToRefresh onRefresh={handleRefresh}>
+                    <Box
+                        sx={{
+                            // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
+                            // jätame ekraani alla tühja ruumi
+                            pb: '56px',
+                            width: '100%',
+                            minHeight: 'calc(100vh - 56px)', // Lahuta bottom nav kõrgus
+                            overflowX: 'hidden'
+                        }}
+                    >
+                        <Routes>
+                            <Route path="/" element={<HomeRedirect/>}/>
 
-                        <Route path="/trainings" element={<TrainingsPage/>}/>
-                        <Route path="/records" element={<RecordsPage/>}/>
-                        <Route path="/find-users" element={<FindUsersPage/>}/>
-                        <Route path="/register-training" element={<RegisterTrainingPage/>}/>
-                        <Route path="/my-profile" element={<MyProfile/>}/>
-                        <Route path="/login" element={<LoginForm/>}/>
-                        <Route path="/register" element={<JoinUsForm/>}/>
-                        <Route path="/select-role" element={<RoleSelectionPage/>}/>
-                        <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
-                        <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
-                        <Route path="/my-affiliate" element={<MyAffiliate/>}/>
-                        <Route path="/classes" element={<Classes/>}/>
-                        <Route path="/members" element={<Members/>}/>
-                        <Route path="/plans" element={<Plans/>}/>
-                        <Route path="/Messages" element={<Messages/>}/>
-                        <Route path="/checkout" element={<Checkout/>}/>
-                        <Route path="/pricing" element={<Pricing/>}/>
-                        <Route path="/marketing" element={<MarketingPage/>}/>
-                        <Route path="/trainer" element={<Trainer/>}/>
-                        <Route path="/help" element={<Help/>}/>
-                        <Route path="/privacy-app" element={<PrivacyApp/>}/>
-                        <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
-                        <Route path="/verify-email" element={<VerifyEmail/>}/>
-                        <Route path="/reset-password" element={<ResetPassword/>}/>
-                        <Route path="/checkin" element={<Checkin/>}/>
-                        <Route path="/admin" element={<Admin/>}/>
-                        {/* ✅ Lisa MarketingPage uue marsruudina */}
+                            <Route path="/trainings" element={<TrainingsPage/>}/>
+                            <Route path="/records" element={<RecordsPage/>}/>
+                            <Route path="/find-users" element={<FindUsersPage/>}/>
+                            <Route path="/register-training" element={<RegisterTrainingPage/>}/>
+                            <Route path="/my-profile" element={<MyProfile/>}/>
+                            <Route path="/login" element={<LoginForm/>}/>
+                            <Route path="/register" element={<JoinUsForm/>}/>
+                            <Route path="/select-role" element={<RoleSelectionPage/>}/>
+                            <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
+                            <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
+                            <Route path="/my-affiliate" element={<MyAffiliate/>}/>
+                            <Route path="/classes" element={<Classes/>}/>
+                            <Route path="/members" element={<Members/>}/>
+                            <Route path="/plans" element={<Plans/>}/>
+                            <Route path="/Messages" element={<Messages/>}/>
+                            <Route path="/checkout" element={<Checkout/>}/>
+                            <Route path="/pricing" element={<Pricing/>}/>
+                            <Route path="/marketing" element={<MarketingPage/>}/>
+                            <Route path="/trainer" element={<Trainer/>}/>
+                            <Route path="/help" element={<Help/>}/>
+                            <Route path="/privacy-app" element={<PrivacyApp/>}/>
+                            <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+                            <Route path="/verify-email" element={<VerifyEmail/>}/>
+                            <Route path="/reset-password" element={<ResetPassword/>}/>
+                            <Route path="/checkin" element={<Checkin/>}/>
+                            <Route path="/admin" element={<Admin/>}/>
+                            {/* ✅ Lisa MarketingPage uue marsruudina */}
 
-                    </Routes>
-                </Box>
+                        </Routes>
+                    </Box>
+                </PullToRefresh>
             </AppTheme>
         </HelmetProvider>
     );

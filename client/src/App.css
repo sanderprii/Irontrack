@@ -53,3 +53,24 @@ input, textarea, select, button {
     transform: rotate(360deg);
   }
 }
+
+/* Vajalik PWA-s, et sisuelement oleks täisekraanil */
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* See aitab Safari brauseris kummitusklikkidega */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

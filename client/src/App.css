@@ -1,16 +1,46 @@
 .App {
   text-align: center;
+}
 
+/* PWA-spetsiifilised stiilid - lisatud pull-to-refresh toetuseks */
+@media all and (display-mode: standalone),
+all and (display-mode: fullscreen) {
+  html, body {
+    /* Keelame brauseri enda pull-to-refresh */
+    overscroll-behavior-y: none !important;
+    /* Takistame põrget lehe ülaosas/allosas */
+    overflow: hidden !important;
+    height: 100% !important;
+    position: fixed !important;
+    width: 100% !important;
+    touch-action: manipulation;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* src/index.css */
-
 html, body, #root {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+}
+
+/* Standardsed mobiiliseadme stiilid (mitte-PWA) */
+@media (hover: none) and (pointer: coarse) {
+  /* Need stiilid rakenduvad ainult puutetundlikel seadmetel */
+  html, body {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+  }
 }
 
 input, textarea, select, button {
@@ -58,19 +88,9 @@ input, textarea, select, button {
 #root {
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
 /* See aitab Safari brauseris kummitusklikkidega */
 * {
   -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: manipulation;
-  height: 100%;
-  margin: 0;
-  padding: 0;
 }

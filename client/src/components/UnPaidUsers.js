@@ -47,11 +47,7 @@ const UnpaidUserRow = ({ row }) => {
                 }}
                 onClick={() => setOpen(!open)}
             >
-                <TableCell>
-                    <IconButton size="small" aria-label="expand row">
-                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                    </IconButton>
-                </TableCell>
+
                 <TableCell>{row.user?.fullName || 'N/A'}</TableCell>
                 <TableCell>{row.amount} €</TableCell>
                 <TableCell>{new Date(row.createdAt).toLocaleDateString()}</TableCell>
@@ -328,7 +324,7 @@ export default function UnpaidUsers({affiliate}) {
                     <Table aria-label="unpaid users table">
                         <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableRow>
-                                <TableCell />
+
                                 <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>

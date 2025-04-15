@@ -196,11 +196,8 @@ const ActivePlans = ({ userId, affiliateId }) => {
                     <Table>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                <TableCell width="50px"></TableCell>
+
                                 <TableCell>Plan Name</TableCell>
-                                <TableCell>Training Type</TableCell>
-                                <TableCell>Start Date</TableCell>
-                                <TableCell>End Date</TableCell>
                                 <TableCell>Price</TableCell>
                                 <TableCell>Sessions Left</TableCell>
                                 {role === 'affiliate' && <TableCell>Actions</TableCell>}
@@ -221,26 +218,10 @@ const ActivePlans = ({ userId, affiliateId }) => {
                                             onClick={() => !isEditing && handleRowClick(plan.id)}
                                             sx={{ cursor: isEditing ? 'default' : 'pointer' }}
                                         >
-                                            <TableCell>
-                                                <IconButton size="small" disabled={isEditing}>
-                                                    {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                </IconButton>
-                                            </TableCell>
+
 
                                             <TableCell>{plan.planName}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    {trainingTypes.map((type, index) => (
-                                                        <Chip
-                                                            key={index}
-                                                            label={type}
-                                                            size="small"
-                                                            color="primary"
-                                                            variant="outlined"
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            </TableCell>
+                                            
 
                                             {isEditing ? (
                                                 <>
@@ -286,8 +267,7 @@ const ActivePlans = ({ userId, affiliateId }) => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <TableCell>{formatDate(plan.purchasedAt)}</TableCell>
-                                                    <TableCell>{formatDate(plan.endDate)}</TableCell>
+
                                                     <TableCell sx={{ fontWeight: 'bold' }}>{plan.price} €</TableCell>
                                                     <TableCell>
                                                         <Chip

@@ -375,8 +375,7 @@ const RegisterTrainingPage = () => {
                                     backgroundSize: "20px"
                                 }}
                             />
-                            <SearchIcon sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "action.active" }} />
-                        </Box>
+                             </Box>
                     </Paper>
 
                     {/* Enhanced Search Results */}

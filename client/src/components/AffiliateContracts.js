@@ -449,16 +449,14 @@ export default function AffiliateContracts({affiliateId}) {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>ID</TableCell>
+
                             <TableCell onClick={() => handleSort('createdAt')}>
                                 Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '▲' : '▼')}
                             </TableCell>
                             <TableCell onClick={() => handleSort('userId')}>
                                 User FullName {sortBy === 'userId' && (sortOrder === 'asc' ? '▲' : '▼')}
                             </TableCell>
-                            <TableCell onClick={() => handleSort('contractType')}>
-                                Contract Type {sortBy === 'contractType' && (sortOrder === 'asc' ? '▲' : '▼')}
-                            </TableCell>
+
                             <TableCell onClick={() => handleSort('status')}>
                                 Status {sortBy === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
                             </TableCell>
@@ -476,12 +474,12 @@ export default function AffiliateContracts({affiliateId}) {
                                         sx={{cursor: 'pointer'}}
                                         onClick={() => toggleRow(contract.id)}
                                     >
-                                        <TableCell>{contract.id}</TableCell>
+
                                         <TableCell>
                                             {new Date(contract.createdAt).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>{contract.user.fullName}</TableCell>
-                                        <TableCell>{contract.contractType}</TableCell>
+
                                         <TableCell>
                                             <FiberManualRecordIcon
                                                 sx={{ color: handleStatusColor(contract.status), fontSize: 12, mr: 1 }}

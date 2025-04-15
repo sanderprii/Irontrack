@@ -67,7 +67,7 @@ const Transactions = ({ user, affiliateId }) => {
                 <Table>
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                            <TableCell width="50px"></TableCell>
+
                             <TableCell>Created At</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Amount</TableCell>
@@ -88,11 +88,7 @@ const Transactions = ({ user, affiliateId }) => {
                                         onClick={() => handleRowClick(tx.id)}
                                         sx={{ cursor: 'pointer' }}
                                     >
-                                        <TableCell>
-                                            <IconButton size="small">
-                                                {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                            </IconButton>
-                                        </TableCell>
+
                                         <TableCell>{formatDate(tx.createdAt)}</TableCell>
                                         <TableCell>{tx.description}</TableCell>
                                         <TableCell sx={{

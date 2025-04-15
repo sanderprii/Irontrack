@@ -111,10 +111,9 @@ export default function PurchaseHistory({ userId, affiliateId }) {
                     <Table>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                <TableCell width="50px"></TableCell>
+
                                 <TableCell>Plan Name</TableCell>
                                 <TableCell>Purchase Date</TableCell>
-                                <TableCell>Training Types</TableCell>
                                 <TableCell>Price</TableCell>
                                 <TableCell>Status</TableCell>
                             </TableRow>
@@ -133,26 +132,10 @@ export default function PurchaseHistory({ userId, affiliateId }) {
                                             onClick={() => handleRowClick(purchase.id)}
                                             sx={{ cursor: 'pointer' }}
                                         >
-                                            <TableCell>
-                                                <IconButton size="small">
-                                                    {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                </IconButton>
-                                            </TableCell>
+
                                             <TableCell>{purchase.planName}</TableCell>
                                             <TableCell>{formatDate(purchase.purchasedAt)}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    {trainingTypes.map((type, index) => (
-                                                        <Chip
-                                                            key={index}
-                                                            label={type}
-                                                            size="small"
-                                                            color="primary"
-                                                            variant="outlined"
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            </TableCell>
+
                                             <TableCell sx={{ fontWeight: 'bold' }}>{purchase.price} €</TableCell>
                                             <TableCell>
                                                 <Chip

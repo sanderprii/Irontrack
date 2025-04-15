@@ -264,7 +264,7 @@ const CreditView = ({ user, affiliateId }) => {
                 <Table>
                     <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableRow>
-                            <TableCell width="50px"></TableCell>
+
                             <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
@@ -279,11 +279,7 @@ const CreditView = ({ user, affiliateId }) => {
                                     onClick={() => handleHistoryRowClick(entry.id)}
                                     sx={{ cursor: 'pointer' }}
                                 >
-                                    <TableCell>
-                                        <IconButton size="small">
-                                            {openHistoryRow === entry.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                        </IconButton>
-                                    </TableCell>
+
                                     <TableCell>{formatDate(entry.createdAt)}</TableCell>
                                     <TableCell>{entry.description}</TableCell>
                                     <TableCell>

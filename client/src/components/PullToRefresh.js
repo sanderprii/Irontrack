@@ -3,214 +3,213 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
-const PullToRefresh = ({ onRefresh, children, disabled = false }) => {
-    const [isPulling, setIsPulling] = useState(false);
+const PullToRefresh = ({ onRefresh, children }) => {
     const [refreshing, setRefreshing] = useState(false);
-    const pullStartY = useRef(0);
-    const pullMoveY = useRef(0);
-    const distanceThreshold = 80; // pikslites - kui kaugele peab tõmbama
-    const refreshIndicatorHeight = useRef(0);
+    const [pullProgress, setPullProgress] = useState(0);
     const containerRef = useRef(null);
-    const contentRef = useRef(null);
+    const startY = useRef(0);
+    const currentY = useRef(0);
+    const pulling = useRef(false);
+    const distanceThreshold = 70;
 
-    // PWA tuvastus - kas rakendus töötab standalone režiimis
-    const isPWA = () => {
+    // PWA detection - using multiple methods for better compatibility
+    const isPwa = () => {
         return window.matchMedia('(display-mode: standalone)').matches ||
             window.matchMedia('(display-mode: fullscreen)').matches ||
-            window.navigator.standalone === true;
+            window.navigator.standalone === true ||
+            document.referrer.includes('android-app://');
     };
 
     useEffect(() => {
-        // Määrame eraldi puutetundliku sündmuse kuulari PWA jaoks
-        const setupPwaListeners = () => {
-            if (contentRef.current) {
-                contentRef.current.addEventListener('touchstart', touchStart, { passive: true });
-                contentRef.current.addEventListener('touchmove', touchMove, { passive: false });
-                contentRef.current.addEventListener('touchend', touchEnd);
-            }
-        };
-
-        // PWA-spetsiifiline aktiveerimine, kui kontainer on laaditud
-        if (isPWA()) {
-            setupPwaListeners();
-
-            // PWA-s on oluline, et kogu scroll konteineri ümber oleks õigesti käsitletud
-            document.body.style.overscrollBehavior = 'none';
+        // Apply specific styles for PWA mode
+        if (isPwa()) {
             document.documentElement.style.overscrollBehavior = 'none';
+            document.body.style.overscrollBehavior = 'none';
+
+            // iOS-specific fix
+            if (window.navigator.standalone === true) {
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                document.body.style.height = '100%';
+            }
         }
 
-        // Puhastame lisatud stiilid ja sündmused
         return () => {
-            if (isPWA() && contentRef.current) {
-                contentRef.current.removeEventListener('touchstart', touchStart);
-                contentRef.current.removeEventListener('touchmove', touchMove);
-                contentRef.current.removeEventListener('touchend', touchEnd);
+            // Clean up styles
+            if (isPwa()) {
+                document.documentElement.style.overscrollBehavior = '';
+                document.body.style.overscrollBehavior = '';
+
+                if (window.navigator.standalone === true) {
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                    document.body.style.height = '';
+                }
             }
         };
     }, []);
 
-    // Puutetundlikud sündmused
-    const touchStart = (e) => {
-        if (disabled) return;
+    // Set up touch handlers directly on the document for PWA
+    useEffect(() => {
+        const handleTouchStart = (e) => {
+            if (window.scrollY <= 5) {
+                startY.current = e.touches[0].clientY;
+                currentY.current = startY.current;
+                pulling.current = true;
+            }
+        };
 
-        // Kontrollime, kas oleme lehe ülaosas (arvestades tolerantsi)
-        const isAtTop =
-            window.scrollY <= 5 ||
-            (contentRef.current && contentRef.current.scrollTop <= 5);
+        const handleTouchMove = (e) => {
+            if (!pulling.current) return;
 
-        if (isAtTop) {
-            pullStartY.current = e.touches[0].clientY;
-            setIsPulling(true);
-        }
-    };
+            currentY.current = e.touches[0].clientY;
+            const pullDistance = currentY.current - startY.current;
 
-    const touchMove = (e) => {
-        if (!isPulling || disabled) return;
+            // Only handle pull-down when at the top of the page
+            if (pullDistance > 0 && window.scrollY <= 5) {
+                // Calculate progress as a percentage
+                const newProgress = Math.min(1, pullDistance / distanceThreshold);
+                setPullProgress(newProgress);
 
-        pullMoveY.current = e.touches[0].clientY;
-        const pullDistance = pullMoveY.current - pullStartY.current;
+                // Apply transformation to the container
+                if (containerRef.current) {
+                    containerRef.current.style.transform = `translateY(${Math.min(pullDistance / 2.5, distanceThreshold)}px)`;
+                }
 
-        // Näitame visuaalset indikaatorit ainult kui tõmbame alla
-        if (pullDistance > 0) {
-            // PWA režiimis peame aktiivselt takistama tavalist kerimist
-            if (isPWA()) {
-                e.preventDefault();
-            } else {
-                // Tavaliselt kontrollime, kas oleme lehe ülaosas
-                const isAtTop =
-                    window.scrollY <= 5 ||
-                    (contentRef.current && contentRef.current.scrollTop <= 5);
-
-                if (isAtTop) {
+                // Important: In PWA mode we need to prevent default to avoid system behaviors
+                if (isPwa() || pullDistance > 10) {
                     e.preventDefault();
                 }
             }
-
-            // Arvutame indikaatori kõrguse, kasutades valemit, mis muudab liikumise sujuvamaks
-            refreshIndicatorHeight.current = Math.min(distanceThreshold, pullDistance * 0.5);
-
-            if (containerRef.current) {
-                containerRef.current.style.transform = `translateY(${refreshIndicatorHeight.current}px)`;
-            }
-        }
-    };
-
-    const touchEnd = async () => {
-        if (!isPulling || disabled) return;
-
-        // Kui tõmbamise kaugus on piisav, käivitame värskenduse
-        const pullDistance = pullMoveY.current - pullStartY.current;
-
-        if (pullDistance > distanceThreshold) {
-            setRefreshing(true);
-
-            if (typeof onRefresh === 'function') {
-                try {
-                    await onRefresh();
-                } catch (error) {
-                    console.error('Värskendamine ebaõnnestus:', error);
-                }
-            }
-        }
-
-        // Taastame algse oleku
-        resetPullState();
-    };
-
-    const resetPullState = () => {
-        setIsPulling(false);
-        setRefreshing(false);
-        pullStartY.current = 0;
-        pullMoveY.current = 0;
-
-        if (containerRef.current) {
-            // Lisame siirde efekti, et animeerida tagasi algasendisse
-            containerRef.current.style.transition = 'transform 0.3s ease-out';
-            containerRef.current.style.transform = 'translateY(0)';
-
-            // Eemaldame siirde pärast animatsiooni lõppu
-            setTimeout(() => {
-                if (containerRef.current) {
-                    containerRef.current.style.transition = '';
-                }
-            }, 300);
-        }
-    };
-
-    // Lisame dokumendi sündmuste kuularid tavalise brauseri jaoks (mitte-PWA)
-    useEffect(() => {
-        if (isPWA()) return; // PWA-s kasutame teisi kuulareid
-
-        // Standardsed sündmuste kuularid
-        document.addEventListener('touchstart', touchStart, { passive: true });
-        document.addEventListener('touchmove', touchMove, { passive: false });
-        document.addEventListener('touchend', touchEnd);
-
-        // Puhastame sündmuste kuularid
-        return () => {
-            document.removeEventListener('touchstart', touchStart);
-            document.removeEventListener('touchmove', touchMove);
-            document.removeEventListener('touchend', touchEnd);
         };
-    }, [isPulling, disabled]);
 
-    // Kontrollime puutetundlikku seadet
-    const isTouchDevice = 'ontouchstart' in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0;
+        const handleTouchEnd = async () => {
+            if (!pulling.current) return;
 
-    // Kui pole puutetundlik seade, tagastame lihtsalt lapsed
-    if (!isTouchDevice && !isPWA()) {
-        return <>{children}</>;
-    }
+            pulling.current = false;
+            const pullDistance = currentY.current - startY.current;
+
+            // Check if the pull was sufficient
+            if (pullDistance > distanceThreshold && window.scrollY <= 5) {
+                setRefreshing(true);
+
+                try {
+                    // Call the refresh function
+                    if (typeof onRefresh === 'function') {
+                        await onRefresh();
+                    }
+                } catch (error) {
+                    console.error('Refresh failed:', error);
+                } finally {
+                    setRefreshing(false);
+                }
+            }
+
+            // Reset to initial state
+            setPullProgress(0);
+            if (containerRef.current) {
+                containerRef.current.style.transition = 'transform 0.3s ease-out';
+                containerRef.current.style.transform = 'translateY(0)';
+
+                // Remove transition after animation completes
+                setTimeout(() => {
+                    if (containerRef.current) {
+                        containerRef.current.style.transition = '';
+                    }
+                }, 300);
+            }
+        };
+
+        // Set up event listeners
+        if (typeof window !== 'undefined') {
+            // For PWA mode, attach to document
+            if (isPwa()) {
+                document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                document.addEventListener('touchend', handleTouchEnd);
+            }
+            // For regular mode, attach to the container
+            else if (containerRef.current) {
+                containerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
+                containerRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
+                containerRef.current.addEventListener('touchend', handleTouchEnd);
+            }
+        }
+
+        // Clean up
+        return () => {
+            if (typeof window !== 'undefined') {
+                if (isPwa()) {
+                    document.removeEventListener('touchstart', handleTouchStart);
+                    document.removeEventListener('touchmove', handleTouchMove);
+                    document.removeEventListener('touchend', handleTouchEnd);
+                } else if (containerRef.current) {
+                    containerRef.current.removeEventListener('touchstart', handleTouchStart);
+                    containerRef.current.removeEventListener('touchmove', handleTouchMove);
+                    containerRef.current.removeEventListener('touchend', handleTouchEnd);
+                }
+            }
+        };
+    }, [onRefresh]);
 
     return (
-        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Värskendamise indikaator */}
+        <Box sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+            {/* Pull indicator */}
             <Box
                 sx={{
-                    height: refreshing ? `${distanceThreshold}px` : '0px',
-                    opacity: refreshing ? 1 : (refreshIndicatorHeight.current / distanceThreshold),
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    transition: refreshing ? 'height 0.2s ease-out' : 'none',
-                    overflow: 'hidden',
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    right: 0,
-                    zIndex: 1000
+                    width: '100%',
+                    height: refreshing ? '50px' : '0',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'transparent',
+                    transition: refreshing ? 'height 0.2s ease-out' : 'none',
+                    overflow: 'hidden',
+                    zIndex: 999,
+                    opacity: refreshing ? 1 : pullProgress,
+                    pointerEvents: 'none'
                 }}
             >
-                {refreshing ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '4px 12px', borderRadius: '16px' }}>
-                        <CircularProgress size={20} />
-                        <Typography variant="body2">Värskendamine...</Typography>
-                    </Box>
-                ) : (
-                    <Typography variant="body2" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '4px 12px', borderRadius: '16px' }}>
-                        Tõmba alla, et värskendada
-                    </Typography>
-                )}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: '20px',
+                        padding: '4px 12px',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    {refreshing ? (
+                        <>
+                            <CircularProgress size={16} thickness={4} />
+                            <Typography variant="caption">Refreshing...</Typography>
+                        </>
+                    ) : (
+                        <Typography variant="caption">
+                            {pullProgress >= 1 ? 'Release to refresh' : 'Pull down to refresh'}
+                        </Typography>
+                    )}
+                </Box>
             </Box>
 
-            {/* Sisu konteiner */}
+            {/* Content container */}
             <Box
                 ref={containerRef}
                 sx={{
                     width: '100%',
                     height: '100%',
                     willChange: 'transform',
-                    transition: refreshing ? 'transform 0.2s ease-out' : '',
-                    position: 'relative',
-                    zIndex: 1
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch' // Important for iOS
                 }}
             >
-                {/* Sisu ref lisamine */}
-                <Box ref={contentRef} sx={{ width: '100%', height: '100%' }}>
-                    {children}
-                </Box>
+                {children}
             </Box>
         </Box>
     );

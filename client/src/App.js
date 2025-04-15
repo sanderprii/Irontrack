@@ -5,13 +5,13 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-// ✅ Impordi AppTheme
+// ✅ Import AppTheme
 import AppTheme from './shared-theme/AppTheme';
 import {AuthContext} from './context/AuthContext';
 import { Helmet } from 'react-helmet-async';
 import './App.css';
 
-// Impordi muud komponendid
+// Import other components
 import ResponsiveNavbar from './components/ResponsiveNavbar';
 import HomePage from './pages/HomePage';
 
@@ -62,30 +62,31 @@ function App() {
     const [showRefreshMessage, setShowRefreshMessage] = useState(false);
 
     useEffect(() => {
-        // Kontrollime, kas rakendus töötab PWA režiimis
+        // Check if the app is running in PWA mode
         const checkIfPWA = () => {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
             const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
             const isIosPWA = window.navigator.standalone === true;
-            return isStandalone || isFullscreen || isIosPWA;
+            const isAndroidPWA = document.referrer.includes('android-app://');
+            return isStandalone || isFullscreen || isIosPWA || isAndroidPWA;
         };
 
         setIsPWA(checkIfPWA());
 
-        // Kuulame display-mode muutusi
+        // Listen for display-mode changes
         const mediaQueryList = window.matchMedia('(display-mode: standalone)');
         const handleChange = (e) => {
             setIsPWA(e.matches || checkIfPWA());
         };
 
-        // Lisame kuulari
+        // Add listener
         if (mediaQueryList.addEventListener) {
             mediaQueryList.addEventListener('change', handleChange);
-        } else if (mediaQueryList.addListener) { // vanemate brauserite tugi
+        } else if (mediaQueryList.addListener) { // Support for older browsers
             mediaQueryList.addListener(handleChange);
         }
 
-        // Puhastame kuulari
+        // Clean up listener
         return () => {
             if (mediaQueryList.removeEventListener) {
                 mediaQueryList.removeEventListener('change', handleChange);
@@ -95,28 +96,28 @@ function App() {
         };
     }, []);
 
-    // Funktsioon, mis värskendab rakenduse andmeid
+    // Function to refresh the application data
     const handleRefresh = useCallback(async () => {
         try {
-            console.log("Värskendamine algas...");
+            console.log("Refresh started...");
 
-            // Näitame teadet
+            // Show notification
             setShowRefreshMessage(true);
 
-            // Ootame natuke, et kasutaja näeks efekti
+            // Wait a bit for the user to see the effect
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Värskendame lehe
+            // Refresh the page
             window.location.reload();
 
             return { success: true };
         } catch (error) {
-            console.error("Värskendamine ebaõnnestus:", error);
+            console.error("Refresh failed:", error);
             throw error;
         }
     }, []);
 
-    // Sulgeme teate
+    // Close notification
     const handleCloseMessage = () => {
         setShowRefreshMessage(false);
     };
@@ -139,7 +140,7 @@ function App() {
                             <Route path="/" element={<MarketingPage/>}/>
                             <Route path="/classes" element={<Classes/>}/>
                             <Route path="/checkin" element={<Checkin/>}/>
-                            {/* Lisa vajadusel teisi marsruute */}
+                            {/* Add other routes as needed */}
                         </Routes>
                     </Box>
                 </AppTheme>
@@ -149,34 +150,37 @@ function App() {
 
     return (
         <HelmetProvider>
-            <AppTheme>  {/* ✅ Kasutame AppTheme kogu rakenduse ümber */}
+            <AppTheme>
                 <CssBaseline/>
                 <Helmet>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                    {/* PWA-spetsiifiline meta tag */}
+                    {/* PWA-specific meta tags */}
                     {isPWA && (
-                        <meta name="apple-mobile-web-app-capable" content="yes" />
+                        <>
+                            <meta name="apple-mobile-web-app-capable" content="yes" />
+                            <meta name="mobile-web-app-capable" content="yes" />
+                        </>
                     )}
                 </Helmet>
                 <ResponsiveNavbar/>
-                {/* Mähime kogu rakenduse sisu PullToRefresh komponendiga */}
+                {/* Wrap the entire app content with PullToRefresh */}
                 <PullToRefresh onRefresh={handleRefresh}>
                     <Box
                         sx={{
-                            // Kui on mobiilivaade ja kasutaja on sisse logitud (st bottom nav on nähtav)
-                            // jätame ekraani alla tühja ruumi
+                            // If mobile view and user is logged in (bottom nav is visible)
+                            // leave space at the bottom of the screen
                             pb: '56px',
                             width: '100%',
                             height: isPWA ? '100%' : 'auto',
-                            minHeight: 'calc(100vh - 56px)', // Lahuta bottom nav kõrgus
+                            minHeight: 'calc(100vh - 56px)', // Subtract bottom nav height
                             overflowX: 'hidden',
-                            // PWA režiimis on vaja eraldi juurdepääsu Y-kerimisele
-                            overflowY: isPWA ? 'auto' : 'visible'
+                            // In PWA mode, we need separate access to Y-scrolling
+                            overflowY: isPWA ? 'auto' : 'visible',
+                            WebkitOverflowScrolling: 'touch' // Important for iOS
                         }}
                     >
                         <Routes>
                             <Route path="/" element={<HomeRedirect/>}/>
-
                             <Route path="/trainings" element={<TrainingsPage/>}/>
                             <Route path="/records" element={<RecordsPage/>}/>
                             <Route path="/find-users" element={<FindUsersPage/>}/>
@@ -207,12 +211,12 @@ function App() {
                     </Box>
                 </PullToRefresh>
 
-                {/* Teade värskendamise kohta */}
+                {/* Notification about refreshing */}
                 <Snackbar
                     open={showRefreshMessage}
                     autoHideDuration={2000}
                     onClose={handleCloseMessage}
-                    message="Värskendamine..."
+                    message="Refreshing..."
                     anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                 />
             </AppTheme>

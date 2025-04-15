@@ -229,7 +229,7 @@ export default function AppAppBar() {
                         )}
 
                         {/* Paremal: Logout-nupp */}
-                        <HelpIcon color="primary"
+                        <HelpIcon color="primary" sx={{mr: 1}}
                                   onClick={() => navigate('/help')}/>
                         {isLoggedIn ? (
                             <IconButton color="primary" onClick={() => logout(navigate)} sx={{mr: 1}}>
@@ -302,7 +302,7 @@ export default function AppAppBar() {
 
                     <Box sx={{display: {xs: 'none', md: 'flex'}, gap: 1, mr: 2}}>
                         <HelpIcon color="primary"
-                                  sx={{margin: 1, pt: 1}}
+                                  sx={{margin: 1}}
                                   onClick={() => navigate('/help')}/>
                         {rightLinks.map((link) =>
                             link.action ? (

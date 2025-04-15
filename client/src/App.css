@@ -2,18 +2,19 @@
   text-align: center;
 }
 
-/* PWA-spetsiifilised stiilid - lisatud pull-to-refresh toetuseks */
+/* PWA-specific styles */
 @media all and (display-mode: standalone),
 all and (display-mode: fullscreen) {
   html, body {
-    /* Keelame brauseri enda pull-to-refresh */
+    /* Prevent browser's native pull-to-refresh */
     overscroll-behavior-y: none !important;
-    /* Takistame põrget lehe ülaosas/allosas */
+    /* Prevent bounce effect at the top/bottom of the page */
     overflow: hidden !important;
     height: 100% !important;
-    position: fixed !important;
     width: 100% !important;
     touch-action: manipulation;
+    margin: 0;
+    padding: 0;
   }
 
   #root {
@@ -21,6 +22,15 @@ all and (display-mode: fullscreen) {
     width: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* For iOS PWA specifically */
+@supports (-webkit-touch-callout: none) {
+  @media all and (display-mode: standalone) {
+    body {
+      position: fixed !important;
+    }
   }
 }
 
@@ -33,9 +43,9 @@ html, body, #root {
   overflow-x: hidden;
 }
 
-/* Standardsed mobiiliseadme stiilid (mitte-PWA) */
+/* Standard mobile device styles (non-PWA) */
 @media (hover: none) and (pointer: coarse) {
-  /* Need stiilid rakenduvad ainult puutetundlikel seadmetel */
+  /* These styles apply only to touch devices */
   html, body {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
@@ -44,9 +54,9 @@ html, body, #root {
 }
 
 input, textarea, select, button {
-  font-size: 16px !important; /* Vähemalt 16px, et vältida iOS automaatset suumimist */
+  font-size: 16px !important; /* At least 16px to prevent iOS auto-zoom */
   max-height: 100%;
-  touch-action: manipulation; /* Täiendav abi suumimise vältimiseks */
+  touch-action: manipulation; /* Additional help to prevent zooming */
 }
 
 .App-logo {
@@ -84,13 +94,13 @@ input, textarea, select, button {
   }
 }
 
-/* Vajalik PWA-s, et sisuelement oleks täisekraanil */
+/* Required for PWA to fill the screen */
 #root {
   height: 100%;
   width: 100%;
 }
 
-/* See aitab Safari brauseris kummitusklikkidega */
+/* Helps with ghost clicks in Safari */
 * {
   -webkit-tap-highlight-color: transparent;
 }

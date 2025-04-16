@@ -27,6 +27,9 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
+import CloseIcon from "@mui/icons-material/Close";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import LeaderboardModal from "./LeaderboardModal";
 import ProfileModal from "./ProfileModal";
 import SendMessageModal from './SendMessageModal';
@@ -71,6 +74,9 @@ export default function ClassModal({
     const [selectedUser, setSelectedUser] = useState(null);
     const [isProfileOpen, setProfileOpen] = useState(false);
 
+    // State for full-screen workout info
+    const [isWorkoutInfoFullScreen, setWorkoutInfoFullScreen] = useState(false);
+
     // Registration and waitlist states
     const [selectedPlanId, setSelectedPlanId] = useState(null);
     const [compatiblePlans, setCompatiblePlans] = useState([]);
@@ -108,6 +114,11 @@ export default function ClassModal({
         const role = localStorage.getItem("role");
         setUserRole(role);
     }, []);
+
+    // Toggle workout info full-screen
+    const toggleWorkoutInfoFullScreen = () => {
+        setWorkoutInfoFullScreen(!isWorkoutInfoFullScreen);
+    };
 
     // Kontrollime, kas klass on täis
     useEffect(() => {
@@ -589,6 +600,145 @@ export default function ClassModal({
 
     const isClassOver = new Date(cls.time) < new Date();
 
+    // Component for workout info in full-screen mode optimized for TV displays
+    const WorkoutInfoFullScreen = () => (
+        <Dialog
+            open={isWorkoutInfoFullScreen}
+            onClose={toggleWorkoutInfoFullScreen}
+            maxWidth="xl"
+            fullWidth
+            fullScreen
+        >
+            <DialogContent
+                sx={{
+                    position: "relative",
+                    backgroundColor: "#121212",
+                    color: "white",
+                    p: 0,
+                    pt: 3,
+                    m: 0,
+                    height: "100vh",
+                    width: "100vw",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column"
+                }}
+            >
+                {/* Small close button */}
+                <IconButton
+                    onClick={toggleWorkoutInfoFullScreen}
+                    sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        color: "white",
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        width: 36,
+                        height: 36,
+                        zIndex: 2000,
+                        "&:hover": {
+                            backgroundColor: "rgba(255,255,255,0.3)",
+                        }
+                    }}
+                >
+                    <CloseIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+
+                {/* Time and trainer info at the top */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        backgroundColor: "rgba(0,0,0,0.3)",
+                        py: 1,
+                        px: 2,
+                        mr: 4,
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            fontSize: { xs: "1rem", sm: "1.2rem" },
+                            color: "#aaa"
+                        }}
+                    >
+                        <strong>🕒 {new Date(cls.time).toLocaleString()}</strong>
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontSize: { xs: "1rem", sm: "1.2rem" },
+                            color: "#aaa"
+                        }}
+                    >
+                        <strong>🏋️ {cls.trainer || "N/A"}</strong>
+                    </Typography>
+                </Box>
+
+                {/* Secondary info (WOD name and type) */}
+                <Box sx={{ px: 3, pt: 2 }}>
+                    {cls.wodName && (
+                        <Typography
+                            sx={{
+                                fontWeight: "bold",
+                                color: "#ff9800",
+                                mb: 1,
+                                fontSize: { xs: "1.5rem", sm: "1.8rem", md: "2rem" },
+                                lineHeight: 1.2
+                            }}
+                        >
+                            🔥 {cls.wodName}
+                        </Typography>
+                    )}
+
+                    {cls.wodType && cls.trainingType === "WOD" && (
+                        <Typography
+                            sx={{
+                                color: "#64b5f6",
+                                mb: 2,
+                                fontStyle: "italic",
+                                fontSize: { xs: "1.2rem", sm: "1.4rem", md: "1.6rem" },
+                                fontWeight: "500",
+                            }}
+                        >
+                            {cls.wodType}
+                        </Typography>
+                    )}
+                </Box>
+
+                {/* Description centered on the page */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flex: 1,
+                        px: 3,
+                        overflow: "auto"
+                    }}
+                >
+                    {cls.description && (
+                        <Typography
+                            sx={{
+                                color: "white",
+                                whiteSpace: "pre-line",
+                                fontSize: { xs: "1.8rem", sm: "2.2rem", md: "2.8rem", lg: "3.2rem" },
+                                lineHeight: { xs: 1.4, sm: 1.5, md: 1.6 },
+                                fontWeight: "500",
+                                letterSpacing: "0.02em",
+                                "& strong": { color: "#81c784" },
+                                wordBreak: "break-word",
+                                maxWidth: "100%"
+                            }}
+                        >
+                            {cls.description}
+                        </Typography>
+                    )}
+                </Box>
+            </DialogContent>
+        </Dialog>
+    );
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
@@ -644,33 +794,59 @@ export default function ClassModal({
                             )}
                         </Box>
                     </Grid>
-                    {cls.trainingType === 'WOD' || cls.trainingType === 'Weightlifting' ? (
 
+                    {cls.trainingType === 'WOD' || cls.trainingType === 'Weightlifting' ? (
                         <Grid item xs={12} md={6}>
                             <Box
                                 sx={{
                                     backgroundColor: "#ccc",
                                     padding: 2,
                                     borderRadius: "8px",
-
+                                    position: "relative",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#bbb",
+                                    }
                                 }}
+                                onClick={toggleWorkoutInfoFullScreen}
                             >
+                                <Box sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    backgroundColor: "rgba(0,0,0,0.1)",
+                                    borderRadius: "50%",
+                                    width: 32,
+                                    height: 32,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}>
+                                    <FullscreenIcon fontSize="small" />
+                                </Box>
+
                                 <Typography
                                     variant="h6"
                                     sx={{fontWeight: "bold", marginBottom: 1}}
                                 >
                                     Workout Info
                                 </Typography>
-                                <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
-                                    <strong>🔥{cls.wodName || "None"}</strong>
-                                </Typography>
-                                <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
-                                    <strong>{cls.wodType || "None"}</strong>
-                                </Typography>
-                                <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
-                                    <strong></strong>{" "}
-                                    {cls.description || "No description available"}
-                                </Typography>
+                                { cls.wodName && (
+                                    <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
+                                        <strong>🔥{cls.wodName}</strong>
+                                    </Typography>
+                                )}
+                                { cls.wodType && cls.trainingType === "WOD" && (
+                                    <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
+                                        <strong>{cls.wodType}</strong>
+                                    </Typography>
+                                )}
+                                { cls.description && (
+                                    <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
+                                        {cls.description}
+                                    </Typography>
+                                )}
                             </Box>
                         </Grid>
                     ) : (
@@ -1132,6 +1308,9 @@ export default function ClassModal({
                 </Button>
             </DialogActions>
 
+            {/* Full-screen workout info component */}
+            {isWorkoutInfoFullScreen && <WorkoutInfoFullScreen />}
+
             <LeaderboardModal
                 open={isLeaderboardOpen}
                 onClose={() => setLeaderboardOpen(false)}
@@ -1153,8 +1332,6 @@ export default function ClassModal({
                     fullName: attendee.fullName
                 })) : []}
             />
-
-            {/* ADDED: New confirmation dialogs */}
 
             {/* Cancel Registration Confirmation Dialog */}
             <Dialog

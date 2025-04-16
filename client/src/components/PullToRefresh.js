@@ -10,7 +10,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const startY = useRef(0);
     const currentY = useRef(0);
     const pulling = useRef(false);
-    const distanceThreshold = 70;
+    const distanceThreshold = 110;
 
     useEffect(() => {
         const handleTouchStart = (e) => {

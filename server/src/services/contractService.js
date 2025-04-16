@@ -191,17 +191,39 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
         if (isPaymentHoliday) {
 
 
+            const userPlan = await prisma.userPlan.findFirst({
+                where: {contractId: parseInt(contractId)}
+            });
+
+            if (!userPlan) {
+                return false;
+            }
+
             await prisma.userPlan.update({
-                where: {contractId: contractId},
+                where: {id: userPlan.id},
                 data: {paymentHoliday: true}
-            })
+            });
+
+
 
 
         } else {
+
+            const userPlan = await prisma.userPlan.findFirst({
+                where: {contractId: parseInt(contractId)},
+
+            });
+
+            if (!userPlan) {
+                return false;
+            }
+
             await prisma.userPlan.update({
-                where: {contractId: contractId},
+                where: {id: userPlan.id},
                 data: {paymentHoliday: false}
-            })
+            });
+
+
         }
 
         const userPlan = await prisma.userPlan.findFirst({

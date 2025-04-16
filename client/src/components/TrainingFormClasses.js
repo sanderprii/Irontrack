@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, MenuItem, FormControl, FormLabel,
-    RadioGroup, FormControlLabel, Radio
+    RadioGroup, FormControlLabel, Radio, TextareaAutosize
 } from "@mui/material";
 
 export default function TrainingModal({ open, onClose, onSave, selectedClass }) {
@@ -206,13 +206,23 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                     margin="dense"
                 />
 
-                <TextField
-                    fullWidth
-                    label="Description"
-                    name="description"
+                <TextareaAutosize
+                    minRows={3}
+                    maxRows={10}
+                    placeholder="Description"
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        borderColor: '#AAAAAA',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                    }}
                     value={trainingData.description}
                     onChange={handleChange}
-                    margin="dense"
+                    name="description" // Preserved from TextField to ensure handleChange works correctly
                 />
 
                 {/* Repeat Weekly Radio Buttons */}

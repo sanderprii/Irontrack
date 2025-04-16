@@ -18,6 +18,9 @@ import SecurityIcon from "@mui/icons-material/Security";
 import DataUsageIcon from "@mui/icons-material/DataUsage";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import UpdateIcon from "@mui/icons-material/Update";
+import ChildCareIcon from "@mui/icons-material/ChildCare";
+import PublicIcon from "@mui/icons-material/Public";
+import PaymentIcon from "@mui/icons-material/Payment";
 import { Link } from "react-router-dom";
 import SEO from '../components/SEO';
 
@@ -44,7 +47,7 @@ const SubHeading = styled(Typography)(({ theme }) => ({
 }));
 
 export default function PrivacyPolicy() {
-    const lastUpdated = "March 20, 2025";
+    const lastUpdated = "April 16, 2025";
 
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -72,11 +75,15 @@ export default function PrivacyPolicy() {
                 </Box>
 
                 <Typography paragraph>
-                    Welcome to IronTrack ("we," "our," or "us"). We are committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our gym management platform.
+                    Welcome to IronTrack ("we," "our," or "us"). We are committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and website (the "Application").
                 </Typography>
 
                 <Typography paragraph>
-                    By using IronTrack, you consent to the data practices described in this policy. If you do not agree with the data practices described, you should not use our platform.
+                    Irontrack OÜ, registration code 17184398, email: info@irontrack.ee, is the data controller responsible for your personal data.
+                </Typography>
+
+                <Typography paragraph>
+                    By using our Application, you consent to the data practices described in this policy. If you do not agree with the data practices described, you should not use our Application.
                 </Typography>
 
                 <SectionHeading variant="h5" component="h2">
@@ -105,19 +112,60 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Profile information (profile picture, physical address, emergency contact)" />
+                        <ListItemText primary="Account information (username, password)" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Payment and billing information" />
+                        <ListItemText primary="Profile information (profile picture if provided)" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Fitness data (workout records, training history, class attendance)" />
+                        <ListItemText primary="Training preferences and history" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Fitness activity data (class registrations, attendance)" />
+                    </ListItem>
+                </List>
+
+                <SubHeading variant="h6" component="h3">
+                    Payment Information
+                </SubHeading>
+
+                <Typography paragraph>
+                    When you make purchases through our Application:
+                </Typography>
+
+                <List>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="All payment processing is handled through Montonio payment solution" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="We do not collect, store, or process your payment card details on our servers" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Montonio collects and processes the payment information necessary to complete transactions" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="We may receive and store certain transaction details (such as purchase date, amount, and confirmation of payment) to maintain records of your service purchases" />
                     </ListItem>
                 </List>
 
@@ -126,7 +174,7 @@ export default function PrivacyPolicy() {
                 </SubHeading>
 
                 <Typography paragraph>
-                    When you access our platform, we may automatically collect certain information, including:
+                    When you access our Application, we may automatically collect certain information, including:
                 </Typography>
 
                 <List>
@@ -140,13 +188,13 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Usage information (pages visited, time spent on platform, features used)" />
+                        <ListItemText primary="Usage information (features used, actions taken within the Application)" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Cookies and similar technologies" />
+                        <ListItemText primary="Log data (access times, pages viewed)" />
                     </ListItem>
                 </List>
 
@@ -172,7 +220,7 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Processing transactions and managing subscriptions" />
+                        <ListItemText primary="Processing transactions through Montonio payment solution" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
@@ -196,7 +244,7 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Monitoring usage patterns and analyzing trends" />
+                        <ListItemText primary="Monitoring usage patterns to enhance Application functionality" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
@@ -204,7 +252,106 @@ export default function PrivacyPolicy() {
                         </ListItemIcon>
                         <ListItemText primary="Detecting and preventing fraud and security incidents" />
                     </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Complying with legal obligations" />
+                    </ListItem>
                 </List>
+
+                <Typography paragraph>
+                    We process your personal data only to the extent necessary to fulfill these purposes and to provide you with the best user experience.
+                </Typography>
+
+                <SectionHeading variant="h5" component="h2">
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <PaymentIcon sx={{ mr: 2 }} />
+                        Payment Processing
+                    </Box>
+                </SectionHeading>
+
+                <SubHeading variant="h6" component="h3">
+                    Montonio Payment Integration
+                </SubHeading>
+
+                <Typography paragraph>
+                    Our Application uses Montonio for payment processing. When you make payments:
+                </Typography>
+
+                <List>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="You will be redirected to Montonio's secure payment environment" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Payment information is entered directly into Montonio's systems, not on our servers" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Montonio processes payments in accordance with industry-standard security protocols and compliance standards" />
+                    </ListItem>
+                </List>
+
+                <SubHeading variant="h6" component="h3">
+                    Transaction Information
+                </SubHeading>
+
+                <Typography paragraph>
+                    For each transaction processed through Montonio, we receive and may store:
+                </Typography>
+
+                <List>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Transaction reference numbers" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Purchase amounts and currency" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Date and time of transaction" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Confirmation of successful or unsuccessful payment" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Service or package purchased" />
+                    </ListItem>
+                </List>
+
+                <Typography paragraph>
+                    We do not receive or store your complete payment card details.
+                </Typography>
+
+                <SubHeading variant="h6" component="h3">
+                    Relationship with Montonio
+                </SubHeading>
+
+                <Typography paragraph>
+                    Montonio acts as a data processor with respect to your payment information. They process this data solely for the purpose of completing the transactions you authorize through our Application. Montonio's processing of your payment information is subject to their own Privacy Policy and Terms of Service.
+                </Typography>
 
                 <SectionHeading variant="h5" component="h2">
                     <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -213,8 +360,12 @@ export default function PrivacyPolicy() {
                     </Box>
                 </SectionHeading>
 
+                <SubHeading variant="h6" component="h3">
+                    Service Providers
+                </SubHeading>
+
                 <Typography paragraph>
-                    We may share your information in the following circumstances:
+                    We may share your information with third-party service providers who perform services on our behalf, including:
                 </Typography>
 
                 <List>
@@ -222,30 +373,56 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="With gym owners and trainers authorized to access member information" />
+                        <ListItemText primary="Montonio for payment processing" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="With service providers that help us deliver our services (payment processors, email service providers)" />
+                        <ListItemText primary="Cloud storage providers" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="When required by law or to protect our rights" />
-                    </ListItem>
-                    <ListItem>
-                        <ListItemIcon>
-                            <ArrowRightIcon color="primary" />
-                        </ListItemIcon>
-                        <ListItemText primary="In connection with a business transaction (merger, sale, or acquisition)" />
+                        <ListItemText primary="IT and system administration services" />
                     </ListItem>
                 </List>
 
                 <Typography paragraph>
-                    We do not sell your personal information to third parties.
+                    These service providers have access to your personal information only to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
+                </Typography>
+
+                <SubHeading variant="h6" component="h3">
+                    Gym Owners and Service Providers
+                </SubHeading>
+
+                <Typography paragraph>
+                    Information related to your training activities may be shared with gym owners and service providers with whom you register for classes through our Application. This is necessary for the provision of the services you request.
+                </Typography>
+
+                <SubHeading variant="h6" component="h3">
+                    Legal Requirements
+                </SubHeading>
+
+                <Typography paragraph>
+                    We may disclose your information if required to do so by law or in response to valid requests by public authorities (e.g., a court or government agency).
+                </Typography>
+
+                <SubHeading variant="h6" component="h3">
+                    Business Transfers
+                </SubHeading>
+
+                <Typography paragraph>
+                    If we are involved in a merger, acquisition, or sale of all or a portion of our assets, your information may be transferred as part of that transaction. We will notify you via email and/or a prominent notice on our Application of any change in ownership or uses of your personal information.
+                </Typography>
+
+                <SubHeading variant="h6" component="h3">
+                    Third-Party Disclosure Limitations
+                </SubHeading>
+
+                <Typography paragraph>
+                    We do not sell, trade, or otherwise transfer your personal information to third parties except as described in this Privacy Policy. We do not share your data with third parties for marketing purposes.
                 </Typography>
 
                 <SectionHeading variant="h5" component="h2">
@@ -293,12 +470,12 @@ export default function PrivacyPolicy() {
                 <SectionHeading variant="h5" component="h2">
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <DataUsageIcon sx={{ mr: 2 }} />
-                        Your Rights and Choices
+                        Your Rights Under GDPR
                     </Box>
                 </SectionHeading>
 
                 <Typography paragraph>
-                    Depending on your location, you may have certain rights regarding your personal information, including:
+                    Under the General Data Protection Regulation (GDPR), if you are a resident of the European Economic Area (EEA), you have certain data protection rights. You have the right to:
                 </Typography>
 
                 <List>
@@ -306,36 +483,48 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Access and obtain a copy of your data" />
+                        <ListItemText primary="Access your personal data" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Rectify or update inaccurate or incomplete information" />
+                        <ListItemText primary="Rectify inaccurate or incomplete personal data" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Request deletion of your data (subject to legal obligations)" />
+                        <ListItemText primary="Erase your personal data ('right to be forgotten')" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Restrict or object to processing of your data" />
+                        <ListItemText primary="Restrict processing of your personal data" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Data portability (receiving your data in a structured format)" />
+                        <ListItemText primary="Object to processing of your personal data" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Data portability (receive your data in a structured, machine-readable format)" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Withdraw consent at any time where we relied on your consent to process your personal data" />
                     </ListItem>
                 </List>
 
                 <Typography paragraph>
-                    To exercise these rights, please contact us using the information in the "Contact Us" section below.
+                    To exercise these rights, please contact us at info@irontrack.ee.
                 </Typography>
 
                 <SectionHeading variant="h5" component="h2">
@@ -345,8 +534,12 @@ export default function PrivacyPolicy() {
                     </Box>
                 </SectionHeading>
 
+                <SubHeading variant="h6" component="h3">
+                    General Data Retention
+                </SubHeading>
+
                 <Typography paragraph>
-                    We retain your personal information for as long as necessary to provide our services and fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law. When determining how long to retain information, we consider:
+                    We will retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. The criteria used to determine our retention periods include:
                 </Typography>
 
                 <List>
@@ -354,31 +547,75 @@ export default function PrivacyPolicy() {
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="The nature and sensitivity of the data" />
+                        <ListItemText primary="The period needed to provide you with the services you have requested" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Our legal obligations" />
+                        <ListItemText primary="Whether there are legal obligations to which we are subject" />
                     </ListItem>
                     <ListItem>
                         <ListItemIcon>
                             <ArrowRightIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary="Potential risks of unauthorized access or disclosure" />
+                        <ListItemText primary="Whether retention is advisable considering our legal position (such as for statutes of limitations, litigation, or regulatory investigations)" />
                     </ListItem>
                 </List>
 
+                <SubHeading variant="h6" component="h3">
+                    Payment Data Retention
+                </SubHeading>
+
+                <Typography paragraph>
+                    For payment-related data:
+                </Typography>
+
+                <List>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="Transaction records are retained for a period of 7 years to comply with accounting and tax regulations" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="After this period, transaction data is either deleted or anonymized" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <ArrowRightIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary="We do not store your complete payment card details at any time" />
+                    </ListItem>
+                </List>
+
+                <Typography paragraph>
+                    After you have terminated your use of our services, we may store your information in an aggregated and anonymized format.
+                </Typography>
+
                 <SectionHeading variant="h5" component="h2">
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <DataUsageIcon sx={{ mr: 2 }} />
+                        <ChildCareIcon sx={{ mr: 2 }} />
+                        Children's Privacy
+                    </Box>
+                </SectionHeading>
+
+                <Typography paragraph>
+                    Our Application is not intended for children under the age of 18. We do not knowingly collect personal information from children under 18. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at info@irontrack.ee, and we will take steps to remove such information.
+                </Typography>
+
+                <SectionHeading variant="h5" component="h2">
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <PublicIcon sx={{ mr: 2 }} />
                         International Data Transfers
                     </Box>
                 </SectionHeading>
 
                 <Typography paragraph>
-                    Your information may be transferred to and processed in countries other than your country of residence, which may have different data protection laws. We ensure that appropriate safeguards are in place to protect your information when transferred internationally.
+                    Your information may be transferred to and processed in countries other than your country of residence, which may have different data protection laws. We ensure that appropriate safeguards are in place to protect your information when transferred internationally, in compliance with applicable data protection laws.
                 </Typography>
 
                 <SectionHeading variant="h5" component="h2">
@@ -389,7 +626,7 @@ export default function PrivacyPolicy() {
                 </SectionHeading>
 
                 <Typography paragraph>
-                    We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will notify you of any material changes by posting the updated policy on our platform and updating the "Last Updated" date. Your continued use of IronTrack after such changes indicates your acceptance of the updated policy.
+                    We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will notify you of any material changes by posting the updated policy on our Application and updating the "Last Updated" date. Your continued use of the Application after such changes indicates your acceptance of the updated policy.
                 </Typography>
 
                 <SectionHeading variant="h5" component="h2">
@@ -404,9 +641,8 @@ export default function PrivacyPolicy() {
                 </Typography>
 
                 <Box sx={{ pl: 3, mb: 3 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>IronTrack OÜ</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>Irontrack OÜ</Typography>
                     <Typography>Email: info@irontrack.ee</Typography>
-
                 </Box>
 
                 <Divider sx={{ my: 4 }} />

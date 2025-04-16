@@ -159,7 +159,8 @@ const updateClass = async (req, res) => {
         location,
         repeatWeekly,
         wodName,
-        wodType
+        wodType,
+        description
     } = req.body;
     const data = req.body;
 
@@ -190,7 +191,8 @@ const updateClass = async (req, res) => {
                 location,
                 repeatWeekly,
                 wodName: wodName.toUpperCase(),
-                wodType
+                wodType,
+                description
             }
         });
         if (repeatWeekly < 1) {

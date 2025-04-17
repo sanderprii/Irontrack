@@ -339,6 +339,7 @@ const assignPlanToUser = async (req, res) => {
                 price: plan.price,
                 endDate: endDate,
                 sessionsLeft: plan.sessions,
+                trainingType: plan.trainingType,
             },
         });
         await prisma.$transaction(async (prisma) => {

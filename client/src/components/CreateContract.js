@@ -155,33 +155,46 @@ export default function CreateContract({ open, onClose, affiliateId }) {
     };
 
     // Improved helper component tooltip (compact version)
-    const InfoTooltip = ({ title }) => (
-        <Box
-            component="span"
-            sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                mr: 1,
-                position: 'relative',
-                '&:hover::after': {
-                    content: `"${title}"`,
-                    position: 'absolute',
-                    top: '-24px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'rgba(97, 97, 97, 0.9)',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem',
-                    whiteSpace: 'nowrap',
-                    zIndex: 1000
-                }
-            }}
-        >
-            <InfoIcon fontSize="small" color="action" sx={{ fontSize: '16px' }} />
-        </Box>
-    );
+    const InfoTooltip = ({ title }) => {
+        const [isOpen, setIsOpen] = useState(false);
+
+        return (
+            <Box
+                component="span"
+                sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    mr: 1,
+                    position: 'relative',
+                }}
+                onMouseEnter={() => setIsOpen(true)}
+                onMouseLeave={() => setIsOpen(false)}
+            >
+                <InfoIcon fontSize="small" color="action" sx={{ fontSize: '16px' }} />
+                {isOpen && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '-40px',
+                            left: '50%',
+
+                            backgroundColor: 'rgba(97, 97, 97, 0.9)',
+                            color: 'white',
+                            padding: '6px 10px',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            maxWidth: '250px', // Piirab tooltip'i laiust
+                            whiteSpace: 'normal', // Lubab tekstil murduda
+                            zIndex: 1000,
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {title}
+                    </Box>
+                )}
+            </Box>
+        );
+    };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -259,9 +272,9 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
                 {/* Contract type */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Type of contract" />
+                    <InfoTooltip title="Contract name" />
                     <TextField
-                        label="Contract Type"
+                        label="Contract Name"
                         value={contractType}
                         onChange={(e) => setContractType(e.target.value)}
                         fullWidth
@@ -270,7 +283,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
                 {/* Payment Amount */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Amount per period" />
+                    <InfoTooltip title="Amount per period. If you want to recive transactions outside this application, then put it 0." />
                     <TextField
                         label="Payment Amount"
                         type="number"

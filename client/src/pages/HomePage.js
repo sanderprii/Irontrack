@@ -10,7 +10,16 @@ import {
     CardContent,
     useTheme,
     useMediaQuery,
-    alpha
+    alpha,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
+    Stepper,
+    Step,
+    StepLabel,
+    Paper
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Slider from "react-slick";
@@ -29,6 +38,14 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import ClassIcon from "@mui/icons-material/Class";
 import TimelineIcon from "@mui/icons-material/Timeline";
+import AppleIcon from "@mui/icons-material/Apple";
+import AndroidIcon from "@mui/icons-material/Android";
+import CloseIcon from "@mui/icons-material/Close";
+import ShareIcon from "@mui/icons-material/Share";
+import AddToHomeScreenIcon from "@mui/icons-material/AddToHomeScreen";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import MenuIcon from "@mui/icons-material/Menu";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { motion } from "framer-motion";
 
 import { getAllStatistics } from "../api/statisticsApi";
@@ -41,6 +58,19 @@ const carouselImages = [
     "https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 ];
 
+// Images for PWA installation guides
+const iOSImages = [
+    "/images/pwa/ios-step1.jpg",
+    "/images/pwa/ios-step2.jpg",
+    "/images/pwa/ios-step3.jpg",
+];
+
+const androidImages = [
+    "/images/pwa/android-step1.jpg",
+    "/images/pwa/android-step2.jpg",
+    "/images/pwa/android-step3.jpg",
+];
+
 // Värvipalett
 const colors = {
     primary: "#0072E5",
@@ -50,6 +80,278 @@ const colors = {
     darkGray: "#212529",
     white: "#FFFFFF",
     statsBg: "rgba(0, 114, 229, 0.05)" // Helesinine statistika sektsioonile
+};
+
+// PWA Installation Tutorial Modal for iOS
+const IOSInstallModal = ({ open, handleClose }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [activeStep, setActiveStep] = useState(0);
+
+    const steps = [
+        {
+            label: "Open Safari",
+            description: "This feature only works in Safari browser on iOS. Open your website in Safari.",
+            image: iOSImages[0],
+        },
+        {
+            label: "Tap Share Button",
+            description: "Tap the share button at the bottom of your browser (box with arrow pointing up).",
+            image: iOSImages[1],
+        },
+        {
+            label: "Add to Home Screen",
+            description: "Scroll down and tap 'Add to Home Screen'. Then tap 'Add' in the top right corner.",
+            image: iOSImages[2],
+        }
+    ];
+
+    const handleNext = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    };
+
+    const handleBack = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    borderRadius: 2,
+                    overflow: 'hidden'
+                }
+            }}
+            fullScreen={isMobile}
+        >
+            <DialogTitle sx={{
+                bgcolor: colors.primary,
+                color: 'white',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: 3,
+                py: 2
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AppleIcon />
+                    <Typography variant="h6" component="div">
+                        Install IronTrack on iOS
+                    </Typography>
+                </Box>
+                <IconButton
+                    edge="end"
+                    color="inherit"
+                    onClick={handleClose}
+                    aria-label="close"
+                >
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ p: 3, mt: 2 }}>
+                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+                    {steps.map((step) => (
+                        <Step key={step.label}>
+                            <StepLabel>{step.label}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <Typography variant="h6" gutterBottom>
+                        {steps[activeStep].label}
+                    </Typography>
+                    <Typography variant="body1" paragraph sx={{ mb: 3 }}>
+                        {steps[activeStep].description}
+                    </Typography>
+                    <Box
+                        component="img"
+                        src={steps[activeStep].image}
+                        alt={`iOS installation step ${activeStep + 1}`}
+                        sx={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            maxHeight: '350px',
+                            border: '1px solid #eee',
+                            borderRadius: 2,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            mb: 2
+                        }}
+                    />
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
+                <Button
+                    disabled={activeStep === 0}
+                    onClick={handleBack}
+                    variant="outlined"
+                >
+                    Back
+                </Button>
+                <Box>
+                    {activeStep === steps.length - 1 ? (
+                        <Button
+                            onClick={handleClose}
+                            variant="contained"
+                            color="primary"
+                        >
+                            Done
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            color="primary"
+                        >
+                            Next
+                        </Button>
+                    )}
+                </Box>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+// PWA Installation Tutorial Modal for Android
+const AndroidInstallModal = ({ open, handleClose }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [activeStep, setActiveStep] = useState(0);
+
+    const steps = [
+        {
+            label: "Open Chrome",
+            description: "Visit the IronTrack website using Google Chrome on your Android device.",
+            image: androidImages[0],
+        },
+        {
+            label: "Menu Options",
+            description: "Tap the three dots menu in the top right corner, then select 'Add to Home screen'.",
+            image: androidImages[1],
+        },
+        {
+            label: "Confirm Installation",
+            description: "Review the app information, then tap 'Add' to install it on your home screen.",
+            image: androidImages[2],
+        }
+    ];
+
+    const handleNext = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    };
+
+    const handleBack = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    borderRadius: 2,
+                    overflow: 'hidden'
+                }
+            }}
+            fullScreen={isMobile}
+        >
+            <DialogTitle sx={{
+                bgcolor: '#3ddc84', // Android green
+                color: 'white',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: 3,
+                py: 2
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AndroidIcon />
+                    <Typography variant="h6" component="div">
+                        Install IronTrack on Android
+                    </Typography>
+                </Box>
+                <IconButton
+                    edge="end"
+                    color="inherit"
+                    onClick={handleClose}
+                    aria-label="close"
+                >
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ p: 3, mt: 2 }}>
+                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+                    {steps.map((step) => (
+                        <Step key={step.label}>
+                            <StepLabel>{step.label}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <Typography variant="h6" gutterBottom>
+                        {steps[activeStep].label}
+                    </Typography>
+                    <Typography variant="body1" paragraph sx={{ mb: 3 }}>
+                        {steps[activeStep].description}
+                    </Typography>
+                    <Box
+                        component="img"
+                        src={steps[activeStep].image}
+                        alt={`Android installation step ${activeStep + 1}`}
+                        sx={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            maxHeight: '350px',
+                            border: '1px solid #eee',
+                            borderRadius: 2,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            mb: 2
+                        }}
+                    />
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
+                <Button
+                    disabled={activeStep === 0}
+                    onClick={handleBack}
+                    variant="outlined"
+                >
+                    Back
+                </Button>
+                <Box>
+                    {activeStep === steps.length - 1 ? (
+                        <Button
+                            onClick={handleClose}
+                            variant="contained"
+                            sx={{ bgcolor: '#3ddc84', '&:hover': { bgcolor: '#32b770' } }}
+                        >
+                            Done
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            sx={{ bgcolor: '#3ddc84', '&:hover': { bgcolor: '#32b770' } }}
+                        >
+                            Next
+                        </Button>
+                    )}
+                </Box>
+            </DialogActions>
+        </Dialog>
+    );
 };
 
 // Modernne statistika komponent animeeritud numbritega
@@ -268,9 +570,27 @@ export default function HomePage() {
         records: 0
     });
     const [loading, setLoading] = useState(true);
+    const [iOSModalOpen, setIOSModalOpen] = useState(false);
+    const [androidModalOpen, setAndroidModalOpen] = useState(false);
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const handleOpenIOSModal = () => {
+        setIOSModalOpen(true);
+    };
+
+    const handleCloseIOSModal = () => {
+        setIOSModalOpen(false);
+    };
+
+    const handleOpenAndroidModal = () => {
+        setAndroidModalOpen(true);
+    };
+
+    const handleCloseAndroidModal = () => {
+        setAndroidModalOpen(false);
+    };
 
     useEffect(() => {
         const fetchStatistics = async () => {
@@ -324,6 +644,33 @@ export default function HomePage() {
         ),
     };
 
+    // Styled AppButton component for iOS and Android
+    const AppButton = ({ icon, label, bgColor, onClick }) => (
+        <Button
+            variant="contained"
+            startIcon={icon}
+            onClick={onClick}
+            sx={{
+                py: 1.2,
+                px: 3,
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                borderRadius: 2,
+                bgcolor: bgColor,
+                textTransform: "none",
+                boxShadow: `0 4px 10px ${alpha(bgColor, 0.3)}`,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: `0 6px 15px ${alpha(bgColor, 0.5)}`,
+                    bgcolor: alpha(bgColor, 0.9)
+                }
+            }}
+        >
+            {label}
+        </Button>
+    );
+
     return (
         <>
             <SEO
@@ -334,6 +681,16 @@ export default function HomePage() {
                 ogImage="https://www.irontrack.ee/images/og-image.jpg"
             />
             <Box sx={{ overflowX: 'hidden' }}>
+                {/* PWA Installation Modals */}
+                <IOSInstallModal
+                    open={iOSModalOpen}
+                    handleClose={handleCloseIOSModal}
+                />
+                <AndroidInstallModal
+                    open={androidModalOpen}
+                    handleClose={handleCloseAndroidModal}
+                />
+
                 {/* HERO KARUSSELL */}
                 <Box sx={{ position: "relative" }}>
                     <Slider {...settings}>
@@ -401,12 +758,7 @@ export default function HomePage() {
                                                     "Specifically designed for CrossFit owners and coaches, our platform simplifies member management, automates payments, and powers your community—so you can focus on what really matters: helping athletes reach their goals."}
                                             </Typography>
 
-                                            <Stack
-                                                direction={{ xs: "column", sm: "row" }}
-                                                spacing={{ xs: 2, sm: 3 }}
-                                                justifyContent="center"
-                                                sx={{ mt: 3 }}
-                                            >
+                                            <Box sx={{ mt: 3 }}>
                                                 <Button
                                                     variant="contained"
                                                     size="large"
@@ -429,31 +781,48 @@ export default function HomePage() {
                                                 >
                                                     Get Started Now
                                                 </Button>
+                                            </Box>
 
-                                                <Button
-                                                    variant="outlined"
-                                                    size="large"
-                                                    onClick={() => navigate("/about")}
-                                                    sx={{
-                                                        py: 1.5,
-                                                        px: 4,
-                                                        fontSize: "1rem",
-                                                        fontWeight: 600,
-                                                        borderRadius: 2,
-                                                        textTransform: "none",
-                                                        color: "#fff",
-                                                        borderColor: "#fff",
-                                                        borderWidth: 2,
-                                                        "&:hover": {
-                                                            borderColor: "#fff",
-                                                            backgroundColor: "rgba(255,255,255,0.1)",
-                                                            borderWidth: 2,
-                                                        }
-                                                    }}
+                                            {/* Installation App Buttons */}
+                                            <Box
+                                                sx={{
+                                                    mt: 3,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    gap: 2,
+                                                    flexWrap: 'wrap'
+                                                }}
+                                            >
+
+
+                                                <Box
+                                                    component={motion.div}
+                                                    initial={{ y: 10, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    transition={{ delay: 0.4, duration: 0.5 }}
                                                 >
-                                                    Learn More
-                                                </Button>
-                                            </Stack>
+                                                    <AppButton
+                                                        icon={<AppleIcon />}
+                                                        label="iOS"
+                                                        bgColor="#000000"
+                                                        onClick={handleOpenIOSModal}
+                                                    />
+                                                </Box>
+
+                                                <Box
+                                                    component={motion.div}
+                                                    initial={{ y: 10, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    transition={{ delay: 0.5, duration: 0.5 }}
+                                                >
+                                                    <AppButton
+                                                        icon={<AndroidIcon />}
+                                                        label="Android"
+                                                        bgColor="#3ddc84"
+                                                        onClick={handleOpenAndroidModal}
+                                                    />
+                                                </Box>
+                                            </Box>
                                         </Box>
                                     </Container>
                                 </Box>
@@ -517,33 +886,36 @@ export default function HomePage() {
                     }}
                 >
                     <Container maxWidth="lg">
-                        <Typography
-                            variant={isMobile ? "h4" : "h3"}
-                            component={motion.h2}
+                        <Box
+                            component={motion.div}
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            sx={{
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                mb: 5,
-                                fontFamily: '"Montserrat", sans-serif',
-                                position: 'relative'
-                            }}
                         >
-                            Our Impact in Numbers
-                            <Box
+                            <Typography
+                                variant={isMobile ? "h4" : "h3"}
                                 sx={{
-                                    position: 'absolute',
-                                    height: 4,
-                                    width: 60,
-                                    backgroundColor: colors.accent,
-                                    bottom: -12,
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    borderRadius: 2
+                                    fontWeight: 700,
+                                    textAlign: 'center',
+                                    mb: 5,
+                                    fontFamily: '"Montserrat", sans-serif',
+                                    position: 'relative'
                                 }}
-                            />
-                        </Typography>
+                            >
+                                Our Impact in Numbers
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        height: 4,
+                                        width: 60,
+                                        backgroundColor: colors.accent,
+                                        bottom: -12,
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        borderRadius: 2
+                                    }}
+                                />
+                            </Typography>
+                        </Box>
 
                         <Grid container spacing={4} justifyContent="center">
                             <Grid item xs={12} sm={6} md={4}>

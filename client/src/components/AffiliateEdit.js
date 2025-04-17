@@ -66,6 +66,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
                 <TextField label="Address" name="address" fullWidth margin="normal" value={form.address} onChange={handleChange} />
                 <TextField label="Training Type" name="trainingType" fullWidth margin="normal" value={form.trainingType} onChange={handleChange} />
                 <TextField label="Email" name="email" fullWidth margin="normal" value={form.email} onChange={handleChange} />
+                <TextField label="Website" name="website" fullWidth margin="normal" value={form.website} onChange={handleChange} />
                 <TextField label="Phone" name="phone" fullWidth margin="normal" value={form.phone} onChange={handleChange} />
                 <TextField label="IBAN" name="iban" fullWidth margin="normal" value={form.iban} onChange={handleChange} />
                 <TextField label="Bank Name" name="bankName" fullWidth margin="normal" value={form.bankName} onChange={handleChange} />

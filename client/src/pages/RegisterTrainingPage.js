@@ -25,11 +25,11 @@ import {
     MenuItem,
     FormHelperText,
     Paper,
-    InputAdornment,
     Avatar,
     ListItemIcon,
     Fade,
-    alpha
+    alpha,
+    Link
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -38,6 +38,12 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SearchIcon from "@mui/icons-material/Search";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
+import PersonIcon from "@mui/icons-material/Person";
+import LanguageIcon from "@mui/icons-material/Language";
+import DomainIcon from "@mui/icons-material/Domain";
+import PaymentIcon from "@mui/icons-material/Payment";
 
 import { styled } from "@mui/material/styles";
 import {
@@ -55,17 +61,16 @@ import { getFamilyMembers } from "../api/familyApi";
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-    pt: { xs: 1, sm: 12 },
-    pb: { xs: 1, sm: 16 },
+    padding: theme.spacing(4, 2),
     position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: theme.spacing(1),
+    gap: theme.spacing(3),
     backgroundColor: theme.palette.background.default,
 }));
 
-// Improved styled card from Plans.js
+// Improved styled card
 const StyledCard = styled(Card)(({ theme }) => ({
     padding: theme.spacing(3),
     display: "flex",
@@ -75,13 +80,15 @@ const StyledCard = styled(Card)(({ theme }) => ({
     backgroundColor: theme.palette.background.paper,
     height: "100%",
     transition: "0.3s",
+    borderRadius: theme.shape.borderRadius * 2,
+    boxShadow: theme.shadows[2],
     "&:hover": {
         boxShadow: theme.shadows[5],
         transform: "translateY(-4px)",
     },
 }));
 
-// Training type styles from Plans.js
+// Training type styles
 const trainingTypeColors = {
     "All classes": "success",
     "WOD": "primary",
@@ -138,6 +145,7 @@ const RegisterTrainingPage = () => {
     const [isHomeGym, setIsHomeGym] = useState(false);
     const [userPlans, setUserPlans] = useState([]);
     const [userData, setUserData] = useState(null);
+    const [viewingPlans, setViewingPlans] = useState(false);
 
     // Family members state
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -221,9 +229,17 @@ const RegisterTrainingPage = () => {
 
             const getUserPlans = await getUserPlansByAffiliate(selectedAffiliate.id);
             setUserPlans(getUserPlans);
+
+            // Set viewing plans to true to hide affiliate info
+            setViewingPlans(true);
         } catch (error) {
             console.error("❌ Error loading plans:", error);
         }
+    };
+
+    // Function to go back to affiliate info view
+    const handleBackToAffiliate = () => {
+        setViewingPlans(false);
     };
 
     const handleAddHomeAffiliate = async () => {
@@ -302,31 +318,31 @@ const RegisterTrainingPage = () => {
     };
 
     function getValidUntil(planId, userPlans) {
-        // Leia kõik kasutaja ostetud plaanid vastava planId järgi
+        // Find all user purchased plans with matching planId
         const foundPlans = userPlans.filter((up) => up.planId === planId);
         if (foundPlans.length === 0) {
-            return null; // kasutajal pole seda plaani ostetud
+            return null; // user doesn't have this plan
         }
 
         const now = new Date();
-        // Filtreerime välja kehtivad plaanid (endDate tulevikus ja sessionsLeft > 0)
+        // Filter valid plans (endDate in future and sessionsLeft > 0)
         const validPlans = foundPlans.filter(plan => {
             const endDate = new Date(plan.endDate);
             return endDate > now && plan.sessionsLeft > 0;
         });
 
         if (validPlans.length === 0) {
-            return null; // ükski plaan pole kehtiv
+            return null; // no valid plans
         }
 
-        // Leiame plaani, millel on kõige hilisem lõppkuupäev
+        // Find the plan with the latest end date
         const latestPlan = validPlans.reduce((latest, current) => {
             const latestDate = new Date(latest.endDate);
             const currentDate = new Date(current.endDate);
             return currentDate > latestDate ? current : latest;
         }, validPlans[0]);
 
-        // Tagastame kehtiva kuupäeva kujul "DD.MM.YYYY"
+        // Return valid date in "DD.MM.YYYY" format
         return formatDateISOtoDDMMYYYY(latestPlan.endDate);
     }
 
@@ -339,11 +355,10 @@ const RegisterTrainingPage = () => {
         return `${day}.${month}.${year}`;
     }
 
-
     return (
         <AppTheme>
-            <StyledContainer maxWidth={false}>
-                <Typography variant="h4" gutterBottom>
+            <StyledContainer maxWidth="lg">
+                <Typography variant="h4" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
                     Register for Training
                 </Typography>
 
@@ -359,7 +374,8 @@ const RegisterTrainingPage = () => {
                             }
                         }}
                     >
-                        <Box sx={{ p: 0.5 }}>
+                        <Box sx={{ p: 0.5, display: 'flex', alignItems: 'center' }}>
+                            <SearchIcon sx={{ ml: 2, color: 'text.secondary' }} />
                             <Box
                                 component="input"
                                 placeholder="Search Affiliate..."
@@ -369,14 +385,12 @@ const RegisterTrainingPage = () => {
                                     width: "100%",
                                     border: "none",
                                     p: 2,
-                                    pl: 5,
                                     fontSize: "1rem",
                                     outline: "none",
-                                    background: `url('${SearchIcon}') no-repeat left 12px center`,
-                                    backgroundSize: "20px"
+                                    bgcolor: 'transparent'
                                 }}
                             />
-                             </Box>
+                        </Box>
                     </Paper>
 
                     {/* Enhanced Search Results */}
@@ -412,11 +426,10 @@ const RegisterTrainingPage = () => {
                                                 </ListItemIcon>
                                                 <ListItemText
                                                     primary={
-                                                        <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 500 }}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
                                                             {affiliate.name}
                                                         </Typography>
                                                     }
-
                                                 />
                                                 <FitnessCenterIcon color="action" sx={{ ml: 2 }} />
                                             </SearchResultItem>
@@ -429,147 +442,264 @@ const RegisterTrainingPage = () => {
                     )}
                 </Box>
 
-                {/* Affiliate Info */}
-                {selectedAffiliate && (
-                    <Box
-                        mt={1}
+                {/* Affiliate Info - Redesigned */}
+                {selectedAffiliate && !viewingPlans && (
+                    <Card
                         sx={{
-                            border: "1px solid #ddd",
-                            borderRadius: "12px",
-                            p: 3,
-                            backgroundColor: (theme) => theme.palette.background.paper,
-                            boxShadow: (theme) => theme.shadows[1],
-                            maxWidth: '1000px',
                             width: "100%",
+                            maxWidth: "1000px",
+                            borderRadius: 3,
+                            boxShadow: 2,
+                            overflow: 'visible'
                         }}
                     >
-                        {/* Pealkiri koos ikooniga */}
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                mb: 2,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                fontWeight: "bold",
-                            }}
-                        >
-                            <BusinessIcon color="primary" />
-                            Affiliate Information
-                        </Typography>
+                        <CardContent sx={{ p: 0 }}>
+                            {/* Main affiliate info with logo */}
+                            <Box sx={{ textAlign: 'center', p: 3, pb: 1 }}>
+                                <Avatar
+                                    src={selectedAffiliate.logo || 'https://via.placeholder.com/120'}
+                                    alt={selectedAffiliate.name}
+                                    sx={{
+                                        width: '120px',
+                                        height: '120px',
+                                        margin: 'auto',
+                                        mb: 2,
+                                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                    }}
+                                />
+                                <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
+                                    {selectedAffiliate.name}
+                                </Typography>
+                                <Chip
+                                    label={selectedAffiliate.trainingType || 'No training type'}
+                                    color="primary"
+                                    size="small"
+                                    sx={{ mb: 3 }}
+                                />
 
-                        {/* Nimi */}
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <BusinessIcon sx={{ color: "gray" }} />
-                            <Typography>
-                                <strong>Name:</strong> {selectedAffiliate.name}
-                            </Typography>
-                        </Box>
+                                {/* Action buttons moved below name */}
+                                <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap", mb: 2 }}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={loadAffiliatePlans}
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        View Plans
+                                    </Button>
 
-                        {/* Aadress */}
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <LocationOnIcon sx={{ color: "gray" }} />
-                            <Typography>
-                                <strong>Address:</strong> {selectedAffiliate.address}
-                            </Typography>
-                        </Box>
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() =>
+                                            navigate("/classes", { state: { affiliate: selectedAffiliate } })
+                                        }
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        View Classes
+                                    </Button>
 
-                        {/* Treeningu tüüp */}
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <FitnessCenterIcon sx={{ color: "gray" }} />
-                            <Typography>
-                                <strong>Training Type:</strong> {selectedAffiliate.trainingType}
-                            </Typography>
-                        </Box>
+                                    {isHomeGym ? (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            onClick={handleRemoveHomeAffiliate}
+                                            sx={{ borderRadius: 2 }}
+                                        >
+                                            Remove Home Gym
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outlined"
+                                            color="success"
+                                            onClick={handleAddHomeAffiliate}
+                                            sx={{ borderRadius: 2 }}
+                                        >
+                                            Add as Home Gym
+                                        </Button>
+                                    )}
+                                </Box>
 
-                        {/* Treenerid */}
-                        <Box sx={{ mt: 2 }}>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                    fontWeight: "bold",
-                                    mb: 1,
-                                }}
-                            >
-                                <GroupsIcon color="action" />
-                                Trainers
-                            </Typography>
+                                {/* Website and links */}
+                                {(selectedAffiliate.website || selectedAffiliate.subdomain) && (
+                                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mb: 2 }}>
+                                        {selectedAffiliate.website && (
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <LanguageIcon sx={{ color: "primary.main" }}/>
+                                                <Link href={selectedAffiliate.website} target="_blank" underline="hover">
+                                                    {selectedAffiliate.website}
+                                                </Link>
+                                            </Box>
+                                        )}
 
-                            <List>
+                                        {selectedAffiliate.subdomain && (
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <DomainIcon sx={{ color: "primary.main" }}/>
+                                                <Link href={`https://${selectedAffiliate.subdomain}.irontrack.ee`} target="_blank" underline="hover">
+                                                    {selectedAffiliate.subdomain}.irontrack.ee
+                                                </Link>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                )}
 
-                                {selectedAffiliate.trainers && selectedAffiliate.trainers.map((trainerObj) => (
-                                    <ListItem key={trainerObj.id} sx={{ py: 0 }}>
-                                        <ListItemText
-                                            primary={trainerObj.trainer.fullName || trainerObj.trainer.username}
-                                            primaryTypographyProps={{ variant: "subtitle1" }}
-                                        />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
+                                <Divider sx={{ mx: -3 }} />
+                            </Box>
 
-                        {/* Nupud */}
-                        <Box mt={3} sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={loadAffiliatePlans}
-                                sx={{ minWidth: "120px" }}
-                            >
-                                View Plans
-                            </Button>
+                            {/* Contact and Details Section */}
+                            <Grid container spacing={3} sx={{ p: 3, pt: 2 }}>
+                                {/* Contact Information */}
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <PersonIcon fontSize="small" />
+                                        Contact Information
+                                    </Typography>
 
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={() =>
-                                    navigate("/classes", { state: { affiliate: selectedAffiliate } })
-                                }
-                                sx={{ minWidth: "120px" }}
-                            >
-                                View Classes
-                            </Button>
+                                    <Grid container spacing={2}>
+                                        {selectedAffiliate.email && (
+                                            <Grid item xs={12}>
+                                                <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                        <EmailIcon sx={{ color: "primary.main" }}/>
+                                                        <Box>
+                                                            <Typography variant="body2" color="text.secondary">Email</Typography>
+                                                            <Typography variant="body1">
+                                                                {selectedAffiliate.email}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </Paper>
+                                            </Grid>
+                                        )}
 
-                            {isHomeGym ? (
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={handleRemoveHomeAffiliate}
-                                    sx={{ minWidth: "120px" }}
-                                >
-                                    Remove Home Gym
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    onClick={handleAddHomeAffiliate}
-                                    sx={{ minWidth: "120px" }}
-                                >
-                                    Add as Home Gym
-                                </Button>
-                            )}
-                        </Box>
-                    </Box>
+                                        {selectedAffiliate.phone && (
+                                            <Grid item xs={12}>
+                                                <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                        <PhoneAndroidIcon sx={{ color: "primary.main" }}/>
+                                                        <Box>
+                                                            <Typography variant="body2" color="text.secondary">Phone</Typography>
+                                                            <Typography variant="body1">
+                                                                {selectedAffiliate.phone}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </Paper>
+                                            </Grid>
+                                        )}
+
+                                        <Grid item xs={12}>
+                                            <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                    <LocationOnIcon sx={{ color: "primary.main" }}/>
+                                                    <Box>
+                                                        <Typography variant="body2" color="text.secondary">Address</Typography>
+                                                        <Typography variant="body1">
+                                                            {selectedAffiliate.address}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Paper>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+
+                                {/* Trainers Section */}
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <GroupsIcon fontSize="small" />
+                                        Trainers
+                                    </Typography>
+
+                                    {selectedAffiliate.trainers && selectedAffiliate.trainers.length > 0 ? (
+                                        <Grid container spacing={2}>
+                                            {selectedAffiliate.trainers.map((trainerObj) => (
+                                                <Grid item xs={12} sm={6} key={trainerObj.id}>
+                                                    <Paper
+                                                        elevation={0}
+                                                        sx={{
+                                                            p: 2,
+                                                            bgcolor: 'background.default',
+                                                            borderRadius: 2,
+                                                            transition: 'all 0.3s',
+                                                            '&:hover': {
+                                                                boxShadow: 1,
+                                                                transform: 'translateY(-2px)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                            <Avatar
+                                                                src={trainerObj.trainer?.logo}
+                                                                sx={{
+                                                                    bgcolor: 'primary.main',
+                                                                    width: 40,
+                                                                    height: 40
+                                                                }}
+                                                            >
+                                                                {(trainerObj.trainer?.fullName || trainerObj.trainer?.username || "?").charAt(0)}
+                                                            </Avatar>
+                                                            <Typography variant="body1" fontWeight={500}>
+                                                                {trainerObj.trainer?.fullName || trainerObj.trainer?.username || "Unknown Trainer"}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    ) : (
+                                        <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2, textAlign: 'center' }}>
+                                            <Typography color="text.secondary">No trainers assigned to this affiliate.</Typography>
+                                        </Paper>
+                                    )}
+                                </Grid>
+
+                                {/* Payment Holiday Fee */}
+                                {selectedAffiliate.paymentHolidayFee && (
+                                    <Grid item xs={12}>
+                                        <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                    <PaymentIcon sx={{ color: "primary.main" }}/>
+                                                    <Typography variant="body1">Payment Holiday Fee:</Typography>
+                                                </Box>
+                                                <Chip
+                                                    label={`${selectedAffiliate.paymentHolidayFee}€`}
+                                                    color="success"
+                                                    variant="outlined"
+                                                    sx={{ fontWeight: 'bold' }}
+                                                />
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                )}
+                            </Grid>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Improved Plans Section */}
-                {plans.length > 0 && (
+                {plans.length > 0 && viewingPlans && (
                     <Box mt={4} sx={{ width: "100%", textAlign: "center" }}>
-                        <Typography
-                            component="h2"
-                            variant="h4"
-                            sx={{
-                                color: "text.primary",
-                                fontWeight: "bold",
-                                mb: 2
-                            }}
-                        >
-                            Available Plans
-                        </Typography>
+                        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 3 }}>
+                            <Button
+                                variant="outlined"
+                                onClick={handleBackToAffiliate}
+                                sx={{ borderRadius: 2, mr: 3 }}
+                            >
+                                Back to Affiliate
+                            </Button>
+                            <Typography
+                                component="h2"
+                                variant="h4"
+                                sx={{
+                                    color: "text.primary",
+                                    fontWeight: "bold",
+                                }}
+                            >
+                                Available Plans
+                            </Typography>
+                        </Box>
                         <Typography
                             variant="body1"
                             sx={{

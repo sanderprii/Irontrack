@@ -293,6 +293,7 @@ model Affiliate {
   iban              String?
   bankName          String?
   ownerId           Int
+  website           String?
   logo              String?
   paymentHolidayFee Float?
   subdomain         String?            @unique

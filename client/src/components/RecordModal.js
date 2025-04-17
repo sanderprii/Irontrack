@@ -33,6 +33,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import { alpha } from '@mui/material/styles';
 import {
     LineChart,
     Line,
@@ -58,6 +59,7 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
     const [chartType, setChartType] = useState('line');
     const [viewEditRecord, setViewEditRecord] = useState(null);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [expandedRowId, setExpandedRowId] = useState(null);
 
     // Responsive design
     const theme = useTheme();
@@ -171,6 +173,12 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
             if (payload && payload.id) {
                 handleDeleteRecord(payload.id);
             }
+        }
+    };
+
+    const toggleRowExpand = (recordId) => {
+        if (isMobile) {
+            setExpandedRowId(prevId => prevId === recordId ? null : recordId);
         }
     };
 
@@ -577,7 +585,9 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                                                         recordType === 'Cardio' ? 'Time' : 'Score'}
                                                 </TableCell>
                                                 <TableCell>Change</TableCell>
-                                                <TableCell>Comment</TableCell>
+                                                {!isMobile && (
+                                                    <TableCell>Comment</TableCell>
+                                                )}
                                                 <TableCell align="right">Actions</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -593,52 +603,85 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                                                 }
 
                                                 return (
-                                                    <TableRow key={record.id}>
-                                                        <TableCell>{formatFullDate(record.fullDate)}</TableCell>
-                                                        <TableCell>{record.displayValue}</TableCell>
-                                                        <TableCell>
-                                                            {change !== null && (
-                                                                <Chip
+                                                    <React.Fragment key={record.id}>
+                                                        <TableRow
+                                                            hover
+                                                            onClick={() => toggleRowExpand(record.id)}
+                                                            sx={{
+                                                                cursor: isMobile ? 'pointer' : 'default',
+                                                                '& > *': { borderBottom: expandedRowId === record.id ? 0 : undefined }
+                                                            }}
+                                                        >
+                                                            <TableCell>{formatFullDate(record.fullDate)}</TableCell>
+                                                            <TableCell>{record.displayValue}</TableCell>
+                                                            <TableCell>
+                                                                {change !== null && (
+                                                                    <Chip
+                                                                        size="small"
+                                                                        label={`${change > 0 ? '+' : ''}${change}%`}
+                                                                        color={
+                                                                            isTrendPositive(change)
+                                                                                ? 'success'
+                                                                                : 'error'
+                                                                        }
+                                                                        icon={getTrendIcon(change)}
+                                                                    />
+                                                                )}
+                                                            </TableCell>
+                                                            {!isMobile && (
+                                                                <TableCell>
+                                                                    {record.comment && (
+                                                                        <Typography variant="body2" sx={{
+                                                                            maxWidth: 200,
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis',
+                                                                            whiteSpace: 'nowrap'
+                                                                        }}>
+                                                                            {record.comment}
+                                                                        </Typography>
+                                                                    )}
+                                                                </TableCell>
+                                                            )}
+                                                            <TableCell align="right">
+                                                                <IconButton
                                                                     size="small"
-                                                                    label={`${change > 0 ? '+' : ''}${change}%`}
-                                                                    color={
-                                                                        isTrendPositive(change)
-                                                                            ? 'success'
-                                                                            : 'error'
-                                                                    }
-                                                                    icon={getTrendIcon(change)}
-                                                                />
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {record.comment && (
-                                                                <Typography variant="body2" sx={{
-                                                                    maxWidth: 200,
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {record.comment}
-                                                                </Typography>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell align="right">
-                                                            <IconButton
-                                                                size="small"
-                                                                color="primary"
-                                                                onClick={() => handleEditRecord(record)}
-                                                            >
-                                                                <EditIcon fontSize="small" />
-                                                            </IconButton>
-                                                            <IconButton
-                                                                size="small"
-                                                                color="error"
-                                                                onClick={() => handleDeleteRecord(record.id)}
-                                                            >
-                                                                <DeleteIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </TableCell>
-                                                    </TableRow>
+                                                                    color="primary"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation(); // Väldi rea avamist kui vajutatakse nuppu
+                                                                        handleEditRecord(record);
+                                                                    }}
+                                                                >
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation(); // Väldi rea avamist kui vajutatakse nuppu
+                                                                        handleDeleteRecord(record.id);
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        </TableRow>
+
+                                                        {/* Kommentaari rida mobiilvaates */}
+                                                        {isMobile && expandedRowId === record.id && record.comment && (
+                                                            <TableRow sx={{ backgroundColor: theme.palette.primary.light + '0D' }}>
+                                                                <TableCell colSpan={5} sx={{ py: 1.5, px: 2 }}>
+                                                                    <Box>
+                                                                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                                                            Comment:
+                                                                        </Typography>
+                                                                        <Typography variant="body2">
+                                                                            {record.comment}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </React.Fragment>
                                                 );
                                             })}
                                         </TableBody>

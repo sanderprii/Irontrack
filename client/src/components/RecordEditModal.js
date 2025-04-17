@@ -17,9 +17,10 @@ import SaveIcon from '@mui/icons-material/Save';
 const RecordEditModal = ({ open, onClose, record, recordType, onSave }) => {
     // Create state for edited values
     const [date, setDate] = useState(record ? record.fullDate?.substring(0, 10) : '');
-    const [value, setValue] = useState('');
+    const [value, setValue] = useState( '');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [comment, setComment] = useState(record ? record.comment : '');
 
     // Set initial value based on record type
     React.useEffect(() => {
@@ -58,7 +59,9 @@ const RecordEditModal = ({ open, onClose, record, recordType, onSave }) => {
             // Prepare payload based on record type
             const payload = {
                 id: record.id,
-                date: new Date(date).toISOString()
+                date: new Date(date).toISOString(),
+                comment: comment,
+
             };
 
             if (recordType === 'Weightlifting') {
@@ -163,6 +166,19 @@ const RecordEditModal = ({ open, onClose, record, recordType, onSave }) => {
                         helperText="For example: number of rounds, reps, etc."
                     />
                 )}
+
+                <TextField
+                    label="Comment (Optional)"
+                    multiline
+                    rows={3}
+                    fullWidth
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    margin="normal"
+                    placeholder="Enter any notes about your performance..."
+                />
+
+
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 3 }}>

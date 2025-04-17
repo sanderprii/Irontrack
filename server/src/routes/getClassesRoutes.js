@@ -65,7 +65,13 @@ router.get("/get-affiliate-by-id", ensureAuthenticated, async (req, res) => {
             include: {
                 trainers: {
                     include: {
-                        trainer: true,
+                        trainer: {
+                            select: {
+                                id: true,
+                                logo: true,
+                                fullName: true,
+                            },
+                        }
                     },
                 },
             },
@@ -77,7 +83,7 @@ router.get("/get-affiliate-by-id", ensureAuthenticated, async (req, res) => {
 
         const trainers = affiliate.trainers.map((t) => ({
             id: t.trainerId,
-            username: t.trainer.username,
+            logo: t.trainer.logo,
             fullName: t.trainer.fullName,
         }));
 

@@ -60,9 +60,9 @@ const carouselImages = [
 
 // Images for PWA installation guides
 const iOSImages = [
-    "/images/pwa/ios-step1.jpg",
-    "/images/pwa/ios-step2.jpg",
-    "/images/pwa/ios-step3.jpg",
+    "/pic/IOSimage0.png",
+    "/pic/IOSimage1.png",
+    "/pic/IOSimage2.png",
 ];
 
 const androidImages = [
@@ -176,7 +176,7 @@ const IOSInstallModal = ({ open, handleClose }) => {
                         sx={{
                             maxWidth: '100%',
                             height: 'auto',
-                            maxHeight: '350px',
+                            maxHeight: '550px',
                             border: '1px solid #eee',
                             borderRadius: 2,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',

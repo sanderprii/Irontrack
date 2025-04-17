@@ -339,6 +339,7 @@ const RegisterTrainingPage = () => {
         return `${day}.${month}.${year}`;
     }
 
+
     return (
         <AppTheme>
             <StyledContainer maxWidth={false}>
@@ -498,10 +499,11 @@ const RegisterTrainingPage = () => {
                             </Typography>
 
                             <List>
-                                {selectedAffiliate.trainers.map((trainer) => (
-                                    <ListItem key={trainer.id} sx={{ py: 0 }}>
+
+                                {selectedAffiliate.trainers && selectedAffiliate.trainers.map((trainerObj) => (
+                                    <ListItem key={trainerObj.id} sx={{ py: 0 }}>
                                         <ListItemText
-                                            primary={trainer.fullName || trainer.username}
+                                            primary={trainerObj.trainer.fullName || trainerObj.trainer.username}
                                             primaryTypographyProps={{ variant: "subtitle1" }}
                                         />
                                     </ListItem>

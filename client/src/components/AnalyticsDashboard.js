@@ -2751,7 +2751,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                                                         <TableCell>Type</TableCell>
                                                                         <TableCell>Details</TableCell>
                                                                         {!isMobile && <TableCell>Date</TableCell>}
-                                                                        <TableCell align="right">Actions</TableCell>
+
                                                                     </TableRow>
                                                                 </TableHead>
                                                                 <TableBody>
@@ -2768,8 +2768,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                                                                     }
                                                                                 />
                                                                             </TableCell>
-                                                                            <TableCell
-                                                                                sx={{whiteSpace: 'nowrap'}}>{warning.type}</TableCell>
+                                                                            <TableCell sx={{whiteSpace: 'nowrap'}}>{warning.type} - {warning.user?.fullName || ""}</TableCell>
                                                                             <TableCell>
                                                                                 {isMobile && warning.details.length > 30 ?
                                                                                     warning.details.substring(0, 30) + '...' :
@@ -2778,14 +2777,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                                                             </TableCell>
                                                                             {!isMobile &&
                                                                                 <TableCell>{new Date(warning.date).toLocaleDateString()}</TableCell>}
-                                                                            <TableCell align="right">
-                                                                                {warning.user && (
-                                                                                    <Button size="small"
-                                                                                            variant="outlined">
-                                                                                        Contact
-                                                                                    </Button>
-                                                                                )}
-                                                                            </TableCell>
+
                                                                         </TableRow>
                                                                     ))}
                                                                 </TableBody>

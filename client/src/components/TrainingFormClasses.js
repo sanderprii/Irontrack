@@ -2,8 +2,13 @@ import React, { useState, useEffect } from "react";
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, MenuItem, FormControl, FormLabel,
-    RadioGroup, FormControlLabel, Radio, TextareaAutosize
+    RadioGroup, FormControlLabel, Radio, TextareaAutosize,
+    Box, Typography, IconButton, Tooltip, Divider
 } from "@mui/material";
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
+import DOMPurify from 'dompurify'; // You'll need to install this package
 
 export default function TrainingModal({ open, onClose, onSave, selectedClass }) {
     const [trainingData, setTrainingData] = useState({
@@ -22,9 +27,21 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
         freeClass: false,
     });
 
+    // State for text formatting
+    const [selectedColorOption, setSelectedColorOption] = useState(null);
+
+    // Color options for formatting
+    const colorOptions = [
+        { name: "Red", color: "#ff0000" },
+        { name: "Green", color: "#00ff00" },
+        { name: "Blue", color: "#0000ff" },
+        { name: "Yellow", color: "#ffff00" },
+        { name: "Orange", color: "#ffa500" },
+        { name: "Purple", color: "#800080" },
+    ];
+
     useEffect(() => {
         if (selectedClass) {
-
             setTrainingData({
                 id: selectedClass.id || "",
                 trainingType: selectedClass.trainingType || "WOD",
@@ -42,7 +59,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 freeClass: selectedClass.freeClass || false,
             });
         } else {
-
             setTrainingData({
                 trainingType: "WOD",
                 trainingName: "",
@@ -78,9 +94,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
         return `${year}-${month}-${day}T${hours}:${minutes}`; // ✅ Kohalik aeg, mitte UTC!
     };
 
-
-
-
     const handleChange = (e) => {
         setTrainingData({ ...trainingData, [e.target.name]: e.target.value });
     };
@@ -90,8 +103,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
     };
 
     const handleSubmit = () => {
-
-
         if (!trainingData || typeof trainingData !== "object") {
             console.error("❌ Invalid training data before submission:", trainingData);
             return;
@@ -100,7 +111,67 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
         onSave(trainingData);
     };
 
+    // Function to apply formatting to selected text
+    const applyFormatting = (formatType, value = null) => {
+        const textarea = document.getElementById('wod-description-edit');
+        if (!textarea) return;
 
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = trainingData.description.substring(start, end);
+
+        let formattedText = '';
+
+        if (selectedText) {
+            switch (formatType) {
+                case 'bold':
+                    formattedText = `<b>${selectedText}</b>`;
+                    break;
+                case 'italic':
+                    formattedText = `<i>${selectedText}</i>`;
+                    break;
+                case 'color':
+                    formattedText = `<span style="color:${value}">${selectedText}</span>`;
+                    break;
+                default:
+                    formattedText = selectedText;
+            }
+
+            const newDescription =
+                trainingData.description.substring(0, start) +
+                formattedText +
+                trainingData.description.substring(end);
+
+            setTrainingData({ ...trainingData, description: newDescription });
+
+            // Close color menu after selection
+            if (formatType === 'color') {
+                setSelectedColorOption(null);
+            }
+        }
+    };
+
+    // Preview component that shows how the formatted text will look
+    const DescriptionPreview = () => {
+        if (!trainingData.description) return null;
+
+        return (
+            <Box sx={{ mt: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, maxHeight: '200px', overflow: 'auto' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Preview:</Typography>
+                <div
+                    dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(trainingData.description, {
+                            ALLOWED_TAGS: ['b', 'i', 'span'],
+                            ALLOWED_ATTR: ['style'],
+                        })
+                    }}
+                    style={{
+                        whiteSpace: "pre-line" // This preserves line breaks
+                    }}
+                />
+            </Box>
+        );
+    };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -131,8 +202,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                     onChange={handleChange}
                     margin="dense"
                 />
-
-
 
                 <TextField
                     fullWidth
@@ -175,7 +244,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 <TextField
                     fullWidth
                     label="Member Capacity"
-
                     name="memberCapacity"
                     value={trainingData.memberCapacity}
                     onChange={handleChange}
@@ -206,24 +274,99 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                     margin="dense"
                 />
 
-                <TextareaAutosize
-                    minRows={3}
-                    maxRows={10}
-                    placeholder="Description"
-                    style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '4px',
-                        borderColor: '#AAAAAA',
-                        fontSize: '14px',
-                        lineHeight: '1.5',
-                        resize: 'vertical',
-                        fontFamily: 'inherit'
-                    }}
-                    value={trainingData.description}
-                    onChange={handleChange}
-                    name="description" // Preserved from TextField to ensure handleChange works correctly
-                />
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle1">Description</Typography>
+
+                    {/* Text formatting toolbar */}
+                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ mr: 1 }}>Formatting:</Typography>
+                        <Tooltip title="Bold">
+                            <IconButton size="small" onClick={() => applyFormatting('bold')}>
+                                <FormatBoldIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Italic">
+                            <IconButton size="small" onClick={() => applyFormatting('italic')}>
+                                <FormatItalicIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* Color dropdown */}
+                        <Box sx={{ position: 'relative' }}>
+                            <Tooltip title="Text Color">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => setSelectedColorOption(prev => prev ? null : true)}
+                                >
+                                    <FormatColorTextIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+
+                            {selectedColorOption && (
+                                <Box sx={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    zIndex: 1000,
+                                    width: '200px',
+                                    backgroundColor: 'white',
+                                    border: '1px solid #ddd',
+                                    borderRadius: 1,
+                                    boxShadow: 3,
+                                    p: 1
+                                }}>
+                                    <Typography variant="caption" sx={{ mb: 1, display: 'block' }}>
+                                        Select color:
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {colorOptions.map((option) => (
+                                            <Tooltip key={option.name} title={option.name}>
+                                                <Box
+                                                    sx={{
+                                                        width: 24,
+                                                        height: 24,
+                                                        backgroundColor: option.color,
+                                                        border: '1px solid #888',
+                                                        borderRadius: 0.5,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={() => applyFormatting('color', option.color)}
+                                                />
+                                            </Tooltip>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Typography variant="caption" sx={{ ml: 2, color: 'text.secondary' }}>
+                            Select text and click a formatting button
+                        </Typography>
+                    </Box>
+
+                    <TextareaAutosize
+                        id="wod-description-edit"
+                        minRows={3}
+                        maxRows={10}
+                        placeholder="Description (you can format selected text with the tools above)"
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '4px',
+                            borderColor: '#AAAAAA',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            resize: 'vertical',
+                            fontFamily: 'inherit'
+                        }}
+                        value={trainingData.description}
+                        onChange={(e) => setTrainingData({ ...trainingData, description: e.target.value })}
+                        name="description" // Preserved from TextField to ensure handleChange works correctly
+                    />
+
+                    {/* Preview of formatted description */}
+                    <DescriptionPreview />
+                </Box>
 
                 {/* Repeat Weekly Radio Buttons */}
                 <FormControl component="fieldset" margin="dense" fullWidth>
@@ -258,13 +401,12 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                         row
                         name="freeClass"
                         value={trainingData.freeClass.toString()}
-                        onChange={(e) => setTrainingData({ ...trainingData, freeClass: e.target.value === "false" })}
+                        onChange={(e) => setTrainingData({ ...trainingData, freeClass: e.target.value === "true" })}
                     >
                         <FormControlLabel value="true" control={<Radio />} label="Yes" />
                         <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                 </FormControl>
-
             </DialogContent>
 
             <DialogActions>

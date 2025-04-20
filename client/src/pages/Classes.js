@@ -12,15 +12,30 @@ import {
     DialogTitle,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogActions,
+    IconButton,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    ToggleButton,
+    ToggleButtonGroup,
+    CircularProgress
 } from "@mui/material";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // Trophy icon for day leaderboard
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
+import LeaderboardModal from "../components/LeaderboardModal";
 
-import ClassDetailsModal from "../components/ClassModal"; // ✅ Lisatud klassi detailide modal
+import ClassDetailsModal from "../components/ClassModal";
 import { getClasses, deleteClass, createTraining, updateTraining, getClassAttendeesCount} from "../api/classesApi";
 import { getAffiliate } from "../api/affiliateApi";
 import ClassWodView from "../components/ClassWodView";
+import { getClassLeaderboard } from "../api/leaderboardApi";
+import { getUserProfile } from "../api/profileApi";
 
 export default function Classes() {
     const theme = useTheme();
@@ -32,10 +47,10 @@ export default function Classes() {
     const [affiliateEmail, setAffiliateEmail] = useState(null);
     const [classes, setClasses] = useState([]);
     const [selectedTraining, setSelectedTraining] = useState(null);
-    const [selectedClass, setSelectedClass] = useState(null); // ✅ Hoitakse valitud klassi andmeid
+    const [selectedClass, setSelectedClass] = useState(null);
     const [isTrainingModalOpen, setTrainingModalOpen] = useState(false);
     const [isWODModalOpen, setWODModalOpen] = useState(false);
-    const [isClassModalOpen, setClassModalOpen] = useState(false); // ✅ Hoitakse klassi modali olekut
+    const [isClassModalOpen, setClassModalOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -49,6 +64,13 @@ export default function Classes() {
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const [userRole, setUserRole] = useState(null);
 
+    // Day leaderboard state
+    const [isDayLeaderboardOpen, setDayLeaderboardOpen] = useState(false);
+    const [dayLeaderboardFilter, setDayLeaderboardFilter] = useState("all");
+    const [dayLeaderboardData, setDayLeaderboardData] = useState([]);
+    const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+    const [userFullName, setUserFullName] = useState("");
+
     // Dialog states
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState(null);
@@ -56,35 +78,72 @@ export default function Classes() {
     const [errorDialogOpen, setErrorDialogOpen] = useState(false);
     const [dialogMessage, setDialogMessage] = useState('');
 
+    // Fix affiliateId issue
     useEffect(() => {
-        const affiliateIdLocalStorage = localStorage.getItem("affiliateId");
-
-        if (selectedAffiliate) {
-            setAffiliateId(selectedAffiliate.id);
-        } else if (affiliateIdLocalStorage) {
-            setAffiliateId(parseInt(localStorage.getItem("affiliateId")));
-
-        } else {
-            const fetchAffiliate = async () => {
-                try {
-                    const response = await getAffiliate();
-                    if (response && response.affiliate && response.affiliate.id) {
-                        setAffiliateId(response.affiliate.id);
-                        setAffiliateEmail(response.affiliate.email);
-                    } else {
-                        console.error("Affiliate ID not found in response:", response);
-                    }
-                } catch (error) {
-                    console.error("Error fetching affiliate ID:", error);
+        const fetchUserProfile = async () => {
+            try {
+                const profile = await getUserProfile();
+                if (profile && profile.fullName) {
+                    setUserFullName(profile.fullName);
+                } else {
+                    const storedName = localStorage.getItem('fullName');
+                    if (storedName) setUserFullName(storedName);
                 }
-            };
-            fetchAffiliate();
-        }
-    }, [selectedAffiliate]); // ✅ Lisatud `selectedAffiliate` sõltuvuseks
+            } catch (error) {
+                console.error("Error fetching user profile:", error);
+                const storedName = localStorage.getItem('fullName');
+                if (storedName) setUserFullName(storedName);
+            }
+        };
 
+        fetchUserProfile();
+    }, []);
 
+    // Set up affiliateId in a more reliable way
     useEffect(() => {
-        const role = localStorage.getItem("role"); // ⬅️ Loe rolli LocalStoragest
+        // Set up affiliateId from various sources
+        if (selectedAffiliate && selectedAffiliate.id) {
+            console.log("Setting affiliateId from selectedAffiliate:", selectedAffiliate.id);
+            setAffiliateId(selectedAffiliate.id);
+            return; // Exit early if we have a selectedAffiliate
+        }
+
+        const storedId = localStorage.getItem("affiliateId");
+        if (storedId) {
+            console.log("Setting affiliateId from localStorage:", storedId);
+            setAffiliateId(parseInt(storedId));
+            return; // Exit early if we found it in localStorage
+        }
+
+        // Only fetch from API if we don't have affiliateId from other sources
+        console.log("Fetching affiliate data from API");
+        const fetchAffiliate = async () => {
+            try {
+                const response = await getAffiliate();
+                console.log("API response:", response);
+
+                if (response && response.affiliate && response.affiliate.id) {
+                    console.log("Setting affiliateId from API response:", response.affiliate.id);
+                    setAffiliateId(response.affiliate.id);
+                    setAffiliateEmail(response.affiliate.email);
+                } else if (response && response.id) {
+                    console.log("Setting affiliateId directly from response:", response.id);
+                    setAffiliateId(response.id);
+                    if (response.email) setAffiliateEmail(response.email);
+                } else {
+                    console.error("Could not find a valid affiliateId in the response:", response);
+                }
+            } catch (error) {
+                console.error("Error fetching affiliate:", error);
+            }
+        };
+
+        fetchAffiliate();
+    }, [selectedAffiliate]);
+
+    // Set userRole
+    useEffect(() => {
+        const role = localStorage.getItem("role");
         setUserRole(role);
     }, []);
 
@@ -100,11 +159,10 @@ export default function Classes() {
         setErrorDialogOpen(true);
     };
 
+    // Modified fetchClasses to not warn about null affiliateId
     const fetchClasses = useCallback(async () => {
-
         if (!affiliateId) {
-            console.warn("⚠️ Skipping fetchClasses: affiliateId is null");
-            return;
+            return; // Just return silently without a warning
         }
 
         const startOfWeek = new Date(currentDate);
@@ -115,8 +173,6 @@ export default function Classes() {
         endOfWeek.setDate(startOfWeek.getDate() + 6);
         endOfWeek.setHours(23, 59, 59, 999);
 
-
-
         try {
             const response = await getClasses(affiliateId, startOfWeek);
             setClasses(response || []);
@@ -126,10 +182,12 @@ export default function Classes() {
         }
     }, [affiliateId, currentDate]);
 
-
+    // Dedicated effect to call fetchClasses when affiliateId changes
     useEffect(() => {
-        fetchClasses();
-    }, [fetchClasses]);
+        if (affiliateId) {
+            fetchClasses();
+        }
+    }, [affiliateId, fetchClasses]);
 
     const fetchAttendeesCount = useCallback(async () => {
         const counts = {};
@@ -137,16 +195,15 @@ export default function Classes() {
             classes.map(async (cls) => {
                 try {
                     const count = await getClassAttendeesCount(cls.id);
-                    counts[cls.id] = count || 0; // Kui API ei tagasta midagi, paneme 0
+                    counts[cls.id] = count || 0;
                 } catch (error) {
                     console.error(`❌ Error fetching attendees for class ${cls.id}:`, error);
-                    counts[cls.id] = 0; // Vigade korral määrame 0
+                    counts[cls.id] = 0;
                 }
             })
         );
         setAttendeesCount(counts);
     }, [classes]);
-
 
     useEffect(() => {
         if (classes.length > 0) {
@@ -154,8 +211,7 @@ export default function Classes() {
         }
     }, [classes, fetchAttendeesCount]);
 
-    let selectedDay = 0;
-
+    // Get classes for selected day
     const getClassesForSelectedDay = (dayIndex) => {
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() || 7) + 1 + dayIndex);
@@ -169,6 +225,75 @@ export default function Classes() {
             );
         });
     };
+
+    // Fetch leaderboard data for all WOD classes on the selected day
+    const fetchDayLeaderboard = async () => {
+        try {
+            setLoadingLeaderboard(true);
+
+            // Get all WOD classes for the selected day
+            const dayClasses = getClassesForSelectedDay(selectedDayIndex);
+            const wodClasses = dayClasses.filter(cls => cls.trainingType === "WOD");
+
+            if (wodClasses.length === 0) {
+                showErrorMessage("No WOD classes found for this day");
+                setLoadingLeaderboard(false);
+                return;
+            }
+
+            // Fetch leaderboard data for each WOD class
+            const leaderboardPromises = wodClasses.map(cls => getClassLeaderboard(cls.id));
+            const leaderboardResults = await Promise.all(leaderboardPromises);
+
+            // Combine all leaderboard results and add the class name to each entry
+            const combinedLeaderboard = [];
+            leaderboardResults.forEach((results, index) => {
+                if (Array.isArray(results) && results.length > 0) {
+                    const classData = wodClasses[index];
+                    const classLeaderboard = results.map(entry => ({
+                        ...entry,
+                        className: classData.trainingName,
+                        wodName: classData.wodName || "WOD",
+                        classTime: new Date(classData.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        classId: classData.id
+                    }));
+                    combinedLeaderboard.push(...classLeaderboard);
+                }
+            });
+
+            setDayLeaderboardData(combinedLeaderboard);
+            setLoadingLeaderboard(false);
+
+            // If we have data, open the leaderboard modal
+            if (combinedLeaderboard.length > 0) {
+                setDayLeaderboardOpen(true);
+            } else {
+                showErrorMessage("No leaderboard entries found for WOD classes today");
+            }
+
+        } catch (error) {
+            console.error("Error fetching day leaderboard:", error);
+            showErrorMessage("Error loading leaderboard data");
+            setLoadingLeaderboard(false);
+        }
+    };
+
+    // Open day leaderboard
+    const handleOpenDayLeaderboard = () => {
+        fetchDayLeaderboard();
+    };
+
+    // Handle leaderboard filter change
+    const handleDayLeaderboardFilterChange = (event, newFilter) => {
+        if (newFilter) {
+            setDayLeaderboardFilter(newFilter);
+        }
+    };
+
+    // Filter the day leaderboard data
+    const filteredDayLeaderboard = dayLeaderboardData.filter(entry =>
+        dayLeaderboardFilter === "all" || entry.scoreType?.toLowerCase() === dayLeaderboardFilter
+    );
 
     const handlePrevWeek = () => {
         const newDate = new Date(currentDate);
@@ -195,13 +320,6 @@ export default function Classes() {
 
     const handleToggleView = () => {
         setShowWeekly((prev) => !prev);
-    };
-
-    const getClassesForWeek = () => {
-        return dayNames.map((_, index) => ({
-            date: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - (currentDate.getDay() || 7) + index + 1),
-            classes: getClassesForSelectedDay(index),
-        }));
     };
 
     // ✅ Funktsioon treeningu salvestamiseks
@@ -278,14 +396,40 @@ export default function Classes() {
         setClassModalOpen(true);
     };
 
-    useEffect(() => {
+    // Check if there are any WOD classes for the selected day
+    const hasWodClasses = getClassesForSelectedDay(selectedDayIndex).some(cls => cls.trainingType === "WOD");
 
-    }, [theme]);
+    // Format date for display
+    const getFormattedDate = () => {
+        return new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate() - (currentDate.getDay() || 7) + selectedDayIndex + 1
+        ).toLocaleDateString();
+    };
 
     return (
         <Container maxWidth={false}>
             <Box textAlign="center" my={4}>
-                <Typography variant="h5" color="primary">Class Schedule</Typography>
+                <Typography variant="h5" color="primary">Class Schedule
+                    {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
+                    {hasWodClasses && (
+                        <IconButton
+                            color="primary"
+                            onClick={handleOpenDayLeaderboard}
+                            sx={{
+                                ml: 1,
+                                color: "goldenrod",
+                                "&:hover": {
+                                    backgroundColor: "rgba(218,165,32,0.1)"
+                                }
+                            }}
+                        >
+                            <EmojiEventsIcon />
+                        </IconButton>
+                    )}
+                </Typography>
+
 
                 {/* ✅ Ainult "owner" ja "trainer" rollid näevad nuppe */}
                 {(userRole === "affiliate" || userRole === "trainer") && (
@@ -319,13 +463,13 @@ export default function Classes() {
                             Previous Week
                         </Button>
                         {!showWeekly && (
-                            <Typography variant="h6">
-                                {new Date(
-                                    currentDate.getFullYear(),
-                                    currentDate.getMonth(),
-                                    currentDate.getDate() - (currentDate.getDay() || 7) + selectedDayIndex + 1
-                                ).toLocaleDateString()}
-                            </Typography>
+                            <Box display="flex" alignItems="center">
+                                <Typography variant="h6">
+                                    {getFormattedDate()}
+                                </Typography>
+
+
+                            </Box>
                         )}
                         {!isMobile && (
                             <Button variant="contained" color="primary" onClick={handleToggleView}>
@@ -372,13 +516,37 @@ export default function Classes() {
                                 const dailyClasses = getClassesForSelectedDay(index);
                                 const dayDate = new Date(currentDate);
                                 dayDate.setDate(dayDate.getDate() - (dayDate.getDay() || 7) + 1 + index);
+                                const hasWodClassesForDay = dailyClasses.some(cls => cls.trainingType === "WOD");
 
                                 return (
                                     <Grid item xs={12} sm={6} md={1.7} lg={1.7} key={index}>
                                         <Box textAlign="center">
-                                            <Typography variant="h6" sx={{ fontWeight: "bold", my: 1 }}>
-                                                {day} - {dayDate.toLocaleDateString("en-GB")}
-                                            </Typography>
+                                            <Box display="flex" alignItems="center" justifyContent="center">
+                                                <Typography variant="h6" sx={{ fontWeight: "bold", my: 1 }}>
+                                                    {day} - {dayDate.toLocaleDateString("en-GB")}
+                                                </Typography>
+
+                                                {/* Day Leaderboard Trophy Icon for weekly view */}
+                                                {hasWodClassesForDay && (
+                                                    <IconButton
+                                                        color="primary"
+                                                        onClick={() => {
+                                                            setSelectedDayIndex(index);
+                                                            handleOpenDayLeaderboard();
+                                                        }}
+                                                        size="small"
+                                                        sx={{
+                                                            ml: 0.5,
+                                                            color: "goldenrod",
+                                                            "&:hover": {
+                                                                backgroundColor: "rgba(218,165,32,0.1)"
+                                                            }
+                                                        }}
+                                                    >
+                                                        <EmojiEventsIcon fontSize="small" />
+                                                    </IconButton>
+                                                )}
+                                            </Box>
                                             <ClassSchedule
                                                 classes={dailyClasses}
                                                 attendeesCount={attendeesCount}
@@ -417,7 +585,125 @@ export default function Classes() {
                 refreshClasses={fetchClasses}
                 attendeesCount={attendeesCount[selectedClass?.id]}
                 affiliateId={affiliateId}
+                affiliateEmail={affiliateEmail}
             />
+
+            {/* Day Leaderboard Modal */}
+            <Dialog
+                open={isDayLeaderboardOpen}
+                onClose={() => setDayLeaderboardOpen(false)}
+                maxWidth={false} // Muuda "md" asemel "false"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        m: { xs: 0 },  // Mobiilis eemaldame ääred
+                        width: { xs: '100%' },  // Mobiilis täislaius
+                        maxWidth: { xs: '100%' },  // Mobiilis täislaius
+                        borderRadius: { xs: 0 }  // Mobiilis eemaldame ümarad nurgad
+                    }
+                }}
+            >
+                <DialogTitle>
+                    <Box display="flex" alignItems="center">
+                        <EmojiEventsIcon sx={{ color: "goldenrod", mr: 1 }} />
+                        <Typography variant="h6">
+                            Daily WOD Leaderboard - {getFormattedDate()}
+                        </Typography>
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    {/* Filter buttons */}
+                    <ToggleButtonGroup
+                        value={dayLeaderboardFilter}
+                        exclusive
+                        onChange={handleDayLeaderboardFilterChange}
+                        aria-label="Filter results"
+                        size="small"
+                        sx={{ mb: 2 }}
+                    >
+                        <ToggleButton value="all">All</ToggleButton>
+                        <ToggleButton value="rx">Rx</ToggleButton>
+                        <ToggleButton value="sc">Sc</ToggleButton>
+                        <ToggleButton value="beg">Beg</ToggleButton>
+                    </ToggleButtonGroup>
+
+                    {/* Show loading indicator or data table */}
+                    {loadingLeaderboard ? (
+                        <Box display="flex" justifyContent="center" my={3}>
+                            <CircularProgress />
+                        </Box>
+                    ) : filteredDayLeaderboard.length > 0 ? (
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Class</TableCell>
+                                        <TableCell>Name</TableCell>
+                                        <TableCell>
+                                            Score
+                                            <Typography
+                                                component="span"
+                                                color="text.secondary"
+                                                sx={{ ml: 1, fontSize: '0.9em' }}
+                                            >
+                                                (previous)
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>Type</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredDayLeaderboard.map((entry, index) => (
+                                        <TableRow
+                                            key={`${entry.id}-${index}`}
+                                            // Highlight the current user's row
+                                            sx={entry.fullName === userFullName ? {
+                                                backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                                            } : {}}
+                                        >
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                    {entry.classTime} - {entry.className}
+                                                </Typography>
+                                                {entry.wodName && (
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {entry.wodName}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>{entry.fullName}</TableCell>
+                                            <TableCell>
+                                                <Box>
+                                                    {entry.score}
+                                                    {entry.previousScore && (
+                                                        <Typography
+                                                            component="span"
+                                                            color="text.secondary"
+                                                            sx={{ ml: 1, fontSize: '0.9em' }}
+                                                        >
+                                                            ({entry.previousScore})
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>{entry.scoreType?.toUpperCase()}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    ) : (
+                        <Typography align="center">
+                            No results available for the selected filter.
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDayLeaderboardOpen(false)} color="primary">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog

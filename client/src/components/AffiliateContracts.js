@@ -77,6 +77,8 @@ export default function AffiliateContracts({affiliateId}) {
     const [newEndDate, setNewEndDate] = useState("");
     const [contractToDeactivate, setContractToDeactivate] = useState(null);
 
+    const [contractToEdit, setContractToEdit] = useState(null);
+
     useEffect(() => {
         loadContracts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,6 +395,11 @@ export default function AffiliateContracts({affiliateId}) {
         }
     };
 
+    const handleOpenEditModal = (contract) => {
+        setContractToEdit(contract);
+        setCreateModalOpen(true);
+    };
+
     return (
         <Box>
             {/* Pealkiri + nupud */}
@@ -501,6 +508,17 @@ export default function AffiliateContracts({affiliateId}) {
                                                         Send
                                                     </Button>
                                                     <IconButton
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenEditModal(contract);
+                                                        }}
+                                                        aria-label="Edit Contract"
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton
                                                         color="error"
                                                         size="small"
                                                         onClick={(e) => {
@@ -513,6 +531,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                     </IconButton>
                                                 </Box>
                                             ) : contract.status === 'Waiting for acceptance' ? (
+                                                // Keep the existing code for this condition
                                                 <IconButton
                                                     color="error"
                                                     size="small"
@@ -525,6 +544,7 @@ export default function AffiliateContracts({affiliateId}) {
                                                     <DeleteIcon />
                                                 </IconButton>
                                             ) : contract.status === 'accepted' ? (
+                                                // Keep the existing code for this condition
                                                 <IconButton
                                                     color="secondary"
                                                     size="small"
@@ -873,8 +893,10 @@ export default function AffiliateContracts({affiliateId}) {
                 <CreateContract
                     open={createModalOpen}
                     affiliateId={affiliateId}
+                    contractToEdit={contractToEdit}
                     onClose={() => {
                         setCreateModalOpen(false);
+                        setContractToEdit(null); // Reset the contract to edit
                         loadContracts();
                     }}
                 />

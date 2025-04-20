@@ -24,6 +24,7 @@ router.post('/days/:id/comments', ensureAuthenticated, trainingPlanController.ad
 // PUT /api/training-plans/sectors/:id/complete
 router.put('/sectors/:id/complete', ensureAuthenticated, trainingPlanController.completeSector);
 
-
+// POST /api/training-plans/sectors/:id/add-to-training
+router.post('/sectors/:id/add-to-training', ensureAuthenticated, trainingPlanController.addSectorToTraining);
 
 module.exports = router;

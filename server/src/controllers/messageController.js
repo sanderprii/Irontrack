@@ -405,55 +405,92 @@ const getAllMessages = async (req, res) => {
 const getSentMessages = async (req, res) => {
     try {
         const user = parseInt(req.user?.id);
-        const affiliate = req.query.affiliate
+        const affiliate = req.query.affiliate;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const search = req.query.search || '';
 
-        const messages = await prisma.message.findMany({
-            where: { affiliateId: parseInt(affiliate) },
+        const skip = (page - 1) * limit;
+
+        // Baas WHERE tingimus
+        const whereCondition = {
+            affiliateId: parseInt(affiliate),
+        };
+
+        // 1. Kõigepealt toome kõik kirjad (ilma limitita), et teha korralik otsing
+        const allMessages = await prisma.message.findMany({
+            where: whereCondition,
             orderBy: {
                 createdAt: 'desc',
             },
         });
 
-        for (const message of messages) {
+        // 2. Lisame saajate täisnimed ja puhastame HTML
+        const enrichedMessages = await Promise.all(allMessages.map(async (message) => {
+            let recipientFullName = '';
+            let groupName = null;
+
             if (message.recipientType === 'group') {
-                const groupName = await prisma.messageGroup.findUnique({
+                const group = await prisma.messageGroup.findUnique({
                     where: { id: message.recipientId },
                 });
-                message.fullName = groupName ? groupName.groupName : "Unknown Group";
-                continue;
+                recipientFullName = group ? group.groupName : "Tundmatu grupp";
+                groupName = recipientFullName;
             } else if (message.recipientType === 'user') {
                 const user = await prisma.user.findUnique({
                     where: { id: message.recipientId },
                 });
-                message.fullName = user ? user.fullName : "Unknown User";
+                recipientFullName = user ? user.fullName : "Tundmatu kasutaja";
             } else if (message.recipientType === 'allMembers') {
-                message.fullName = "All Members";
+                recipientFullName = "Kõik liikmed";
             }
-        }
 
-        const result = messages.map((msg) => {
-            // First, replace common HTML line break elements with newline characters
-            let processedBody = msg.body
-                .replace(/<br\s*\/?>/gi, '\n')        // Replace <br> tags with newlines
-                .replace(/<\/p><p>/gi, '\n\n')        // Replace paragraph breaks with double newlines
-                .replace(/<div><\/div>/gi, '\n')      // Replace empty divs with newlines
-                .replace(/<\/div><div>/gi, '\n');     // Replace div breaks with newlines
-
-            // Then remove all remaining HTML tags
+            // Puhastame HTML
+            let processedBody = message.body
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p><p>/gi, '\n\n')
+                .replace(/<div><\/div>/gi, '\n')
+                .replace(/<\/div><div>/gi, '\n');
             processedBody = processedBody.replace(/<[^>]*>/g, '');
 
             return {
-                id: msg.id,
-                subject: msg.subject,
+                id: message.id,
+                subject: message.subject,
                 body: processedBody,
-                createdAt: msg.createdAt,
-                recipientId: msg.recipientId,
-                recipientFullName: msg.fullName,
-                recipientType: msg.recipientType,
+                createdAt: message.createdAt,
+                recipientId: message.recipientId,
+                recipientFullName,
+                recipientType: message.recipientType,
+                groupName
             };
-        });
+        }));
 
-        res.json(result);
+        // 3. Filtreerimine otsingutermini järgi
+        const filteredMessages = search
+            ? enrichedMessages.filter(msg =>
+                (msg.recipientFullName && msg.recipientFullName.toLowerCase().includes(search.toLowerCase())) ||
+                (msg.subject && msg.subject.toLowerCase().includes(search.toLowerCase())) ||
+                (msg.body && msg.body.toLowerCase().includes(search.toLowerCase()))
+            )
+            : enrichedMessages;
+
+        // 4. Leheküljestamine
+        const totalCount = filteredMessages.length;
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // 5. Valime ainult praegusele lehele kuuluvad kirjad
+        const startIndex = (page - 1) * limit;
+        const paginatedMessages = filteredMessages.slice(startIndex, startIndex + limit);
+
+        res.json({
+            messages: paginatedMessages,
+            pagination: {
+                total: totalCount,
+                page,
+                limit,
+                pages: totalPages
+            }
+        });
     } catch (error) {
         console.error('Error in getSentMessages:', error);
         res.status(500).json({ error: 'Failed to get sent messages' });

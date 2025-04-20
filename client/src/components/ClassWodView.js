@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { getWeekWODs, applyWODToTrainings } from "../api/wodApi";
 import WODModal from "./WODModal";
+import DOMPurify from 'dompurify'; // Added import for sanitizing HTML
 
 export default function ClassWodView({ affiliateId, onClose }) {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -119,7 +120,7 @@ export default function ClassWodView({ affiliateId, onClose }) {
 
                                     <Divider sx={{ mb: 2 }} />
 
-                                    {/* WOD Andmed */}
+                                    {/* WOD Andmed - Updated to render HTML content */}
                                     {wod ? (
                                         <Box textAlign="center">
                                             <Typography variant="h6" sx={{ fontWeight: "bold", color: "text.primary" }}>
@@ -128,9 +129,22 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                             <Typography variant="subtitle2" sx={{ color: "secondary.main", mb: 1, fontStyle: "italic" }}>
                                                 {wod.type}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "pre-line" }}>
-                                                {wod.description}
-                                            </Typography>
+                                            {/* Updated to render HTML safely */}
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: DOMPurify.sanitize(wod.description, {
+                                                        ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                        ALLOWED_ATTR: ['style'],
+                                                    })
+                                                }}
+                                                style={{
+                                                    color: "text.secondary",
+                                                    whiteSpace: "pre-line",
+                                                    fontSize: "14px",
+                                                    lineHeight: "1.5",
+                                                    textAlign: "center"
+                                                }}
+                                            />
                                         </Box>
                                     ) : (
                                         <Typography variant="body2" color="textSecondary" textAlign="center">

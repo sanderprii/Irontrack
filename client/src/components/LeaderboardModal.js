@@ -175,8 +175,21 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
         filter === "all" || entry.scoreType?.toLowerCase() === filter
     );
 
+    const role = localStorage.getItem('role');
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open}
+                onClose={onClose}
+                maxWidth={false} // Muuda "md" asemel "false"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        m: { xs: 0 },  // Mobiilis eemaldame ääred
+                        width: { xs: '100%' },  // Mobiilis täislaius
+                        maxWidth: { xs: '100%' },  // Mobiilis täislaius
+                        borderRadius: { xs: 0 }  // Mobiilis eemaldame ümarad nurgad
+                    }
+                }}>
             <DialogTitle>Leaderboard</DialogTitle>
             <DialogContent>
                 <ToggleButtonGroup
@@ -253,7 +266,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
             </DialogContent>
             <DialogActions>
                 {/* Only show Add to Records button for WOD type classes */}
-                {cls && cls.trainingType === "WOD" && (
+                {cls && cls.trainingType === "WOD" && role === "regular" && (
                     <Button
                         onClick={handleOpenConfirmation}
                         color="primary"

@@ -34,6 +34,7 @@ import LeaderboardModal from "./LeaderboardModal";
 import ProfileModal from "./ProfileModal";
 import SendMessageModal from './SendMessageModal';
 import SendIcon from '@mui/icons-material/Send';
+import DOMPurify from 'dompurify'; // You'll need to install this package
 
 // Import API functions
 import {
@@ -706,7 +707,7 @@ export default function ClassModal({
                     )}
                 </Box>
 
-                {/* Description centered on the page */}
+                {/* Description centered on the page - UPDATED to render HTML */}
                 <Box
                     sx={{
                         display: "flex",
@@ -718,21 +719,24 @@ export default function ClassModal({
                     }}
                 >
                     {cls.description && (
-                        <Typography
-                            sx={{
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(cls.description, {
+                                    ALLOWED_TAGS: ['b', 'i', 'span'],
+                                    ALLOWED_ATTR: ['style'],
+                                })
+                            }}
+                            style={{
                                 color: "white",
                                 whiteSpace: "pre-line",
-                                fontSize: { xs: "1.8rem", sm: "2.2rem", md: "2.8rem", lg: "3.2rem" },
-                                lineHeight: { xs: 1.4, sm: 1.5, md: 1.6 },
+                                fontSize: "2.8rem",
+                                lineHeight: 1.6,
                                 fontWeight: "500",
                                 letterSpacing: "0.02em",
-                                "& strong": { color: "#81c784" },
                                 wordBreak: "break-word",
                                 maxWidth: "100%"
                             }}
-                        >
-                            {cls.description}
-                        </Typography>
+                        />
                     )}
                 </Box>
             </DialogContent>
@@ -843,9 +847,18 @@ export default function ClassModal({
                                     </Typography>
                                 )}
                                 { cls.description && (
-                                    <Typography sx={{color: "text.primary", whiteSpace: "pre-line"}}>
-                                        {cls.description}
-                                    </Typography>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: DOMPurify.sanitize(cls.description, {
+                                                ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                ALLOWED_ATTR: ['style'],
+                                            })
+                                        }}
+                                        style={{
+                                            color: "text.primary",
+                                            whiteSpace: "pre-line"
+                                        }}
+                                    />
                                 )}
                             </Box>
                         </Grid>
@@ -1251,6 +1264,10 @@ export default function ClassModal({
                                     <FormControlLabel value="sc" control={<Radio/>} label="Scaled"/>
                                     <FormControlLabel value="beg" control={<Radio/>} label="Beginner"/>
                                 </RadioGroup>
+
+                                <Typography variant="caption">
+                                    Reps/Time/Weight. For example: 147, 5:30, 50.
+                                </Typography>
 
                                 {/* Score field */}
                                 <TextField

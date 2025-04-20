@@ -43,18 +43,27 @@ export const sendMessage = async ({ recipientType, groupName, senderId, recipien
 };
 
 
-export const getSentMessages = async (affiliate) => {
+export const getSentMessages = async (affiliate, page = 1, search = '') => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/messages/sent?affiliate=${affiliate}`, {
+        const url = new URL(`${API_URL}/messages/sent`);
+
+        // Lisame päringu parameetrid
+        url.searchParams.append('affiliate', affiliate);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', 50); // 50 kirja lehel
+        if (search) url.searchParams.append('search', search);
+
+        const response = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-
         });
+
         if (!response.ok) {
             throw new Error('Failed to fetch sent messages');
         }
+
         return await response.json();
     } catch (error) {
         console.error('getSentMessages error:', error);

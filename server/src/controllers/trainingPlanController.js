@@ -359,15 +359,11 @@ exports.addComment = async (req, res) => {
 // Mark a sector as complete
 exports.completeSector = async (req, res) => {
     try {
-        const { sectorId, completed } = req.body;
+        const sectorId = parseInt(req.params.id, 10);
         const userId = req.user.id;
+        const { completed } = req.body;
 
-        // Validate required fields
-        if (!sectorId || typeof completed !== 'boolean') {
-            return res.status(400).json({ error: 'Missing required fields.' });
-        }
-
-        // Check if sector exists
+        // Find the sector
         const sector = await prisma.trainingSector.findUnique({
             where: { id: sectorId },
             include: {
@@ -383,20 +379,23 @@ exports.completeSector = async (req, res) => {
             return res.status(404).json({ error: 'Sector not found.' });
         }
 
-        // Check if user has access to this sector
-        if (sector.trainingDay.trainingPlan.creatorId !== userId && sector.trainingDay.trainingPlan.userId !== userId) {
-            return res.status(403).json({ error: 'You do not have permission to update this sector.' });
+        // Check if the user is the one to whom the plan is assigned
+        if (sector.trainingDay.trainingPlan.userId !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to mark this sector as complete.' });
         }
 
+        // Update the sector
         const updatedSector = await prisma.trainingSector.update({
             where: { id: sectorId },
-            data: { completed }
+            data: {
+                completed
+            }
         });
 
         res.json(updatedSector);
     } catch (error) {
-        console.error('Error updating sector:', error);
-        res.status(500).json({ error: 'Failed to update sector.' });
+        console.error('Error completing sector:', error);
+        res.status(500).json({ error: 'Failed to complete sector.' });
     }
 };
 
@@ -448,5 +447,80 @@ exports.addSector = async (req, res) => {
     } catch (error) {
         console.error('Error adding sector:', error);
         res.status(500).json({ error: 'Failed to add sector.' });
+    }
+};
+
+// Add a sector to the user's trainings
+exports.addSectorToTraining = async (req, res) => {
+    try {
+        const sectorId = parseInt(req.params.id, 10);
+        const userId = req.user.id;
+
+        // Find the sector with all its details
+        const sector = await prisma.trainingSector.findUnique({
+            where: { id: sectorId },
+            include: {
+                trainingDay: {
+                    include: {
+                        trainingPlan: true
+                    }
+                }
+            }
+        });
+
+        if (!sector) {
+            return res.status(404).json({ error: 'Sector not found.' });
+        }
+
+        // Check if the user is the one to whom the plan is assigned
+        if (sector.trainingDay.trainingPlan.userId !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to add this sector to your trainings.' });
+        }
+
+        // Map sector type to training type - now correctly handles all training types
+        let trainingType;
+        switch (sector.type) {
+            case 'WOD':
+                trainingType = 'WOD';
+                break;
+            case 'Weightlifting':
+                trainingType = 'Weightlifting';
+                break;
+            case 'Cardio':
+                trainingType = 'Cardio';
+                break;
+            case 'Rowing':
+                trainingType = 'Rowing';  // Now correctly maps Rowing
+                break;
+            case 'Gymnastics':
+                trainingType = 'Gymnastics';  // Now correctly maps Gymnastics
+                break;
+            default:
+                trainingType = 'Other';
+        }
+
+        // Create a new training
+        const training = await prisma.training.create({
+            data: {
+                type: trainingType,  // This will now be the correct type including Rowing/Gymnastics
+                date: new Date(),
+                wodName: trainingType === 'WOD' ? `${sector.trainingDay.trainingPlan.name} - ${sector.trainingDay.name}` : null,
+                wodType: trainingType === 'WOD' ? 'Training Plan' : null,
+                userId,
+                exercises: {
+                    create: {
+                        exerciseData: sector.content
+                    }
+                }
+            },
+            include: {
+                exercises: true
+            }
+        });
+
+        res.status(201).json(training);
+    } catch (error) {
+        console.error('Error adding sector to training:', error);
+        res.status(500).json({ error: 'Failed to add sector to training.' });
     }
 };

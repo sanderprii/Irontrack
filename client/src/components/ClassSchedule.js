@@ -1,12 +1,31 @@
-import React from "react";
-import { Box, Card, CardContent, Typography, Grid } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Card, CardContent, Typography, Grid, IconButton } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime"; // ⏰ Kellaaeg
 import PersonIcon from "@mui/icons-material/Person"; // 👤 Treener
 import GroupIcon from "@mui/icons-material/Group"; // 👥 Mahutavus
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 Trophy icon for leaderboard
+import LeaderboardModal from "./LeaderboardModal"; // Import LeaderboardModal
 
 export default function ClassSchedule({ classes, attendeesCount, onClassClick, weeklyView }) {
     // ✅ Sorteerime klassid ajaliselt (varasemad eespool)
     const sortedClasses = [...classes].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+    // State for Leaderboard modal
+    const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
+    const [selectedLeaderboardClass, setSelectedLeaderboardClass] = useState(null);
+
+    // Handle opening the leaderboard
+    const handleOpenLeaderboard = (e, cls) => {
+        e.stopPropagation(); // Prevent the card click from opening the class modal
+        setSelectedLeaderboardClass(cls);
+        setLeaderboardOpen(true);
+    };
+
+    // Handle closing the leaderboard
+    const handleCloseLeaderboard = () => {
+        setLeaderboardOpen(false);
+        setSelectedLeaderboardClass(null);
+    };
 
     // Function to get background color based on training type
     const getBackgroundColor = (trainingType) => {
@@ -21,7 +40,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                 return "#f9f0ff"; // hele-lilla
             case "Gymnastics":
                 return "#fff0f9"; // hele-roosa
-                case "Open Gym":
+            case "Open Gym":
                 return "#f5f0e1"; // hele-pruun
             default:
                 return "background.paper";
@@ -49,9 +68,33 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                             width: "100%",
                             mb: 2, // Lisame väikese vahe iga klassi vahele
                             p: weeklyView ? 1 : 2, // Weekly vaates väiksem padding
+                            position: "relative", // For positioning the trophy icon
                         }}
                         onClick={() => onClassClick(cls)}
                     >
+                        {/* Trophy icon for WOD classes */}
+                        {cls.trainingType === "WOD" && (
+                            <IconButton
+                                sx={{
+                                    position: "absolute",
+                                    top: 5,
+                                    right: 5,
+                                    zIndex: 1,
+                                    color: "goldenrod",
+                                    backgroundColor: "rgba(255,255,255,0.5)",
+                                    '&:hover': {
+                                        backgroundColor: "rgba(255,255,255,0.8)",
+                                    },
+                                    width: 32,
+                                    height: 32,
+                                }}
+                                onClick={(e) => handleOpenLeaderboard(e, cls)}
+                                size="small"
+                            >
+                                <EmojiEventsIcon fontSize="small" />
+                            </IconButton>
+                        )}
+
                         <CardContent>
                             {weeklyView ? (
                                 // ✅ Päevavaade (KAHE VEERUGA)
@@ -114,6 +157,16 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                         </CardContent>
                     </Card>
                 ))
+            )}
+
+            {/* Leaderboard Modal */}
+            {selectedLeaderboardClass && (
+                <LeaderboardModal
+                    open={isLeaderboardOpen}
+                    onClose={handleCloseLeaderboard}
+                    classId={selectedLeaderboardClass.id}
+                    cls={selectedLeaderboardClass}
+                />
             )}
         </Box>
     );

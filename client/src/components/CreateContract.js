@@ -19,11 +19,11 @@ import {
 } from '@mui/material';
 
 import InfoIcon from '@mui/icons-material/Info';
-import { createContract, getLatestContractTemplate } from '../api/contractApi';
+import { createContract, getLatestContractTemplate, updateContract } from '../api/contractApi';
 import { searchUsers } from '../api/membersApi';
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 
-export default function CreateContract({ open, onClose, affiliateId }) {
+export default function CreateContract({ open, onClose, affiliateId, contractToEdit }) {
     // Kasutaja otsing
     const [userQuery, setUserQuery] = useState('');
     const [userOptions, setUserOptions] = useState([]);
@@ -59,12 +59,67 @@ export default function CreateContract({ open, onClose, affiliateId }) {
     const [dialogMessage, setDialogMessage] = useState('');
     const [validationError, setValidationError] = useState('');
 
-    // Laeme default contract template, kui modal avaneb
+    // Load contract data if editing or template if creating
     useEffect(() => {
-        if (open) {
+        if (open && contractToEdit) {
+            // Pre-fill form with contract data
+            setSelectedUser({
+                id: contractToEdit.userId,
+                fullName: contractToEdit.user?.fullName || 'Unknown User'
+            });
+            setContractType(contractToEdit.contractType || 'Monthly Membership');
+            setContent(contractToEdit.content || '');
+            setPaymentType(contractToEdit.paymentType || '');
+            setPaymentAmount(contractToEdit.paymentAmount?.toString() || '');
+            setPaymentInterval(contractToEdit.paymentInterval || 'month');
+            setPaymentDay(contractToEdit.paymentDay || 1);
+
+            // Format the validUntil date for the input field
+            if (contractToEdit.validUntil) {
+                const date = new Date(contractToEdit.validUntil);
+                setValidUntil(date.toISOString().split('T')[0]);
+            } else {
+                setValidUntil('');
+            }
+
+            // Parse training types (could be a JSON string or already an array)
+            try {
+                if (contractToEdit.trainingType) {
+                    // Try to parse as JSON if it's a string
+                    const trainingTypesArray = typeof contractToEdit.trainingType === 'string'
+                        ? JSON.parse(contractToEdit.trainingType)
+                        : contractToEdit.trainingType;
+                    setTrainingTypes(trainingTypesArray);
+                } else {
+                    setTrainingTypes([]);
+                }
+            } catch (e) {
+                // If parsing fails, try to use it as a comma-separated string
+                const types = contractToEdit.trainingType?.split(',') || [];
+                setTrainingTypes(types.map(t => t.trim()).filter(t => t));
+            }
+        } else if (open && !contractToEdit) {
+            // Reset form for new contract
+            setSelectedUser(null);
+            setContractType('Monthly Membership');
+            setPaymentType('');
+            setPaymentAmount('');
+            setPaymentInterval('month');
+            setPaymentDay(1);
+            setValidUntil('');
+            setTrainingTypes([]);
+
+            // Load template for new contracts
             loadTemplate();
         }
-    }, [open]);
+    }, [open, contractToEdit]);
+
+    // Laeme default contract template, kui modal avaneb
+    useEffect(() => {
+        if (open && !contractToEdit) {
+            loadTemplate();
+        }
+    }, [open, contractToEdit]);
 
     const loadTemplate = async () => {
         try {
@@ -124,10 +179,10 @@ export default function CreateContract({ open, onClose, affiliateId }) {
         }
 
         try {
-            // Koostame payload, kus on lisaks uued väljad
+            // Koostame payload
             const payload = {
                 affiliateId,
-                userId: selectedUser.id, // eeldame, et user-objektil on 'id'
+                userId: selectedUser.id,
                 contractType,
                 content,
                 paymentType,
@@ -136,12 +191,19 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                 paymentDay: paymentDay ? parseInt(paymentDay, 10) : null,
                 validUntil,
                 trainingTypes, // Send as array, backend will convert to string
+                action: "create" // or "update" based on context
             };
 
-            await createContract(payload);
-
-            // Show success message
-            showSuccessMessage('Contract created successfully!');
+            let result;
+            if (contractToEdit) {
+                // Update existing contract
+                result = await updateContract(contractToEdit.id, payload);
+                showSuccessMessage('Contract updated successfully!');
+            } else {
+                // Create new contract
+                result = await createContract(payload);
+                showSuccessMessage('Contract created successfully!');
+            }
 
             // Close on success after a short delay
             setTimeout(() => {
@@ -149,8 +211,8 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                 onClose();
             }, 1500);
         } catch (error) {
-            console.error('Error creating contract:', error);
-            showErrorMessage('Failed to create contract. Please try again.');
+            console.error(contractToEdit ? 'Error updating contract:' : 'Error creating contract:', error);
+            showErrorMessage(contractToEdit ? 'Failed to update contract. Please try again.' : 'Failed to create contract. Please try again.');
         }
     };
 
@@ -198,10 +260,12 @@ export default function CreateContract({ open, onClose, affiliateId }) {
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>Create Contract</DialogTitle>
+            <DialogTitle>{contractToEdit ? 'Edit Contract' : 'Create Contract'}</DialogTitle>
             <DialogContent dividers>
                 <Typography variant="body2" sx={{ mb: 2 }}>
-                    Fill the fields to create a new contract.
+                    {contractToEdit
+                        ? 'Edit the contract details below.'
+                        : 'Fill the fields to create a new contract.'}
                 </Typography>
 
                 {/* Display validation error if any */}
@@ -237,8 +301,10 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                                         </>
                                     ),
                                 }}
+                                disabled={!!contractToEdit} // Disable when editing
                             />
                         )}
+                        disabled={!!contractToEdit} // Disable entire component when editing
                     />
                 </Box>
 
@@ -365,7 +431,7 @@ export default function CreateContract({ open, onClose, affiliateId }) {
                     Cancel
                 </Button>
                 <Button onClick={handleSave} variant="contained" color="primary">
-                    Save Contract
+                    {contractToEdit ? 'Update Contract' : 'Save Contract'}
                 </Button>
             </DialogActions>
 

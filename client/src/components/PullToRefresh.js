@@ -10,12 +10,18 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const startY = useRef(0);
     const currentY = useRef(0);
     const pulling = useRef(false);
-    const distanceThreshold = 110;
+    // Suurendatud lävi, et rohkem peaks alla tõmbama
+    const distanceThreshold = 200; // Väärtus oli enne 110, nüüd suurendatud
+
+    // Helper function to check if we're at the top of the page
+    const isAtTop = () => {
+        return window.scrollY <= 2; // Rangem kontroll (oli 5)
+    };
 
     useEffect(() => {
         const handleTouchStart = (e) => {
             // Only start pulling if we're at the top of the page
-            if (window.scrollY <= 5) {
+            if (isAtTop()) {
                 startY.current = e.touches[0].clientY;
                 currentY.current = startY.current;
                 pulling.current = true;
@@ -23,13 +29,21 @@ const PullToRefresh = ({ onRefresh, children }) => {
         };
 
         const handleTouchMove = (e) => {
-            if (!pulling.current) return;
+            // Kui ei ole tõmbamas või pole lehe alguses, siis lõpeta
+            if (!pulling.current || !isAtTop()) {
+                pulling.current = false; // Reset pulling kui keritakse
+                setPullProgress(0);
+                if (containerRef.current) {
+                    containerRef.current.style.transform = 'translateY(0)';
+                }
+                return;
+            }
 
             currentY.current = e.touches[0].clientY;
             const pullDistance = currentY.current - startY.current;
 
             // Only show visual indicator when pulling down
-            if (pullDistance > 0 && window.scrollY <= 5) {
+            if (pullDistance > 0 && isAtTop()) {
                 // Calculate progress as a percentage
                 const newProgress = Math.min(1, pullDistance / distanceThreshold);
                 setPullProgress(newProgress);
@@ -52,8 +66,8 @@ const PullToRefresh = ({ onRefresh, children }) => {
             pulling.current = false;
             const pullDistance = currentY.current - startY.current;
 
-            // Check if the pull was sufficient
-            if (pullDistance > distanceThreshold && window.scrollY <= 5) {
+            // Check if the pull was sufficient AND we're at the top
+            if (pullDistance > distanceThreshold && isAtTop()) {
                 setRefreshing(true);
 
                 try {
@@ -83,11 +97,23 @@ const PullToRefresh = ({ onRefresh, children }) => {
             }
         };
 
+        // Scroll handler to disable pulling when user scrolls away from top
+        const handleScroll = () => {
+            if (pulling.current && !isAtTop()) {
+                pulling.current = false;
+                setPullProgress(0);
+                if (containerRef.current) {
+                    containerRef.current.style.transform = 'translateY(0)';
+                }
+            }
+        };
+
         // Set up event listeners
         if (containerRef.current) {
             containerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
             containerRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
             containerRef.current.addEventListener('touchend', handleTouchEnd);
+            window.addEventListener('scroll', handleScroll);
         }
 
         // Clean up
@@ -97,6 +123,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 containerRef.current.removeEventListener('touchmove', handleTouchMove);
                 containerRef.current.removeEventListener('touchend', handleTouchEnd);
             }
+            window.removeEventListener('scroll', handleScroll);
         };
     }, [onRefresh]);
 

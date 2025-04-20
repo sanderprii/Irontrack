@@ -156,7 +156,23 @@ exports.getContractById = async (req, res) => {
 exports.updateContract = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, acceptedAt, contractType, content, endDate, affiliateId, userId, action } = req.body;
+        const {
+            status,
+            acceptedAt,
+            trainingType,
+            contractType,
+            content,
+            endDate,
+            affiliateId,
+            userId,
+            action,
+            paymentType,
+            paymentAmount,
+            paymentInterval,
+            paymentDay,
+            trainingTypes, // This would come from the frontend as an array
+            active
+        } = req.body;
 
         // Loome dünaamilise data objekti, mis sisaldab ainult olemasolevaid välju
         const data = {};
@@ -166,6 +182,23 @@ exports.updateContract = async (req, res) => {
         if (contractType !== undefined) data.contractType = contractType;
         if (content !== undefined) data.content = content;
         if (endDate !== undefined) data.validUntil = new Date(endDate); // validUntil vastendatakse endDate'ile
+        if (userId !== undefined) data.userId = parseInt(userId);
+        if (affiliateId !== undefined) data.affiliateId = parseInt(affiliateId);
+        if (paymentType !== undefined) data.paymentType = paymentType;
+        if (paymentAmount !== undefined) data.paymentAmount = parseFloat(paymentAmount);
+        if (paymentInterval !== undefined) data.paymentInterval = paymentInterval;
+        if (paymentDay !== undefined) data.paymentDay = parseInt(paymentDay);
+        if (active !== undefined) data.active = active;
+
+        // Process training types - could be an array or a string
+        if (trainingType !== undefined) {
+            data.trainingType = trainingType;
+        } else if (trainingTypes !== undefined) {
+            // If trainingTypes array is provided (from frontend), convert it to JSON string
+            data.trainingType = Array.isArray(trainingTypes)
+                ? JSON.stringify(trainingTypes)
+                : trainingTypes;
+        }
 
         // Kui ühtegi välja pole määratud, tagasta veateade
         if (Object.keys(data).length === 0) {
@@ -179,7 +212,7 @@ exports.updateContract = async (req, res) => {
         });
 
         // Lisa logi, kui affiliateId ja userId on olemas
-        if (affiliateId && userId) {
+        if (affiliateId && userId && action) {
             await prisma.contractLogs.create({
                 data: {
                     contractId: parseInt(id),

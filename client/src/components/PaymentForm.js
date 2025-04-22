@@ -128,7 +128,7 @@ export default function PaymentForm({ affiliateCredit, appliedCredit, setApplied
                         <FormControlLabel
                             value="montonio"
                             control={<Radio />}
-                            label="Montonio (Bank payments, credit cards)"
+                            label="Montonio Bank payment"
                         />
 
                         {paymentMethod === 'montonio' && affiliateCredit > 0 && (

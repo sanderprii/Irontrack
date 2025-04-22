@@ -6,73 +6,61 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import PropTypes from 'prop-types';
 
-const addresses = ['1 MUI Drive', 'Reactville', 'Anytown', '99999', 'USA'];
-const payments = [
-  { name: 'Card type:', detail: 'Visa' },
-  { name: 'Card holder:', detail: 'Mr. John Smith' },
-  { name: 'Card number:', detail: 'xxxx-xxxx-xxxx-1234' },
-  { name: 'Expiry date:', detail: '04/2024' },
-];
+export default function Review({ totalPrice, planName, planPrice, appliedCredit }) {
+  // Arvuta uus kogusumma
+  const total = Math.max(planPrice - appliedCredit, 0);
 
-export default function Review() {
   return (
-    <Stack spacing={2}>
-      <List disablePadding>
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Products" secondary="4 selected" />
-          <Typography variant="body2">$134.98</Typography>
-        </ListItem>
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Shipping" secondary="Plus taxes" />
-          <Typography variant="body2">$9.99</Typography>
-        </ListItem>
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Total" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            $144.97
-          </Typography>
-        </ListItem>
-      </List>
-      <Divider />
-      <Stack
-        direction="column"
-        divider={<Divider flexItem />}
-        spacing={2}
-        sx={{ my: 2 }}
-      >
-        <div>
-          <Typography variant="subtitle2" gutterBottom>
-            Shipment details
-          </Typography>
-          <Typography gutterBottom>John Smith</Typography>
-          <Typography gutterBottom sx={{ color: 'text.secondary' }}>
-            {addresses.join(', ')}
-          </Typography>
-        </div>
-        <div>
-          <Typography variant="subtitle2" gutterBottom>
-            Payment details
-          </Typography>
-          <Grid container>
-            {payments.map((payment) => (
-              <React.Fragment key={payment.name}>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  useFlexGap
-                  sx={{ width: '100%', mb: 1 }}
-                >
-                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                    {payment.name}
-                  </Typography>
-                  <Typography variant="body2">{payment.detail}</Typography>
-                </Stack>
-              </React.Fragment>
-            ))}
-          </Grid>
-        </div>
+      <Stack spacing={2}>
+        <List disablePadding>
+          <ListItem sx={{ py: 1, px: 0 }}>
+            <ListItemText primary="Products" secondary={planName} />
+            <Typography variant="body2">{planPrice}€</Typography>
+          </ListItem>
+          {appliedCredit > 0 && (
+              <ListItem sx={{ py: 1, px: 0 }}>
+                <ListItemText primary="Paid by credit" />
+                <Typography variant="body2" color="text.primary">
+                  -{appliedCredit}€
+                </Typography>
+              </ListItem>
+          )}
+          <ListItem sx={{ py: 1, px: 0 }}>
+            <ListItemText primary="Total" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {total}€
+            </Typography>
+          </ListItem>
+        </List>
+        <Divider />
+        <Stack direction="column" divider={<Divider flexItem />} spacing={2} sx={{ my: 2 }}>
+          <div>
+            <Typography variant="subtitle2" gutterBottom>
+              Payment details
+            </Typography>
+            <Grid container>
+              {/* Näiteks võib siia lisada makse detailide ridu */}
+              <Grid item xs={12}>
+                <Typography variant="body2">
+                  Payment method: {appliedCredit > 0 ? 'Credit' : 'Other'}
+                </Typography>
+              </Grid>
+            </Grid>
+          </div>
+        </Stack>
       </Stack>
-    </Stack>
   );
 }
+
+Review.propTypes = {
+  planName: PropTypes.string.isRequired,
+  planPrice: PropTypes.number.isRequired,
+  totalPrice: PropTypes.number, // mitte enam kasutusel, kuna arvutame uuesti
+  appliedCredit: PropTypes.number,
+};
+
+Review.defaultProps = {
+  appliedCredit: 0,
+};

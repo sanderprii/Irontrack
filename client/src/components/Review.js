@@ -16,7 +16,7 @@ export default function Review({ totalPrice, planName, planPrice, appliedCredit 
       <Stack spacing={2}>
         <List disablePadding>
           <ListItem sx={{ py: 1, px: 0 }}>
-            <ListItemText primary="Products" secondary="4 selected" />
+            <ListItemText primary="Products" secondary={planName} />
             <Typography variant="body2">{planPrice}€</Typography>
           </ListItem>
           {appliedCredit > 0 && (
@@ -44,7 +44,7 @@ export default function Review({ totalPrice, planName, planPrice, appliedCredit 
               {/* Näiteks võib siia lisada makse detailide ridu */}
               <Grid item xs={12}>
                 <Typography variant="body2">
-                  Payment method: {appliedCredit > 0 ? 'Credit' : 'Other'}
+                  Payment method: {appliedCredit > 0 ? 'Credit' : 'Bank transfer'}
                 </Typography>
               </Grid>
             </Grid>

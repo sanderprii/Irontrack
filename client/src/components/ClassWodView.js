@@ -123,6 +123,9 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                     {/* WOD Andmed - Updated to render HTML content */}
                                     {wod ? (
                                         <Box textAlign="center">
+                                            <Typography variant="subtitle2" sx={{ color: "secondary.main", mb: 1, fontStyle: "italic" }}>
+                                                {wod.notes}
+                                            </Typography>
                                             <Typography variant="h6" sx={{ fontWeight: "bold", color: "text.primary" }}>
                                                 {wod.wodName}
                                             </Typography>
@@ -146,6 +149,7 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                                 }}
                                             />
                                         </Box>
+
                                     ) : (
                                         <Typography variant="body2" color="textSecondary" textAlign="center">
                                             No WOD added

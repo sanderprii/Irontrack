@@ -3,14 +3,14 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, MenuItem, FormControl, FormLabel,
     RadioGroup, FormControlLabel, Radio, TextareaAutosize,
-    Box, Typography, IconButton, Tooltip, Divider
+    Box, Typography, IconButton, Tooltip, Divider, Select, InputLabel
 } from "@mui/material";
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
 import DOMPurify from 'dompurify'; // You'll need to install this package
 
-export default function TrainingModal({ open, onClose, onSave, selectedClass }) {
+export default function TrainingModal({ open, onClose, onSave, selectedClass, trainers = [] }) {
     const [trainingData, setTrainingData] = useState({
         trainingType: "WOD", // Default väärtus
         trainingName: "",
@@ -57,6 +57,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 description: selectedClass.description || "",
                 canRegister: selectedClass.canRegister || true,
                 freeClass: selectedClass.freeClass || false,
+                applyToAllFutureTrainings: selectedClass.applyToAllFutureTrainings || false,
             });
         } else {
             setTrainingData({
@@ -73,6 +74,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                 description: "",
                 canRegister: true,
                 freeClass: false,
+                applyToAllFutureTrainings: false,
             });
         }
     }, [selectedClass]);
@@ -223,14 +225,27 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                     margin="dense"
                 />
 
-                <TextField
-                    fullWidth
-                    label="Trainer"
-                    name="trainer"
-                    value={trainingData.trainer}
-                    onChange={handleChange}
-                    margin="dense"
-                />
+                {/* Trainer dropdown instead of text field */}
+                <FormControl fullWidth margin="dense">
+                    <InputLabel id="trainer-select-label">Trainer</InputLabel>
+                    <Select
+                        labelId="trainer-select-label"
+                        id="trainer-select"
+                        name="trainer"
+                        value={trainingData.trainer}
+                        onChange={handleChange}
+                        label="Trainer"
+                    >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
+                        {trainers.map((trainer) => (
+                            <MenuItem key={trainer.trainerId} value={trainer.fullName}>
+                                {trainer.fullName}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
 
                 <TextField
                     fullWidth
@@ -376,6 +391,19 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass }) 
                         name="repeatWeekly"
                         value={trainingData.repeatWeekly.toString()}
                         onChange={(e) => setTrainingData({ ...trainingData, repeatWeekly: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Apply to all future trainings?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="applyToAllFutureTraining"
+                        value={trainingData.applyToAllFutureTrainings ? "true" : "false"}
+                        onChange={(e) => setTrainingData({ ...trainingData, applyToAllFutureTrainings: e.target.value === "true" })}
                     >
                         <FormControlLabel value="true" control={<Radio />} label="Yes" />
                         <FormControlLabel value="false" control={<Radio />} label="No" />

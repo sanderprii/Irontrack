@@ -111,7 +111,7 @@ export default function AppAppBar() {
         } else if (role === 'trainer') {
             leftLinks = [
                 {name: 'Classes', to: '/classes'},
-                {name: 'Members', to: '/members'},
+
             ];
         } else if (role === 'checkin') {
             leftLinks = [

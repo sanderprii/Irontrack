@@ -13,6 +13,7 @@ model User {
   email                 String             @unique
   password              String
   fullName              String?
+  dateOfBirth           DateTime?
   emailConfirmed        Boolean            @default(false)
   verificationToken     String?
   verificationExpires   DateTime?
@@ -87,6 +88,7 @@ model Contract {
   paymentInterval String?
   paymentDay      Int?
   validUntil      DateTime?
+  startDate       DateTime?
   active          Boolean          @default(true)
   status          String           @default("draft") // draft, sent, accepted jne
   createdAt       DateTime         @default(now())
@@ -388,6 +390,7 @@ model todayWOD {
   type        String
   description String
   date        DateTime
+  notes       String?
   affiliateId Int
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }

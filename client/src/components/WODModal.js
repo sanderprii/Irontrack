@@ -12,7 +12,7 @@ import { getTodayWOD, saveTodayWOD } from "../api/wodApi";
 import DOMPurify from 'dompurify'; // You'll need to install this package
 
 export default function WODModal({ open, onClose, selectedDate, selectedAffiliateId, refreshWODs }) {
-    const [wod, setWod] = useState({ wodName: "", type: "For Time", description: "" });
+    const [wod, setWod] = useState({ wodName: "", type: "For Time", description: "", notes: "" });
     const [showSearch, setShowSearch] = useState(true);
     const [selectedColorOption, setSelectedColorOption] = useState(null);
     const wodTypes = ["For Time", "EMOM", "TABATA", "AMRAP"];
@@ -35,6 +35,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     wodName: response.wodName || "",
                     type: response.type || "For Time",
                     description: response.description || "",
+                    notes: response.notes || "",
                 });
             } else {
                 setWod({ wodName: "", type: "For Time", description: "" });
@@ -67,6 +68,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                 wodType: wod.type,
                 description: sanitizedDescription,
                 date: formattedDate,
+                notes: wod.notes,
             };
 
             await saveTodayWOD(selectedAffiliateId, wodPayload);
@@ -154,6 +156,14 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
             <DialogTitle>{wod.wodName ? "Edit WOD" : "Add WOD"}</DialogTitle>
             <DialogContent>
                 {showSearch && <WODSearch onSelectWOD={handleSelectWOD} />}
+                <TextField
+                    label="Notes"
+                    fullWidth
+                    value={wod.notes}
+                    onChange={(e) => setWod({ ...wod, notes: e.target.value })}
+                    margin="normal"
+                />
+
                 <TextField
                     label="WOD Name"
                     fullWidth

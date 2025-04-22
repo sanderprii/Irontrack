@@ -96,6 +96,7 @@ exports.createContract = async (req, res) => {
             paymentInterval,
             paymentDay,
             validUntil,
+            startDate,
             trainingTypes, // Extract trainingTypes from request
         } = req.body;
 
@@ -119,6 +120,7 @@ exports.createContract = async (req, res) => {
                 paymentInterval,
                 paymentDay,
                 validUntil: validUntilDate,
+                startDate: new Date(startDate),
                 trainingType, // Use singular field name matching the schema
             },
         });
@@ -170,6 +172,7 @@ exports.updateContract = async (req, res) => {
             paymentAmount,
             paymentInterval,
             paymentDay,
+            startDate,
             trainingTypes, // This would come from the frontend as an array
             active
         } = req.body;
@@ -189,6 +192,7 @@ exports.updateContract = async (req, res) => {
         if (paymentInterval !== undefined) data.paymentInterval = paymentInterval;
         if (paymentDay !== undefined) data.paymentDay = parseInt(paymentDay);
         if (active !== undefined) data.active = active;
+        if (startDate !== undefined) data.startDate = new Date(startDate);
 
         // Process training types - could be an array or a string
         if (trainingType !== undefined) {
@@ -299,7 +303,7 @@ exports.getUserContracts = async (req, res) => {
                 include: {
                     logs: true,     // kui tahad logs'id
                     signed: true,   // kui tahad SignedContract ridu
-                    affiliate: {select: {name: true}}, // kui tahad affiliate infot
+                    affiliate: {select: {name: true, email: true}}, // kui tahad affiliate infot
                     paymentHolidays: true,
                 },
                 orderBy: { createdAt: 'desc' },
@@ -394,7 +398,7 @@ exports.acceptContract = async (req, res) => {
         // Kui ei ole, siis loome uue UserPlan
         if (!contract.userPlan || contract.userPlan.length === 0) {
             // Arvutame lõppkuupäeva (1 kuu alates tänasest)
-            const endDate = new Date();
+            const endDate = new Date(contract.startDate);
             endDate.setMonth(endDate.getMonth() + 1);
 
             // Loome UserPlan kirje

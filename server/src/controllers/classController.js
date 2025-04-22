@@ -160,10 +160,9 @@ const updateClass = async (req, res) => {
         repeatWeekly,
         wodName,
         wodType,
-        description
+        description,
+        applyToAllFutureTrainings
     } = req.body;
-    const data = req.body;
-
 
     // time võib tulla õiges formaadis kui ka dateTTime formaadis. Kontrollime ja teisendame õigesse formaati
     let classTime = new Date(time);
@@ -175,16 +174,26 @@ const updateClass = async (req, res) => {
         classTime = new Date(classTime.toISOString());
     }
 
-
     try {
-        const data = req.body;
-        data.duration = parseInt(data.duration);
+        // Leia praegune klass, et kontrollida vana mahutavust
+        const currentClass = await prisma.classSchedule.findUnique({
+            where: { id: classId },
+            include: {
+                affiliate: true
+            }
+        });
+
+        if (!currentClass) {
+            return res.status(404).json({ error: "Class not found" });
+        }
+
+        // Uuenda klass uute andmetega
         const updatedClass = await prisma.classSchedule.update({
             where: {id: classId},
             data: {
                 trainingType,
                 trainingName,
-                time: classTime, // ✅ Õige DateTime väärtus Prisma jaoks
+                time: classTime,
                 duration: parseInt(duration),
                 trainer,
                 memberCapacity: parseInt(memberCapacity),
@@ -195,15 +204,127 @@ const updateClass = async (req, res) => {
                 description
             }
         });
+
+        // Kontrolli, kas mahutavus suurenes
+        const oldCapacity = currentClass.memberCapacity;
+        const newCapacity = parseInt(memberCapacity);
+        const capacityIncrease = newCapacity - oldCapacity;
+
+        // Kui mahutavus suurenes, kontrolli ootelisti
+        if (capacityIncrease > 0) {
+            // Leia praegune osalejate arv
+            const enrolledCount = await prisma.classAttendee.count({
+                where: { classId }
+            });
+
+            // Arvuta vabad kohad
+            const availableSpots = newCapacity - enrolledCount;
+
+            if (availableSpots > 0) {
+                // Leia inimesed ootelististist (vanemad kõigepealt)
+                const waitlistEntries = await prisma.waitlist.findMany({
+                    where: { classId },
+                    orderBy: { createdAt: 'asc' },
+                    include: {
+                        user: true,
+                        userPlan: true
+                    },
+                    take: availableSpots // Võta vaid nii palju kui kohti on
+                });
+
+                // Töötle iga ootelisti kirjet
+                for (const entry of waitlistEntries) {
+                    // Tasuliste klasside puhul kontrolli, kas plaan on kehtiv
+                    if (!currentClass.freeClass && entry.userPlanId > 0) {
+                        const plan = await prisma.userPlan.findUnique({
+                            where: { id: entry.userPlanId }
+                        });
+
+                        if (!plan || plan.sessionsLeft <= 0) {
+                            // Jäta see inimene vahele, kuna tema plaan pole enam kehtiv
+                            continue;
+                        }
+                    }
+
+                    // Alusta tehingut selle inimese jaoks
+                    await prisma.$transaction(async (tx) => {
+                        let isFamilyMember = false;
+                        if (entry.userPlan && entry.userPlan.familyMemberId > 0) {
+                            isFamilyMember = true;
+                        }
+
+                        // Registreeri inimene ootenimekirjast
+                        await tx.classAttendee.create({
+                            data: {
+                                userId: entry.userId,
+                                classId,
+                                checkIn: false,
+                                userPlanId: entry.userPlanId,
+                                affiliateId: currentClass.affiliateId,
+                                isFamilyMember: isFamilyMember || false,
+                                familyMemberId: entry.userPlan?.familyMemberId || null
+                            }
+                        });
+
+                        // Kui see on tasuline klass, vähenda sessioone
+                        if (!currentClass.freeClass && entry.userPlanId > 0) {
+                            await tx.userPlan.update({
+                                where: { id: entry.userPlanId },
+                                data: { sessionsLeft: { decrement: 1 } }
+                            });
+                        }
+
+                        // Eemalda inimene ootenimekirjast
+                        await tx.waitlist.delete({
+                            where: {
+                                classId_userId: {
+                                    classId,
+                                    userId: entry.userId
+                                }
+                            }
+                        });
+                    });
+
+                    // Saada e-maili teavitus
+                    try {
+                        const emailData = {
+                            recipientType: 'user',
+                            senderId: currentClass.affiliateId,
+                            recipientId: entry.userId,
+                            subject: `You've been registered for ${currentClass.trainingName}`,
+                            body: `
+Dear ${entry.user.fullName},
+
+Good news! A spot has opened up in the class "${currentClass.trainingName}" scheduled for ${new Date(currentClass.time).toLocaleString()}.
+
+You have been automatically registered for this class from the waitlist.
+${entry.userPlan && entry.userPlan.familyMemberId ? `This registration is for your family member.` : ''}
+
+Time: ${new Date(currentClass.time).toLocaleString()}
+Trainer: ${currentClass.trainer || 'N/A'}
+
+We look forward to seeing you there!
+
+IronTrack Team
+                            `,
+                            affiliateEmail: currentClass.affiliate.email
+                        };
+
+                        await sendMessage(emailData);
+                    } catch (emailError) {
+                        console.error('Error sending notification email:', emailError);
+                        // Jätka töötlemist, isegi kui e-maili saatmine ebaõnnestub
+                    }
+                }
+            }
+        }
+
         if (repeatWeekly < 1) {
-
-            // kustuta kõik klassid, kus seriesId on sama mis antud klassil, seriesId on olemas ja id on suurem kui classId. Enne tuleb selle klassi seriedId saada
-            const seriesIdGet = await prisma.classSchedule.findFirst({where: {id: classId}})
-
+            // kustuta kõik klassid, kus seriesId on sama mis antud klassil, seriesId on olemas ja id on suurem kui classId
+            const seriesIdGet = await prisma.classSchedule.findFirst({where: {id: classId}});
             const seriesId = seriesIdGet.seriesId;
 
             if (seriesId) {
-
                 await prisma.classSchedule.deleteMany({
                     where: {
                         seriesId,
@@ -212,6 +333,52 @@ const updateClass = async (req, res) => {
                 });
             }
         }
+
+        // If applyToAllFutureTrainings is true, update all future classes
+        if (applyToAllFutureTrainings) {
+            const seriesIdGet = await prisma.classSchedule.findFirst({where: {id: classId}});
+            const seriesId = seriesIdGet.seriesId;
+
+            if (seriesId) {
+                // Get all future classes in the series
+                const futureClasses = await prisma.classSchedule.findMany({
+                    where: {
+                        seriesId,
+                        id: {gt: classId}
+                    },
+                    orderBy: {
+                        time: 'asc'
+                    }
+                });
+
+                // Update each future class with an incrementing date
+                for (let i = 0; i < futureClasses.length; i++) {
+                    const futureClass = futureClasses[i];
+
+                    // Create a new date object for each class
+                    const newTime = new Date(classTime);
+                    newTime.setDate(newTime.getDate() + (i+1) * 7);
+
+                    await prisma.classSchedule.update({
+                        where: { id: futureClass.id },
+                        data: {
+                            trainingType,
+                            trainingName,
+                            time: newTime,
+                            duration: parseInt(duration),
+                            trainer,
+                            memberCapacity: parseInt(memberCapacity),
+                            location,
+                            repeatWeekly,
+                            wodName: wodName ? wodName.toUpperCase() : '',
+                            wodType,
+                            description
+                        }
+                    });
+                }
+            }
+        }
+
         res.status(200).json({message: "Class updated successfully!", class: updatedClass});
     } catch (error) {
         console.error("Error updating class:", error);

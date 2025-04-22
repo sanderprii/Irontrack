@@ -52,6 +52,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
     const [paymentInterval, setPaymentInterval] = useState('month'); // default väärtus
     const [paymentDay, setPaymentDay] = useState(1);
     const [validUntil, setValidUntil] = useState('');
+    const [startDate, setStartDate] = useState('');
 
     // Dialog states
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -73,6 +74,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             setPaymentAmount(contractToEdit.paymentAmount?.toString() || '');
             setPaymentInterval(contractToEdit.paymentInterval || 'month');
             setPaymentDay(contractToEdit.paymentDay || 1);
+            setStartDate(contractToEdit.startDate || '');
 
             // Format the validUntil date for the input field
             if (contractToEdit.validUntil) {
@@ -106,6 +108,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             setPaymentAmount('');
             setPaymentInterval('month');
             setPaymentDay(1);
+            setStartDate('');
             setValidUntil('');
             setTrainingTypes([]);
 
@@ -189,6 +192,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 paymentAmount: paymentAmount ? parseFloat(paymentAmount) : null,
                 paymentInterval,
                 paymentDay: paymentDay ? parseInt(paymentDay, 10) : null,
+                startDate,
                 validUntil,
                 trainingTypes, // Send as array, backend will convert to string
                 action: "create" // or "update" based on context
@@ -385,6 +389,21 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         value={paymentDay}
                         onChange={(e) => setPaymentDay(e.target.value)}
                         fullWidth
+                    />
+                </Box>
+
+                {/* start date (kuupäev) */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <InfoTooltip title="Contract start date" />
+                    <TextField
+                        label="Start Date"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        fullWidth
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
                     />
                 </Box>
 

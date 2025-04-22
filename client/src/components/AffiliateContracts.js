@@ -670,6 +670,24 @@ export default function AffiliateContracts({affiliateId}) {
 
                                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Starting date:
+                                                                            </Typography>
+                                                                            <Typography variant="body1">
+                                                                                {contract.startDate
+                                                                                    ? new Date(contract.startDate).toLocaleDateString(
+                                                                                        'en-GB',
+                                                                                        {
+                                                                                            day: '2-digit',
+                                                                                            month: '2-digit',
+                                                                                            year: 'numeric',
+                                                                                        }
+                                                                                    )
+                                                                                    : 'N/A'}
+                                                                            </Typography>
+                                                                        </Box>
+
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
                                                                                 Valid Until:
                                                                             </Typography>
                                                                             <Typography variant="body1">

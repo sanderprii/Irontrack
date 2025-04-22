@@ -90,7 +90,7 @@ const IOSInstallModal = ({ open, handleClose }) => {
 
     const steps = [
         {
-            label: "Open Safari",
+            label: "Read all 3 steps first! - Open Safari",
             description: "This feature only works in Safari browser on iOS. Open your website in Safari.",
             image: iOSImages[0],
         },
@@ -226,7 +226,7 @@ const AndroidInstallModal = ({ open, handleClose }) => {
 
     const steps = [
         {
-            label: "Open Chrome",
+            label: "Read all 3 steps first! - Open Chrome",
             description: "Visit the IronTrack website using Google Chrome on your Android device.",
             image: androidImages[0],
         },

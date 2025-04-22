@@ -136,7 +136,7 @@ exports.editProfile = async (req, res) => {
             where: { id: userId },
             data: {
                 fullName: fullName.toUpperCase() || null,
-
+                dateOfBirth: new Date(dateOfBirth) || null,
                 email: email || null,
                 phone: phone || null,
                 address: address || null,
@@ -168,6 +168,7 @@ exports.getUser = async (req, res) => {
                 logo: true,
                 address: true,
                 emergencyContact: true,
+                dateOfBirth: true,
             }
         });
         res.json(user);
@@ -188,6 +189,7 @@ exports.updateUserData = async (req, res) => {
             data: {
                 fullName,
                 email,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
 
             },
         });

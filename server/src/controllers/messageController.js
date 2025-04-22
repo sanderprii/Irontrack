@@ -357,12 +357,10 @@ const sendMessageToAffiliate = async (req, res) => {
         // Use new HTML template
         const htmlContent = createEmailTemplate(subject, body);
 
-        // Testing email
-        const testingEmail = process.env.VERIFIED_EMAIL || "info@irontrack.ee";
 
         const params = {
             from: defaultSender,
-            recipients: [new Recipient(testingEmail)], // For testing - change later to: affiliateEmail
+            recipients: [new Recipient(affiliateEmail)], // For testing - change later to: affiliateEmail
             replyTo: new Sender(senderEmail, "Reply To"),
             subject: subject,
             html: htmlContent,

@@ -52,6 +52,7 @@ export default function Classes() {
     const [isWODModalOpen, setWODModalOpen] = useState(false);
     const [isClassModalOpen, setClassModalOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [trainers, setTrainers] = useState([]);
 
     const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -103,31 +104,41 @@ export default function Classes() {
     useEffect(() => {
         // Set up affiliateId from various sources
         if (selectedAffiliate && selectedAffiliate.id) {
-            console.log("Setting affiliateId from selectedAffiliate:", selectedAffiliate.id);
+
             setAffiliateId(selectedAffiliate.id);
+
+            if (selectedAffiliate.trainers) {
+                setTrainers(selectedAffiliate.trainers);
+            }
+
             return; // Exit early if we have a selectedAffiliate
         }
 
         const storedId = localStorage.getItem("affiliateId");
         if (storedId) {
-            console.log("Setting affiliateId from localStorage:", storedId);
+
             setAffiliateId(parseInt(storedId));
             return; // Exit early if we found it in localStorage
         }
 
         // Only fetch from API if we don't have affiliateId from other sources
-        console.log("Fetching affiliate data from API");
+
         const fetchAffiliate = async () => {
             try {
                 const response = await getAffiliate();
-                console.log("API response:", response);
+
 
                 if (response && response.affiliate && response.affiliate.id) {
-                    console.log("Setting affiliateId from API response:", response.affiliate.id);
+
                     setAffiliateId(response.affiliate.id);
                     setAffiliateEmail(response.affiliate.email);
+
+                    if (response.trainers && Array.isArray(response.trainers)) {
+                        setTrainers(response.trainers);
+                    }
+
                 } else if (response && response.id) {
-                    console.log("Setting affiliateId directly from response:", response.id);
+
                     setAffiliateId(response.id);
                     if (response.email) setAffiliateEmail(response.email);
                 } else {
@@ -340,6 +351,11 @@ export default function Classes() {
             if (trainingData.id) {
                 await updateTraining(trainingData.id, trainingData); // ✅ Teeme update
                 showSuccessMessage("Training updated successfully!");
+
+                if (selectedClass && selectedClass.id === trainingData.id) {
+                    setSelectedClass(trainingData);
+                }
+
             } else {
                 await createTraining(affiliateId, trainingData); // ✅ Loome uue klassi
                 showSuccessMessage("New training created successfully!");
@@ -574,6 +590,7 @@ export default function Classes() {
                 onClose={() => setTrainingModalOpen(false)}
                 onSave={handleSaveTraining}
                 selectedClass={selectedTraining}
+                trainers={trainers}
             />
 
             <ClassDetailsModal
@@ -586,6 +603,7 @@ export default function Classes() {
                 attendeesCount={attendeesCount[selectedClass?.id]}
                 affiliateId={affiliateId}
                 affiliateEmail={affiliateEmail}
+                trainers={trainers}
             />
 
             {/* Day Leaderboard Modal */}

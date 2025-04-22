@@ -19,7 +19,12 @@ const getMyAffiliate = async (req, res) => {
             include: {
                 trainers: {
                     include: {
-                        trainer: true,
+                        trainer: {
+                            select: {
+                                fullName: true,
+                                logo: true,
+                            },
+                        }
                     },
                 },
             },

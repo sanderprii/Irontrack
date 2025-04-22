@@ -42,7 +42,7 @@ const startDate = new Date(req.query.startDate);
 
 // ✅ Create or Update Today's WOD
 const saveTodayWOD = async (req, res) => {
-    const { affiliateId, wodName, wodType, description, date } = req.body; // ✅ Ainult ühe päeva andmed
+    const { affiliateId, wodName, wodType, description, date, notes } = req.body; // ✅ Ainult ühe päeva andmed
 
     if (!affiliateId) {
         return res.status(400).json({ error: "Missing required fields." });
@@ -62,7 +62,8 @@ const saveTodayWOD = async (req, res) => {
                     data: {
                         name: wodName,
                         type: wodType,
-                        description
+                        description,
+                        notes,
                     }
                 });
             }
@@ -83,7 +84,8 @@ const saveTodayWOD = async (req, res) => {
                     wodName,
                     type: wodType,
                     description,
-                    date: new Date(date)
+                    date: new Date(date),
+                    notes,
                 }
             });
             return res.json({ message: "WOD added successfully." });

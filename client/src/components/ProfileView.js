@@ -41,6 +41,23 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
     const [dialogMessage, setDialogMessage] = useState('');
     const [noteToDelete, setNoteToDelete] = useState(null);
 
+    // Helper function to format date as DD.MM.YYYY
+    const formatDate = (dateString) => {
+        if (!dateString) return ''; // Handle empty dates
+
+        const date = new Date(dateString);
+
+        // Check if date is valid
+        if (isNaN(date.getTime())) return dateString;
+
+        // Format to DD.MM.YYYY
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const year = date.getFullYear();
+
+        return `${day}.${month}.${year}`;
+    };
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -146,7 +163,13 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                                     <strong></strong> {user.fullName}
                                 </Typography>
                             </Box>
-
+                            {/* dateOfBirth - now formatted */}
+                            <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+                                <PersonIcon sx={{color: "gray"}}/>
+                                <Typography>
+                                    <strong></strong> {formatDate(user.dateOfBirth)}
+                                </Typography>
+                            </Box>
                             <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
                                 <EmailIcon sx={{color: "gray"}}/>
                                 <Typography>
@@ -200,7 +223,12 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                                     <strong></strong> {user.fullName}
                                 </Typography>
                             </Box>
-
+                            <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+                                <PersonIcon sx={{color: "gray"}}/>
+                                <Typography>
+                                    <strong></strong> {formatDate(user.dateOfBirth)}
+                                </Typography>
+                            </Box>
                             <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
                                 <EmailIcon sx={{color: "gray"}}/>
                                 <Typography>

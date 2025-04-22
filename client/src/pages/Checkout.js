@@ -471,7 +471,8 @@ export default function Checkout(props) {
                         affiliateId: affiliateInfo?.id,
                         acceptType: 'checkout',
                         contractTermsId: 1,
-                        paymentCompleted: true
+                        paymentCompleted: true,
+
                     });
 
                     setPaymentSuccess(true);

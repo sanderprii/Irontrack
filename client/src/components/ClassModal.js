@@ -67,6 +67,7 @@ export default function ClassModal({
                                        attendeesCount,
                                        affiliateId,
                                        affiliateEmail,
+                                       trainers = [],
                                        props
                                    }) {
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -312,7 +313,7 @@ export default function ClassModal({
                 const planEndDate = new Date(plan.endDate).getTime();
                 let expiryTime = 0;
                 if (plan.contractId !== null) {
-                    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
+                    const fiveDaysInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
                     expiryTime = planEndDate + fiveDaysInMs;
                 } else {
                     expiryTime = planEndDate;
@@ -439,6 +440,9 @@ export default function ClassModal({
         try {
             await cancelRegistration(cls.id, cls.freeClass);
             await fetchAttendees();
+
+
+
             if (userRole === "affiliate" || userRole === "trainer") {
                 // Refresh waitlist after cancellation to reflect changes
                 await fetchWaitlistEntries();
@@ -523,6 +527,8 @@ export default function ClassModal({
             setAttendees(prev => prev.filter(a => a.userId !== userId));
             await refreshClasses();
 
+            await fetchAttendees();
+
             // Also check waitlist after deletion - someone might have been auto-registered
             if (userRole === "affiliate" || userRole === "trainer") {
                 await fetchWaitlistEntries();
@@ -599,7 +605,17 @@ export default function ClassModal({
         setSendMessageOpen(true);
     };
 
-    const isClassOver = new Date(cls.time) < new Date();
+    // Add 1 hour buffer - class is considered "over" for registration purposes 1 hour before start
+    const isClassOver = () => {
+        const classTime = new Date(cls.time);
+        const currentTime = new Date();
+
+        // Add 1 hour buffer
+        const oneHourInMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+        // Class is "over" if it's less than 1 hour until class starts or already started
+        return classTime.getTime() - currentTime.getTime() < oneHourInMs;
+    };
 
     // Component for workout info in full-screen mode optimized for TV displays
     const WorkoutInfoFullScreen = () => (
@@ -877,7 +893,7 @@ export default function ClassModal({
                             <Button
                                 variant="contained"
                                 color="error"
-                                disabled={isClassOver}
+                                disabled={isClassOver()}
                                 onClick={handleOpenCancelConfirm}
                             >
                                 Cancel Registration
@@ -887,7 +903,7 @@ export default function ClassModal({
                             <Button
                                 variant="contained"
                                 color="warning"
-                                disabled={isClassOver}
+                                disabled={isClassOver()}
                                 onClick={handleOpenWaitlistRemoveConfirm}
                             >
                                 Remove from Waitlist
@@ -900,7 +916,7 @@ export default function ClassModal({
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        disabled={isClassOver}
+                                        disabled={isClassOver()}
                                         onClick={handleAddToWaitlist}
                                     >
                                         Join Waitlist
@@ -949,7 +965,7 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="primary"
-                                                    disabled={isClassOver}
+                                                    disabled={isClassOver()}
                                                     onClick={handleAddToWaitlist}
                                                 >
                                                     Join Waitlist
@@ -977,7 +993,7 @@ export default function ClassModal({
                                     <Button
                                         variant="contained"
                                         color="success"
-                                        disabled={isClassOver}
+                                        disabled={isClassOver()}
                                         onClick={handleRegister}
                                     >
                                         Register
@@ -1026,7 +1042,7 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="success"
-                                                    disabled={isClassOver}
+                                                    disabled={isClassOver()}
                                                     onClick={handleRegister}
                                                 >
                                                     Register

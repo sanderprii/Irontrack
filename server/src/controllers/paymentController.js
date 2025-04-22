@@ -97,7 +97,7 @@ const createMontonioPayment = async (req, res) => {
             notificationUrl: notificationUrl,
             currency: "EUR",
             grandTotal: parseFloat(formattedAmount),
-            locale: "et",
+            locale: "en",
 
             // Optional billing info if available
             billingAddress: {
@@ -121,7 +121,7 @@ const createMontonioPayment = async (req, res) => {
                 methodOptions: {
                     paymentDescription: description || `Plan purchase: ${MERCHANT_NAME}`,
                     preferredCountry: "EE",
-                    preferredLocale: "et"
+                    preferredLocale: "en"
                 },
                 amount: parseFloat(formattedAmount),
                 currency: "EUR"

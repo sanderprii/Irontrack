@@ -437,15 +437,12 @@ export default function TrainingsPage() {
 
     function closeModal() {
         if (isEditing) {
-            showConfirmDialog(
-                "Discard Changes",
-                "Are you sure you want to close without saving your changes?",
-                () => {
+
                     setModalOpen(false);
                     setModalTraining(null);
                     setIsEditing(false);
-                }
-            );
+
+
         } else {
             setModalOpen(false);
             setModalTraining(null);

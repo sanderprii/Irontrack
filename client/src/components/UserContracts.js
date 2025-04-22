@@ -163,6 +163,7 @@ export default function UserContracts({ user, affiliateId }) {
                     affiliateId: parsedAffiliateId, // Kasuta parsitud ID-d
                     validityDays: 31, // Standardne 30-päevane kehtivus esimesele maksele
                     sessions: 999, // Piisavalt suur arv, et kasutaja saaks käia nii palju kui tahab
+
                 },
                 affiliate: {
                     id: parsedAffiliateId,
@@ -563,6 +564,15 @@ export default function UserContracts({ user, affiliateId }) {
                                                                                 </Typography>
                                                                                 <Typography variant="body1">
                                                                                     {formatDate(contract.createdAt)}
+                                                                                </Typography>
+                                                                            </Box>
+
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Starting date:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {formatDate(contract.startDate)}
                                                                                 </Typography>
                                                                             </Box>
 

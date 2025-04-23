@@ -441,6 +441,7 @@ model paymentMetadata {
   montonioUuid     String
   contractId       Int
   affiliateId      Int
+  paymentUrl       String?
   isPaymentHoliday Boolean  @default(false)
   createdAt        DateTime @default(now())
 

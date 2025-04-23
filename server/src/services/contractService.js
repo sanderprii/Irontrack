@@ -382,7 +382,8 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             isPaymentHoliday,
             originalPaymentAmount,
             appliedCredit,
-            remainingAmount
+            remainingAmount,
+            response.data.url
         );
 
         // Saada makselink emailile
@@ -413,7 +414,8 @@ async function recordPendingPayment(
     isPaymentHoliday,
     originalAmount,
     appliedCredit = 0,
-    remainingAmount
+    remainingAmount,
+    paymentUrl
 ) {
     try {
         // Määra tüüp vastavalt krediidi kasutusele
@@ -436,7 +438,8 @@ async function recordPendingPayment(
                 status: "pending",
                 contractId: contract.id,
                 userId: contract.userId,
-                affiliateId: contract.affiliateId
+                affiliateId: contract.affiliateId,
+
             }
         });
 
@@ -448,7 +451,8 @@ async function recordPendingPayment(
                 contractId: contract.id,
                 affiliateId: contract.affiliateId,
                 isPaymentHoliday: isPaymentHoliday,
-                createdAt: new Date()
+                createdAt: new Date(),
+                paymentUrl: paymentUrl,
             }
         });
 

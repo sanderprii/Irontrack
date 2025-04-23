@@ -29,6 +29,8 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // Trophy icon fo
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
 import LeaderboardModal from "../components/LeaderboardModal";
+import { getClassesForDay, assignTrainerToClasses } from "../api/classesApi";
+import TrainerAssignmentModal from "../components/TrainerAssignmentModal";
 
 import ClassDetailsModal from "../components/ClassModal";
 import { getClasses, deleteClass, createTraining, updateTraining, getClassAttendeesCount} from "../api/classesApi";
@@ -78,6 +80,13 @@ export default function Classes() {
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
     const [errorDialogOpen, setErrorDialogOpen] = useState(false);
     const [dialogMessage, setDialogMessage] = useState('');
+
+    // Add near other state declarations
+    const [isTrainerAssignmentOpen, setTrainerAssignmentOpen] = useState(false);
+    const [selectedTrainer, setSelectedTrainer] = useState(null);
+    const [selectedAssignmentDate, setSelectedAssignmentDate] = useState(new Date());
+    const [dayClasses, setDayClasses] = useState([]);
+    const [selectedClassIds, setSelectedClassIds] = useState([]);
 
     // Fix affiliateId issue
     useEffect(() => {
@@ -424,6 +433,96 @@ export default function Classes() {
         ).toLocaleDateString();
     };
 
+    const handleOpenTrainerAssignment = () => {
+        const today = new Date();
+        setSelectedTrainer(null);
+        setSelectedClassIds([]);
+        setSelectedAssignmentDate(today);
+        setTrainerAssignmentOpen(true);
+
+        fetchClassesForDay(today);
+    };
+
+    const fetchClassesForDay = async (date) => {
+        if (!affiliateId) return;
+
+        const formattedDate = date.toISOString().split('T')[0];
+
+        try {
+            const response = await getClassesForDay(affiliateId, formattedDate);
+            setDayClasses(response || []);
+        } catch (error) {
+            console.error("❌ Error fetching classes for day:", error);
+            showErrorMessage("Error loading classes for selected day");
+            setDayClasses([]);
+        }
+    };
+
+    const handleDateChange = (date) => {
+        setSelectedAssignmentDate(date);
+        setSelectedClassIds([]);
+        fetchClassesForDay(date);
+    };
+
+    const handleTrainerChange = (trainerId) => {
+        // Leia õige treener ID järgi
+        const trainer = trainers.find(t =>
+            (t.trainerId === parseInt(trainerId)) ||
+            (t.id === parseInt(trainerId))
+        );
+        setSelectedTrainer(trainer);
+    };
+
+    const handleClassCheckboxChange = (classId) => {
+        setSelectedClassIds(prev => {
+            if (prev.includes(classId)) {
+                return prev.filter(id => id !== classId);
+            } else {
+                return [...prev, classId];
+            }
+        });
+    };
+
+    const handleAssignTrainer = async () => {
+        if (!selectedTrainer) {
+            showErrorMessage("Please select a trainer");
+            return;
+        }
+
+        if (selectedClassIds.length === 0) {
+            showErrorMessage("Please select at least one class");
+            return;
+        }
+
+        // Leia korrektne treeneri nimi
+        let trainerName = "";
+        if (typeof selectedTrainer === 'string') {
+            trainerName = selectedTrainer;
+        } else if (selectedTrainer.fullName) {
+            trainerName = selectedTrainer.fullName;
+        } else if (selectedTrainer.trainer && selectedTrainer.trainer.fullName) {
+            trainerName = selectedTrainer.trainer.fullName;
+        } else {
+
+            showErrorMessage("Could not determine trainer name");
+            return;
+        }
+
+        try {
+
+
+            const response = await assignTrainerToClasses(selectedClassIds, trainerName);
+
+
+            setTrainerAssignmentOpen(false);
+            fetchClasses(); // Värskendame klassid pärast määramist
+            showSuccessMessage("Trainer assigned successfully!");
+        } catch (error) {
+            console.error("❌ Error assigning trainer:", error);
+            showErrorMessage("Error assigning trainer to classes: " + (error.message || "Unknown error"));
+        }
+    };
+
     return (
         <Container maxWidth={false}>
             <Box textAlign="center" my={4}>
@@ -460,9 +559,15 @@ export default function Classes() {
                     )
 
                 )}
+
                 {(userRole === "affiliate" || userRole === "trainer") && (
                     <Button sx={{m: 1}} variant="contained" color="primary" onClick={handleAddTraining}>
                         Add Training
+                    </Button>
+                )}
+                {userRole === "affiliate" && (
+                    <Button sx={{m: 1}} variant="contained" color="primary" onClick={handleOpenTrainerAssignment}>
+                        Add Trainers
                     </Button>
                 )}
 
@@ -604,6 +709,20 @@ export default function Classes() {
                 affiliateId={affiliateId}
                 affiliateEmail={affiliateEmail}
                 trainers={trainers}
+            />
+
+            <TrainerAssignmentModal
+                open={isTrainerAssignmentOpen}
+                onClose={() => setTrainerAssignmentOpen(false)}
+                trainers={trainers}
+                dayClasses={dayClasses}
+                selectedTrainer={selectedTrainer}
+                selectedDate={selectedAssignmentDate}
+                selectedClassIds={selectedClassIds}
+                onTrainerChange={handleTrainerChange}
+                onDateChange={handleDateChange}
+                onClassCheckboxChange={handleClassCheckboxChange}
+                onAssign={handleAssignTrainer}
             />
 
             {/* Day Leaderboard Modal */}

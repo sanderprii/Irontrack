@@ -405,3 +405,114 @@ export const deleteWaitlist = async (classId) => {
         console.error("❌ Error deleting waitlist:", error);
     }
 }
+
+// Get classes for a specific day
+export const getClassesForDay = async (affiliateId, date) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/trainer/day/${affiliateId}/${date}`, {
+            method: "GET",
+            headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
+
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch classes for day");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error getting classes for day:", error);
+        throw error;
+    }
+};
+
+// Assign trainer to multiple classes
+export const assignTrainerToClasses = async (classIds, trainerName) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/trainer/assign-trainer`, {
+            method: "POST",
+            headers: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"},
+            body: JSON.stringify({
+                classIds,
+                trainerName
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to assign trainer to classes");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error assigning trainer to classes:", error);
+        throw error;
+    }
+};
+
+export const registerMemberForClass = async (classId, planId, affiliateId, userId, isFamilyMember = false, familyMemberId = null) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(`${API_URL}/trainer/register-member`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                classId,
+                planId,
+                affiliateId,
+                userId,
+                isFamilyMember,
+                familyMemberId
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to register member for class");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error registering member for class:", error);
+        throw error;
+    }
+};
+
+// Search users by name
+export const searchUsersByName = async (query) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_URL}/trainer/search-users?q=${query}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return [];
+    }
+};
+
+// Get family members for a user
+export const getFamilyMembers = async (userId) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_URL}/trainer/family-members?userId=${userId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching family members:", error);
+        return [];
+    }
+};

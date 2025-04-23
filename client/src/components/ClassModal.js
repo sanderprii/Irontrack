@@ -35,6 +35,8 @@ import ProfileModal from "./ProfileModal";
 import SendMessageModal from './SendMessageModal';
 import SendIcon from '@mui/icons-material/Send';
 import DOMPurify from 'dompurify'; // You'll need to install this package
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import AddAttendeeModal from "./AddAttendeeModal";
 
 // Import API functions
 import {
@@ -111,6 +113,7 @@ export default function ClassModal({
     const [deleteAttendeeConfirmOpen, setDeleteAttendeeConfirmOpen] = useState(false);
     const [attendeeToDelete, setAttendeeToDelete] = useState(null);
     const [deleteClassConfirmOpen, setDeleteClassConfirmOpen] = useState(false);
+    const [isAddAttendeeModalOpen, setAddAttendeeModalOpen] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("role");
@@ -759,6 +762,19 @@ export default function ClassModal({
         </Dialog>
     );
 
+    const handleOpenAddAttendeeModal = () => {
+        setAddAttendeeModalOpen(true);
+    };
+
+    const handleCloseAddAttendeeModal = () => {
+        setAddAttendeeModalOpen(false);
+    };
+
+    const handleAttendeeAdded = () => {
+        // Refresh the attendees list
+        refreshClasses();
+    };
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={window.innerWidth < 600}>
             <DialogTitle
@@ -1070,6 +1086,18 @@ export default function ClassModal({
                 {(userRole === "affiliate" || userRole === "trainer") && (
                     <>
                         <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                            {(userRole === "affiliate" || userRole === "trainer") && (
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleOpenAddAttendeeModal}
+                                    startIcon={<PersonAddIcon />}
+                                    size="small"
+                                    sx={{ ml: 1 }}
+                                >
+                                    Add Attendee
+                                </Button>
+                            )}
                             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                                 Attendees
                             </Typography>
@@ -1364,6 +1392,14 @@ export default function ClassModal({
                     id: attendee.userId,
                     fullName: attendee.fullName
                 })) : []}
+            />
+
+            <AddAttendeeModal
+                open={isAddAttendeeModalOpen}
+                onClose={handleCloseAddAttendeeModal}
+                classId={cls?.id}
+                affiliateId={affiliateId}
+                onSuccess={handleAttendeeAdded}
             />
 
             {/* Cancel Registration Confirmation Dialog */}

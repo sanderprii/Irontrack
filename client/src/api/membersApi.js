@@ -96,3 +96,37 @@ export const getOwnerAffiliateId = async () => {
         console.error("Error fetching owner affiliate ID:", error);
     }
 }
+
+// Search users by name
+export const searchUsersByName = async (query) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_BASE}/trainer/search-users?q=${query}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return [];
+    }
+};
+
+// Get family members for a user
+export const getFamilyMembers = async (userId) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_BASE}/trainer/family-members?userId=${userId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching family members:", error);
+        return [];
+    }
+};

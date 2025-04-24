@@ -18,6 +18,9 @@ import {
 } from '@mui/icons-material';
 import {useTheme} from '@mui/material/styles';
 import {analyticsApi} from '../api/analyticsApi';
+import NewMembersRetention from './NewMembersRetention';
+import ContractPlanMetrics from './ContractPlanMetrics';
+
 import {Line, Bar, Pie} from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -62,11 +65,12 @@ const AnalyticsDashboard = ({affiliateId}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+    const [period, setPeriod] = useState('THIS_MONTH');
 
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const [affiliate, setAffiliate] = useState(null);
     // Drawer state for mobile period selector
     const [periodDrawerOpen, setPeriodDrawerOpen] = useState(false);
     const [cardMenuAnchorEl, setCardMenuAnchorEl] = useState(null);
@@ -196,6 +200,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
 
     // Handle period change for the current tab
     const handlePeriodChange = (newPeriod) => {
+
         switch (activeTab) {
             case 0:
                 setDashboardPeriod(newPeriod);
@@ -216,6 +221,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                 setPaymentHealthData(null);
                 setSuspendedContractsData(null);
                 setExpiringContractsData(null);
+                setPeriod(newPeriod);
                 break;
             case 3:
                 setTrainingPeriod(newPeriod);
@@ -228,6 +234,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                 setChurnData(null);
                 setClientLifecycleData(null);
                 setClientAchievementsData(null);
+                setPeriod(newPeriod);
                 break;
             case 5:
                 setGrowthPeriod(newPeriod);
@@ -1875,6 +1882,12 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                     </Card>
                                 </Grid>
                             </Grid>
+                            <Grid item xs={12}>
+                                <ContractPlanMetrics
+                                    affiliateId={affiliateId}
+                                    period={period}
+                                />
+                            </Grid>
                         </Box>
                     )}
 
@@ -2544,6 +2557,7 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                             </CardContent>
                                         </Collapse>
                                     </Card>
+
                                 </Grid>
                             </Grid>
 
@@ -2703,8 +2717,18 @@ const AnalyticsDashboard = ({affiliateId}) => {
                                         </Collapse>
                                     </Card>
                                 </Grid>
+
+                            </Grid>
+                            <Grid item xs={12} md={6} lg={6}>
+                                <NewMembersRetention
+                                    affiliateId={affiliateId}
+                                    affiliateEmail={affiliate?.email || ''}
+                                    period={period}
+                                />
                             </Grid>
                         </Box>
+
+
                     )}
 
                     {/* Growth Potential & Early Warnings - Mobile Optimized */}

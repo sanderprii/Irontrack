@@ -1593,6 +1593,207 @@ const getEarlyWarnings = async (req, res) => {
     }
 };
 
+const getNewMembers = async (req, res) => {
+    try {
+        const affiliateId = parseInt(req.params.affiliateId);
+        const period = req.query.period || 'THIS_MONTH';
+        await validateAffiliateAccess(req.user.id, affiliateId);
+
+        const { startDate, endDate, periodLabel } = getDateRangeForPeriod(period);
+
+        // Get members who joined during the selected period
+        const newMembers = await prisma.members.findMany({
+            where: {
+                affiliateId,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // For each member, check if they have an active plan
+        const membersWithPlanStatus = await Promise.all(
+            newMembers.map(async (member) => {
+                const activePlan = await prisma.userPlan.findFirst({
+                    where: {
+                        userId: member.userId,
+                        affiliateId,
+                        endDate: {
+                            gt: new Date()
+                        }
+                    }
+                });
+
+                return {
+                    userId: member.userId,
+                    memberId: member.id,
+                    fullName: member.user.fullName,
+                    email: member.user.email,
+                    createdAt: member.createdAt,
+                    hasActivePlan: !!activePlan
+                };
+            })
+        );
+
+        res.json({
+            data: transformBigInts(membersWithPlanStatus),
+            periodLabel
+        });
+    } catch (error) {
+        console.error("❌ Error in getNewMembers:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const getContractAndPlanMetrics = async (req, res) => {
+    try {
+        const affiliateId = parseInt(req.params.affiliateId);
+        const period = req.query.period || 'THIS_MONTH';
+        await validateAffiliateAccess(req.user.id, affiliateId);
+console.log("period", period);
+        const { startDate, endDate, periodLabel } = getDateRangeForPeriod(period);
+
+        // 1. Count clients with contracts (status="accepted" and active during period)
+        const contractClientsCount = await prisma.contract.count({
+            where: {
+                affiliateId,
+                status: { equals: "accepted", mode: 'insensitive' }, // Case insensitive match
+                active: true,
+                startDate: {
+                    gte: startDate,
+                    lte: endDate
+                },
+                OR: [
+                    // End date within the period
+                    {
+                        validUntil: {
+                            gte: startDate,
+                            lte: endDate
+                        }
+                    },
+                    // End date in the future (after the period)
+                    {
+                        validUntil: {
+                            gt: endDate
+                        }
+                    },
+                    // Contracts without end date (unlimited)
+                    {
+                        validUntil: null
+                    }
+                ]
+            }
+        });
+
+        // Log for debugging
+
+
+        // 2. Count clients without contracts but with plans in the period
+        const nonContractClients = await prisma.userPlan.findMany({
+            where: {
+                affiliateId,
+                contractId: null,  // Only plans with no contract
+                purchasedAt: {     // Plans purchased during the period
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            select: {
+                userId: true
+            },
+            distinct: ['userId']  // Count each user only once
+        });
+
+        console.log("nonContractClients", nonContractClients);
+
+        const nonContractClientsCount = nonContractClients.length;
+
+        // 3. Get plans purchased grouped by plan name
+        // First get all transactions with plan purchases
+        const planTransactions = await prisma.transactions.findMany({
+            where: {
+                affiliateId,
+                planId: {
+                    not: null
+                },
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            include: {
+                plan: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
+
+        // Group transactions by plan name and count
+        const plansByName = {};
+        planTransactions.forEach(transaction => {
+            if (transaction.plan) {
+                const planName = transaction.plan.name;
+                if (!plansByName[planName]) {
+                    plansByName[planName] = 0;
+                }
+                plansByName[planName]++;
+            }
+        });
+
+        // Convert to array of { planName, count } objects
+        const plansPurchasedByName = Object.entries(plansByName).map(([planName, count]) => ({
+            planName,
+            count
+        })).sort((a, b) => b.count - a.count); // Sort by count descending
+
+        const totalPurchasedPlansCount = planTransactions.length;
+
+        // 4. Get revenue from plans during the period
+        const planRevenue = await prisma.transactions.aggregate({
+            where: {
+                affiliateId,
+                planId: {
+                    not: null
+                },
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            _sum: {
+                amount: true
+            }
+        });
+
+        res.json(transformBigInts({
+            contractClientsCount,
+            nonContractClientsCount,
+            totalPurchasedPlansCount,
+            plansPurchasedByName,
+            planRevenue: planRevenue._sum?.amount || 0,
+            periodLabel
+        }));
+    } catch (error) {
+        console.error("❌ Error in getContractAndPlanMetrics:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Export all functions
 module.exports = {
     getDashboardOverview,
@@ -1614,5 +1815,7 @@ module.exports = {
     getDormantClients,
     getGrowthOpportunities,
     getEarlyWarnings,
-    getTopMembersByCheckIns
+    getTopMembersByCheckIns,
+    getNewMembers,
+    getContractAndPlanMetrics
 };

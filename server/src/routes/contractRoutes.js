@@ -40,4 +40,6 @@ router.patch('/:id', contractController.updateContract);
 // DELETE /contracts/:id
 router.delete('/:id', contractController.deleteContract);
 
+router.put('/unpaid/:id', contractController.updateUnpaidUser);
+
 module.exports = router;

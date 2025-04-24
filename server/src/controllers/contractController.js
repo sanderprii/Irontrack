@@ -592,3 +592,21 @@ exports.getUnpaidUsers = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch unpaid users' });
     }
 };
+
+exports.updateUnpaidUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+
+        // Uuenda transaction staatust
+        const updatedTransaction = await prisma.transactions.update({
+            where: { id: parseInt(id) },
+            data: { status: "success" },
+        });
+
+        res.json(updatedTransaction);
+    } catch (error) {
+        console.error('Error updating unpaid user:', error);
+        res.status(500).json({ error: 'Failed to update unpaid user' });
+    }
+}

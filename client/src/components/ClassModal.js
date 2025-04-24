@@ -831,7 +831,7 @@ export default function ClassModal({
                         </Box>
                     </Grid>
 
-                    {cls.trainingType === 'WOD' || cls.trainingType === 'Weightlifting' ? (
+                    { cls.wodName || cls.wodType || cls.description ? (
                         <Grid item xs={12} md={6}>
                             <Box
                                 sx={{
@@ -873,7 +873,7 @@ export default function ClassModal({
                                         <strong>🔥{cls.wodName}</strong>
                                     </Typography>
                                 )}
-                                { cls.wodType && cls.trainingType === "WOD" && (
+                                { cls.wodType  && (
                                     <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                         <strong>{cls.wodType}</strong>
                                     </Typography>

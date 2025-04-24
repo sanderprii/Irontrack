@@ -18,6 +18,7 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    Button
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -26,15 +27,18 @@ import EmailIcon from '@mui/icons-material/Email';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EventIcon from '@mui/icons-material/Event';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { getUnpaidUsers } from '../api/contractApi';
+import { getUnpaidUsers, updateUnpaidUser } from '../api/contractApi';
+
+
 
 // Row component for each unpaid user
-const UnpaidUserRow = ({ row }) => {
+const UnpaidUserRow = ({ row, fetchUnpaidUsers }) => {
     const [open, setOpen] = useState(false);
 
-    // Check if payment is overdue (current day is greater than contract payment day)
+// Check if payment is overdue (current day is greater than contract payment day)
     const currentDay = new Date().getDate();
     const isOverdue = row.contract && row.contract.paymentDay && currentDay > row.contract.paymentDay;
+
 
     return (
         <>
@@ -57,6 +61,25 @@ const UnpaidUserRow = ({ row }) => {
                         color="warning"
                         size="small"
                     />
+                </TableCell>
+                <TableCell>
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            updateUnpaidUser(row.id).then(fetchUnpaidUsers);
+                        }}
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        sx={{
+                            borderRadius: 1,
+                            textTransform: 'none',
+                            boxShadow: 1,
+                        }}
+                        startIcon={<PaymentIcon fontSize="small" />}
+                    >
+                        Paid
+                    </Button>
                 </TableCell>
             </TableRow>
             <TableRow>
@@ -329,12 +352,13 @@ export default function UnpaidUsers({affiliate}) {
                                 <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                                <TableCell></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {filteredUsers.length > 0 ? (
                                 filteredUsers.map((row) => (
-                                    <UnpaidUserRow key={row.id} row={row} />
+                                    <UnpaidUserRow key={row.id} row={row} fetchUnpaidUsers={fetchUnpaidUsers} />
                                 ))
                             ) : (
                                 <TableRow>

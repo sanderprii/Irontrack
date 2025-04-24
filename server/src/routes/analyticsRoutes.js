@@ -41,4 +41,10 @@ router.get('/growth-opportunities/:affiliateId', ensureAuthenticatedJWT, analyti
 // Early Warning System
 router.get('/early-warnings/:affiliateId', ensureAuthenticatedJWT, analyticsController.getEarlyWarnings);
 
+// Add this route
+router.get('/new-members/:affiliateId', ensureAuthenticatedJWT, analyticsController.getNewMembers);
+
+// Add this route
+router.get('/contract-plan-metrics/:affiliateId', ensureAuthenticatedJWT, analyticsController.getContractAndPlanMetrics);
+
 module.exports = router;

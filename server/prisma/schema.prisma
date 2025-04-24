@@ -376,6 +376,7 @@ model Members {
   addScoreCount Int?           @default(0)
   atRisk        Boolean        @default(false)
   ristData      String?
+  createdAt     DateTime       @default(now())
   isActive      Boolean        @default(true)
   user          User           @relation(fields: [userId], references: [id])
   affiliate     Affiliate      @relation(fields: [affiliateId], references: [id])

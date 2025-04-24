@@ -221,3 +221,20 @@ export const getUnpaidUsers = async (affiliateId) => {
         return [];
     }
 };
+
+export const updateUnpaidUser = async (transactionId) => {
+    const token = localStorage.getItem('token');
+    try {
+        const resp = await fetch(`${API_BASE}/contracts/unpaid/${transactionId}`, {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+
+        });
+        return await resp.json();
+    } catch (error) {
+        console.error('Error updateUnpaidUser:', error);
+    }
+}

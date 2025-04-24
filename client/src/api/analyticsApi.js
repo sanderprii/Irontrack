@@ -148,5 +148,20 @@ export const analyticsApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return await response.json();
-    }
+    },
+
+    getNewMembers: async (token, affiliateId, period = 'THIS_MONTH') => {
+        const response = await fetch(`${API_URL}/analytics/new-members/${affiliateId}?period=${period}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return await response.json();
+    },
+
+    getContractAndPlanMetrics: async (token, affiliateId, period = 'THIS_MONTH') => {
+        const response = await fetch(`${API_URL}/analytics/contract-plan-metrics/${affiliateId}?period=${period}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return await response.json();
+    },
+
 };

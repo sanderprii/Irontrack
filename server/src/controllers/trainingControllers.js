@@ -146,9 +146,10 @@ exports.updateTraining = async (req, res) => {
         let exercisesData = [];
         if (typeof exercises === 'string') {
             // If exercises is a string, split by newlines and create exercise objects
+            // OLULINE MUUDATUS: eemaldatud .trim() ja filter, et säilitada tühjad read
             exercisesData = exercises.split('\n').map(line => ({
-                exerciseData: line.trim()
-            })).filter(ex => ex.exerciseData !== ''); // Remove empty lines
+                exerciseData: line
+            }));
         } else if (Array.isArray(exercises)) {
             // If exercises is already an array, use it directly
             exercisesData = exercises.map((ex) => ({

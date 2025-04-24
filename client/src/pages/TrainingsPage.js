@@ -47,6 +47,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // FullCalendar React
 import FullCalendar from '@fullcalendar/react';
@@ -554,6 +555,43 @@ export default function TrainingsPage() {
         setFormExpanded(!formExpanded);
     };
 
+
+
+    async function handleDelete() {
+        if (!modalTraining) return;
+
+        // Ask for confirmation before deleting
+        showConfirmDialog(
+            "Delete Training",
+            "Are you sure you want to delete this training? This action cannot be undone.",
+            async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_URL}/training/${modalTraining.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const resErr = await response.json();
+                        showErrorMessage('Error: ' + (resErr.error || 'Unknown error'));
+                        return;
+                    }
+
+                    // Close modal and reload trainings
+                    closeModal();
+                    await loadTrainings();
+                    showSuccessMessage("Training successfully deleted!");
+                } catch (err) {
+                    showErrorMessage('Error deleting training: ' + err.message);
+                }
+            }
+        );
+    }
+
     return (
         <AppTheme>
             <StyledContainer maxWidth="lg" sx={{ width: '100%' }}>
@@ -984,7 +1022,8 @@ export default function TrainingsPage() {
                                                         fontSize: '14px',
                                                         lineHeight: '1.5',
                                                         resize: 'vertical',
-                                                        fontFamily: 'inherit'
+                                                        fontFamily: 'inherit',
+                                                        whiteSpace: 'pre-wrap'
                                                     }}
                                                 />
                                             </FormControl>
@@ -1024,13 +1063,23 @@ export default function TrainingsPage() {
                         )}
 
                         {!isEditing ? (
-                            <Button
-                                variant="contained"
-                                onClick={handleEdit}
-                                startIcon={<EditIcon />}
-                            >
-                                Edit
-                            </Button>
+                            <>
+                                <Button
+                                    variant="contained"
+                                    onClick={handleEdit}
+                                    startIcon={<EditIcon />}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={handleDelete}
+                                    startIcon={<DeleteIcon />}
+                                >
+                                    Delete
+                                </Button>
+                            </>
                         ) : (
                             <Button
                                 variant="contained"

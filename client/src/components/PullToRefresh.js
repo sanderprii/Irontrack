@@ -8,30 +8,58 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const [pullProgress, setPullProgress] = useState(0);
     const containerRef = useRef(null);
     const startY = useRef(0);
+    const startX = useRef(0);
     const currentY = useRef(0);
     const pulling = useRef(false);
-    // Suurendatud lävi, et rohkem peaks alla tõmbama
-    const distanceThreshold = 200; // Väärtus oli enne 110, nüüd suurendatud
+    const pullStartedAtTop = useRef(false);
+    const distanceThreshold = 200;
+    const minVerticalDistance = 50; // Minimum vertical distance before showing visual feedback
+    const maxHorizontalRatio = 0.8; // Maximum allowed horizontal movement ratio
 
     // Helper function to check if we're at the top of the page
     const isAtTop = () => {
-        return window.scrollY <= 2; // Rangem kontroll (oli 5)
+        return window.scrollY === 0; // Only true when exactly at top
     };
 
     useEffect(() => {
+        let touchStartTime = 0;
+        const touchStartDelay = 100; // ms delay before starting pull detection
+
         const handleTouchStart = (e) => {
-            // Only start pulling if we're at the top of the page
-            if (isAtTop()) {
-                startY.current = e.touches[0].clientY;
-                currentY.current = startY.current;
-                pulling.current = true;
-            }
+            // Store the start position
+            startY.current = e.touches[0].clientY;
+            startX.current = e.touches[0].clientX;
+            currentY.current = startY.current;
+
+            // Record if we're at the top when touch starts
+            pullStartedAtTop.current = isAtTop();
+
+            // Set timestamp for possible delayed pull activation
+            touchStartTime = Date.now();
+
+            // Don't set pulling to true immediately
+            pulling.current = false;
         };
 
         const handleTouchMove = (e) => {
-            // Kui ei ole tõmbamas või pole lehe alguses, siis lõpeta
-            if (!pulling.current || !isAtTop()) {
-                pulling.current = false; // Reset pulling kui keritakse
+            currentY.current = e.touches[0].clientY;
+            const currentX = e.touches[0].clientX;
+
+            // Calculate vertical and horizontal distances
+            const verticalDistance = currentY.current - startY.current;
+            const horizontalDistance = Math.abs(currentX - startX.current);
+
+            // Check if movement is mostly vertical (not horizontal/diagonal)
+            const isVerticalMovement = horizontalDistance < verticalDistance * maxHorizontalRatio;
+
+            // Only allow pull if: started at top, moving downward, and mostly vertical movement
+            const canPull = pullStartedAtTop.current &&
+                verticalDistance > minVerticalDistance &&
+                isVerticalMovement;
+
+            // If we have a horizontal drag, don't enable pulling
+            if (horizontalDistance > 20 && horizontalDistance > verticalDistance) {
+                pulling.current = false;
                 setPullProgress(0);
                 if (containerRef.current) {
                     containerRef.current.style.transform = 'translateY(0)';
@@ -39,22 +67,35 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 return;
             }
 
-            currentY.current = e.touches[0].clientY;
-            const pullDistance = currentY.current - startY.current;
+            // Only enable pulling after delay and if conditions are met
+            if (!pulling.current && canPull && Date.now() - touchStartTime > touchStartDelay) {
+                pulling.current = true;
+            }
+
+            // If not pulling or not at top, exit
+            if (!pulling.current) {
+                setPullProgress(0);
+                if (containerRef.current) {
+                    containerRef.current.style.transform = 'translateY(0)';
+                }
+                return;
+            }
 
             // Only show visual indicator when pulling down
-            if (pullDistance > 0 && isAtTop()) {
+            if (verticalDistance > 0 && pulling.current) {
                 // Calculate progress as a percentage
-                const newProgress = Math.min(1, pullDistance / distanceThreshold);
+                const newProgress = Math.min(1, verticalDistance / distanceThreshold);
                 setPullProgress(newProgress);
 
                 // Apply transformation to the container
                 if (containerRef.current) {
-                    containerRef.current.style.transform = `translateY(${Math.min(pullDistance / 2.5, distanceThreshold)}px)`;
+                    // More resistance for longer pulls
+                    const resistance = 2.5 + (verticalDistance / 200);
+                    containerRef.current.style.transform = `translateY(${Math.min(verticalDistance / resistance, distanceThreshold)}px)`;
                 }
 
                 // If pulling significantly, prevent default to avoid system behaviors
-                if (pullDistance > 10) {
+                if (verticalDistance > 30) {
                     e.preventDefault();
                 }
             }
@@ -64,6 +105,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
             if (!pulling.current) return;
 
             pulling.current = false;
+            pullStartedAtTop.current = false;
             const pullDistance = currentY.current - startY.current;
 
             // Check if the pull was sufficient AND we're at the top
@@ -99,7 +141,8 @@ const PullToRefresh = ({ onRefresh, children }) => {
 
         // Scroll handler to disable pulling when user scrolls away from top
         const handleScroll = () => {
-            if (pulling.current && !isAtTop()) {
+            if (!isAtTop()) {
+                pullStartedAtTop.current = false;
                 pulling.current = false;
                 setPullProgress(0);
                 if (containerRef.current) {

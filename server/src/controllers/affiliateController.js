@@ -89,7 +89,7 @@ const searchUsers = async (req, res) => {
 const createOrUpdateAffiliate = async (req, res) => {
     try {
         const userId = req.user?.id;
-        const { id, name, address, trainingType, trainers, email, phone, iban, bank, paymentHolidayFee, website } = req.body;
+        const { id, name, address, trainingType, trainers, email, phone, iban, bank, paymentHolidayFee, website, feedback } = req.body;
 
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized: Missing userId" });
@@ -127,6 +127,7 @@ const affiliateId = parseInt(id)
                     iban,
                     bankName: bank,
                     paymentHolidayFee: parseInt(paymentHolidayFee),
+                    feedback,
                 },
             });
 
@@ -181,6 +182,7 @@ const affiliateId = parseInt(id)
                     iban,
                     bankName: bank,
                     paymentHolidayFee: parseInt(paymentHolidayFee),
+                    feedback,
                 },
             });
 

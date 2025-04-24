@@ -295,6 +295,7 @@ model Affiliate {
   iban              String?
   bankName          String?
   ownerId           Int
+  feedback          String?
   website           String?
   logo              String?
   paymentHolidayFee Float?

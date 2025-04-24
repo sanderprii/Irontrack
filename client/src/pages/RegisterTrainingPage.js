@@ -542,6 +542,12 @@ const RegisterTrainingPage = () => {
                                         )}
                                     </Box>
                                 )}
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">Feedback link:</Typography>
+                                    <Link href={`https://${selectedAffiliate.feedback}`} target="_blank" underline="hover">
+                                        {selectedAffiliate.feedback}
+                                    </Link>
+                                </Box>
 
                                 <Divider sx={{ mx: -3 }} />
                             </Box>

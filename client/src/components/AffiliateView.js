@@ -127,6 +127,12 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                                     {affiliate.subdomain}.irontrack.ee
                                 </Link>
                             </Box>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary">Feedback link:</Typography>
+                                <Link href={`https://${affiliate.feedback}`} target="_blank" underline="hover">
+                                    {affiliate.feedback}
+                                </Link>
+                            </Box>
                         </Box>
                     </CardContent>
                 </Card>

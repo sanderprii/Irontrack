@@ -231,6 +231,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const contactNoteRoutes = require('./routes/contactNoteRoutes');
 
 const { startScheduler } = require('./schedulers/contractChecker');
+const { startScheduler: startClassExtenderScheduler } = require('./schedulers/classExtenderScheduler');
 
 
 
@@ -332,4 +333,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server käivitunud pordil ${PORT}`);
 
     startScheduler();
+    startClassExtenderScheduler();
 });

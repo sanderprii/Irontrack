@@ -10,11 +10,260 @@ const NOTIFICATION_URL = process.env.NOTIFICATION_URL || 'https://api.irontrack.
 const MONTONIO_API_URL = process.env.NODE_ENV === 'production'
     ? 'https://stargate.montonio.com/api'
     : 'https://sandbox-stargate.montonio.com/api';
+async function sendPaymentReminderEmail(
+    contract,
+    paymentUrl,
+    amount,
+    invoiceNumber,
+    transactionDate,
+    isPaymentHoliday = false,
+    weeklyReminder = false
+) {
+    // Formateeri tehingu kuupäev
+    const formattedDate = new Date(transactionDate).toLocaleDateString();
+    const currentMonth = new Date(transactionDate).toLocaleString('en-US', {month: 'long'});
+
+    // Eraldi pealkiri iganädalase meeldetuletuse jaoks
+    const reminderPrefix = weeklyReminder ? "OVERDUE PAYMENT: " : "REMINDER: ";
+
+    const emailSubject = isPaymentHoliday
+        ? `${reminderPrefix}Payment Holiday Fee for ${contract.affiliate.name} - ${currentMonth}`
+        : `${reminderPrefix}Monthly payment for ${contract.affiliate.name}`;
+
+    // Erinevad teated vastavalt sellele, kas tegu on tavapärase või iganädalase meeldetuletusega
+    const reminderMessage = weeklyReminder
+        ? `<p>This is a <strong>weekly reminder</strong> that you have an <strong>overdue payment</strong> for ${contract.affiliate.name}.</p>
+           <p>Your invoice #${invoiceNumber} from ${formattedDate} remains unpaid.</p>`
+        : `<p>This is a reminder that you have an <strong>unpaid invoice</strong> for ${contract.affiliate.name} (Invoice #${invoiceNumber} from ${formattedDate}).</p>`;
+
+    // HTML email body
+    const emailHtmlBody = `
+        <p>Dear ${contract.user.fullName},</p>
+        
+        ${reminderMessage}
+        
+        <p>The amount due is <strong>€${amount}</strong>.</p>
+        
+        <p>Please use the following link to complete your payment as soon as possible:</p>
+        
+        <div style="margin: 25px 0;">
+            <a href="${paymentUrl}" style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 4px; text-align: center;">Make Payment</a>
+        </div>
+        
+        <p style="margin-bottom: 20px; color: #666; font-size: 14px;">If the button doesn't work, please copy and paste this link into your browser:<br>
+        <a href="${paymentUrl}" style="color: #d4af37; word-break: break-all;">${paymentUrl}</a></p>
+        
+        <p>Thank you!<br>
+        IronTrack Team</p>
+    `;
+
+    await sendMessage({
+        recipientType: 'user',
+        senderId: contract.affiliateId,
+        recipientId: contract.userId,
+        subject: emailSubject,
+        body: emailHtmlBody,
+        affiliateEmail: contract.affiliate.email
+    });
+}
+
+// Funktsioon, mis kontrollib pending maksetega lepinguid ja saadab meeldetuletusi
+async function checkAndNotifyPendingPayments() {
+    try {
+        const today = new Date();
+
+        // Otsi lepinguid, millel on maksepäev täna
+        const contractsWithPaymentDueToday = await prisma.contract.findMany({
+            where: {
+                active: true,
+                paymentDay: today.getDate(),
+                validUntil: {
+                    gt: today
+                },
+                status: 'accepted'
+            },
+            include: {
+                user: true,
+                affiliate: true
+            }
+        });
+
+        let notifiedCount = 0;
+
+        for (const contract of contractsWithPaymentDueToday) {
+            // Otsi kõik "pending" staatusega tehingud antud lepingu jaoks
+            const pendingTransactions = await prisma.transactions.findMany({
+                where: {
+                    contractId: contract.id,
+                    status: 'pending'
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            for (const pendingTransaction of pendingTransactions) {
+                // Leia makseandmed
+                const paymentData = await prisma.paymentMetadata.findFirst({
+                    where: {
+                        transactionId: pendingTransaction.id
+                    }
+                });
+
+                if (paymentData && paymentData.paymentUrl) {
+                    // Saada meeldetuletuse email makselingiga
+                    await sendPaymentReminderEmail(
+                        contract,
+                        paymentData.paymentUrl,
+                        pendingTransaction.amount,
+                        pendingTransaction.invoiceNumber,
+                        pendingTransaction.createdAt,
+                        paymentData.isPaymentHoliday,
+                        false // See ei ole iganädalane meeldetuletus
+                    );
+
+                    notifiedCount++;
+                }
+            }
+        }
+
+        return { success: true, notifiedCount };
+    } catch (error) {
+        console.error('Error checking pending payments:', error);
+        throw error;
+    }
+}
+
+// Uus funktsioon: Iganädalane meeldetuletus kõigile maksmata arvetele (esmaspäeviti)
+async function sendWeeklyPaymentReminders() {
+    try {
+        const today = new Date();
+
+        // Kontrolli, kas täna on esmaspäev (0 = pühapäev, 1 = esmaspäev, jne)
+        if (today.getDay() !== 1) {
+            console.log('Today is not Monday. Weekly reminders are sent only on Mondays.');
+            return { success: true, notifiedCount: 0, skipped: true };
+        }
+
+        // Otsi kõik pending tehingud
+        const pendingTransactions = await prisma.transactions.findMany({
+            where: {
+                status: 'pending',
+                contractId: {
+                    not: null
+                }
+            },
+            include: {
+                user: true,
+            }
+        });
+
+        let notifiedCount = 0;
+
+        for (const transaction of pendingTransactions) {
+            // Kontrollime, kas leping on veel aktiivne
+            const contract = await prisma.contract.findFirst({
+                where: {
+                    id: transaction.contractId,
+                    active: true,
+                },
+                include: {
+                    user: true,
+                    affiliate: true
+                }
+            });
+
+            if (!contract) {
+                continue; // Leping pole aktiivne, jätkame järgmisega
+            }
+
+            // Leia makseandmed
+            const paymentData = await prisma.paymentMetadata.findFirst({
+                where: {
+                    transactionId: transaction.id
+                }
+            });
+
+            if (paymentData && paymentData.paymentUrl) {
+                // Saada iganädalane meeldetuletus makselingiga
+                await sendPaymentReminderEmail(
+                    contract,
+                    paymentData.paymentUrl,
+                    transaction.amount,
+                    transaction.invoiceNumber,
+                    transaction.createdAt,
+                    paymentData.isPaymentHoliday,
+                    true // See on iganädalane meeldetuletus
+                );
+
+                notifiedCount++;
+            }
+        }
+
+        console.log(`Sent weekly reminders for ${notifiedCount} pending transactions`);
+        return { success: true, notifiedCount };
+    } catch (error) {
+        console.error('Error sending weekly payment reminders:', error);
+        throw error;
+    }
+}
 
 async function processContractPayments() {
     try {
         const today = new Date();
 
+        // 1. Esmalt märgime lõppenud lepingud "ended" staatusesse
+        const expiredContracts = await prisma.contract.findMany({
+            where: {
+                active: true,
+                validUntil: {
+                    lt: today // Lõpptähtaeg on möödas
+                },
+                status: {
+                    not: 'ended' // Pole veel lõppenuks märgitud
+                }
+            }
+        });
+
+        if (expiredContracts.length > 0) {
+            // Märgi lepingud lõppenuks
+            await prisma.contract.updateMany({
+                where: {
+                    id: {
+                        in: expiredContracts.map(contract => contract.id)
+                    }
+                },
+                data: {
+                    status: 'ended',
+                    active: false
+                }
+            });
+
+            // Salvesta logi andmebaasi
+            await prisma.contractLogs.createMany({
+                data: expiredContracts.map(contract => ({
+                    contractId: contract.id,
+                    userId: contract.userId,
+                    affiliateId: contract.affiliateId,
+                    action: 'contract ended - Contract period expired',
+                }))
+            });
+
+            console.log(`Marked ${expiredContracts.length} expired contracts as ended`);
+        }
+
+        // 2. Kontrolli ja saada meeldetuletused tasumata maksetele
+        const pendingPaymentsResult = await checkAndNotifyPendingPayments();
+        console.log(`Sent payment reminders for ${pendingPaymentsResult.notifiedCount} pending transactions with due date today`);
+
+        // 3. Kontrolli, kas täna on esmaspäev ja saada iganädalased meeldetuletused kõigile pending tehingutele
+        let weeklyRemindersResult = { notifiedCount: 0 };
+        if (today.getDay() === 1) { // 1 = esmaspäev
+            weeklyRemindersResult = await sendWeeklyPaymentReminders();
+            console.log(`Sent weekly payment reminders for ${weeklyRemindersResult.notifiedCount} pending transactions`);
+        }
+
+        // 4. Jätkame tavapärase maksetöötlusega
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + 5);
         const targetPaymentDay = futureDate.getDate();
@@ -43,70 +292,18 @@ async function processContractPayments() {
             }
         });
 
-        // Otsi pending transaktsioonid
-        const pendingTransactions = await prisma.transactions.findMany({
-            where: {
-                status: 'pending',
-                contractId: {
-                    in: activeContracts.map(contract => contract.id)
-                }
-            }
-        });
-
-        // Salvesta pending transaktsioonidega lepingute ID-d
-        const contractsWithPendingTransactions = new Set(
-            pendingTransactions.map(t => t.contractId)
-        );
-
-        if (pendingTransactions.length > 0) {
-
-            // Märgi lepingud lõpetatuks
-            await prisma.contract.updateMany({
-                where: {
-                    id: {
-                        in: pendingTransactions.map(t => t.contractId)
-                    }
-                },
-                data: {
-                    status: 'terminated'
-                }
-            });
-
-            // Salvesta logi andmebaasi
-            await prisma.contractLogs.createMany({
-                data: pendingTransactions.map(t => ({
-                    contractId: t.contractId,
-                    userId: t.userId,
-                    affiliateId: t.affiliateId,
-                    action: 'contract terminated - Unpaid contract payment',
-                }))
-            });
-
-            await prisma.transactions.updateMany(
-                {
-                    where: {
-                        id: {
-                            in: pendingTransactions.map(t => t.id)
-                        }
-                    },
-                    data: {
-                        status: 'unpaid'
-                    }
-                }
-            )
-
-            // Filtreeri välja lepingud, millel on pending transaktsioonid
-            activeContracts = activeContracts.filter(
-                contract => !contractsWithPendingTransactions.has(contract.id)
-            );
-        }
-
-        // Käi läbi ainult lepingud, millel pole pending transaktsioone
+        // Käi läbi kõik aktiivsed lepingud ja saada makselingid
         for (const contract of activeContracts) {
             await createAndSendPaymentLink(contract, currentMonth, true);
         }
 
-        return {success: true, processedCount: activeContracts.length};
+        return {
+            success: true,
+            processedCount: activeContracts.length,
+            expiredContractsCount: expiredContracts.length,
+            pendingPaymentsNotified: pendingPaymentsResult.notifiedCount,
+            weeklyRemindersNotified: weeklyRemindersResult.notifiedCount
+        };
     } catch (error) {
         console.error('Error processing contract payments:', error);
         throw error;
@@ -358,7 +555,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             currency: "EUR",
             amount: remainingAmount,
             locale: "et",
-            expiresAt: new Date(Date.now() + 36 * 24 * 60 * 60 * 1000).toISOString(), // 36 päeva
+            expiresAt: new Date(Date.now() + 100 * 24 * 60 * 60 * 1000).toISOString(),
             notificationUrl: `${NOTIFICATION_URL}/api/payments/montonio-webhook`,
             askAdditionalInfo: false
         };
@@ -595,8 +792,6 @@ async function sendPaymentEmail(
         <p>Please use the following link to complete your payment:</p>
         ${paymentButton}
         
-        <p>The payment link is valid for 36 days.</p>
-        
         <p>Thank you!<br>
         IronTrack Team</p>
         `
@@ -639,7 +834,6 @@ async function sendPaymentEmail(
     Please use the following link to complete your payment:
     ${paymentUrl}
     
-    The payment link is valid for 36 days.
     
     Thank you!
     IronTrack Team
@@ -775,5 +969,14 @@ const handleMontonioWebhook = async (req, res) => {
 
 module.exports = {
     processContractPayments,
-    handleMontonioWebhook
+    handleMontonioWebhook,
+    checkAndNotifyPendingPayments,
+    sendPaymentReminderEmail,
+    checkAndApplyUserCredit,
+    updateUserPlanDueDate,
+    createAndSendPaymentLink,
+    sendPaymentEmail,
+    sendCreditPaymentEmail,
+    recordPendingPayment
+
 };

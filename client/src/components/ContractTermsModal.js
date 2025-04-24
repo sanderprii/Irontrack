@@ -7,35 +7,66 @@ import {
     Button,
     Typography,
     Box,
-    CircularProgress
+    CircularProgress,
+    IconButton
 } from '@mui/material';
-import ReactMarkdown from 'react-markdown';
 import { getContractTermsById } from '../api/contractApi';
 
 export default function ContractTermsModal({ open, onClose, termsId }) {
     const [termsData, setTermsData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [dialogTitle, setDialogTitle] = useState('Contract Terms');
+    const [termsType, setTermsType] = useState('register');
+
+    // Get user role once for consistent use throughout component
+    const userRole = localStorage.getItem('role');
 
     useEffect(() => {
-        // Set the dialog title based on localStorage role
-        const userRole = localStorage.getItem('role');
+        // Set the dialog title and initial terms type based on localStorage role
         if (!userRole) {
             setDialogTitle('Terms and Conditions');
+            // Default to "register" when no role is present
+            setTermsType('register');
         } else {
             setDialogTitle('Contract Terms');
+            // Use the provided termsId when role exists
+            setTermsType(termsId);
         }
+    }, [open, termsId, userRole]);
 
-        if (open && termsId) {
+    useEffect(() => {
+        // Fetch terms when termsType is set and modal is open
+        if (open && termsType) {
             fetchTerms();
         }
-    }, [open, termsId]);
+    }, [termsType, open]);
 
     const fetchTerms = async () => {
-        setLoading(true);
-        const data = await getContractTermsById(termsId);
-        setTermsData(data || null);
-        setLoading(false);
+        try {
+            setLoading(true);
+            console.log("Fetching terms with type:", termsType);
+            const data = await getContractTermsById(termsType);
+            console.log("Fetched data:", data);
+            setTermsData(data || null);
+        } catch (error) {
+            console.error("Error fetching terms:", error);
+            setTermsData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLanguageChange = () => {
+        // Choose the Estonian terms type based on whether user has a role
+        if (userRole) {
+            // If user has a role, use contractEST type
+            console.log("Changing language to Estonian, setting terms type to 'contractEST'");
+            setTermsType('contractEST');
+        } else {
+            // If user has no role, use registerEST type
+            console.log("Changing language to Estonian, setting terms type to 'registerEST'");
+            setTermsType('registerEST');
+        }
     };
 
     // Custom styling for markdown content
@@ -142,9 +173,42 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
         );
     };
 
+    // Estonian flag component
+    const EstonianFlag = () => {
+        return (
+            <IconButton
+                onClick={handleLanguageChange}
+                sx={{
+                    position: 'absolute',
+                    right: 16,
+                    top: 8,
+                    width: 36,
+                    height: 24,
+                    p: 0,
+                    overflow: 'hidden',
+                    border: '1px solid #ccc'
+                }}
+            >
+                <Box sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Box sx={{ flex: 1, bgcolor: '#0072CE', width: '100%' }} />
+                    <Box sx={{ flex: 1, bgcolor: '#000000', width: '100%' }} />
+                    <Box sx={{ flex: 1, bgcolor: '#FFFFFF', width: '100%' }} />
+                </Box>
+            </IconButton>
+        );
+    };
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogTitle sx={{ position: 'relative' }}>
+                {dialogTitle}
+                <EstonianFlag />
+            </DialogTitle>
             <DialogContent dividers>
                 {loading ? (
                     <Box display="flex" justifyContent="center" p={2}>
@@ -153,7 +217,7 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
                 ) : termsData ? (
                     renderMarkdown(termsData.terms)
                 ) : (
-                    <Typography>No terms found.</Typography>
+                    <Typography>No terms found. {termsType ? `Attempted to load terms with type: ${termsType}` : 'No terms type specified'}</Typography>
                 )}
             </DialogContent>
             <DialogActions>

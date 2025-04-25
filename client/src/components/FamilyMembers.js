@@ -103,17 +103,17 @@ export default function FamilyMembers({ user }) {
     return (
         <>
             <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" sx={{ mb: 2 }}>Family Members</Typography>
+                <Typography variant="h5" sx={{ mb: 2 }}>Children</Typography>
                 <Divider sx={{ my: 2 }} />
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">Registered Family Members</Typography>
+                    <Typography variant="h6">Registered Children</Typography>
                     <Button
                         variant="outlined"
                         startIcon={<PersonAddIcon />}
                         onClick={() => setShowAddForm(!showAddForm)}
                     >
-                        Add Family Member
+                        Add Child
                     </Button>
                 </Box>
 
@@ -121,7 +121,7 @@ export default function FamilyMembers({ user }) {
                 {showAddForm && (
                     <Box sx={{ mt: 2, p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 3 }}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            New Family Member
+                            New Child
                         </Typography>
                         <TextField
                             fullWidth
@@ -186,7 +186,7 @@ export default function FamilyMembers({ user }) {
                         </Box>
                     ) : (
                         <Typography variant="body1" sx={{ my: 4, textAlign: 'center', color: 'text.secondary' }}>
-                            No family members added yet
+                            No children added yet
                         </Typography>
                     )
                 )}
@@ -236,7 +236,7 @@ export default function FamilyMembers({ user }) {
                 <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to remove this family member? This action cannot be undone.
+                        Are you sure you want to remove this child? This action cannot be undone.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

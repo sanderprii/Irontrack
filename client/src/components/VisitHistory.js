@@ -254,12 +254,16 @@ export default function VisitHistory({user, affiliateId}) {
                                                                                     backgroundColor: '#f8f9fa',
                                                                                     p: 2,
                                                                                     borderRadius: 1,
+                                                                                    whiteSpace: 'pre-wrap'
                                                                                 }}
                                                                                 dangerouslySetInnerHTML={{
                                                                                     __html: DOMPurify.sanitize(att.classSchedule?.description || "No description available", {
                                                                                         ALLOWED_TAGS: ['b', 'i', 'span'],
                                                                                         ALLOWED_ATTR: ['style'],
                                                                                     })
+                                                                                }}
+                                                                                style={{
+                                                                                    wordBreak: "break-word",
                                                                                 }}
                                                                             />
 

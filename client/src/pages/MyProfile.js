@@ -34,7 +34,7 @@ import { getUserContracts } from '../api/contractApi';
 
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
-    { id: 'family-members', label: 'Family Members', component: FamilyMembers },
+    { id: 'family-members', label: 'Children', component: FamilyMembers },
     { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
     { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
     { id: 'change-password', label: 'Change Password', component: ChangePassword },

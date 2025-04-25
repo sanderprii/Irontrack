@@ -53,6 +53,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import AppTheme from "../shared-theme/AppTheme";
+import DOMPurify from "dompurify";
 
 // Styled components
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -291,6 +292,22 @@ export default function TrainingsPage() {
         setWodDescription(replaced);
         setWodSearchResults([]);
     }
+
+    function initDOMPurify() {
+        // Configure DOMPurify to allow style attributes and common formatting tags
+        DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+            // Allow all style attributes
+            if (node.hasAttribute('style')) {
+                // Do nothing, let the style attribute remain
+                return;
+            }
+        });
+    }
+
+// Call this in a useEffect to initialize DOMPurify when the component mounts
+    useEffect(() => {
+        initDOMPurify();
+    }, []);
 
     // --- 4) Submit new training ---
     async function handleSubmitTraining(e) {
@@ -1034,15 +1051,33 @@ export default function TrainingsPage() {
                                                     mb: 2,
                                                     p: 2,
                                                     borderRadius: 1,
-                                                    minHeight: '100px',
-                                                    whiteSpace: 'pre-wrap'
+                                                    minHeight: '100px'
                                                 }}
                                             >
-                                                {typeof modalTraining.exercises === 'string' ?
-                                                    modalTraining.exercises :
-                                                    Array.isArray(modalTraining.exercises) ?
-                                                        modalTraining.exercises.map(ex => ex.exerciseData || '').join('\n') :
-                                                        ''}
+                                                {typeof modalTraining.exercises === 'string' ? (
+                                                    <div
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: DOMPurify.sanitize(modalTraining.exercises, {
+                                                                ADD_ATTR: ['style'], // Allow style attributes
+                                                                USE_PROFILES: {html: true} // Use HTML profile
+                                                            })
+                                                        }}
+                                                    />
+                                                ) : Array.isArray(modalTraining.exercises) ? (
+                                                    <div
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: DOMPurify.sanitize(
+                                                                modalTraining.exercises.map(ex => ex.exerciseData || '').join('<br>'),
+                                                                {
+                                                                    ADD_ATTR: ['style'], // Allow style attributes
+                                                                    USE_PROFILES: {html: true} // Use HTML profile
+                                                                }
+                                                            )
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    ''
+                                                )}
                                             </Paper>
                                         )}
                                     </Grid>

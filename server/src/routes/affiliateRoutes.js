@@ -14,7 +14,7 @@ if (!affiliateController.getMyAffiliate || !affiliateController.createOrUpdateAf
 }
 
 // ✅ Defineeri API teed (routes)
-router.get("/my-affiliate",  affiliateController.getMyAffiliate);
+router.get("/my-affiliate", ensureAuthenticated, affiliateController.getMyAffiliate);
 router.get("/search-users", ensureAuthenticated, affiliateController.searchUsers);
 router.put("/affiliate", ensureAuthenticated, affiliateController.createOrUpdateAffiliate);
 router.get("/affiliateById", ensureAuthenticated, affiliateController.getAffiliateById);

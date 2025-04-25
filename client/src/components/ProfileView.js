@@ -235,12 +235,16 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                                     <strong></strong> {user.email}
                                 </Typography>
                             </Box>
+                            { role === "affiliate" ? (
                             <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
                                 <PhoneAndroidIcon sx={{color: "gray"}}/>
                                 <Typography>
                                     <strong></strong> {user.phone}
                                 </Typography>
                             </Box>
+                            ) : (
+                                ""
+                            )}
                             <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
                                 <PhoneAndroidIcon sx={{color: "gray"}}/>
                                 <Typography>

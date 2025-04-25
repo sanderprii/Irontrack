@@ -63,6 +63,7 @@ const affiliateId = parseInt(req.query.affiliateId, 10);
             credit: user.credit || 0,
             logo: user.logo,
             address: user.address,
+            dateOfBirth: user.dateOfBirth,
             emergencyContact: user.emergencyContact,
             isMember: !!isMember,
             userNotes: user.userNotes,

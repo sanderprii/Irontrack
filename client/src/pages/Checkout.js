@@ -697,10 +697,10 @@ export default function Checkout(props) {
                                     Selected products
                                 </Typography>
                                 <Typography variant="body1">
-                                    {totalPrice}€
+                                    {planData?.price}€
                                 </Typography>
                             </div>
-                            <InfoMobile totalPrice={`${totalPrice}€`}/>
+                            <InfoMobile totalPrice={`${planData?.price}€`}/>
                         </CardContent>
                     </Card>
 

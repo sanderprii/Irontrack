@@ -22,7 +22,8 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 
-import {getUserAttendees} from '../api/profileApi'; // Sinu olemasolev API-funktsioon
+import {getUserAttendees} from '../api/profileApi';
+import DOMPurify from "dompurify"; // Sinu olemasolev API-funktsioon
 
 /**
  * Abifunktsioon: kuupäeva formindamine (dd.MM.yyyy, nt 21.02.2025)
@@ -253,11 +254,15 @@ export default function VisitHistory({user, affiliateId}) {
                                                                                     backgroundColor: '#f8f9fa',
                                                                                     p: 2,
                                                                                     borderRadius: 1,
-                                                                                    whiteSpace: 'pre-line',
                                                                                 }}
-                                                                            >
-                                                                                {att.classSchedule?.description || "No description available"}
-                                                                            </Box>
+                                                                                dangerouslySetInnerHTML={{
+                                                                                    __html: DOMPurify.sanitize(att.classSchedule?.description || "No description available", {
+                                                                                        ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                                                        ALLOWED_ATTR: ['style'],
+                                                                                    })
+                                                                                }}
+                                                                            />
+
                                                                         </Box>
                                                                     </CardContent>
                                                                 </Card>

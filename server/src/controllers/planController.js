@@ -27,7 +27,7 @@ const getPlans = async (req, res) => {
 // ✅ POST: Uus plaan
 const createPlan = async (req, res) => {
     const ownerId = parseInt(req.user?.id);
-    const {name, trainingType, validityDays, price, additionalData, sessions} = req.body;
+    const {name, trainingType, validityDays, price, additionalData, sessions, active} = req.body;
 let trainingTypeString = trainingType;
     if (Array.isArray(trainingTypeString)) {
         trainingTypeString = JSON.stringify(trainingTypeString);
@@ -49,7 +49,8 @@ let trainingTypeString = trainingType;
                 additionalData,
                 sessions: parseInt(sessions),
                 ownerId,
-                affiliateId: affiliateId.id
+                affiliateId: affiliateId.id,
+                active: active || true // Default to true if not provided
             }
         });
 
@@ -63,7 +64,7 @@ let trainingTypeString = trainingType;
 const updatePlan = async (req, res) => {
     const ownerId = parseInt(req.user?.id);
     const planId = parseInt(req.params.id);
-    const {name, trainingType, validityDays, price, additionalData, sessions} = req.body;
+    const {name, trainingType, validityDays, price, additionalData, sessions, active} = req.body;
 
     let trainingTypeString = trainingType;
     if (Array.isArray(trainingTypeString)) {
@@ -94,7 +95,8 @@ const updatePlan = async (req, res) => {
                 validityDays: parseInt(validityDays),
                 price: parseFloat(price),
                 additionalData,
-                sessions: parseInt(sessions)
+                sessions: parseInt(sessions),
+                active
             }
         });
 

@@ -648,6 +648,7 @@ export default function ClassModal({
                     color: "white",
                     p: 0,
                     pt: 3,
+
                     m: 0,
                     height: "100vh",
                     width: "100vw",

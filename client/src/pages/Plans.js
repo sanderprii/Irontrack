@@ -19,6 +19,7 @@ import { getPlans, createPlan, updatePlan, deletePlan } from "../api/planApi";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import AppTheme from "../shared-theme/AppTheme";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -61,6 +62,13 @@ const trainingTypeColors = {
 const TrainingTypeChip = styled(Chip)(({ theme }) => ({
     margin: theme.spacing(0.5),
     fontWeight: 500,
+}));
+
+// Status dot component
+const StatusDot = styled(FiberManualRecordIcon)(({ active, theme }) => ({
+    fontSize: '0.75rem',
+    color: active ? '#4caf50' : '#f44336', // Green for active, red for inactive
+    marginRight: theme.spacing(0.5),
 }));
 
 // Function to ensure training types are always in array format
@@ -180,7 +188,10 @@ export default function Plans() {
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => setModalOpen(true)}
+                        onClick={() => {
+                            setSelectedPlan(null);
+                            setModalOpen(true);
+                        }}
                         startIcon={<AutoAwesomeIcon />}
                         sx={{ borderRadius: "20px" }}
                     >
@@ -200,9 +211,31 @@ export default function Plans() {
                                         bgcolor: "background.paper",
                                         p: 3,
                                         borderLeft: "5px solid #FFB347",
+                                        position: "relative"
                                     }
-                                    : {}}
+                                    : {
+                                        position: "relative"
+                                    }}
                             >
+                                {/* Status Dot Indicator */}
+                                <Box
+                                    sx={{
+                                        position: "absolute",
+                                        top: 10,
+                                        right: 10,
+                                        display: "flex",
+                                        alignItems: "center"
+                                    }}
+                                >
+                                    <StatusDot active={plan.active} />
+                                    <Typography
+                                        variant="caption"
+                                        color={plan.active ? "success.main" : "error.main"}
+                                    >
+                                        {plan.active ? "Active" : "Inactive"}
+                                    </Typography>
+                                </Box>
+
                                 <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
                                     <Box sx={{ mb: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
                                         <Typography component="h3" variant="h5" fontWeight="bold">

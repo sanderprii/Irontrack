@@ -220,11 +220,16 @@ const RegisterTrainingPage = () => {
 
         try {
             const affiliatePlans = await fetchPlans(selectedAffiliate.ownerId);
+
+            // Filter out inactive plans, then process the remaining ones
+            const filteredPlans = affiliatePlans.filter(plan => plan.active);
+
             // Process plans to ensure trainingType is in the correct format
-            const processedPlans = affiliatePlans.map(plan => ({
+            const processedPlans = filteredPlans.map(plan => ({
                 ...plan,
                 trainingType: ensureTrainingTypeArray(plan.trainingType)
             }));
+
             setPlans(processedPlans);
 
             const getUserPlans = await getUserPlansByAffiliate(selectedAffiliate.id);
@@ -799,14 +804,14 @@ const RegisterTrainingPage = () => {
                                                     fullWidth
                                                     variant="contained"
                                                     color="primary"
-                                                    disabled={Boolean(validUntil)}
+
                                                     onClick={() => handleBuyPlan(plan)}
                                                     sx={{
                                                         borderRadius: "20px",
                                                         py: 1,
                                                     }}
                                                 >
-                                                    {validUntil ? "Already Active" : "Buy Plan"}
+                                                    Buy Plan
                                                 </Button>
                                             </CardActions>
                                         </StyledCard>

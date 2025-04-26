@@ -1,16 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Checkbox, FormControlLabel } from "@mui/material";
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Checkbox,
+    FormControlLabel,
+    Box,
+    Typography
+} from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 
 export default function PlanFormModal({ open, onClose, onSave, plan }) {
-    const [form, setForm] = useState({
+    const initialFormState = {
         name: "",
         validityDays: "",
         price: "",
         sessions: "",
         additionalData: "",
-        trainingType: [] // Initialize trainingType as an empty array
-    });
+        trainingType: [],
+        active: true
+    };
+
+    const [form, setForm] = useState(initialFormState);
 
     // Function to ensure training types are always in array format
     const parseTrainingType = (trainingType) => {
@@ -42,16 +56,10 @@ export default function PlanFormModal({ open, onClose, onSave, plan }) {
             };
             setForm(updatedPlan);
         } else {
-            setForm({
-                name: "",
-                validityDays: "",
-                price: "",
-                sessions: "",
-                additionalData: "",
-                trainingType: []
-            });
+            // Reset to initial state when adding a new plan
+            setForm(initialFormState);
         }
-    }, [plan]);
+    }, [plan, open]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -63,16 +71,23 @@ export default function PlanFormModal({ open, onClose, onSave, plan }) {
     };
 
     const handleSubmit = () => {
-        // No need to process trainingType separately here,
-        // it's handled in the API layer
         onSave(form);
     };
 
-
-
     return (
         <Dialog open={open} onClose={onClose} fullWidth>
-            <DialogTitle>{plan ? "Edit Plan" : "Add New Plan"}</DialogTitle>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">
+                    {plan ? "Edit Plan" : "Add New Plan"}
+                </Typography>
+                {plan && (
+                    <Box display="flex" alignItems="center">
+                        <Typography variant="body2" color={form.active ? 'green' : 'red'}>
+                            {form.active ? 'Active' : 'Inactive'}
+                        </Typography>
+                    </Box>
+                )}
+            </DialogTitle>
             <DialogContent>
                 <TextField
                     select
@@ -155,6 +170,15 @@ export default function PlanFormModal({ open, onClose, onSave, plan }) {
                     margin="normal"
                     value={form.additionalData}
                     onChange={handleChange}
+                />
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={form.active}
+                            onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                        />
+                    }
+                    label="Active"
                 />
             </DialogContent>
             <DialogActions>

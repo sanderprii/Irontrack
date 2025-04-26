@@ -24,7 +24,7 @@ router.get('/unpaid', contractController.getUnpaidUsers);
 router.get('/user/:userId', contractController.getUserContracts);
 
 // Accept contract (update status, create logs, etc.)
-router.put('/:contractId/accept', contractController.acceptContract);
+router.post('/:contractId/accept', contractController.acceptContract);
 
 router.post('/:contractId/payment-holiday', contractController.createPaymentHoliday);
 
@@ -35,7 +35,7 @@ router.put('/:phId/update-payment-holiday', contractController.updatePaymentHoli
 router.get('/:id', contractController.getContractById);
 
 // PUT /contracts/:id
-router.patch('/:id', contractController.updateContract);
+router.put('/:id', contractController.updateContract);
 
 // DELETE /contracts/:id
 router.delete('/:id', contractController.deleteContract);

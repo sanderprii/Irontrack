@@ -30,7 +30,7 @@ import {acceptContract} from "../api/contractApi";
 const steps = ['Payment details', 'Review your order'];
 
 // Funktsioon, mis tagastab sammu sisu ja edastab lisaks krediidi andmed
-function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedCredit, setAppliedCredit) {
+function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedCredit, setAppliedCredit, contract, isContractPayment) {
     switch (step) {
         case 0:
             return (
@@ -38,7 +38,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     affiliateCredit={affiliateCredit}
                     appliedCredit={appliedCredit}
                     setAppliedCredit={setAppliedCredit}
-                    planPrice={planData?.price || 0}
+                    planPrice={contract?.isFirstPayment && contract?.firstPaymentAmount ? contract.firstPaymentAmount : (planData?.price || 0)}
                 />
             );
         case 1:
@@ -47,6 +47,8 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     planName={planData?.name || ''}
                     planPrice={planData?.price || 0}
                     appliedCredit={appliedCredit}
+                    contract={contract}
+                    isContractPayment={isContractPayment}
                 />
             );
         default:
@@ -442,6 +444,8 @@ export default function Checkout(props) {
         }
     }, [affiliateInfo?.id]);
 
+    // Modified portion of handlePlaceOrder in Checkout.js
+
     const handlePlaceOrder = async () => {
         try {
             setLoading(true);
@@ -458,9 +462,23 @@ export default function Checkout(props) {
                 localStorage.setItem('checkout_isContractPayment', 'true');
             }
 
-            // Arvuta lõplik summa
-            const finalAmount = Math.max((planData?.price || 0) - appliedCredit, 0);
+            // Arvuta lõplik summa - UUENDATUD LOOGIKA esimeseks makseks
+            let finalAmount;
             const isContractPmt = isContractPayment || planData?.id === 'contract-payment';
+
+            // Kui tegemist on lepingumaksega, kontrolli, kas on esimene makse ja kasuta firstPaymentAmount-i
+            if (isContractPmt && contract) {
+                if (contract.isFirstPayment && contract.firstPaymentAmount) {
+                    // Kasuta firstPaymentAmount-i kui see on määratud
+                    finalAmount = Math.max(contract.firstPaymentAmount - appliedCredit, 0);
+                } else {
+                    // Tavaline lepingu makse
+                    finalAmount = Math.max((planData?.price || 0) - appliedCredit, 0);
+                }
+            } else {
+                // Tavaline mitte-lepingu ost
+                finalAmount = Math.max((planData?.price || 0) - appliedCredit, 0);
+            }
 
             // Kui kogu summa on kaetud krediidiga
             if (finalAmount === 0) {
@@ -472,7 +490,6 @@ export default function Checkout(props) {
                         acceptType: 'checkout',
                         contractTermsId: 1,
                         paymentCompleted: true,
-
                     });
 
                     setPaymentSuccess(true);
@@ -499,9 +516,20 @@ export default function Checkout(props) {
                 // Kui maksta on vaja Montonio kaudu
                 const returnUrl = window.location.href.split('?')[0]; // Remove existing query parameters
 
+                // Määra õige summa makseks, sõltuvalt kas tegemist on firstPayment-iga või mitte
+                const paymentPrice = isContractPmt && contract?.isFirstPayment && contract?.firstPaymentAmount
+                    ? contract.firstPaymentAmount
+                    : planData?.price;
+
+                // Uuenda planData hinda kui tegemist on esimese lepingumaksega
+                const adjustedPlanData = { ...planData };
+                if (isContractPmt && contract?.isFirstPayment && contract?.firstPaymentAmount) {
+                    adjustedPlanData.price = contract.firstPaymentAmount;
+                }
+
                 // Loo Montonio makse
                 const paymentResponse = await createMontonioPayment(
-                    planData,
+                    adjustedPlanData,
                     affiliateInfo?.id,
                     appliedCredit,
                     contract,
@@ -632,6 +660,8 @@ export default function Checkout(props) {
                             planName={planData?.name || ''}
                             planPrice={planData?.price || 0}
                             appliedCredit={appliedCredit}
+                            firstPaymentPrice={contract?.firstPaymentAmount ? `${contract.firstPaymentAmount}€` : undefined}
+                            isFirstPayment={!!contract?.isFirstPayment}
                         />
                     </Box>
                 </Grid>
@@ -700,7 +730,13 @@ export default function Checkout(props) {
                                     {planData?.price}€
                                 </Typography>
                             </div>
-                            <InfoMobile totalPrice={`${planData?.price}€`}/>
+                            <InfoMobile
+                                planName={planData?.name || ''}
+                                planPrice={planData?.price || 0}
+                                appliedCredit={appliedCredit}
+                                firstPaymentPrice={contract?.firstPaymentAmount ? `${contract.firstPaymentAmount}€` : undefined}
+                                isFirstPayment={!!contract?.isFirstPayment}
+                            />
                         </CardContent>
                     </Card>
 
@@ -753,7 +789,16 @@ export default function Checkout(props) {
                             </Stack>
                         ) : (
                             <React.Fragment>
-                                {getStepContent(activeStep, planData, affiliateInfo, affiliateCredit, appliedCredit, setAppliedCredit)}
+                                {getStepContent(
+                                    activeStep,
+                                    planData,
+                                    affiliateInfo,
+                                    affiliateCredit,
+                                    appliedCredit,
+                                    setAppliedCredit,
+                                    contract,
+                                    isContractPayment || planData?.id === 'contract-payment'
+                                )}
                                 {/* Navigeerimisnupud */}
                                 <Box
                                     sx={[

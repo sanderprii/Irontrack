@@ -77,28 +77,30 @@ model Message {
 }
 
 model Contract {
-  id              Int              @id @default(autoincrement())
-  affiliateId     Int
-  userId          Int
-  trainingType    String?
-  contractType    String?
-  content         String
-  paymentType     String?
-  paymentAmount   Float?
-  paymentInterval String?
-  paymentDay      Int?
-  validUntil      DateTime?
-  startDate       DateTime?
-  active          Boolean          @default(true)
-  status          String           @default("draft") // draft, sent, accepted jne
-  createdAt       DateTime         @default(now())
-  acceptedAt      DateTime?
-  affiliate       Affiliate        @relation(fields: [affiliateId], references: [id])
-  user            User             @relation(fields: [userId], references: [id])
-  signed          SignedContract[]
-  logs            ContractLogs[]
-  paymentHolidays PaymentHoliday[]
-  userPlan        UserPlan[]
+  id                 Int              @id @default(autoincrement())
+  affiliateId        Int
+  userId             Int
+  trainingType       String?
+  contractType       String?
+  content            String
+  paymentType        String?
+  paymentAmount      Float?
+  paymentInterval    String?
+  paymentDay         Int?
+  isFirstPayment     Boolean          @default(true)
+  firstPaymentAmount Float?
+  validUntil         DateTime?
+  startDate          DateTime?
+  active             Boolean          @default(true)
+  status             String           @default("draft") // draft, sent, accepted jne
+  createdAt          DateTime         @default(now())
+  acceptedAt         DateTime?
+  affiliate          Affiliate        @relation(fields: [affiliateId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
+  signed             SignedContract[]
+  logs               ContractLogs[]
+  paymentHolidays    PaymentHoliday[]
+  userPlan           UserPlan[]
 }
 
 model ContractLogs {

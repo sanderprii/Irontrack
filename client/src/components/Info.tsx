@@ -3,57 +3,98 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
-
-const products = [
-  {
-    name: 'Professional plan',
-    desc: 'Monthly subscription',
-    price: '$15.00',
-  },
-  {
-    name: 'Dedicated support',
-    desc: 'Included in the Professional plan',
-    price: 'Free',
-  },
-  {
-    name: 'Hardware',
-    desc: 'Devices needed for development',
-    price: '$69.99',
-  },
-  {
-    name: 'Landing page template',
-    desc: 'License',
-    price: '$49.99',
-  },
-];
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
 
 interface InfoProps {
-  totalPrice: string;
+  planName: string;
+  planPrice: number;
+  appliedCredit: number;
+  firstPaymentPrice?: string;
+  isFirstPayment?: boolean;
 }
 
-export default function Info({ totalPrice }: InfoProps) {
+export default function Info({
+                               planName,
+                               planPrice,
+                               appliedCredit,
+                               firstPaymentPrice,
+                               isFirstPayment = false
+                             }: InfoProps) {
+  // Calculate the total price with applied credit
+  const calculatedTotalPrice = Math.max(planPrice - appliedCredit, 0);
+
+  // Format the price for display
+
+  const formattedRegularPrice = `${calculatedTotalPrice}€`;
+
   return (
-    <React.Fragment>
-      <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-        Total
-      </Typography>
-      <Typography variant="h4" gutterBottom>
-        {totalPrice}
-      </Typography>
-      <List disablePadding>
-        {products.map((product) => (
-          <ListItem key={product.name} sx={{ py: 1, px: 0 }}>
+      <React.Fragment>
+        <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+          Total
+        </Typography>
+
+
+            <Box>
+              <Typography variant="h4" gutterBottom>
+                {firstPaymentPrice}
+              </Typography>
+              <Chip
+                  label="First payment"
+                  color="primary"
+                  size="small"
+                  sx={{ mb: 2 }}
+              />
+            </Box>
+
+            <Typography variant="h4" gutterBottom>
+              {formattedRegularPrice}
+            </Typography>
+
+
+        <List disablePadding>
+          <ListItem sx={{ py: 1, px: 0 }}>
             <ListItemText
-              sx={{ mr: 2 }}
-              primary={product.name}
-              secondary={product.desc}
+                sx={{ mr: 2 }}
+                primary={planName}
+                secondary={`Regular monthly payment`}
             />
             <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-              {product.price}
+              {`${planPrice}€`}
             </Typography>
           </ListItem>
-        ))}
-      </List>
-    </React.Fragment>
+
+          {appliedCredit > 0 && (
+              <ListItem sx={{ py: 1, px: 0 }}>
+                <ListItemText
+                    sx={{ mr: 2 }}
+                    primary="Credit applied"
+                />
+                <Typography variant="body1" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                  {`-${appliedCredit}€`}
+                </Typography>
+              </ListItem>
+          )}
+
+          {isFirstPayment && firstPaymentPrice && (
+              <ListItem sx={{ py: 1, px: 0 }}>
+                <ListItemText
+                    sx={{ mr: 2 }}
+                    primary="First payment adjustment"
+                    secondary="Proportional to contract start date"
+                />
+                <Typography variant="body1" sx={{ fontWeight: 'medium', color: 'primary.main' }}>
+                  {firstPaymentPrice}
+                </Typography>
+              </ListItem>
+          )}
+        </List>
+
+        {isFirstPayment && firstPaymentPrice && (
+            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+              Your first payment is calculated proportionally based on the days between your contract start date and the next regular payment date.
+            </Typography>
+        )}
+      </React.Fragment>
   );
 }

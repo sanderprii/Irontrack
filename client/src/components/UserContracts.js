@@ -490,7 +490,16 @@ export default function UserContracts({ user, affiliateId }) {
                                                                                     {contract.paymentAmount} €
                                                                                 </Typography>
                                                                             </Box>
-
+                                                                            { contract.isFirstPayment && (
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    First Payment Amount:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                    {contract.firstPaymentAmount} €
+                                                                                </Typography>
+                                                                            </Box>
+                                                                            )}
                                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                 <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
                                                                                     Payment Interval:

@@ -148,20 +148,45 @@ export const assignPlanToUser = async (planId, userId, affiliateId) => {
 };
 
 // In planApi.js or similar file
+// In planApi.js - updated createMontonioPayment function
 export const createMontonioPayment = async (
     planData,
     affiliateId,
     appliedCredit,
     contract,
-    returnUrl, userData
+    returnUrl,
+    userData
 ) => {
-    const finalAmount = Math.max(planData.price - appliedCredit, 0);
+    // Determine the correct payment amount
+    let paymentAmount = planData.price;
+
+    // If this is a contract first payment, use the firstPaymentAmount
+    if (contract && contract.isFirstPayment && contract.firstPaymentAmount) {
+        paymentAmount = contract.firstPaymentAmount;
+    }
+
+    // Apply any credit
+    const finalAmount = Math.max(paymentAmount - appliedCredit, 0);
 
     // Only proceed with payment if there's an amount to pay
     if (finalAmount === 0) {
         return { is_fully_credited: true };
     }
-const token = localStorage.getItem("token");
+
+    const token = localStorage.getItem("token");
+
+    // Create a description that includes first payment info if applicable
+    let description = planData.name;
+    if (contract && contract.isFirstPayment && contract.firstPaymentAmount) {
+        const startDate = new Date(contract.startDate).toLocaleDateString();
+        const nextPaymentDate = new Date();
+        nextPaymentDate.setDate(contract.paymentDay);
+        if (nextPaymentDate.getDate() < new Date().getDate()) {
+            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        }
+        description = `${planData.name} - First payment (${startDate} to ${nextPaymentDate.toLocaleDateString()})`;
+    }
+
     try {
         const response = await fetch(`${API_URL}/payments/montonio`, {
             method: 'POST',
@@ -172,12 +197,11 @@ const token = localStorage.getItem("token");
             body: JSON.stringify({
                 amount: finalAmount.toFixed(2),
                 orderId: planData.id || Date.now(),
-                description: planData.name,
+                description: description,
                 userData: userData,
                 affiliateId,
                 appliedCredit,
                 contractId: contract?.id,
-
             }),
         });
 

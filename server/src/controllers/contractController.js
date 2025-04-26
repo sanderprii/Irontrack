@@ -98,6 +98,7 @@ exports.createContract = async (req, res) => {
             validUntil,
             startDate,
             trainingTypes, // Extract trainingTypes from request
+            firstPaymentAmount,
         } = req.body;
 
         const validUntilDate = new Date(validUntil);
@@ -122,6 +123,7 @@ exports.createContract = async (req, res) => {
                 validUntil: validUntilDate,
                 startDate: new Date(startDate),
                 trainingType, // Use singular field name matching the schema
+                firstPaymentAmount: parseFloat(firstPaymentAmount) || 0, // Ensure it's a number
             },
         });
 
@@ -370,6 +372,7 @@ exports.acceptContract = async (req, res) => {
             data: {
                 status: 'accepted',
                 acceptedAt: new Date(),
+                isFirstPayment: false,
             },
         });
 
@@ -397,26 +400,85 @@ exports.acceptContract = async (req, res) => {
         // Kontrolli kas UserPlan on juba olemas selle lepinguga
         // Kui ei ole, siis loome uue UserPlan
         if (!contract.userPlan || contract.userPlan.length === 0) {
-            // Arvutame lõppkuupäeva (1 kuu alates tänasest)
-            const endDate = new Date(contract.startDate);
-            endDate.setMonth(endDate.getMonth() + 1);
+            // ===== UPDATED: Create UserPlan with correctly aligned end date =====
 
-            // Loome UserPlan kirje
-            await prisma.userPlan.create({
-                data: {
-                    userId: userId,
-                    affiliateId: affiliateId,
-                    contractId: parseInt(contractId),
-                    planName: `${contract.contractType || 'Monthly'}`,
-                    validityDays: 31, // Standard 30-päevane periood
-                    price: contract.paymentAmount,
-                    purchasedAt: new Date(),
-                    endDate: endDate,
-                    sessionsLeft: 9999, // Piiramatu arv sessioone (lepingupõhine)
-                    planId: 0,
-                    trainingType: contract.trainingType
-                }
+            // Get the contract data for calculations
+            const startDate = new Date(contract.startDate || new Date());
+            const paymentDay = contract.paymentDay || 1;
+
+            // Calculate end date that aligns with payment day
+            let endDate = new Date(startDate);
+
+            // If start date day is after payment day, next payment is in next month
+            if (startDate.getDate() > paymentDay) {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+
+            // Set the day to payment day
+            endDate.setDate(paymentDay);
+
+            // Calculate days difference for first payment logic
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const daysDiff = Math.round((endDate - startDate) / msPerDay);
+
+            // If less than 10 days until next payment, add another month
+            if (daysDiff < 10) {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+
+            // Check if user plan already exists
+            const existingUserPlan = await prisma.userPlan.findFirst({
+                where: { contractId: parseInt(contractId) },
             });
+
+            if (existingUserPlan) {
+                // Update existing user plan
+                await prisma.userPlan.update({
+                    where: { id: existingUserPlan.id },
+                    data: { endDate }
+                });
+            } else {
+                // Create new user plan
+                await prisma.userPlan.create({
+                    data: {
+                        userId,
+                        contractId: parseInt(contractId),
+                        affiliateId: parseInt(affiliateId),
+                        planName: contract.contractType || "Membership Contract",
+                        trainingType: contract.trainingType,
+                        validityDays: 30, // Default
+                        price: contract.paymentAmount || 0,
+                        sessionsLeft: 999, // Unlimited for contract
+                        purchasedAt: new Date(),
+                        endDate,
+                        paymentHoliday: false,
+                        planId: 0,
+                    }
+                });
+            }
+
+            // Mark first payment as completed if it was used
+            if (contract.isFirstPayment) {
+                await prisma.contract.update({
+                    where: { id: parseInt(contractId) },
+                    data: { isFirstPayment: false }
+                });
+
+                // Create a transaction record for the payment
+                const invoiceNumber = "Credit-" + new Date().getTime();
+                await prisma.transactions.create({
+                    data: {
+                        userId,
+                        affiliateId: parseInt(affiliateId),
+                        amount: contract.firstPaymentAmount || contract.paymentAmount || 0,
+                        invoiceNumber,
+                        description: `First payment for contract ${contractId} paid with credit`,
+                        status: "success",
+                        type: "credit"
+                    }
+                });
+            }
+
         }
 
         res.json(updatedContract);
@@ -597,16 +659,47 @@ exports.updateUnpaidUser = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // First fetch the transaction to get the contractId
+        const transaction = await prisma.transactions.findUnique({
+            where: { id: parseInt(id) }
+        });
 
-        // Uuenda transaction staatust
+        if (!transaction) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        // Update transaction status
         const updatedTransaction = await prisma.transactions.update({
             where: { id: parseInt(id) },
             data: { status: "success" },
         });
+
+        // If transaction has a contractId, update the corresponding UserPlan
+        if (transaction.contractId) {
+            // Find UserPlan with the same contractId
+            const userPlan = await prisma.userPlan.findFirst({
+                where: {
+                    contractId: transaction.contractId
+                }
+            });
+
+            if (userPlan) {
+                // Calculate the new endDate (add one month)
+                const currentEndDate = new Date(userPlan.endDate);
+                const newEndDate = new Date(currentEndDate);
+                newEndDate.setMonth(newEndDate.getMonth() + 1);
+
+                // Update the UserPlan with the new endDate
+                await prisma.userPlan.update({
+                    where: { id: userPlan.id },
+                    data: { endDate: newEndDate }
+                });
+            }
+        }
 
         res.json(updatedTransaction);
     } catch (error) {
         console.error('Error updating unpaid user:', error);
         res.status(500).json({ error: 'Failed to update unpaid user' });
     }
-}
+};

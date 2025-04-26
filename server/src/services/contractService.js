@@ -265,7 +265,7 @@ async function processContractPayments() {
 
         // 4. Jätkame tavapärase maksetöötlusega
         const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 5);
+        futureDate.setDate(futureDate.getDate() + 10);
         const targetPaymentDay = futureDate.getDate();
 
         const currentMonth = futureDate.toLocaleString('en-US', {month: 'long'});
@@ -278,12 +278,13 @@ async function processContractPayments() {
                 validUntil: {
                     gt: today
                 },
-                paymentType: {
-                    not: null
-                },
                 paymentAmount: {
                     not: null
                 },
+                startDate: {
+                    lt: new Date(),
+                },
+                isFirstPayment: false,
                 status: 'accepted'
             },
             include: {

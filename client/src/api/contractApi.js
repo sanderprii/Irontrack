@@ -51,20 +51,23 @@ export const createContract = async (payload) => {
     }
 };
 
-export const updateContract = async (contractId, payload) => {
-    const token = localStorage.getItem('token');
+// Function to update contract status
+export const updateContract = async (contractId, data) => {
     try {
-        const resp = await fetch(`${API_BASE}/contracts/${contractId}`, {
-            method: 'PATCH',
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE}/contracts/${contractId}`, {
+            method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(data)
         });
-        return await resp.json();
-    } catch (err) {
-        console.error('Error updateContract:', err);
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error updating contract:", error);
+        throw error;
     }
 };
 
@@ -133,27 +136,24 @@ export const getUserContracts = async (userId, affiliateId) => {
 // Accept contract
 export const acceptContract = async (contractId, data) => {
     try {
-        const response = await fetch(`/api/contracts/${contractId}/accept`, {
-            method: 'PUT',
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE}/contracts/${contractId}/accept`, {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(data)
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            // Kontrollime kas on tegemist maksmata lepinguga
-            if (errorData.requiresPayment) {
-                return { requiresPayment: true };
-            }
-            throw new Error(errorData.error || 'Failed to accept contract');
+            throw new Error(errorData.message || 'Error accepting contract');
         }
 
         return await response.json();
     } catch (error) {
-        console.error('Error accepting contract:', error);
+        console.error("Error accepting contract:", error);
         throw error;
     }
 };

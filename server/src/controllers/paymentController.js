@@ -208,7 +208,9 @@ const createMontonioPayment = async (req, res) => {
  * Handle Montonio webhook notifications
  */
 // Part of paymentController.js - Handling payment holidays in webhook
+// Part of paymentController.js - Updated to handle first payments
 const handleMontonioWebhook = async (req, res) => {
+
     try {
         const {orderToken} = req.body;
 
@@ -227,10 +229,10 @@ const handleMontonioWebhook = async (req, res) => {
                 return res.status(200).json({success: false, message: 'Invalid token format'});
             }
 
-            // Kasuta uuid-d paymentLinkUuid asemel
-            const orderUuid = decodedToken.paymentLinkUuid;  // UUID on otseselt decodedToken.uuid-s, mitte paymentLinkUuid-s
+            // Kasuta uuid-d
+            const orderUuid = decodedToken.paymentLinkUuid;
             console.log(`Processing webhook for order UUID: ${orderUuid}`);
-            console.log(decodedToken)
+
             // Lepingu maksete jaoks otsime paymentMetadata
             const paymentMetadata = await prisma.paymentMetadata.findFirst({
                 where: {montonioUuid: orderUuid}
@@ -273,7 +275,6 @@ const handleMontonioWebhook = async (req, res) => {
             // Kui leidsime metadata, töötleme lepingumakse
             const {transactionId, contractId, affiliateId, isPaymentHoliday} = paymentMetadata;
 
-
             // Leia API võtmed affiliateId järgi
             const apiKeys = await prisma.affiliateApiKeys.findFirst({
                 where: {affiliateId: affiliateId}
@@ -304,7 +305,6 @@ const handleMontonioWebhook = async (req, res) => {
                 currency
             } = decodedToken;
 
-
             // Uuenda vastavalt makse staatusele
             if (paymentStatus === 'PAID') {
                 // 1. Uuenda tehingu olek
@@ -319,42 +319,102 @@ const handleMontonioWebhook = async (req, res) => {
                 }
 
                 // 2. Kui EI OLE payment holiday, siis uuenda userPlan
-
-                // Leia lepinguga seotud kasutaja plaan
-                const userPlan = await prisma.userPlan.findFirst({
-                    where: {contractId: contractId}
+                // Leia lepinguga seotud leping ja kasutaja plaan
+                const contract = await prisma.contract.findUnique({
+                    where: {id: contractId},
+                    include: {
+                        userPlan: true
+                    }
                 });
 
-                if (userPlan) {
-
-
-                    // Arvuta uus lõppkuupäev (lisa üks kuu)
-                    let newEndDate = new Date(userPlan.endDate);
-                    newEndDate.setMonth(newEndDate.getMonth() + 1);
-
-
-                    // Uuenda kasutaja plaani kehtivust
-                    await prisma.userPlan.update({
-                        where: {id: userPlan.id},
-                        data: {endDate: newEndDate}
-                    });
-
-                    if (isPaymentHoliday) {
-                        await prisma.userPlan.update ({
-                            where: {id: userPlan.id},
-                            data: {paymentHoliday: true}
-                        })
-                    } else {
-                        await prisma.userPlan.update ({
-                            where: {id: userPlan.id},
-                            data: {paymentHoliday: false}
-                        })
-                    }
-
-                } else {
-                    console.error(`UserPlan not found for contract ${contractId}`);
+                if (!contract) {
+                    console.error(`Contract not found with ID ${contractId}`);
+                    return res.status(200).json({success: true, message: 'Payment processed but contract not found'});
                 }
 
+                // UUENDATUD LOOGIKA: Käsitle isFirstPayment loogika
+                if (contract.isFirstPayment) {
+                    console.log(`Processing first payment for contract ${contractId}`);
+
+                    const userPlan = contract.userPlan[0];
+
+                    if (userPlan) {
+                        // Arvuta lõppkuupäev, mis joondub paymentDay-ga
+                        let endDate;
+                        const startDate = new Date(contract.startDate || new Date());
+                        const paymentDay = contract.paymentDay || 1;
+
+                        // Leia järgmine makse kuupäev
+                        const nextPaymentDate = new Date(startDate);
+
+                        // Kui alguskuupäeva päev on suurem kui makse päev, siis järgmine makse on järgmisel kuul
+                        if (startDate.getDate() > paymentDay) {
+                            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+                        }
+
+                        // Määra päev
+                        nextPaymentDate.setDate(paymentDay);
+
+                        // Kui järgmine makse on vähem kui 10 päeva pärast, siis userPlan endDate on ülejärgmisel kuul
+                        const daysDiff = Math.round((nextPaymentDate - startDate) / (1000 * 60 * 60 * 24));
+
+                        if (daysDiff < 10) {
+                            // Kui esimene makse katab järgmise kuu, liigume veel ühe kuu edasi
+                            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+                        }
+
+                        // Uuenda kasutaja plaani
+                        await prisma.userPlan.update({
+                            where: {id: userPlan.id},
+                            data: {
+                                endDate: nextPaymentDate
+                            }
+                        });
+
+                        // Märgi leping, et esimene makse on tehtud
+                        await prisma.contract.update({
+                            where: {id: contractId},
+                            data: {
+                                isFirstPayment: false
+                            }
+                        });
+
+                        console.log(`Updated contract ${contractId} and userPlan ${userPlan.id} - first payment complete`);
+                    } else {
+                        console.error(`No UserPlan found for contract ${contractId} during first payment`);
+                    }
+                } else {
+                    // Tavaline korduvmakse loogika
+                    const userPlan = await prisma.userPlan.findFirst({
+                        where: {contractId: contractId}
+                    });
+
+                    if (userPlan) {
+                        // Arvuta uus lõppkuupäev (lisa üks kuu)
+                        let newEndDate = new Date(userPlan.endDate);
+                        newEndDate.setMonth(newEndDate.getMonth() + 1);
+
+                        // Uuenda kasutaja plaani kehtivust
+                        await prisma.userPlan.update({
+                            where: {id: userPlan.id},
+                            data: {endDate: newEndDate}
+                        });
+
+                        if (isPaymentHoliday) {
+                            await prisma.userPlan.update ({
+                                where: {id: userPlan.id},
+                                data: {paymentHoliday: true}
+                            });
+                        } else {
+                            await prisma.userPlan.update ({
+                                where: {id: userPlan.id},
+                                data: {paymentHoliday: false}
+                            });
+                        }
+                    } else {
+                        console.error(`UserPlan not found for contract ${contractId}`);
+                    }
+                }
             } else if (paymentStatus === 'VOIDED' || paymentStatus === 'ABANDONED') {
                 console.log(`Marking transaction ${transactionId} as cancelled`);
 

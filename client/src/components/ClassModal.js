@@ -1156,7 +1156,7 @@ export default function ClassModal({
                                                 </Box>
                                             }
                                             // Show family member indicator if it's a family member registration
-                                            secondary={attendee.isFamilyMember ? "Family Member" : null}
+                                            secondary={attendee.isFamilyMember ? `Child. Parent: ${attendee.registrantName}` : null}
                                         />
 
                                         {/* Nupud (check-in & kustuta) */}

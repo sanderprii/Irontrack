@@ -16,9 +16,13 @@ import {
     MenuItem,
     Box,
     Chip,
+    Tooltip,
+    Alert,
 } from '@mui/material';
 
 import InfoIcon from '@mui/icons-material/Info';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { createContract, getLatestContractTemplate, updateContract } from '../api/contractApi';
 import { searchUsers } from '../api/membersApi';
 import TextareaAutosize from "@mui/material/TextareaAutosize";
@@ -53,12 +57,18 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
     const [paymentDay, setPaymentDay] = useState(1);
     const [validUntil, setValidUntil] = useState('');
     const [startDate, setStartDate] = useState('');
+    const [firstPaymentAmount, setFirstPaymentAmount] = useState('');
+    const [isFirstPayment, setIsFirstPayment] = useState(true);
+    const [calculationComplete, setCalculationComplete] = useState(false);
 
     // Dialog states
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
     const [errorDialogOpen, setErrorDialogOpen] = useState(false);
     const [dialogMessage, setDialogMessage] = useState('');
     const [validationError, setValidationError] = useState('');
+
+    // First payment calculation preview
+    const [paymentPreview, setPaymentPreview] = useState(null);
 
     // Load contract data if editing or template if creating
     useEffect(() => {
@@ -74,7 +84,10 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             setPaymentAmount(contractToEdit.paymentAmount?.toString() || '');
             setPaymentInterval(contractToEdit.paymentInterval || 'month');
             setPaymentDay(contractToEdit.paymentDay || 1);
-            setStartDate(contractToEdit.startDate || '');
+            setStartDate(contractToEdit.startDate ? new Date(contractToEdit.startDate).toISOString().split('T')[0] : '');
+            setIsFirstPayment(contractToEdit.isFirstPayment !== undefined ? contractToEdit.isFirstPayment : true);
+            setFirstPaymentAmount(contractToEdit.firstPaymentAmount?.toString() || '');
+            setCalculationComplete(!!contractToEdit.firstPaymentAmount);
 
             // Format the validUntil date for the input field
             if (contractToEdit.validUntil) {
@@ -100,6 +113,11 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 const types = contractToEdit.trainingType?.split(',') || [];
                 setTrainingTypes(types.map(t => t.trim()).filter(t => t));
             }
+
+            // Calculate first payment even when editing
+            if (contractToEdit.startDate && contractToEdit.paymentDay && contractToEdit.paymentAmount) {
+                calculateFirstPayment();
+            }
         } else if (open && !contractToEdit) {
             // Reset form for new contract
             setSelectedUser(null);
@@ -111,11 +129,24 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             setStartDate('');
             setValidUntil('');
             setTrainingTypes([]);
+            setFirstPaymentAmount('');
+            setIsFirstPayment(true);
+            setCalculationComplete(false);
+            setPaymentPreview(null);
 
             // Load template for new contracts
             loadTemplate();
         }
     }, [open, contractToEdit]);
+
+    // Calculate first payment amount when relevant fields change
+    useEffect(() => {
+        if (startDate && paymentDay && paymentAmount) {
+            calculateFirstPayment();
+        } else {
+            setCalculationComplete(false);
+        }
+    }, [startDate, paymentDay, paymentAmount]);
 
     // Laeme default contract template, kui modal avaneb
     useEffect(() => {
@@ -134,6 +165,119 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             console.error('Error loading contract template:', error);
             showErrorMessage('Failed to load contract template.');
         }
+    };
+
+    /**
+     * Calculates the first payment amount for a contract based on start date and payment day
+     */
+    const calculateFirstPayment = () => {
+        if (!startDate || !paymentAmount || !paymentDay) {
+            setFirstPaymentAmount('');
+            setPaymentPreview(null);
+            setCalculationComplete(false);
+            return;
+        }
+
+        const paymentAmountNum = parseFloat(paymentAmount);
+        if (isNaN(paymentAmountNum)) {
+            setFirstPaymentAmount('');
+            setPaymentPreview(null);
+            setCalculationComplete(false);
+            return;
+        }
+
+        // Parse start date
+        const startDateObj = new Date(startDate);
+        if (isNaN(startDateObj.getTime())) {
+            setFirstPaymentAmount('');
+            setPaymentPreview(null);
+            setCalculationComplete(false);
+            return;
+        }
+
+        // If payment day is same as start date day, use regular amount
+        if (startDateObj.getDate() === parseInt(paymentDay)) {
+            setFirstPaymentAmount(paymentAmountNum.toString());
+            setPaymentPreview({
+                firstPaymentAmount: paymentAmountNum,
+                includesNextMonth: false,
+                daysUntilNextPayment: 0,
+                explanation: "Payment day matches contract start day, so regular monthly payment applies.",
+                startDateFormatted: startDateObj.toLocaleDateString(),
+                paymentDayFormatted: startDateObj.toLocaleDateString()
+            });
+            setCalculationComplete(true);
+            return;
+        }
+
+        // Get current month's length
+        const currentMonth = startDateObj.getMonth();
+        const currentYear = startDateObj.getFullYear();
+        const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // Calculate next payment date
+        let nextPaymentMonth = currentMonth;
+        let nextPaymentYear = currentYear;
+
+        // If start date day is after payment day, next payment is in next month
+        if (startDateObj.getDate() > parseInt(paymentDay)) {
+            nextPaymentMonth = currentMonth + 1;
+            if (nextPaymentMonth > 11) {
+                nextPaymentMonth = 0;
+                nextPaymentYear++;
+            }
+        }
+
+        const nextPaymentDate = new Date(nextPaymentYear, nextPaymentMonth, parseInt(paymentDay));
+
+        // If next payment day doesn't exist in that month (e.g., 31 in February),
+        // use the last day of the month
+        if (nextPaymentDate.getDate() !== parseInt(paymentDay)) {
+            nextPaymentDate.setDate(0); // Last day of previous month
+        }
+
+        // Calculate days until next payment date
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysUntilNextPayment = Math.round((nextPaymentDate - startDateObj) / msPerDay);
+
+        // Check if less than 10 days remain until next payment
+        const includesNextMonth = daysUntilNextPayment < 10;
+
+        // Calculate daily rate
+        const dailyRate = paymentAmountNum / daysInCurrentMonth;
+
+        // Calculate partial period amount
+        let calculatedFirstPayment = daysUntilNextPayment * dailyRate;
+
+        // If less than 10 days until next payment, add another full month
+        if (includesNextMonth) {
+            calculatedFirstPayment += paymentAmountNum;
+        }
+
+        // Round to 2 decimal places
+        calculatedFirstPayment = Math.round(calculatedFirstPayment * 100) / 100;
+
+        setFirstPaymentAmount(calculatedFirstPayment.toString());
+
+        // Create explanatory text for preview
+        let explanation = "";
+        if (includesNextMonth) {
+            explanation = `First payment includes ${daysUntilNextPayment} days until next payment date (${nextPaymentDate.toLocaleDateString()}) plus the next full month because less than 10 days remain.`;
+        } else {
+            explanation = `First payment covers ${daysUntilNextPayment} days until next payment date (${nextPaymentDate.toLocaleDateString()}).`;
+        }
+
+        setPaymentPreview({
+            firstPaymentAmount: calculatedFirstPayment,
+            includesNextMonth,
+            daysUntilNextPayment,
+            nextPaymentDate: nextPaymentDate.toLocaleDateString(),
+            explanation,
+            startDateFormatted: startDateObj.toLocaleDateString(),
+            paymentDayFormatted: nextPaymentDate.toLocaleDateString()
+        });
+
+        setCalculationComplete(true);
     };
 
     // Show success message via dialog
@@ -170,6 +314,24 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
         };
     }, [userQuery]);
 
+    // Handle start date change with automatic calculation
+    const handleStartDateChange = (e) => {
+        setStartDate(e.target.value);
+        // Calculation will happen in useEffect
+    };
+
+    // Handle payment day change with automatic calculation
+    const handlePaymentDayChange = (e) => {
+        setPaymentDay(e.target.value);
+        // Calculation will happen in useEffect
+    };
+
+    // Handle payment amount change with automatic calculation
+    const handlePaymentAmountChange = (e) => {
+        setPaymentAmount(e.target.value);
+        // Calculation will happen in useEffect
+    };
+
     // Lepingu salvestamine
     const handleSave = async () => {
         // Reset any validation errors
@@ -179,6 +341,26 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
         if (!selectedUser) {
             setValidationError('Please select a user!');
             return;
+        }
+
+        // Check if start date and payment day are set
+        if (!startDate) {
+            setValidationError('Please set a contract start date!');
+            return;
+        }
+
+        if (!paymentDay) {
+            setValidationError('Please set a payment day!');
+            return;
+        }
+
+        // Check if first payment amount is calculated
+        if (!firstPaymentAmount && paymentAmount) {
+            calculateFirstPayment(); // Calculate one more time just to be sure
+            if (!calculationComplete) {
+                setValidationError('First payment amount could not be calculated. Please check your inputs.');
+                return;
+            }
         }
 
         try {
@@ -195,12 +377,15 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 startDate,
                 validUntil,
                 trainingTypes, // Send as array, backend will convert to string
-                action: "create" // or "update" based on context
+                isFirstPayment: true, // Always set to true for new contracts
+                firstPaymentAmount: firstPaymentAmount ? parseFloat(firstPaymentAmount) : null,
+                status: "draft"
             };
 
             let result;
             if (contractToEdit) {
                 // Update existing contract
+                payload.isFirstPayment = isFirstPayment; // Preserve the existing value
                 result = await updateContract(contractToEdit.id, payload);
                 showSuccessMessage('Contract updated successfully!');
             } else {
@@ -218,6 +403,11 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             console.error(contractToEdit ? 'Error updating contract:' : 'Error creating contract:', error);
             showErrorMessage(contractToEdit ? 'Failed to update contract. Please try again.' : 'Failed to create contract. Please try again.');
         }
+    };
+
+    // Force recalculation
+    const handleForceCalculate = () => {
+        calculateFirstPayment();
     };
 
     // Improved helper component tooltip (compact version)
@@ -243,7 +433,6 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                             position: 'absolute',
                             top: '-40px',
                             left: '50%',
-
                             backgroundColor: 'rgba(97, 97, 97, 0.9)',
                             color: 'white',
                             padding: '6px 10px',
@@ -353,13 +542,14 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
 
                 {/* Payment Amount */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <InfoTooltip title="Amount per period. If you want to recive transactions outside this application, then put it 0." />
+                    <InfoTooltip title="Regular monthly payment amount. If you want to receive transactions outside this application, then put it 0." />
                     <TextField
-                        label="Payment Amount"
+                        label="Monthly Payment Amount"
                         type="number"
                         value={paymentAmount}
-                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        onChange={handlePaymentAmountChange}
                         fullWidth
+                        required
                     />
                 </Box>
 
@@ -387,8 +577,9 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         type="number"
                         inputProps={{ min: 1, max: 28 }}
                         value={paymentDay}
-                        onChange={(e) => setPaymentDay(e.target.value)}
+                        onChange={handlePaymentDayChange}
                         fullWidth
+                        required
                     />
                 </Box>
 
@@ -399,13 +590,66 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         label="Start Date"
                         type="date"
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={handleStartDateChange}
                         fullWidth
+                        required
                         InputLabelProps={{
                             shrink: true,
                         }}
                     />
                 </Box>
+
+                {/* First Payment Amount (auto-calculated and editable) */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <InfoTooltip title="First payment amount (auto-calculated based on start date and payment day)" />
+                    <TextField
+                        label="First Payment Amount"
+                        type="number"
+                        value={firstPaymentAmount}
+                        onChange={(e) => setFirstPaymentAmount(e.target.value)}
+                        fullWidth
+                        InputProps={{
+                            endAdornment: (
+                                <Tooltip title="Recalculate first payment amount">
+                                    <Button
+                                        onClick={handleForceCalculate}
+                                        sx={{ ml: 1 }}
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        startIcon={<CalculateIcon />}
+                                    >
+                                        Calculate
+                                    </Button>
+                                </Tooltip>
+                            ),
+                        }}
+                        error={paymentAmount && startDate && paymentDay && !calculationComplete}
+                        helperText={paymentAmount && startDate && paymentDay && !calculationComplete ?
+                            "Please calculate the first payment amount" : ""}
+                    />
+                </Box>
+
+                {/* First Payment Preview */}
+                {paymentPreview && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        <Typography variant="body2" fontWeight="bold">
+                            First Payment Calculation:
+                        </Typography>
+                        <Typography variant="body2">
+                            {paymentPreview.explanation}
+                        </Typography>
+                        {paymentPreview.includesNextMonth && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                                <strong>Period 1:</strong> {paymentPreview.startDateFormatted} to {paymentPreview.paymentDayFormatted} - {paymentPreview.daysUntilNextPayment} days
+                                <br />
+                                <strong>Period 2:</strong> Full next month
+                                <br />
+                                <strong>Total amount:</strong> {paymentPreview.firstPaymentAmount}€
+                            </Typography>
+                        )}
+                    </Alert>
+                )}
 
                 {/* Valid Until (kuupäev) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -449,7 +693,12 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Button onClick={onClose} color="inherit">
                     Cancel
                 </Button>
-                <Button onClick={handleSave} variant="contained" color="primary">
+                <Button
+                    onClick={handleSave}
+                    variant="contained"
+                    color="primary"
+                    disabled={!calculationComplete && paymentAmount && startDate && paymentDay}
+                >
                     {contractToEdit ? 'Update Contract' : 'Save Contract'}
                 </Button>
             </DialogActions>

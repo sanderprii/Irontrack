@@ -1302,6 +1302,46 @@ const deleteWaitlist = async (req, res) => {
     }
 }
 
+const addClassToMyTrainings = async (req, res) => {
+    const {classId} = req.body;
+const userId = req.user?.id;
+
+    if (!classId || !userId) {
+        return res.status(400).json({error: "Class ID and User ID required"});
+    }
+
+    try {
+        const classInfo = await prisma.classSchedule.findUnique({
+            where: {id: parseInt(classId)},
+
+        });
+
+        if (!classInfo) {
+            return res.status(404).json({error: "Class not found"});
+        }
+
+        await prisma.training.create({
+            data: {
+                userId,
+                type: classInfo.trainingType,
+                date: classInfo.time,
+                wodName: classInfo.wodName || null,
+                wodType: classInfo.wodType || null,
+                exercises: classInfo.description ? {
+                    create: {
+                        exerciseData: classInfo.description,
+                    }
+                } : undefined
+            }
+        });
+
+        res.status(200).json({message: "Class added to My Trainings successfully!"});
+    } catch (error) {
+        console.error("❌ Error adding class to My Trainings:", error);
+        res.status(500).json({error: "Failed to add class to My Trainings"});
+    }
+}
+
 module.exports = {
     getClassInfo,
     getClasses,
@@ -1320,5 +1360,6 @@ module.exports = {
     checkClassScore,
     getWaitlist,
     createWaitlist,
-    deleteWaitlist
+    deleteWaitlist,
+    addClassToMyTrainings
 };

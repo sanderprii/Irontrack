@@ -37,7 +37,9 @@ import {
     InputAdornment,
     SwipeableDrawer,
     AppBar,
-    Toolbar
+    Toolbar,
+    Pagination,
+    PaginationItem
 } from "@mui/material";
 import { getOrders, getFinanceData } from "../api/financeApi";
 import { getAffiliateTransactions } from "../api/creditApi";
@@ -58,6 +60,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 export default function FinanceView() {
     const theme = useTheme();
@@ -73,6 +77,11 @@ export default function FinanceView() {
     const [expandedOrderId, setExpandedOrderId] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [transactionSearchQuery, setTransactionSearchQuery] = useState("");
+
+    // Pagination state
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [transactionsPage, setTransactionsPage] = useState(1);
+    const itemsPerPage = 50;
 
     // Mobile UI state
     const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -104,6 +113,15 @@ export default function FinanceView() {
             fetchTransactions();
         }
     }, [affiliateId, startDate, endDate]);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setOrdersPage(1);
+    }, [searchQuery, sortBy]);
+
+    useEffect(() => {
+        setTransactionsPage(1);
+    }, [transactionSearchQuery]);
 
     const fetchAffiliateId = async () => {
         try {
@@ -228,6 +246,15 @@ export default function FinanceView() {
         setDateFilterOpen(false);
     };
 
+    // Pagination handlers
+    const handleOrdersPageChange = (event, value) => {
+        setOrdersPage(value);
+    };
+
+    const handleTransactionsPageChange = (event, value) => {
+        setTransactionsPage(value);
+    };
+
     // Calculate days left until expiration
     const calculateDaysLeft = (endDate) => {
         const today = new Date();
@@ -275,6 +302,13 @@ export default function FinanceView() {
         }
     });
 
+    // Pagination logic for orders
+    const ordersTotalPages = Math.ceil(sortedOrders.length / itemsPerPage);
+    const paginatedOrders = sortedOrders.slice(
+        (ordersPage - 1) * itemsPerPage,
+        ordersPage * itemsPerPage
+    );
+
     // Filter transactions
     const filteredTransactions = (transactions || []).filter(transaction => {
         const searchLower = transactionSearchQuery.toLowerCase();
@@ -283,6 +317,39 @@ export default function FinanceView() {
             (transaction?.user?.fullName?.toLowerCase() || "").includes(searchLower)
         );
     });
+
+    // Pagination logic for transactions
+    const transactionsTotalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
+        (transactionsPage - 1) * itemsPerPage,
+        transactionsPage * itemsPerPage
+    );
+
+    // Custom pagination component
+    const renderPagination = (page, totalPages, handleChange) => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
+                <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={handleChange}
+                    siblingCount={1}
+                    boundaryCount={1}
+                    renderItem={(item) => {
+                        if (item.type === 'previous') {
+                            return <PaginationItem {...item} icon={<ArrowBackIcon />} />;
+                        }
+                        if (item.type === 'next') {
+                            return <PaginationItem {...item} icon={<ArrowForwardIcon />} />;
+                        }
+                        return <PaginationItem {...item} />;
+                    }}
+                />
+            </Box>
+        );
+    };
 
     // Render mobile order card
     const renderOrderCard = (order) => {
@@ -1038,248 +1105,252 @@ export default function FinanceView() {
                     {/* Mobile Card View vs Desktop Table View */}
                     {isMobile ? (
                         <Box>
-                            {sortedOrders.length > 0 ? (
-                                sortedOrders.map(order => renderOrderCard(order))
+                            {paginatedOrders.length > 0 ? (
+                                paginatedOrders.map(order => renderOrderCard(order))
                             ) : (
                                 <Box sx={{ textAlign: 'center', py: 4 }}>
                                     <Typography color="text.secondary">No orders found</Typography>
                                 </Box>
                             )}
+                            {renderPagination(ordersPage, ordersTotalPages, handleOrdersPageChange)}
                         </Box>
                     ) : (
-                        <TableContainer component={Paper} sx={{ mt: 2 }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                        <TableCell width="50px"></TableCell>
-                                        <TableCell>User</TableCell>
-                                        <TableCell>Plan</TableCell>
-                                        <TableCell>Price (€)</TableCell>
-                                        <TableCell>Purchased At</TableCell>
-                                        <TableCell>Valid Until</TableCell>
-                                        <TableCell>Status</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {sortedOrders.map(order => {
-                                        const isOpen = expandedOrderId === order.id;
-                                        const status = calculateStatus(order.endDate);
+                        <>
+                            <TableContainer component={Paper} sx={{ mt: 2 }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                            <TableCell width="50px"></TableCell>
+                                            <TableCell>User</TableCell>
+                                            <TableCell>Plan</TableCell>
+                                            <TableCell>Price (€)</TableCell>
+                                            <TableCell>Purchased At</TableCell>
+                                            <TableCell>Valid Until</TableCell>
+                                            <TableCell>Status</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {paginatedOrders.map(order => {
+                                            const isOpen = expandedOrderId === order.id;
+                                            const status = calculateStatus(order.endDate);
 
-                                        return (
-                                            <React.Fragment key={order.id}>
-                                                {/* Main Order Row */}
-                                                <TableRow
-                                                    hover
-                                                    onClick={() => handleOrderClick(order)}
-                                                    sx={{ cursor: 'pointer' }}
-                                                >
-                                                    <TableCell>
-                                                        <IconButton size="small">
-                                                            {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                        </IconButton>
-                                                    </TableCell>
-                                                    <TableCell>{order.user.fullName}</TableCell>
-                                                    <TableCell>{order.planName}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>€{order.price.toFixed(2)}</TableCell>
-                                                    <TableCell>{new Date(order.purchasedAt).toLocaleDateString()}</TableCell>
-                                                    <TableCell>{new Date(order.endDate).toLocaleDateString()}</TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            label={status.label}
-                                                            color={status.color}
-                                                            size="small"
-                                                        />
-                                                    </TableCell>
-                                                </TableRow>
+                                            return (
+                                                <React.Fragment key={order.id}>
+                                                    {/* Main Order Row */}
+                                                    <TableRow
+                                                        hover
+                                                        onClick={() => handleOrderClick(order)}
+                                                        sx={{ cursor: 'pointer' }}
+                                                    >
+                                                        <TableCell>
+                                                            <IconButton size="small">
+                                                                {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                            </IconButton>
+                                                        </TableCell>
+                                                        <TableCell>{order.user.fullName}</TableCell>
+                                                        <TableCell>{order.planName}</TableCell>
+                                                        <TableCell sx={{ fontWeight: 'bold' }}>€{order.price.toFixed(2)}</TableCell>
+                                                        <TableCell>{new Date(order.purchasedAt).toLocaleDateString()}</TableCell>
+                                                        <TableCell>{new Date(order.endDate).toLocaleDateString()}</TableCell>
+                                                        <TableCell>
+                                                            <Chip
+                                                                label={status.label}
+                                                                color={status.color}
+                                                                size="small"
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
 
-                                                {/* Expanded Details Row */}
-                                                <TableRow>
-                                                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
-                                                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                                                            <Box sx={{ margin: 2 }}>
-                                                                <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
-                                                                    Order Details
-                                                                </Typography>
+                                                    {/* Expanded Details Row */}
+                                                    <TableRow>
+                                                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+                                                            <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                                                                <Box sx={{ margin: 2 }}>
+                                                                    <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                                        Order Details
+                                                                    </Typography>
 
-                                                                <Grid container spacing={3}>
-                                                                    {/* User Information Card */}
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Card elevation={1} sx={{ height: '100%' }}>
-                                                                            <CardContent>
-                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                    <PersonIcon sx={{ mr: 1 }} />
-                                                                                    Customer Information
-                                                                                </Typography>
-                                                                                <Divider sx={{ mb: 2 }} />
+                                                                    <Grid container spacing={3}>
+                                                                        {/* User Information Card */}
+                                                                        <Grid item xs={12} md={6}>
+                                                                            <Card elevation={1} sx={{ height: '100%' }}>
+                                                                                <CardContent>
+                                                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                        <PersonIcon sx={{ mr: 1 }} />
+                                                                                        Customer Information
+                                                                                    </Typography>
+                                                                                    <Divider sx={{ mb: 2 }} />
 
-                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Name:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {order.user.fullName}
-                                                                                        </Typography>
-                                                                                    </Box>
-
-                                                                                    {order.user.email && (
+                                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                                Email:
+                                                                                                Name:
                                                                                             </Typography>
                                                                                             <Typography variant="body1">
-                                                                                                {order.user.email}
+                                                                                                {order.user.fullName}
                                                                                             </Typography>
                                                                                         </Box>
-                                                                                    )}
-                                                                                </Box>
-                                                                            </CardContent>
-                                                                        </Card>
-                                                                    </Grid>
 
-                                                                    {/* Payment Information Card */}
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Card elevation={1} sx={{ height: '100%' }}>
-                                                                            <CardContent>
-                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                    <PaymentIcon sx={{ mr: 1 }} />
-                                                                                    Payment Information
-                                                                                </Typography>
-                                                                                <Divider sx={{ mb: 2 }} />
-
-                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Price:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
-                                                                                            €{order.price.toFixed(2)}
-                                                                                        </Typography>
+                                                                                        {order.user.email && (
+                                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                    Email:
+                                                                                                </Typography>
+                                                                                                <Typography variant="body1">
+                                                                                                    {order.user.email}
+                                                                                                </Typography>
+                                                                                            </Box>
+                                                                                        )}
                                                                                     </Box>
+                                                                                </CardContent>
+                                                                            </Card>
+                                                                        </Grid>
 
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Payment Date:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {new Date(order.purchasedAt).toLocaleString()}
-                                                                                        </Typography>
-                                                                                    </Box>
+                                                                        {/* Payment Information Card */}
+                                                                        <Grid item xs={12} md={6}>
+                                                                            <Card elevation={1} sx={{ height: '100%' }}>
+                                                                                <CardContent>
+                                                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                        <PaymentIcon sx={{ mr: 1 }} />
+                                                                                        Payment Information
+                                                                                    </Typography>
+                                                                                    <Divider sx={{ mb: 2 }} />
 
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Status:
-                                                                                        </Typography>
-                                                                                        <Chip
-                                                                                            label={status.label}
-                                                                                            color={status.color}
-                                                                                        />
-                                                                                    </Box>
-                                                                                </Box>
-                                                                            </CardContent>
-                                                                        </Card>
-                                                                    </Grid>
-
-                                                                    {/* Plan Details Card */}
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Card elevation={1}>
-                                                                            <CardContent>
-                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                    <FitnessCenterIcon sx={{ mr: 1 }} />
-                                                                                    Plan Details
-                                                                                </Typography>
-                                                                                <Divider sx={{ mb: 2 }} />
-
-                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Plan Name:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {order.planName}
-                                                                                        </Typography>
-                                                                                    </Box>
-
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Sessions Left:
-                                                                                        </Typography>
-                                                                                        <Chip
-                                                                                            label={order.sessionsLeft === 9999 ? "Unlimited" : order.sessionsLeft}
-                                                                                            color={order.sessionsLeft > 5 ? "success" : order.sessionsLeft > 0 ? "warning" : "error"}
-                                                                                            size="small"
-                                                                                        />
-                                                                                    </Box>
-                                                                                </Box>
-                                                                            </CardContent>
-                                                                        </Card>
-                                                                    </Grid>
-
-                                                                    {/* Membership Timeline Card */}
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Card elevation={1}>
-                                                                            <CardContent>
-                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                    <DateRangeIcon sx={{ mr: 1 }} />
-                                                                                    Membership Timeline
-                                                                                </Typography>
-                                                                                <Divider sx={{ mb: 2 }} />
-
-                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Start Date:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {new Date(order.purchasedAt).toLocaleString()}
-                                                                                        </Typography>
-                                                                                    </Box>
-
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            End Date:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {new Date(order.endDate).toLocaleString()}
-                                                                                        </Typography>
-                                                                                    </Box>
-
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Days Left:
-                                                                                        </Typography>
-                                                                                        <Chip
-                                                                                            label={`${calculateDaysLeft(order.endDate)} days`}
-                                                                                            color={status.color}
-                                                                                            size="small"
-                                                                                        />
-                                                                                    </Box>
-
-                                                                                    {order.validityDays && (
+                                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                                Validity Period:
+                                                                                                Price:
                                                                                             </Typography>
-                                                                                            <Typography variant="body1">
-                                                                                                {order.validityDays} days
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                                                                                                €{order.price.toFixed(2)}
                                                                                             </Typography>
                                                                                         </Box>
-                                                                                    )}
-                                                                                </Box>
-                                                                            </CardContent>
-                                                                        </Card>
+
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Payment Date:
+                                                                                            </Typography>
+                                                                                            <Typography variant="body1">
+                                                                                                {new Date(order.purchasedAt).toLocaleString()}
+                                                                                            </Typography>
+                                                                                        </Box>
+
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Status:
+                                                                                            </Typography>
+                                                                                            <Chip
+                                                                                                label={status.label}
+                                                                                                color={status.color}
+                                                                                            />
+                                                                                        </Box>
+                                                                                    </Box>
+                                                                                </CardContent>
+                                                                            </Card>
+                                                                        </Grid>
+
+                                                                        {/* Plan Details Card */}
+                                                                        <Grid item xs={12} md={6}>
+                                                                            <Card elevation={1}>
+                                                                                <CardContent>
+                                                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                        <FitnessCenterIcon sx={{ mr: 1 }} />
+                                                                                        Plan Details
+                                                                                    </Typography>
+                                                                                    <Divider sx={{ mb: 2 }} />
+
+                                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Plan Name:
+                                                                                            </Typography>
+                                                                                            <Typography variant="body1">
+                                                                                                {order.planName}
+                                                                                            </Typography>
+                                                                                        </Box>
+
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Sessions Left:
+                                                                                            </Typography>
+                                                                                            <Chip
+                                                                                                label={order.sessionsLeft === 9999 ? "Unlimited" : order.sessionsLeft}
+                                                                                                color={order.sessionsLeft > 5 ? "success" : order.sessionsLeft > 0 ? "warning" : "error"}
+                                                                                                size="small"
+                                                                                            />
+                                                                                        </Box>
+                                                                                    </Box>
+                                                                                </CardContent>
+                                                                            </Card>
+                                                                        </Grid>
+
+                                                                        {/* Membership Timeline Card */}
+                                                                        <Grid item xs={12} md={6}>
+                                                                            <Card elevation={1}>
+                                                                                <CardContent>
+                                                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                        <DateRangeIcon sx={{ mr: 1 }} />
+                                                                                        Membership Timeline
+                                                                                    </Typography>
+                                                                                    <Divider sx={{ mb: 2 }} />
+
+                                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Start Date:
+                                                                                            </Typography>
+                                                                                            <Typography variant="body1">
+                                                                                                {new Date(order.purchasedAt).toLocaleString()}
+                                                                                            </Typography>
+                                                                                        </Box>
+
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                End Date:
+                                                                                            </Typography>
+                                                                                            <Typography variant="body1">
+                                                                                                {new Date(order.endDate).toLocaleString()}
+                                                                                            </Typography>
+                                                                                        </Box>
+
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Days Left:
+                                                                                            </Typography>
+                                                                                            <Chip
+                                                                                                label={`${calculateDaysLeft(order.endDate)} days`}
+                                                                                                color={status.color}
+                                                                                                size="small"
+                                                                                            />
+                                                                                        </Box>
+
+                                                                                        {order.validityDays && (
+                                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                    Validity Period:
+                                                                                                </Typography>
+                                                                                                <Typography variant="body1">
+                                                                                                    {order.validityDays} days
+                                                                                                </Typography>
+                                                                                            </Box>
+                                                                                        )}
+                                                                                    </Box>
+                                                                                </CardContent>
+                                                                            </Card>
+                                                                        </Grid>
                                                                     </Grid>
-                                                                </Grid>
-                                                            </Box>
-                                                        </Collapse>
-                                                    </TableCell>
-                                                </TableRow>
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                                                </Box>
+                                                            </Collapse>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            {renderPagination(ordersPage, ordersTotalPages, handleOrdersPageChange)}
+                        </>
                     )}
                 </Box>
             )}
@@ -1435,229 +1506,233 @@ export default function FinanceView() {
                     {/* Mobile Card View vs Desktop Table View */}
                     {isMobile ? (
                         <Box>
-                            {filteredTransactions.length > 0 ? (
-                                filteredTransactions.map(transaction => renderTransactionCard(transaction))
+                            {paginatedTransactions.length > 0 ? (
+                                paginatedTransactions.map(transaction => renderTransactionCard(transaction))
                             ) : (
                                 <Box sx={{ textAlign: 'center', py: 4 }}>
                                     <Typography color="text.secondary">No transactions found</Typography>
                                 </Box>
                             )}
+                            {renderPagination(transactionsPage, transactionsTotalPages, handleTransactionsPageChange)}
                         </Box>
                     ) : (
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell width="50px"></TableCell>
-                                        <TableCell>Invoice Number</TableCell>
-                                        <TableCell>User</TableCell>
-                                        <TableCell>Amount (€)</TableCell>
-                                        <TableCell>Description</TableCell>
-                                        <TableCell>Type</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell>Date</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredTransactions.map(transaction => (
-                                        <React.Fragment key={transaction.id}>
-                                            <TableRow
-                                                hover
-                                                onClick={() => handleTransactionClick(transaction)}
-                                                sx={{ cursor: 'pointer' }}
-                                            >
-                                                <TableCell>
-                                                    <IconButton size="small">
-                                                        {expandedTransactionId === transaction.id ?
-                                                            <KeyboardArrowUpIcon /> :
-                                                            <KeyboardArrowDownIcon />
-                                                        }
-                                                    </IconButton>
-                                                </TableCell>
-                                                <TableCell>{transaction.invoiceNumber}</TableCell>
-                                                <TableCell>{transaction.user?.fullName || "Unknown"}</TableCell>
-                                                <TableCell>€{transaction.amount.toFixed(2)}</TableCell>
-                                                <TableCell>{transaction.description}</TableCell>
-                                                <TableCell>{transaction.type || "N/A"}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={transaction.status || "N/A"}
-                                                        color={
-                                                            transaction.status === 'completed' ? 'success' :
-                                                                transaction.status === 'pending' ? 'warning' :
-                                                                    transaction.status === 'failed' ? 'error' :
-                                                                        'default'
-                                                        }
-                                                        size="small"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
-                                            </TableRow>
+                        <>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell width="50px"></TableCell>
+                                            <TableCell>Invoice Number</TableCell>
+                                            <TableCell>User</TableCell>
+                                            <TableCell>Amount (€)</TableCell>
+                                            <TableCell>Description</TableCell>
+                                            <TableCell>Type</TableCell>
+                                            <TableCell>Status</TableCell>
+                                            <TableCell>Date</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {paginatedTransactions.map(transaction => (
+                                            <React.Fragment key={transaction.id}>
+                                                <TableRow
+                                                    hover
+                                                    onClick={() => handleTransactionClick(transaction)}
+                                                    sx={{ cursor: 'pointer' }}
+                                                >
+                                                    <TableCell>
+                                                        <IconButton size="small">
+                                                            {expandedTransactionId === transaction.id ?
+                                                                <KeyboardArrowUpIcon /> :
+                                                                <KeyboardArrowDownIcon />
+                                                            }
+                                                        </IconButton>
+                                                    </TableCell>
+                                                    <TableCell>{transaction.invoiceNumber}</TableCell>
+                                                    <TableCell>{transaction.user?.fullName || "Unknown"}</TableCell>
+                                                    <TableCell>€{transaction.amount.toFixed(2)}</TableCell>
+                                                    <TableCell>{transaction.description}</TableCell>
+                                                    <TableCell>{transaction.type || "N/A"}</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={transaction.status || "N/A"}
+                                                            color={
+                                                                transaction.status === 'completed' ? 'success' :
+                                                                    transaction.status === 'pending' ? 'warning' :
+                                                                        transaction.status === 'failed' ? 'error' :
+                                                                            'default'
+                                                            }
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
+                                                </TableRow>
 
-                                            {/* Expanded Details Row */}
-                                            <TableRow>
-                                                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
-                                                    <Collapse in={expandedTransactionId === transaction.id} timeout="auto" unmountOnExit>
-                                                        <Box sx={{ margin: 2 }}>
-                                                            <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
-                                                                Transaction Details
-                                                            </Typography>
+                                                {/* Expanded Details Row */}
+                                                <TableRow>
+                                                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
+                                                        <Collapse in={expandedTransactionId === transaction.id} timeout="auto" unmountOnExit>
+                                                            <Box sx={{ margin: 2 }}>
+                                                                <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
+                                                                    Transaction Details
+                                                                </Typography>
 
-                                                            <Grid container spacing={3}>
-                                                                {/* Transaction Overview Card */}
-                                                                <Grid item xs={12} md={6}>
-                                                                    <Card elevation={1} sx={{ height: '100%' }}>
-                                                                        <CardContent>
-                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                <ReceiptIcon sx={{ mr: 1 }} />
-                                                                                Invoice Information
-                                                                            </Typography>
-                                                                            <Divider sx={{ mb: 2 }} />
+                                                                <Grid container spacing={3}>
+                                                                    {/* Transaction Overview Card */}
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Card elevation={1} sx={{ height: '100%' }}>
+                                                                            <CardContent>
+                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                    <ReceiptIcon sx={{ mr: 1 }} />
+                                                                                    Invoice Information
+                                                                                </Typography>
+                                                                                <Divider sx={{ mb: 2 }} />
 
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Invoice Number:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1">
-                                                                                        {transaction.invoiceNumber}
-                                                                                    </Typography>
-                                                                                </Box>
-
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Transaction Date:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1">
-                                                                                        {new Date(transaction.createdAt).toLocaleString()}
-                                                                                    </Typography>
-                                                                                </Box>
-
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Status:
-                                                                                    </Typography>
-                                                                                    <Chip
-                                                                                        label={transaction.status || "N/A"}
-                                                                                        color={
-                                                                                            transaction.status === 'completed' ? 'success' :
-                                                                                                transaction.status === 'pending' ? 'warning' :
-                                                                                                    transaction.status === 'failed' ? 'error' :
-                                                                                                        'default'
-                                                                                        }
-                                                                                        size="small"
-                                                                                    />
-                                                                                </Box>
-
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Type:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1">
-                                                                                        {transaction.type || "N/A"}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </CardContent>
-                                                                    </Card>
-                                                                </Grid>
-
-                                                                {/* Payment Information Card */}
-                                                                <Grid item xs={12} md={6}>
-                                                                    <Card elevation={1} sx={{ height: '100%' }}>
-                                                                        <CardContent>
-                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                <PaymentIcon sx={{ mr: 1 }} />
-                                                                                Payment Information
-                                                                            </Typography>
-                                                                            <Divider sx={{ mb: 2 }} />
-
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Amount:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
-                                                                                        €{transaction.amount.toFixed(2)}
-                                                                                    </Typography>
-                                                                                </Box>
-
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        Credit Operation:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1">
-                                                                                        {transaction.isCredit ? "Yes" : "No"}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </CardContent>
-                                                                    </Card>
-                                                                </Grid>
-
-                                                                {/* User Information Card */}
-                                                                <Grid item xs={12} md={6}>
-                                                                    <Card elevation={1}>
-                                                                        <CardContent>
-                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                <PersonIcon sx={{ mr: 1 }} />
-                                                                                User Information
-                                                                            </Typography>
-                                                                            <Divider sx={{ mb: 2 }} />
-
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                        User:
-                                                                                    </Typography>
-                                                                                    <Typography variant="body1">
-                                                                                        {transaction.user?.fullName || "Unknown"}
-                                                                                    </Typography>
-                                                                                </Box>
-
-                                                                                {transaction.user?.email && (
+                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                         <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                            Email:
+                                                                                            Invoice Number:
                                                                                         </Typography>
                                                                                         <Typography variant="body1">
-                                                                                            {transaction.user.email}
+                                                                                            {transaction.invoiceNumber}
                                                                                         </Typography>
                                                                                     </Box>
-                                                                                )}
-                                                                            </Box>
-                                                                        </CardContent>
-                                                                    </Card>
-                                                                </Grid>
 
-                                                                {/* Description Card */}
-                                                                <Grid item xs={12} md={6}>
-                                                                    <Card elevation={1}>
-                                                                        <CardContent>
-                                                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                                <DescriptionIcon sx={{ mr: 1 }} />
-                                                                                Description
-                                                                            </Typography>
-                                                                            <Divider sx={{ mb: 2 }} />
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Transaction Date:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {new Date(transaction.createdAt).toLocaleString()}
+                                                                                        </Typography>
+                                                                                    </Box>
 
-                                                                            <Box sx={{ p: 1 }}>
-                                                                                <Typography variant="body1">
-                                                                                    {transaction.description || "No description available"}
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Status:
+                                                                                        </Typography>
+                                                                                        <Chip
+                                                                                            label={transaction.status || "N/A"}
+                                                                                            color={
+                                                                                                transaction.status === 'completed' ? 'success' :
+                                                                                                    transaction.status === 'pending' ? 'warning' :
+                                                                                                        transaction.status === 'failed' ? 'error' :
+                                                                                                            'default'
+                                                                                            }
+                                                                                            size="small"
+                                                                                        />
+                                                                                    </Box>
+
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Type:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {transaction.type || "N/A"}
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                </Box>
+                                                                            </CardContent>
+                                                                        </Card>
+                                                                    </Grid>
+
+                                                                    {/* Payment Information Card */}
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Card elevation={1} sx={{ height: '100%' }}>
+                                                                            <CardContent>
+                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                    <PaymentIcon sx={{ mr: 1 }} />
+                                                                                    Payment Information
                                                                                 </Typography>
-                                                                            </Box>
-                                                                        </CardContent>
-                                                                    </Card>
+                                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Amount:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                                                                                            €{transaction.amount.toFixed(2)}
+                                                                                        </Typography>
+                                                                                    </Box>
+
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            Credit Operation:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {transaction.isCredit ? "Yes" : "No"}
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                </Box>
+                                                                            </CardContent>
+                                                                        </Card>
+                                                                    </Grid>
+
+                                                                    {/* User Information Card */}
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Card elevation={1}>
+                                                                            <CardContent>
+                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                    <PersonIcon sx={{ mr: 1 }} />
+                                                                                    User Information
+                                                                                </Typography>
+                                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                            User:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body1">
+                                                                                            {transaction.user?.fullName || "Unknown"}
+                                                                                        </Typography>
+                                                                                    </Box>
+
+                                                                                    {transaction.user?.email && (
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                                Email:
+                                                                                            </Typography>
+                                                                                            <Typography variant="body1">
+                                                                                                {transaction.user.email}
+                                                                                            </Typography>
+                                                                                        </Box>
+                                                                                    )}
+                                                                                </Box>
+                                                                            </CardContent>
+                                                                        </Card>
+                                                                    </Grid>
+
+                                                                    {/* Description Card */}
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Card elevation={1}>
+                                                                            <CardContent>
+                                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
+                                                                                    <DescriptionIcon sx={{ mr: 1 }} />
+                                                                                    Description
+                                                                                </Typography>
+                                                                                <Divider sx={{ mb: 2 }} />
+
+                                                                                <Box sx={{ p: 1 }}>
+                                                                                    <Typography variant="body1">
+                                                                                        {transaction.description || "No description available"}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            </CardContent>
+                                                                        </Card>
+                                                                    </Grid>
                                                                 </Grid>
-                                                            </Grid>
-                                                        </Box>
-                                                    </Collapse>
-                                                </TableCell>
-                                            </TableRow>
-                                        </React.Fragment>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                                            </Box>
+                                                        </Collapse>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </React.Fragment>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            {renderPagination(transactionsPage, transactionsTotalPages, handleTransactionsPageChange)}
+                        </>
                     )}
                 </Box>
             )}

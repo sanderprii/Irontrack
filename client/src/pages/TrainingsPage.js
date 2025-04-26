@@ -120,7 +120,7 @@ const TypeChip = styled(Chip)(({ theme, trainingtype }) => {
             textColor = '#FFFFFF';
             break;
         default:
-            chipColor = 'rgba(33, 150, 243, 0.85)'; // Lighter info blue
+            chipColor = 'rgba(211, 211, 211, 0.8)'; // white
             textColor = '#FFFFFF';
     }
 
@@ -397,7 +397,7 @@ export default function TrainingsPage() {
                     bgColor = 'rgba(233, 30, 99, 0.85)'; // Pink
                     break;
                 default:
-                    bgColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
+                    bgColor = 'rgba(211, 211, 211, 0.8)'; // Info blue
             }
 
             return {
@@ -405,7 +405,7 @@ export default function TrainingsPage() {
                 title: t.type,
                 start: t.date,
                 backgroundColor: bgColor,
-                borderColor: bgColor,
+                borderColor: '#0d1117',
                 extendedProps: {training: t},
             };
         });
@@ -438,11 +438,12 @@ export default function TrainingsPage() {
                 backgroundColor = 'rgba(233, 30, 99, 0.85)'; // Pink
                 break;
             default:
-                backgroundColor = 'rgba(33, 150, 243, 0.85)'; // Info blue
+                backgroundColor = 'rgba(211, 211, 211, 0.8)';
+
         }
 
         return {
-            html: `<div style="width:100%;height:14px;background-color:${backgroundColor};border-radius:3px;margin-bottom:2px;"></div>`,
+            html: `<div style="width:100%;height:14px;background-color:${backgroundColor};border-radius:3px;margin-bottom:2px; border: #0d1117"></div>`,
         };
     }
 

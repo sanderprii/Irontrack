@@ -525,3 +525,25 @@ export const getFamilyMembers = async (userId) => {
         return [];
     }
 };
+
+export const addClassToMyTrainings = async (classId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/classes/add-training`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({classId}),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to add class to my trainings");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("❌ Error adding class to my trainings:", error);
+    }
+}

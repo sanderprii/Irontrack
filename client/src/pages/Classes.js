@@ -526,7 +526,8 @@ export default function Classes() {
     return (
         <Container maxWidth={false}>
             <Box textAlign="center" my={4}>
-                <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>
+
+                {selectedAffiliate?.name && <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
                 <Typography variant="h5" color="primary">Class Schedule
                     {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
                     {hasWodClasses && (

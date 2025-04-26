@@ -28,4 +28,6 @@ router.get("/classes/waitlist", ensureAuthenticated, classController.getWaitlist
 router.post("/classes/waitlist", ensureAuthenticated, classController.createWaitlist);
 router.delete("/classes/waitlist/remove", ensureAuthenticated, classController.deleteWaitlist);
 
+router.post ("/classes/add-training", ensureAuthenticated, classController.addClassToMyTrainings);
+
 module.exports = router;

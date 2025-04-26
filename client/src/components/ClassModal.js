@@ -38,6 +38,7 @@ import SendIcon from '@mui/icons-material/Send';
 import DOMPurify from 'dompurify'; // You'll need to install this package
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import AddAttendeeModal from "./AddAttendeeModal";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 Trophy icon for leaderboard
 
 // Import API functions
 import {
@@ -55,11 +56,13 @@ import {
     getWaitlist,
     createWaitlist,
     deleteWaitlist,
+    addClassToMyTrainings
 } from "../api/classesApi";
 import {getUserPlansByAffiliate, getUserProfile} from "../api/profileApi";
 import {getMemberInfo} from "../api/membersApi";
 import {getFamilyMembers} from "../api/familyApi";
-import * as PropTypes from "prop-types"; // Import the family API function
+import * as PropTypes from "prop-types";
+import AddIcon from "@mui/icons-material/Add"; // Import the family API function
 
 
 
@@ -378,6 +381,18 @@ export default function ClassModal({
             setCompatiblePlans([]);
             setHasAnyPlans(false);
             setHasCompatiblePlans(false);
+        }
+    }
+
+    async function handleAddClassToMyTrainings() {
+        try {
+            if (!cls || !cls.id) return;
+
+            await addClassToMyTrainings(cls.id);
+            alert("Class added to your trainings!");
+        } catch (error) {
+            console.error("Error adding class to my trainings:", error);
+            alert("Failed to add class to my trainings");
         }
     }
 
@@ -892,6 +907,7 @@ export default function ClassModal({
                                     </Typography>
                                 )}
                                 { cls.description && (
+                                    <>
                                     <div
                                         dangerouslySetInnerHTML={{
                                             __html: DOMPurify.sanitize(cls.description, {
@@ -904,6 +920,29 @@ export default function ClassModal({
                                             whiteSpace: "pre-line"
                                         }}
                                     />
+                                        { userRole === "regular" && hasScore === false && (
+                                            <IconButton
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Peata sündmuse levimine üles vanemnoodini
+                                                    handleAddClassToMyTrainings();
+                                                }}
+                                                color="primary"
+                                                size="small"
+                                                sx={{
+                                                    position: "absolute",
+                                                    bottom: 8,
+                                                    right: 8,
+                                                    border: '1px solid',
+                                                    borderColor: 'primary.main',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                                                    }
+                                                }}
+                                            >
+                                                <AddIcon />
+                                            </IconButton>
+                                        )}
+                                    </>
                                 )}
                             </Box>
                         </Grid>
@@ -1391,10 +1430,20 @@ export default function ClassModal({
             </DialogContent>
 
             <DialogActions sx={{justifyContent: "space-between", padding: "16px"}}>
-                <Button onClick={() => setLeaderboardOpen(true)} color="primary" variant="outlined">
-                    Leaderboard
-                </Button>
 
+                <IconButton
+                    color="primary"
+                    onClick={() => setLeaderboardOpen(true)}
+                    sx={{
+                        ml: 1,
+                        color: "goldenrod",
+                        "&:hover": {
+                            backgroundColor: "rgba(218,165,32,0.1)"
+                        }
+                    }}
+                >
+                    <EmojiEventsIcon />
+                </IconButton>
                 {/* CHANGED: Use confirmation dialog for class deletion */}
                 {(userRole === 'affiliate' || userRole === 'trainer') && (
                     <>

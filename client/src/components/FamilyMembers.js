@@ -18,7 +18,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonIcon from '@mui/icons-material/Person';
-import { getFamilyMembers, addFamilyMember, deleteFamilyMember } from '../api/familyApi';
+import { getFamilyMembers, addFamilyMember, deleteFamilyMember, getAffiliateFamilyMembers } from '../api/familyApi';
 
 export default function FamilyMembers({ user }) {
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -38,11 +38,21 @@ export default function FamilyMembers({ user }) {
         loadFamilyMembers();
     }, []);
 
+    const role = localStorage.getItem("role");
+
     const loadFamilyMembers = async () => {
         try {
-            setIsLoading(true);
-            const data = await getFamilyMembers();
+            if (role === "regular") {
+                setIsLoading(true);
+                const data = await getFamilyMembers();
+
             setFamilyMembers(data);
+            } else
+            if (role === "affiliate") {
+                setIsLoading(true);
+                const data = await getAffiliateFamilyMembers(user.id);
+                setFamilyMembers(data);
+            }
             setIsLoading(false);
         } catch (error) {
             showErrorMessage('Failed to load family members');
@@ -108,6 +118,7 @@ export default function FamilyMembers({ user }) {
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Registered Children</Typography>
+                    { role === "regular" && (
                     <Button
                         variant="outlined"
                         startIcon={<PersonAddIcon />}
@@ -115,6 +126,7 @@ export default function FamilyMembers({ user }) {
                     >
                         Add Child
                     </Button>
+                    )}
                 </Box>
 
                 {/* Add new family member form */}
@@ -165,6 +177,7 @@ export default function FamilyMembers({ user }) {
                                                 <PersonIcon sx={{ color: 'gray' }} />
                                                 <Typography variant="h6">{member.fullName}</Typography>
                                             </Box>
+                                            { role === "regular" && (
                                             <IconButton
                                                 onClick={() => handleOpenDeleteConfirm(member.id)}
                                                 size="small"
@@ -176,6 +189,7 @@ export default function FamilyMembers({ user }) {
                                             >
                                                 <DeleteIcon />
                                             </IconButton>
+                                            )}
                                         </Box>
                                         <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
                                             Added: {new Date(member.createdAt).toLocaleDateString()}

@@ -37,6 +37,7 @@ import Transactions from "../components/Transactions";
 import VisitHistory from "../components/VisitHistory";
 import TrainingPlans from '../components/TrainingPlans';
 import ContactNotes from "../components/ContactNotes";
+import FamilyMembers from "../components/FamilyMembers";
 
 export default function Members() {
     const [members, setMembers] = useState([]);
@@ -55,6 +56,7 @@ export default function Members() {
 
     const menuItems = [
         {id: "profile", label: "Profile", component: ProfileView},
+        {id: "family", label: "Children", component: FamilyMembers},
         { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
         {id: "statistics", label: "Statistics", component: Statistics},
         {id: "purchase-history", label: "Purchase History", component: PurchaseHistory},

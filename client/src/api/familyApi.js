@@ -87,6 +87,30 @@ export const deleteFamilyMember = async (id) => {
     }
 };
 
+export const getAffiliateFamilyMembers = async (userId) => {
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/user/family-members/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            console.error('Error response:', await response.text());
+            return [];
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching affiliate family members:', error);
+        return [];
+    }
+}
+
 export default {
     getFamilyMembers,
     addFamilyMember,

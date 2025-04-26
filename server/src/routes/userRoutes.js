@@ -18,6 +18,7 @@ router.get('/attendees', ensureAuthenticatedJWT, userController.getUserAttendees
 
 // New family member routes
 router.get('/family-members', ensureAuthenticatedJWT, userController.getFamilyMembers);
+router.get('/family-members/:userId', ensureAuthenticatedJWT, userController.getAffiliateFamilyMembers);
 router.post('/family-members', ensureAuthenticatedJWT, userController.addFamilyMember);
 router.delete('/family-members/:id', ensureAuthenticatedJWT, userController.deleteFamilyMember);
 

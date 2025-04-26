@@ -465,3 +465,24 @@ exports.deleteFamilyMember = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete family member.' });
     }
 };
+
+// Get family members for a specific user (for affiliates)
+exports.getAffiliateFamilyMembers = async (req, res) => {
+    const userId = parseInt(req.params.userId);
+
+    if (isNaN(userId)) {
+        return res.status(400).json({ error: 'Invalid user ID.' });
+    }
+
+    try {
+        const familyMembers = await prisma.familyMember.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json(familyMembers);
+    } catch (error) {
+        console.error('Error fetching affiliate family members:', error);
+        res.status(500).json({ error: 'Failed to fetch affiliate family members.' });
+    }
+};

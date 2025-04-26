@@ -221,29 +221,39 @@ const ActivePlans = ({ userId, affiliateId }) => {
 
 
                                             <TableCell>{plan.planName}</TableCell>
-                                            
+
 
                                             {isEditing ? (
                                                 <>
                                                     <TableCell>{formatDate(plan.purchasedAt)}</TableCell>
                                                     <TableCell>
-                                                        <TextField
-                                                            type="date"
-                                                            size="small"
-                                                            value={editData.endDate}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            onChange={(e) => handleChange('endDate', e.target.value)}
-                                                        />
+                                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <Typography variant="caption" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                                                                Plan End Date
+                                                            </Typography>
+                                                            <TextField
+                                                                type="date"
+                                                                size="small"
+                                                                value={editData.endDate}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => handleChange('endDate', e.target.value)}
+                                                            />
+                                                        </Box>
                                                     </TableCell>
                                                     <TableCell>{plan.price} €</TableCell>
                                                     <TableCell>
-                                                        <TextField
-                                                            type="number"
-                                                            size="small"
-                                                            value={editData.sessionsLeft}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            onChange={(e) => handleChange('sessionsLeft', e.target.value)}
-                                                        />
+                                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <Typography variant="caption" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                                                                Remaining Sessions
+                                                            </Typography>
+                                                            <TextField
+                                                                type="number"
+                                                                size="small"
+                                                                value={editData.sessionsLeft}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => handleChange('sessionsLeft', e.target.value)}
+                                                            />
+                                                        </Box>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', gap: 1 }}>

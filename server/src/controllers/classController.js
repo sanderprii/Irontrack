@@ -400,14 +400,16 @@ const deleteClass = async (req, res) => {
 };
 
 // Klasside osalejate pärimine
+// Klasside osalejate pärimine
 const getClassAttendees = async (req, res) => {
     const classId = parseInt(req.query.classId);
     if (!classId) return res.status(400).json({error: "Class ID required."});
 
     try {
+        // Fetch attendees with additional user info including dateOfBirth
         const attendees = await prisma.classAttendee.findMany({
             where: {classId},
-            include: {user: {select: {id: true, fullName: true}}}
+            include: {user: {select: {id: true, fullName: true, dateOfBirth: true}}}
         });
 
         if (attendees.length === 0) {
@@ -457,6 +459,30 @@ const getClassAttendees = async (req, res) => {
                 return acc;
             }, {});
 
+            // Get previous attendances for all users in a single query
+            const userAttendanceCounts = await prisma.classAttendee.groupBy({
+                by: ['userId'],
+                _count: {
+                    userId: true
+                },
+                where: {
+                    userId: {
+                        in: attendeeUserIds
+                    }
+                }
+            });
+
+            // Create a map of user ID to attendance count
+            const attendanceCountMap = userAttendanceCounts.reduce((acc, item) => {
+                acc[item.userId] = item._count.userId;
+                return acc;
+            }, {});
+
+            // Get today's date for birthday checking
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1; // JavaScript months are 0-indexed
+            const currentDay = today.getDate();
+
             // Koosta vastus, kus igal kasutajal on ainult tema enda märkmed
             const response = attendees.map(att => {
                 // Determine display name
@@ -467,11 +493,28 @@ const getClassAttendees = async (req, res) => {
                     displayName = familyMemberMap[att.familyMemberId];
                 }
 
+                // If attendance count is 1, this is their first training
+                // (the current attendance is counted in this number)
+                const attendanceCount = attendanceCountMap[att.userId] || 0;
+                const firstTraining = attendanceCount <= 1;
+
+                // Check if it's the user's birthday
+                let isBirthday = false;
+                if (att.user.dateOfBirth) {
+                    const birthDate = new Date(att.user.dateOfBirth);
+                    const birthMonth = birthDate.getMonth() + 1; // JavaScript months are 0-indexed
+                    const birthDay = birthDate.getDate();
+
+                    isBirthday = (birthMonth === currentMonth && birthDay === currentDay);
+                }
+
                 return {
                     userId: att.user.id,
                     fullName: displayName,
                     registrantName: att.user.fullName, // Original account owner name
                     checkIn: att.checkIn,
+                    firstTraining: firstTraining,
+                    isBirthday: isBirthday,
                     isFamilyMember: att.isFamilyMember || false,
                     familyMemberId: att.familyMemberId || null,
                     // Lisa ainult selle kasutaja märkmed

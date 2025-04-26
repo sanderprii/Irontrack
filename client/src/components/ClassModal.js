@@ -24,6 +24,7 @@ import {
     TextField,
     DialogContentText,
 } from "@mui/material";
+import CakeIcon from "@mui/icons-material/Cake";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -57,7 +58,10 @@ import {
 } from "../api/classesApi";
 import {getUserPlansByAffiliate, getUserProfile} from "../api/profileApi";
 import {getMemberInfo} from "../api/membersApi";
-import {getFamilyMembers} from "../api/familyApi"; // Import the family API function
+import {getFamilyMembers} from "../api/familyApi";
+import * as PropTypes from "prop-types"; // Import the family API function
+
+
 
 export default function ClassModal({
                                        open,
@@ -397,6 +401,14 @@ export default function ClassModal({
         const response = await checkUserEnrollment(cls.id);
         setIsRegistered(response.enrolled);
     }
+
+    const isClassTimePassed = () => {
+        const classTime = new Date(cls.time);
+        const currentTime = new Date();
+
+        // Return true if current time is past the class time
+        return currentTime > classTime;
+    };
 
     // Updated: Register with family member support
     const handleRegister = async () => {
@@ -783,7 +795,7 @@ export default function ClassModal({
                 {cls.trainingName}
             </DialogTitle>
 
-            <DialogContent>
+            <DialogContent sx={{p: 1}}>
                 {/* Põhiinfo sektsioon */}
                 <Grid container spacing={3} sx={{paddingY: 2}}>
                     {/* Vasak veerg */}
@@ -932,7 +944,7 @@ export default function ClassModal({
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        disabled={isClassOver()}
+                                        disabled={isClassTimePassed()}
                                         onClick={handleAddToWaitlist}
                                     >
                                         Join Waitlist
@@ -981,7 +993,7 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="primary"
-                                                    disabled={isClassOver()}
+                                                    disabled={isClassTimePassed()}
                                                     onClick={handleAddToWaitlist}
                                                 >
                                                     Join Waitlist
@@ -1009,7 +1021,7 @@ export default function ClassModal({
                                     <Button
                                         variant="contained"
                                         color="success"
-                                        disabled={isClassOver()}
+                                        disabled={isClassTimePassed()}
                                         onClick={handleRegister}
                                     >
                                         Register
@@ -1058,7 +1070,7 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="success"
-                                                    disabled={isClassOver()}
+                                                    disabled={isClassTimePassed()}
                                                     onClick={handleRegister}
                                                 >
                                                     Register
@@ -1095,7 +1107,7 @@ export default function ClassModal({
                                     size="small"
                                     sx={{ ml: 1 }}
                                 >
-                                    Add Attendee
+
                                 </Button>
                             )}
                             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
@@ -1109,7 +1121,7 @@ export default function ClassModal({
                                 onClick={handleSendMessage}
                                 disabled={attendees.length === 0}
                             >
-                                Send Message
+
                             </Button>
                         </Box>
                         <List>
@@ -1153,10 +1165,40 @@ export default function ClassModal({
                                                             />
                                                         ) : null
                                                     )}
+
+                                                    {/* Birthday icon */}
+                                                    {attendee.isBirthday && (
+                                                        <CakeIcon
+                                                            sx={{
+                                                                color: "#FF69B4 !important",
+                                                                animation: "pulse 1.5s infinite",
+                                                                "@keyframes pulse": {
+                                                                    "0%": {
+                                                                        transform: "scale(1)"
+                                                                    },
+                                                                    "50%": {
+                                                                        transform: "scale(1.2)"
+                                                                    },
+                                                                    "100%": {
+                                                                        transform: "scale(1)"
+                                                                    }
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
                                                 </Box>
                                             }
                                             // Show family member indicator if it's a family member registration
-                                            secondary={attendee.isFamilyMember ? `Child. Parent: ${attendee.registrantName}` : null}
+                                            secondary={
+                                                <>
+                                                    {attendee.isFamilyMember ? `Child. Parent: ${attendee.registrantName}` : null}
+                                                    {attendee.firstTraining && (
+                                                        <Typography variant="caption" color="text.secondary" display="block">
+                                                            First Training
+                                                        </Typography>
+                                                    )}
+                                                </>
+                                            }
                                         />
 
                                         {/* Nupud (check-in & kustuta) */}

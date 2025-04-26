@@ -164,7 +164,8 @@ function App() {
                 <PullToRefresh onRefresh={handleRefresh}>
                     <Box
                         sx={{
-                            pb: '56px',
+                            height: '5px',
+                            pb: '0px',
                             width: '100%',
                             minHeight: 'calc(100vh - 56px)',
                             overflowX: 'hidden'

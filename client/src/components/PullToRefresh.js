@@ -182,7 +182,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    padding: '8px 0',
+                    padding: '0',
                     opacity: refreshing ? 1 : pullProgress,
                     pointerEvents: 'none',
                     zIndex: 1000
@@ -195,7 +195,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
                         gap: 1,
                         bgcolor: 'rgba(255, 255, 255, 0.9)',
                         borderRadius: '20px',
-                        padding: '4px 12px',
+                        padding: '0',
                         boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                     }}
                 >

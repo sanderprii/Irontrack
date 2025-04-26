@@ -66,7 +66,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: theme.spacing(3),
+    gap: theme.spacing(1),
     backgroundColor: theme.palette.background.default,
 }));
 
@@ -363,7 +363,7 @@ const RegisterTrainingPage = () => {
     return (
         <AppTheme>
             <StyledContainer maxWidth="lg">
-                <Typography variant="h4" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: 600, mt: 0, mb: 1 }}>
                     Register for Training
                 </Typography>
 

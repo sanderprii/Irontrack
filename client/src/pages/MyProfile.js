@@ -196,7 +196,7 @@ export default function MyProfile() {
         <Container
             maxWidth={false}
             sx={{
-                mt: 4,
+                mt: 2,
                 px: { xs: 0, sm: 0, md: 4 },
                 display: 'flex',
                 backgroundColor: 'background.default',
@@ -207,7 +207,7 @@ export default function MyProfile() {
             <Paper
                 sx={{
 position: 'absolute',
-                    top: 48,
+                    top: 5,
                     left: 0,
                     right: 0,
                     zIndex: 1300,
@@ -328,7 +328,7 @@ position: 'absolute',
                     flexGrow: 1,
                     p: { xs: 0, sm: 0, md: 3 },
                     backgroundColor: 'background.default',
-                    mt: { xs: '36px', md: 0 }, // Lisa ülaservast ruumi mobiilivaates menüü jaoks
+
                 }}
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>

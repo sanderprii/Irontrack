@@ -1324,7 +1324,7 @@ const addClassToMyTrainings = async (req, res) => {
         // If addCompetition flag is true and there is competition info,
         // append it to the description with a header
         if (addCompetition && classInfo.competitionInfo) {
-            description += "\n\n<b>Competition Info:</b>\n" + classInfo.competitionInfo;
+            description += "\n\n<b>Competition Extra:</b>\n" + classInfo.competitionInfo;
         }
 
         await prisma.training.create({

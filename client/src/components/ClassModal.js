@@ -948,7 +948,7 @@ export default function ClassModal({
                                                 color: 'text.primary'
                                             }}>
                                                 <Typography sx={{ fontWeight: "bold", mb: 1, color: "#ff9800" }}>
-                                                    Competition Details:
+                                                    Competition Extra:
                                                 </Typography>
                                                 <div
                                                     dangerouslySetInnerHTML={{
@@ -990,7 +990,7 @@ export default function ClassModal({
                                         )}
 
                                         {/* Add to trainings button (existing code) */}
-                                        {userRole === "regular" && hasScore === false && (
+                                        {userRole === "regular" && (
                                             <IconButton
                                                 onClick={(e) => {
                                                     e.stopPropagation(); // Peata sündmuse levimine üles vanemnoodini

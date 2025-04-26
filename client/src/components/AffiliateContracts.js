@@ -206,7 +206,7 @@ export default function AffiliateContracts({affiliateId}) {
             const emailBody = `
             <p>Hello ${contract.user.fullName},</p>
             
-            <p>You have received a new contract from ${affiliateInfo?.name || 'your affiliate'} 
+            <p>You have received a new contract from <strong>${affiliateInfo?.name || 'your affiliate'}</strong> 
             that requires your signature.</p>
             
             <p><strong>Contract details:</strong></p>
@@ -222,7 +222,7 @@ export default function AffiliateContracts({affiliateId}) {
             <p>Please log in to your account to review and sign the contract.</p>
             
             <p>Thank you,<br>
-            ${affiliateInfo?.name || 'Your Affiliate'} Team</p>
+            <strong>${affiliateInfo?.name || 'Your Affiliate'} Team</strong></p>
             `;
 
             // Send notification email to the user

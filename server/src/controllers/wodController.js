@@ -42,7 +42,7 @@ const startDate = new Date(req.query.startDate);
 
 // ✅ Create or Update Today's WOD
 const saveTodayWOD = async (req, res) => {
-    const { affiliateId, wodName, wodType, description, date, notes } = req.body; // ✅ Ainult ühe päeva andmed
+    const { affiliateId, wodName, wodType, description, date, notes, competitionInfo } = req.body; // ✅ Ainult ühe päeva andmed
 
     if (!affiliateId) {
         return res.status(400).json({ error: "Missing required fields." });
@@ -60,10 +60,10 @@ const saveTodayWOD = async (req, res) => {
             if (!isDefaultWOD) {
                 await prisma.defaultWOD.create({
                     data: {
-                        name: wodName,
+                        name: wodName || "",
                         type: wodType,
-                        description,
-                        notes,
+                        description: description || "",
+
                     }
                 });
             }
@@ -73,7 +73,7 @@ const saveTodayWOD = async (req, res) => {
             // ✅ Uuenda, kui see päev on juba olemas
             await prisma.todayWOD.update({
                 where: { id: existingWOD.id },
-                data: { wodName, type: wodType, description }
+                data: { wodName, type: wodType, description, notes, competitionInfo }
             });
             return res.json({ message: "WOD updated successfully." });
         } else {
@@ -86,6 +86,7 @@ const saveTodayWOD = async (req, res) => {
                     description,
                     date: new Date(date),
                     notes,
+                    competitionInfo,
                 }
             });
             return res.json({ message: "WOD added successfully." });
@@ -180,7 +181,8 @@ const applyWODToTrainings = async (req, res) => {
             data: {
                 wodName: wod.wodName,
                 wodType: wod.type,
-                description: wod.description
+                description: wod.description,
+                competitionInfo: wod.competitionInfo,
             }
         });
 

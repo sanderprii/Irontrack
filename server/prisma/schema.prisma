@@ -226,28 +226,29 @@ model defaultWOD {
 }
 
 model ClassSchedule {
-  id             Int                @id @default(autoincrement())
-  trainingType   String?
-  trainingName   String
-  time           DateTime
-  duration       Int
-  trainer        String?
-  memberCapacity Int
-  location       String?
-  repeatWeekly   Boolean            @default(false)
-  ownerId        Int
-  owner          User               @relation(fields: [ownerId], references: [id])
-  affiliateId    Int
-  affiliate      Affiliate          @relation(fields: [affiliateId], references: [id])
-  seriesId       Int?
-  wodName        String?
-  wodType        String?
-  description    String?
-  canRegister    Boolean            @default(true)
-  freeClass      Boolean            @default(false)
-  attendees      ClassAttendee[]
-  leaderboard    ClassLeaderboard[]
-  waitlist       Waitlist[]
+  id              Int                @id @default(autoincrement())
+  trainingType    String?
+  trainingName    String
+  time            DateTime
+  duration        Int
+  trainer         String?
+  memberCapacity  Int
+  location        String?
+  repeatWeekly    Boolean            @default(false)
+  ownerId         Int
+  owner           User               @relation(fields: [ownerId], references: [id])
+  affiliateId     Int
+  affiliate       Affiliate          @relation(fields: [affiliateId], references: [id])
+  seriesId        Int?
+  wodName         String?
+  wodType         String?
+  description     String?
+  competitionInfo String?
+  canRegister     Boolean            @default(true)
+  freeClass       Boolean            @default(false)
+  attendees       ClassAttendee[]
+  leaderboard     ClassLeaderboard[]
+  waitlist        Waitlist[]
 }
 
 model Plan {
@@ -389,14 +390,15 @@ model Members {
 }
 
 model todayWOD {
-  id          Int       @id @default(autoincrement())
-  wodName     String?
-  type        String
-  description String
-  date        DateTime
-  notes       String?
-  affiliateId Int
-  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  id              Int       @id @default(autoincrement())
+  wodName         String?
+  type            String
+  description     String
+  competitionInfo String?
+  date            DateTime
+  notes           String?
+  affiliateId     Int
+  affiliate       Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
 model transactions {

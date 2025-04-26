@@ -1063,6 +1063,9 @@ export default function TrainingsPage() {
                                                                 USE_PROFILES: {html: true} // Use HTML profile
                                                             })
                                                         }}
+                                                        style={{
+                                                            whiteSpace: 'pre-line' // Add this style
+                                                        }}
                                                     />
                                                 ) : Array.isArray(modalTraining.exercises) ? (
                                                     <div
@@ -1074,6 +1077,9 @@ export default function TrainingsPage() {
                                                                     USE_PROFILES: {html: true} // Use HTML profile
                                                                 }
                                                             )
+                                                        }}
+                                                        style={{
+                                                            whiteSpace: 'pre-line' // Add this style
                                                         }}
                                                     />
                                                 ) : (

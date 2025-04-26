@@ -36,6 +36,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     type: response.type || "For Time",
                     description: response.description || "",
                     notes: response.notes || "",
+                    competitionInfo: response.competitionInfo || "",
                 });
             } else {
                 setWod({ wodName: "", type: "For Time", description: "" });
@@ -69,6 +70,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                 description: sanitizedDescription,
                 date: formattedDate,
                 notes: wod.notes,
+                competitionInfo: wod.competitionInfo,
             };
 
             await saveTodayWOD(selectedAffiliateId, wodPayload);
@@ -276,6 +278,23 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                         * To format text: Select the text you want to format, then click a formatting button above.
                     </Typography>
                 </Box>
+                <TextareaAutosize
+                    minRows={3}
+                    maxRows={10}
+                    placeholder="Competition Info"
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        borderColor: '#AAAAAA',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                    }}
+                    value={wod.competitionInfo}
+                    onChange={(e) => setWod({ ...wod, competitionInfo: e.target.value })}
+                />
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleSaveWOD} color="primary">Save</Button>

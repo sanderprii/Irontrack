@@ -148,6 +148,13 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                                     textAlign: "center"
                                                 }}
                                             />
+                                            <Typography variant="h6" sx={{ fontWeight: "bold", color: "text.primary" }}
+                                                mt={2}>
+                                                Competition Info
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "pre-line" }}>
+                                                {wod.competitionInfo}
+                                            </Typography>
                                         </Box>
 
                                     ) : (

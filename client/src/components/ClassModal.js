@@ -39,6 +39,8 @@ import DOMPurify from 'dompurify'; // You'll need to install this package
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import AddAttendeeModal from "./AddAttendeeModal";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 Trophy icon for leaderboard
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 // Import API functions
 import {
@@ -114,6 +116,7 @@ export default function ClassModal({
     const [waitlistEntries, setWaitlistEntries] = useState([]);
 
     const [isSendMessageOpen, setSendMessageOpen] = useState(false);
+    const [showCompetitionInfo, setShowCompetitionInfo] = useState(false);
 
     const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
     const [waitlistRemoveConfirmOpen, setWaitlistRemoveConfirmOpen] = useState(false);
@@ -245,6 +248,11 @@ export default function ClassModal({
             setIsInWaitlist(false);
         }
     }
+
+    const toggleCompetitionInfo = (e) => {
+        e.stopPropagation(); // Prevent click from triggering the fullscreen toggle
+        setShowCompetitionInfo(!showCompetitionInfo);
+    };
 
     // Toome waitlisti sissekanded admini/treeneri vaates
     async function fetchWaitlistEntries() {
@@ -387,8 +395,15 @@ export default function ClassModal({
     async function handleAddClassToMyTrainings() {
         try {
             if (!cls || !cls.id) return;
+            if ( showCompetitionInfo ) {
+                const addCompetition = true
 
-            await addClassToMyTrainings(cls.id);
+                await addClassToMyTrainings(cls.id, addCompetition);
+            } else {
+                const addCompetition = false
+                await addClassToMyTrainings(cls.id, addCompetition);
+            }
+
             alert("Class added to your trainings!");
         } catch (error) {
             console.error("Error adding class to my trainings:", error);
@@ -907,20 +922,75 @@ export default function ClassModal({
                                     </Typography>
                                 )}
                                 { cls.description && (
+
                                     <>
-                                    <div
-                                        dangerouslySetInnerHTML={{
-                                            __html: DOMPurify.sanitize(cls.description, {
-                                                ALLOWED_TAGS: ['b', 'i', 'span'],
-                                                ALLOWED_ATTR: ['style'],
-                                            })
-                                        }}
-                                        style={{
-                                            color: "text.primary",
-                                            whiteSpace: "pre-line"
-                                        }}
-                                    />
-                                        { userRole === "regular" && hasScore === false && (
+                                    <Box sx={{pb: 2}}>
+                                        <div
+                                            dangerouslySetInnerHTML={{
+                                                __html: DOMPurify.sanitize(cls.description, {
+                                                    ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                    ALLOWED_ATTR: ['style'],
+                                                })
+                                            }}
+                                            style={{
+                                                color: "text.primary",
+                                                whiteSpace: "pre-line"
+                                            }}
+                                        />
+                                    </Box>
+                                        {/* Competition info section (conditionally rendered) */}
+                                        {showCompetitionInfo && cls.competitionInfo && (
+                                            <Box sx={{
+                                                mt: 2,
+                                                pt: 2,
+                                                pb: 2,
+                                                borderTop: '1px dashed #aaa',
+                                                color: 'text.primary'
+                                            }}>
+                                                <Typography sx={{ fontWeight: "bold", mb: 1, color: "#ff9800" }}>
+                                                    Competition Details:
+                                                </Typography>
+                                                <div
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: DOMPurify.sanitize(cls.competitionInfo, {
+                                                            ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                            ALLOWED_ATTR: ['style'],
+                                                        })
+                                                    }}
+                                                    style={{
+                                                        whiteSpace: "pre-line"
+                                                    }}
+                                                />
+                                            </Box>
+                                        )}
+
+                                        {/* Competition button (only shown if competitionInfo exists) */}
+                                        {cls.competitionInfo && (
+                                            <Button
+                                                onClick={toggleCompetitionInfo}
+                                                endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                size="small"
+                                                sx={{
+                                                    position: "absolute",
+                                                    bottom: -18,
+                                                    left: "50%",
+                                                    transform: "translateX(-50%)",
+                                                    backgroundColor: '#f0f0f0',
+                                                    color: '#666',
+                                                    fontSize: '0.75rem',
+                                                    padding: '2px 8px',
+                                                    minWidth: 'auto',
+                                                    '&:hover': {
+                                                        backgroundColor: '#e0e0e0',
+                                                    }
+                                                }}
+                                            >
+                                                Competition
+                                            </Button>
+                                        )}
+
+                                        {/* Add to trainings button (existing code) */}
+                                        {userRole === "regular" && hasScore === false && (
                                             <IconButton
                                                 onClick={(e) => {
                                                     e.stopPropagation(); // Peata sündmuse levimine üles vanemnoodini
@@ -944,6 +1014,7 @@ export default function ClassModal({
                                         )}
                                     </>
                                 )}
+
                             </Box>
                         </Grid>
                     ) : (

@@ -1303,8 +1303,8 @@ const deleteWaitlist = async (req, res) => {
 }
 
 const addClassToMyTrainings = async (req, res) => {
-    const {classId} = req.body;
-const userId = req.user?.id;
+    const {classId, addCompetition} = req.body;
+    const userId = req.user?.id;
 
     if (!classId || !userId) {
         return res.status(400).json({error: "Class ID and User ID required"});
@@ -1313,11 +1313,18 @@ const userId = req.user?.id;
     try {
         const classInfo = await prisma.classSchedule.findUnique({
             where: {id: parseInt(classId)},
-
         });
 
         if (!classInfo) {
             return res.status(404).json({error: "Class not found"});
+        }
+
+        let description = classInfo.description || "";
+
+        // If addCompetition flag is true and there is competition info,
+        // append it to the description with a header
+        if (addCompetition && classInfo.competitionInfo) {
+            description += "\n\n<b>Competition Info:</b>\n" + classInfo.competitionInfo;
         }
 
         await prisma.training.create({
@@ -1327,9 +1334,9 @@ const userId = req.user?.id;
                 date: classInfo.time,
                 wodName: classInfo.wodName || null,
                 wodType: classInfo.wodType || null,
-                exercises: classInfo.description ? {
+                exercises: description ? {
                     create: {
-                        exerciseData: classInfo.description,
+                        exerciseData: description,
                     }
                 } : undefined
             }

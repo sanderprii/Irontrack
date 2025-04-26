@@ -526,7 +526,7 @@ export const getFamilyMembers = async (userId) => {
     }
 };
 
-export const addClassToMyTrainings = async (classId) => {
+export const addClassToMyTrainings = async (classId, addCompetition) => {
     try {
         const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/classes/add-training`, {
@@ -535,7 +535,7 @@ export const addClassToMyTrainings = async (classId) => {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({classId}),
+            body: JSON.stringify({classId, addCompetition}),
         });
 
         if (!response.ok) {

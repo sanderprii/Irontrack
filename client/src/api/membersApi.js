@@ -130,3 +130,31 @@ export const getFamilyMembers = async (userId) => {
         return [];
     }
 };
+
+// Get plans for a specific user or family member
+export const getMemberPlans = async (userId, affiliateId, memberType = 'user', familyMemberId = null) => {
+    const token = localStorage.getItem("token");
+    try {
+        let url = `${API_BASE}/trainer/member-plans?userId=${userId}&affiliateId=${affiliateId}`;
+
+        if (memberType === 'familyMember' && familyMemberId) {
+            url += `&memberType=familyMember&familyMemberId=${familyMemberId}`;
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch plans: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching member plans:", error);
+        return { plans: [] };
+    }
+};

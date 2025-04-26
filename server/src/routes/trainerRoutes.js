@@ -37,4 +37,6 @@ router.post("/plans/comment", ensureAuthenticated, trainingPlanController.addCom
 router.post("/plans/sector", ensureAuthenticated, trainingPlanController.addSector);
 router.put("/plans/sector/complete", ensureAuthenticated, trainingPlanController.completeSector);
 
+router.get('/member-plans', ensureAuthenticated, trainerController.getMemberPlans);
+
 module.exports = router;

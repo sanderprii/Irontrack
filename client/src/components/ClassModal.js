@@ -1442,6 +1442,7 @@ export default function ClassModal({
                 classId={cls?.id}
                 affiliateId={affiliateId}
                 onSuccess={handleAttendeeAdded}
+                fetchAttendees={fetchAttendees}
             />
 
             {/* Cancel Registration Confirmation Dialog */}

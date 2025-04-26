@@ -17,10 +17,12 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
-    Checkbox,
+    Chip,
     Divider
 } from "@mui/material";
-import { searchUsersByName, getMemberInfo, getFamilyMembers } from "../api/membersApi";
+import PersonIcon from '@mui/icons-material/Person';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import { searchUsersByName, getMemberPlans } from "../api/membersApi";
 import { registerMemberForClass } from "../api/classesApi";
 
 export default function AddAttendeeModal({
@@ -28,27 +30,23 @@ export default function AddAttendeeModal({
                                              onClose,
                                              classId,
                                              affiliateId,
-                                             onSuccess
+                                             onSuccess,
+                                                fetchAttendees
                                          }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [userPlans, setUserPlans] = useState([]);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [memberPlans, setMemberPlans] = useState([]);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
-
-    // Family member states
-    const [familyMembers, setFamilyMembers] = useState([]);
-    const [isFamilyMember, setIsFamilyMember] = useState(false);
-    const [selectedFamilyMember, setSelectedFamilyMember] = useState(null);
 
     // Handle search input change
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
     };
 
-    // Search for users when query changes
+    // Search for users and family members when query changes
     useEffect(() => {
         const delaySearch = setTimeout(async () => {
             if (searchQuery.length >= 3) {
@@ -57,8 +55,8 @@ export default function AddAttendeeModal({
                     const results = await searchUsersByName(searchQuery);
                     setSearchResults(results || []);
                 } catch (error) {
-                    console.error("Error searching users:", error);
-                    setErrorMessage("Failed to search users");
+                    console.error("Error searching:", error);
+                    setErrorMessage("Failed to search");
                 } finally {
                     setLoading(false);
                 }
@@ -70,25 +68,30 @@ export default function AddAttendeeModal({
         return () => clearTimeout(delaySearch);
     }, [searchQuery]);
 
-    // Handle user selection
-    const handleUserSelect = async (user) => {
-        setSelectedUser(user);
+    // Handle member selection (user or family member)
+    const handleMemberSelect = async (member) => {
+        setSelectedMember(member);
         setLoading(true);
+        setErrorMessage("");
 
         try {
-            const [memberInfo, familyMembersData] = await Promise.all([
-                getMemberInfo(user.id, affiliateId),
-                getFamilyMembers(user.id)
-            ]);
+            // Get appropriate plans based on member type
+            if (member.type === 'familyMember') {
+                const plansData = await getMemberPlans(
+                    member.parentUserId,
+                    affiliateId,
+                    'familyMember',
+                    member.id
+                );
+                setMemberPlans(plansData.plans || []);
+            } else {
+                // Regular user
+                const plansData = await getMemberPlans(member.id, affiliateId);
+                setMemberPlans(plansData.plans || []);
+            }
 
-            setUserPlans(memberInfo.plans || []);
-            setFamilyMembers(familyMembersData || []);
-
-            // Reset selections when changing users
+            // Reset plan selection
             setSelectedPlan(null);
-            setIsFamilyMember(false);
-            setSelectedFamilyMember(null);
-            setErrorMessage("");
         } catch (error) {
             console.error("Error loading member info:", error);
             setErrorMessage("Failed to load member data");
@@ -102,28 +105,19 @@ export default function AddAttendeeModal({
         setSelectedPlan(planId);
     };
 
-    // Handle family member toggle
-    const handleFamilyMemberToggle = (event) => {
-        setIsFamilyMember(event.target.checked);
-        if (!event.target.checked) {
-            setSelectedFamilyMember(null);
-        }
-    };
-
-    // Handle family member selection
-    const handleFamilyMemberSelect = (memberId) => {
-        setSelectedFamilyMember(memberId);
-    };
-
     // Register member for class
     const handleRegister = async () => {
-        if (!selectedUser || !selectedPlan) {
-            setErrorMessage("Please select both a member and a plan");
+        if (!selectedMember) {
+            setErrorMessage("Please select a member");
             return;
         }
 
-        if (isFamilyMember && !selectedFamilyMember) {
-            setErrorMessage("Please select a family member");
+        // For paid classes, require a plan selection
+        const classInfo = {}; // You might want to pass class info to know if it's free
+        const isFreeClass = classInfo.freeClass;
+
+        if (!isFreeClass && !selectedPlan) {
+            setErrorMessage("Please select a plan");
             return;
         }
 
@@ -131,14 +125,14 @@ export default function AddAttendeeModal({
         try {
             await registerMemberForClass(
                 classId,
-                selectedPlan,
+                selectedPlan, // Could be null for free classes
                 affiliateId,
-                selectedUser.id,
-                isFamilyMember,
-                selectedFamilyMember
+                selectedMember // Contains all the info needed to identify user/family member
             );
+
             onSuccess();
             handleReset();
+            fetchAttendees()
             onClose();
         } catch (error) {
             console.error("Error registering member:", error);
@@ -152,19 +146,23 @@ export default function AddAttendeeModal({
     const handleReset = () => {
         setSearchQuery("");
         setSearchResults([]);
-        setSelectedUser(null);
-        setUserPlans([]);
+        setSelectedMember(null);
+        setMemberPlans([]);
         setSelectedPlan(null);
         setErrorMessage("");
-        setFamilyMembers([]);
-        setIsFamilyMember(false);
-        setSelectedFamilyMember(null);
     };
 
     // Handle close
     const handleClose = () => {
         handleReset();
         onClose();
+    };
+
+    // Helper to render the right icon based on member type
+    const getMemberTypeIcon = (memberType) => {
+        return memberType === 'familyMember'
+            ? <FamilyRestroomIcon color="secondary" />
+            : <PersonIcon color="primary" />;
     };
 
     return (
@@ -174,7 +172,7 @@ export default function AddAttendeeModal({
                 {/* Search Input */}
                 <TextField
                     fullWidth
-                    label="Search Members"
+                    label="Search Members & Family Members"
                     variant="outlined"
                     value={searchQuery}
                     onChange={handleSearchChange}
@@ -196,56 +194,85 @@ export default function AddAttendeeModal({
                     </Box>
                 )}
 
-                {/* Search Results */}
-                {!selectedUser && searchResults.length > 0 && (
+                {/* Search Results - Now with indicators for users vs family members */}
+                {!selectedMember && searchResults.length > 0 && (
                     <Box mt={2}>
                         <Typography variant="subtitle1">Search Results</Typography>
                         <List dense>
-                            {searchResults.map((user) => (
+                            {searchResults.map((result) => (
                                 <ListItem
                                     button
-                                    key={user.id}
-                                    onClick={() => handleUserSelect(user)}
+                                    key={`${result.type}-${result.id}`}
+                                    onClick={() => handleMemberSelect(result)}
+                                    sx={{
+                                        border: '1px solid #eee',
+                                        borderRadius: '4px',
+                                        mb: 1,
+                                        '&:hover': {
+                                            backgroundColor: '#f5f5f5'
+                                        }
+                                    }}
                                 >
-                                    <ListItemText
-                                        primary={user.fullName}
-                                        secondary={user.email}
-                                    />
+                                    <Box display="flex" alignItems="center" width="100%">
+                                        {getMemberTypeIcon(result.type)}
+                                        <Box ml={2} flex={1}>
+                                            <ListItemText
+                                                primary={
+                                                    <Box display="flex" alignItems="center">
+                                                        <Typography variant="body1" fontWeight="medium">
+                                                            {result.fullName}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={result.type === 'familyMember' ? 'Family Member' : 'Member'}
+                                                            size="small"
+                                                            color={result.type === 'familyMember' ? 'secondary' : 'primary'}
+                                                            variant="outlined"
+                                                            sx={{ ml: 1 }}
+                                                        />
+                                                    </Box>
+                                                }
+                                                secondary={result.email || (result.type === 'familyMember' ? 'Family member' : '')}
+                                            />
+                                        </Box>
+                                    </Box>
                                 </ListItem>
                             ))}
                         </List>
                     </Box>
                 )}
 
-                {/* Selected User */}
-                {selectedUser && (
+                {/* Selected Member */}
+                {selectedMember && (
                     <Box mt={2}>
-                        <Typography variant="subtitle1">Selected Member</Typography>
+                        <Typography variant="subtitle1">Selected {selectedMember.type === 'familyMember' ? 'Family Member' : 'Member'}</Typography>
                         <Box
                             p={2}
                             bgcolor="background.paper"
                             border={1}
                             borderColor="divider"
                             borderRadius={1}
+                            display="flex"
+                            alignItems="center"
                         >
-                            <Typography variant="h6">{selectedUser.fullName}</Typography>
-                            <Typography variant="body2" color="textSecondary">
-                                {selectedUser.email}
-                            </Typography>
+                            {getMemberTypeIcon(selectedMember.type)}
+                            <Box ml={2} flex={1}>
+                                <Typography variant="h6">{selectedMember.fullName}</Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                    {selectedMember.email}
+                                    {selectedMember.type === 'familyMember' && ' (Family Member)'}
+                                </Typography>
+                            </Box>
                             <Button
                                 size="small"
                                 color="primary"
-                                onClick={() => setSelectedUser(null)}
-                                sx={{ mt: 1 }}
+                                onClick={() => setSelectedMember(null)}
                             >
-                                Change Member
+                                Change
                             </Button>
                         </Box>
 
-
-
                         {/* Member Plans */}
-                        {userPlans.length > 0 ? (
+                        {memberPlans.length > 0 ? (
                             <Box mt={2}>
                                 <Typography variant="subtitle1">Select Plan</Typography>
                                 <FormControl component="fieldset">
@@ -253,7 +280,7 @@ export default function AddAttendeeModal({
                                         value={selectedPlan}
                                         onChange={(e) => handlePlanSelect(e.target.value)}
                                     >
-                                        {userPlans.map((plan) => (
+                                        {memberPlans.map((plan) => (
                                             <FormControlLabel
                                                 key={plan.userPlanId}
                                                 value={plan.userPlanId.toString()}
@@ -262,10 +289,11 @@ export default function AddAttendeeModal({
                                                     <Box>
                                                         <Typography variant="body1">{plan.planName}</Typography>
                                                         <Typography variant="body2" color="textSecondary">
-                                                            Valid until: {new Date(plan.endDate).toLocaleDateString()}
+                                                            Sessions left: {plan.sessionsLeft} | Valid until: {new Date(plan.endDate).toLocaleDateString()}
                                                         </Typography>
                                                     </Box>
                                                 }
+                                                disabled={plan.sessionsLeft <= 0}
                                             />
                                         ))}
                                     </RadioGroup>
@@ -273,21 +301,21 @@ export default function AddAttendeeModal({
                             </Box>
                         ) : (
                             <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-                                No active plans available for this member
+                                No active plans available for this {selectedMember.type === 'familyMember' ? 'family member' : 'member'}
                             </Typography>
                         )}
                     </Box>
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} color="primary">
+                <Button onClick={handleClose}>
                     Cancel
                 </Button>
                 <Button
                     onClick={handleRegister}
                     color="primary"
                     variant="contained"
-                    disabled={!selectedUser || !selectedPlan || (isFamilyMember && !selectedFamilyMember) || loading}
+                    disabled={!selectedMember || (!selectedPlan && memberPlans.length > 0) || loading}
                 >
                     Register
                 </Button>

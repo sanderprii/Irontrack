@@ -451,36 +451,45 @@ export const assignTrainerToClasses = async (classIds, trainerName) => {
     }
 };
 
-export const registerMemberForClass = async (classId, planId, affiliateId, userId, isFamilyMember = false, familyMemberId = null) => {
-    try {
-        const token = localStorage.getItem("token");
+export const registerMemberForClass = async (classId, planId, affiliateId, memberInfo) => {
 
-        const response = await fetch(`${API_URL}/trainer/register-member`, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        try {
+            const token = localStorage.getItem("token");
+
+            // Determine if we're registering a user or a family member
+            const payload = {
                 classId,
                 planId,
-                affiliateId,
-                userId,
-                isFamilyMember,
-                familyMemberId
-            }),
-        });
+                affiliateId
+            };
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to register member for class");
+            if (memberInfo.type === 'familyMember') {
+                payload.memberType = 'familyMember';
+                payload.memberId = memberInfo.id;
+            } else {
+                payload.userId = memberInfo.id;
+                payload.memberType = 'user';
+            }
+
+            const response = await fetch(`${API_URL}/trainer/register-member`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to register for class");
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("❌ Error registering for class:", error);
+            throw error;
         }
-
-        return await response.json();
-    } catch (error) {
-        console.error("❌ Error registering member for class:", error);
-        throw error;
-    }
 };
 
 // Search users by name

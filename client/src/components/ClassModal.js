@@ -1473,7 +1473,7 @@ export default function ClassModal({
                                     value={scoreValue}
                                     onChange={(e) => setScoreValue(e.target.value)}
                                     fullWidth
-                                    sx={{mb: 2}}
+                                    sx={{mb: 2, mt: 1}}
                                 />
 
                                 {/* SAVE + CANCEL buttons */}

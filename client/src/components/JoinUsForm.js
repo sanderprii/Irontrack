@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -20,7 +20,7 @@ import {
     InputAdornment,
     IconButton
 } from '@mui/material';
-import { Visibility, VisibilityOff, Person, Email, Phone, Home, Key } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Person, Email, Phone, Home, Key, VerifiedUser } from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
 
@@ -87,6 +87,7 @@ export default function JoinUsForm() {
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [email, setEmail] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -102,6 +103,8 @@ export default function JoinUsForm() {
     // Validation error states
     const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
+    const [confirmEmailError, setConfirmEmailError] = useState(false);
+    const [confirmEmailErrorMessage, setConfirmEmailErrorMessage] = useState('');
     const [passwordError, setPasswordError] = useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState(false);
@@ -111,6 +114,19 @@ export default function JoinUsForm() {
 
     // API URL
     const API_URL = process.env.REACT_APP_API_URL;
+
+    // Validate confirm email whenever either email or confirm email changes
+    useEffect(() => {
+        if (confirmEmail) {
+            if (email !== confirmEmail) {
+                setConfirmEmailError(true);
+                setConfirmEmailErrorMessage('Emails do not match');
+            } else {
+                setConfirmEmailError(false);
+                setConfirmEmailErrorMessage('');
+            }
+        }
+    }, [email, confirmEmail]);
 
     const validateInputs = () => {
         let isValid = true;
@@ -133,6 +149,16 @@ export default function JoinUsForm() {
         } else {
             setEmailError(false);
             setEmailErrorMessage('');
+        }
+
+        // Confirm email validation
+        if (!confirmEmail || confirmEmail !== email) {
+            setConfirmEmailError(true);
+            setConfirmEmailErrorMessage('Emails do not match.');
+            isValid = false;
+        } else {
+            setConfirmEmailError(false);
+            setConfirmEmailErrorMessage('');
         }
 
         // Password validation (min 6 characters)
@@ -205,6 +231,7 @@ export default function JoinUsForm() {
                 setPhone('');
                 setAddress('');
                 setEmail('');
+                setConfirmEmail('');
                 setPassword('');
                 setConfirmPassword('');
                 setAcceptedTerms(false);
@@ -346,6 +373,46 @@ export default function JoinUsForm() {
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <Email />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                            }
+                                        }}
+                                    />
+                                </StyledFormControl>
+
+                                {/* Confirm Email */}
+                                <StyledFormControl fullWidth>
+                                    <FormLabel htmlFor="confirmEmail" sx={{ mb: 1, fontWeight: 500 }}>
+                                        Confirm Email
+                                    </FormLabel>
+                                    <TextField
+                                        error={confirmEmailError}
+                                        helperText={confirmEmailErrorMessage}
+                                        id="confirmEmail"
+                                        type="email"
+                                        name="confirmEmail"
+                                        placeholder="john@smith.com"
+                                        autoComplete="email"
+                                        required
+                                        fullWidth
+                                        variant="outlined"
+                                        color={confirmEmailError ? 'error' : confirmEmail && !confirmEmailError ? 'success' : 'primary'}
+                                        value={confirmEmail}
+                                        onChange={(e) => setConfirmEmail(e.target.value)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Email />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: confirmEmail && (
+                                                <InputAdornment position="end">
+                                                    {!confirmEmailError && confirmEmail ?
+                                                        <VerifiedUser color="success" /> : null}
                                                 </InputAdornment>
                                             ),
                                         }}

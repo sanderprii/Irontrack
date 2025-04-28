@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+    import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -26,12 +26,12 @@ const RecordEditModal = ({ open, onClose, record, recordType, onSave }) => {
     React.useEffect(() => {
         if (record) {
             if (recordType === 'Weightlifting') {
-                setValue(record.weight || '');
+                setValue(record.value || '');
             } else if (recordType === 'Cardio') {
-                setValue(record.time || '');
+                setValue(record.value || '');
             } else {
                 // WOD
-                setValue(record.score || '');
+                setValue(record.value || '');
             }
         }
     }, [record, recordType]);
@@ -61,16 +61,15 @@ const RecordEditModal = ({ open, onClose, record, recordType, onSave }) => {
                 id: record.id,
                 date: new Date(date).toISOString(),
                 comment: comment,
-
             };
 
             if (recordType === 'Weightlifting') {
                 payload.weight = parseFloat(value);
             } else if (recordType === 'Cardio') {
-                payload.time = value;
+                payload.time = String(value); // Kindlusta, et see on string
             } else {
                 // WOD
-                payload.score = value;
+                payload.score = String(value); // Kindlusta, et see on string
             }
 
             // Call API to update the record

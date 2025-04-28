@@ -7,15 +7,38 @@ const prisma = new PrismaClient();
 // Lisame debug režiimi
 const DEBUG = true;
 
+// Abifunktsioonid tabelinimede käsitlemiseks
+function normalizeTableName(tableName) {
+    if (!tableName) return null;
+
+    // Kõik potentsiaalsed variatsioonid
+    const variations = [
+        tableName,                                              // originaal (nt "user")
+        tableName.toLowerCase(),                                // kõik väiketähed (nt "user")
+        tableName.toUpperCase(),                                // kõik suurtähed (nt "USER")
+        tableName.charAt(0).toUpperCase() + tableName.slice(1), // PascalCase (nt "User")
+        tableName.charAt(0).toLowerCase() + tableName.slice(1)  // camelCase (nt "user")
+    ];
+
+    // Kontrolli, milline variant on Prisma kliendis olemas
+    for (const variant of variations) {
+        if (prisma[variant] && typeof prisma[variant] === 'object') {
+            if (DEBUG) console.log(`Leitud Prisma mudel: ${variant} (originaal: ${tableName})`);
+            return variant;
+        }
+    }
+
+    // Kui otsest vastet ei leitud, tagasta originaal
+    if (DEBUG) console.log(`Prisma mudelit ei leitud. Kasutan originaali: ${tableName}`);
+    return tableName;
+}
+
 /**
  * Tagastab kõik andmebaasi tabelid
  */
 exports.getTables = async (req, res) => {
     try {
         if (DEBUG) console.log('Päritakse andmebaasi tabeleid');
-
-        // Prisma databaseUrl sisaldab andmebaasi tüüpi
-        const dbType = process.env.DATABASE_URL?.includes('postgresql') ? 'postgresql' : 'mysql';
 
         // Kõige esimene valik - kasuta Prisma sisseehitatud meetodeid
         const dataModels = Object.keys(prisma).filter(key =>
@@ -30,27 +53,16 @@ exports.getTables = async (req, res) => {
             return res.json(dataModels);
         }
 
-        // Teine valik - vastavalt andmebaasi tüübile erinevad päringud
+        // Teine valik - SQL päring
         try {
-            let tableNames;
-
-            if (dbType === 'postgresql') {
-                // PostgreSQL tabelid
-                const result = await prisma.$queryRaw`
-          SELECT table_name 
-          FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_type = 'BASE TABLE'
-          ORDER BY table_name;
-        `;
-                tableNames = result.map(row => row.table_name);
-            } else {
-                // MySQL tabelid
-                const result = await prisma.$queryRaw`
-          SHOW TABLES;
-        `;
-                tableNames = result.map(row => Object.values(row)[0]);
-            }
+            const result = await prisma.$queryRaw`
+              SELECT table_name 
+              FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_type = 'BASE TABLE'
+              ORDER BY table_name;
+            `;
+            const tableNames = result.map(row => row.table_name);
 
             if (DEBUG) console.log('Tagastan SQL päringuga leitud tabelid:', tableNames);
             return res.json(tableNames);
@@ -59,12 +71,7 @@ exports.getTables = async (req, res) => {
         }
 
         // Kui kumbki meetod ei töötanud, tagastame staatilise nimekirja
-        const staticTables = [
-            'User', 'Affiliate', 'AffiliateTrainer', 'ClassSchedule', 'ClassAttendee',
-            'Plan', 'UserPlan', 'Record', 'Training', 'Exercise', 'Contract',
-            'SignedContract', 'Message', 'Credit', 'defaultWOD', 'ClassLeaderboard',
-            'Members', 'todayWOD', 'transactions', 'PaymentHoliday', 'ContractLogs'
-        ];
+        const staticTables = Object.keys(prisma).filter(k => !k.startsWith('_') && typeof prisma[k] === 'object');
 
         if (DEBUG) console.log('Tagastan staatilise tabelite nimekirja:', staticTables);
         return res.json(staticTables);
@@ -79,26 +86,22 @@ exports.getTables = async (req, res) => {
  */
 exports.getTableData = async (req, res) => {
     try {
-        const { tableName } = req.params;
+        const { tableName: rawTableName } = req.params;
         const page = parseInt(req.query.page) || 0;
         const limit = parseInt(req.query.limit) || 100;
         const offset = page * limit;
 
+        // Normaliseerime tabelinime
+        const tableName = normalizeTableName(rawTableName);
+
         if (DEBUG) console.log(`Päritakse tabeli ${tableName} andmeid, lehekülg ${page}, limiit ${limit}`);
 
-        // Kontrollime, kas tabel on lubatud
-        const validTables = await getValidTables();
-        if (!validTables.includes(tableName)) {
-            if (DEBUG) console.log(`Tabelit ${tableName} ei leitud lubatud tabelite hulgast:`, validTables);
-            return res.status(404).json({ error: 'Tabelit ei leitud' });
-        }
-
-        // Proovime kõigepealt Prisma API-d
+        // Proovime kasutada Prisma API-d
         if (prisma[tableName] && typeof prisma[tableName].findMany === 'function') {
             try {
                 if (DEBUG) console.log(`Kasutan Prisma API-d tabeli ${tableName} pärimiseks`);
 
-                // Loeme andmed Prisma API-ga
+                // Loeme andmed
                 const data = await prisma[tableName].findMany({
                     skip: offset,
                     take: limit
@@ -107,10 +110,23 @@ exports.getTableData = async (req, res) => {
                 // Loeme metaandmed
                 const totalRows = await prisma[tableName].count();
 
-                // Saame veergude nimed esimesest andmeobjektist
-                const columns = data.length > 0 ? Object.keys(data[0]) : [];
+                // Saame veergude nimed esimesest andmeobjektist või tühjast objektist
+                let columns = [];
+                if (data.length > 0) {
+                    columns = Object.keys(data[0]);
+                } else {
+                    // Proovime saada veergude nimed mudeli struktuurist
+                    const emptyObject = {};
+                    for (const key in prisma[tableName].fields) {
+                        if (!key.startsWith('_')) {
+                            emptyObject[key] = null;
+                        }
+                    }
+                    columns = Object.keys(emptyObject);
+                }
 
-                // Määrame nõutud väljad (võtame lihtsalt id välja praegu)
+                // Määrame nõutud väljad
+                // Praegu lihtsalt id, mida saaks täiendada
                 const requiredFields = ['id'];
 
                 if (DEBUG) console.log(`Tagastan ${data.length} rida andmeid Prisma API kaudu`);
@@ -130,25 +146,32 @@ exports.getTableData = async (req, res) => {
         try {
             if (DEBUG) console.log(`Kasutan SQL päringut tabeli ${tableName} andmete saamiseks`);
 
-            // Saame tabeli struktuuri
+            // Kontrollime, kas tabel eksisteerib
+            const tableExists = await checkTableExists(tableName);
+            if (!tableExists) {
+                return res.status(404).json({ error: `Tabelit ${tableName} ei leitud` });
+            }
+
+            // Tabeli struktuuri päring
             const columnsInfo = await getTableColumns(tableName);
             const columns = columnsInfo.map(col => col.name);
 
-            // Toome välja nõutud väljad
+            // Nõutud väljad
             const requiredFields = columnsInfo
                 .filter(col => !col.isNullable && !col.hasDefaultValue && !col.isAutoincrement)
                 .map(col => col.name);
 
-            // Andmed
-            const data = await prisma.$queryRaw`
-        SELECT * FROM ${prisma.raw(`"${tableName}"`)}
-        LIMIT ${limit} OFFSET ${offset}
-      `;
+            // Andmepäring
+            const query = `
+                SELECT * FROM "${tableName}"
+                LIMIT ${limit} OFFSET ${offset}
+            `;
+
+            const data = await prisma.$queryRawUnsafe(query);
 
             // Ridade koguarv
-            const countResult = await prisma.$queryRaw`
-        SELECT COUNT(*) as count FROM ${prisma.raw(`"${tableName}"`)}
-      `;
+            const countQuery = `SELECT COUNT(*) as count FROM "${tableName}"`;
+            const countResult = await prisma.$queryRawUnsafe(countQuery);
             const totalRows = parseInt(countResult[0].count);
 
             if (DEBUG) console.log(`Tagastan ${data.length} rida andmeid SQL kaudu`);
@@ -160,13 +183,10 @@ exports.getTableData = async (req, res) => {
             });
         } catch (sqlError) {
             console.error(`SQL viga tabeli ${tableName} pärimisel:`, sqlError);
-
-            // Kui midagi ei tööta, tagastame vähemalt tühja vastuse
-            return res.json({
-                columns: [],
-                data: [],
-                totalRows: 0,
-                requiredFields: []
+            return res.status(500).json({
+                error: 'SQL viga tabeli pärimisel',
+                details: sqlError.message,
+                tableName: tableName
             });
         }
     } catch (error) {
@@ -180,39 +200,14 @@ exports.getTableData = async (req, res) => {
  */
 exports.getTablePrimaryKey = async (req, res) => {
     try {
-        const { tableName } = req.params;
+        const { tableName: rawTableName } = req.params;
+        const tableName = normalizeTableName(rawTableName);
 
         if (DEBUG) console.log(`Päritakse tabeli ${tableName} primaarvõtit`);
 
-        // Kasutame Prisma API-d, kui võimalik
-        if (prisma[tableName] && typeof prisma[tableName].findMany === 'function') {
-            // Prisma mudelite puhul on primaarvõti tavaliselt "id"
-            // kui pole defineeritud teisiti
-            return res.json({ primaryKey: "id" });
-        }
+        // Enamikul juhtudel on primaarvõti "id"
+        return res.json({ primaryKey: "id" });
 
-        // Kontrollime, kas tabel on lubatud
-        const validTables = await getValidTables();
-        if (!validTables.includes(tableName)) {
-            return res.status(404).json({ error: 'Tabelit ei leitud' });
-        }
-
-        try {
-            // Saame tabeli struktuuri, et leida primaarvõti
-            const columnsInfo = await getTableColumns(tableName);
-            const primaryKeyColumn = columnsInfo.find(col => col.isPrimary);
-
-            if (!primaryKeyColumn) {
-                // Kui ei leia primaarvõtit, eeldame, et see on "id"
-                return res.json({ primaryKey: "id" });
-            }
-
-            res.json({ primaryKey: primaryKeyColumn.name });
-        } catch (sqlError) {
-            console.error('SQL päring primaarvõtme jaoks ebaõnnestus:', sqlError);
-            // Paljudel tabelitel on primaarvõti "id"
-            return res.json({ primaryKey: "id" });
-        }
     } catch (error) {
         console.error('Viga primaarvõtme pärimisel:', error);
         res.status(500).json({ error: 'Andmebaasi päring ebaõnnestus: ' + error.message });
@@ -221,11 +216,12 @@ exports.getTablePrimaryKey = async (req, res) => {
 
 /**
  * Uuendab tabeli rida - TÄHELEPANU: Toetame nii /tableName/:id kui ka /tableName marsruute
- * See on universaalne meetod, mis peaks töötama igasuguste pöördumiste korral
  */
 exports.updateRow = async (req, res) => {
     try {
-        const { tableName } = req.params;
+        const { tableName: rawTableName } = req.params;
+        const tableName = normalizeTableName(rawTableName);
+
         // ID võib tulla kas URL-ist või päringust
         const id = req.params.id || req.body.id;
         const rowData = req.body;
@@ -236,49 +232,40 @@ exports.updateRow = async (req, res) => {
             console.log('Päringu body:', req.body);
         }
 
-        // Kontrollime, kas tabel on lubatud
-        const validTables = await getValidTables();
-        if (!validTables.includes(tableName)) {
-            return res.status(404).json({ error: 'Tabelit ei leitud' });
-        }
-
-        // Kui ID puudub täielikult, kontrollime, kas kehas on mõni muu primaarvõti
-        let primaryKeyField = 'id';
-        let primaryKeyValue = id;
-
-        if (!primaryKeyValue && tableName) {
-            if (DEBUG) console.log('ID puudub, otsime alternatiivset primaarvõtit rowData andmetest');
-
-            // Proovime leida mõni ID-ga sarnane väli
-            const possibleKeyFields = Object.keys(rowData).filter(key =>
-                key.toLowerCase().includes('id')
-            );
-
-            if (possibleKeyFields.length > 0) {
-                primaryKeyField = possibleKeyFields[0];
-                primaryKeyValue = rowData[primaryKeyField];
-                if (DEBUG) console.log(`Leidsime alternatiivse primaarvõtme: ${primaryKeyField} = ${primaryKeyValue}`);
-            }
-        }
-
-        if (!primaryKeyValue) {
+        // Kontrollime ID olemasolu
+        if (!id) {
             return res.status(400).json({ error: 'Primaarvõti puudub. Ei saa rida uuendada.' });
         }
 
-        // Katsetame Prisma API-d
+        // Ettevalmistame andmed
+        const updateData = { ...rowData };
+
+        // Eemaldame id välja, et vältida konflikte
+        if (updateData.id !== undefined) {
+            delete updateData.id;
+        }
+
+        // Teisendame teadaolevad tüübid
+        convertKnownTypes(updateData);
+
+        // Asendame tühjad väärtused null-iga
+        replaceEmptyStrings(updateData);
+
+        if (DEBUG) {
+            console.log('Puhastatud andmed uuendamiseks:', updateData);
+        }
+
+        // Kasutame Prisma API-d
         if (prisma[tableName] && typeof prisma[tableName].update === 'function') {
             try {
                 if (DEBUG) console.log(`Kasutan Prisma API-d rea uuendamiseks tabelis ${tableName}`);
 
-                // Uuendame rea koopiaga päringust ilma ID-ta
-                const updateData = { ...rowData };
-                // Eemaldame id välja, et vältida konflikte
-                if (updateData.id !== undefined) {
-                    delete updateData.id;
-                }
+                // Määrame ID väärtuse numbriliseks, kui see on number
+                const idValue = !isNaN(id) ? parseInt(id) : id;
 
+                // Proovime uuendada rida
                 const updatedRow = await prisma[tableName].update({
-                    where: { [primaryKeyField]: parseInt(primaryKeyValue) || primaryKeyValue },
+                    where: { id: idValue },
                     data: updateData
                 });
 
@@ -286,57 +273,18 @@ exports.updateRow = async (req, res) => {
                 return res.json(updatedRow);
             } catch (prismaError) {
                 console.error('Prisma API viga:', prismaError);
-                // Jätkame SQL lähenemisega
+                return res.status(500).json({
+                    error: 'Rea uuendamine ebaõnnestus',
+                    details: prismaError.message,
+                    tableName: tableName,
+                    id: id
+                });
             }
-        }
-
-        // Proovime SQL päringut
-        try {
-            if (DEBUG) console.log('Kasutan SQL päringut rea uuendamiseks');
-
-            // Koostame UPDATE päring
-            const setClauses = [];
-            const values = [];
-            let paramCounter = 1;
-
-            // Koostame SET klausi dünaamiliselt, välja arvatud primaarvõti
-            Object.entries(rowData).forEach(([key, value]) => {
-                if (key !== primaryKeyField) {
-                    setClauses.push(`"${key}" = $${paramCounter}`);
-                    values.push(value);
-                    paramCounter++;
-                }
+        } else {
+            return res.status(404).json({
+                error: 'Tabelit ei leitud või puudub uuendamise funktsioon',
+                tableName: tableName
             });
-
-            // Lisame WHERE tingimuse parameetri
-            values.push(primaryKeyValue);
-
-            // Moodustame päringu
-            const query = `
-        UPDATE "${tableName}" 
-        SET ${setClauses.join(', ')} 
-        WHERE "${primaryKeyField}" = $${paramCounter} 
-        RETURNING *
-      `;
-
-            if (DEBUG) {
-                console.log('SQL päring:', query);
-                console.log('Parameetrid:', values);
-            }
-
-            // Teostame päringu
-            const result = await prisma.$queryRaw(query, ...values);
-
-            if (!result || result.length === 0) {
-                if (DEBUG) console.log('SQL päring ei tagastanud tulemusi');
-                return res.status(404).json({ error: 'Rida ei leitud või uuendamine ebaõnnestus' });
-            }
-
-            if (DEBUG) console.log('SQL päring õnnestus, tulemus:', result[0]);
-            return res.json(result[0]);
-        } catch (sqlError) {
-            console.error('SQL viga:', sqlError);
-            return res.status(500).json({ error: 'SQL viga: ' + sqlError.message });
         }
     } catch (error) {
         console.error('Viga rea uuendamisel:', error);
@@ -344,230 +292,117 @@ exports.updateRow = async (req, res) => {
     }
 };
 
-// Modify this function in server/src/controllers/adminController.js
-
 /**
  * Lisab tabelisse uue rea
  */
 exports.addRow = async (req, res) => {
     try {
-        const { tableName } = req.params;
+        const { tableName: rawTableName } = req.params;
+        const tableName = normalizeTableName(rawTableName);
         const rowData = req.body;
 
-        console.log(`Lisame rea tabelisse ${tableName}`);
-        console.log('Andmed:', rowData);
-
-        // Kontrollime, kas tabel on lubatud
-        const validTables = await getValidTables();
-        if (!validTables.includes(tableName)) {
-            return res.status(404).json({ error: 'Tabelit ei leitud' });
+        if (DEBUG) {
+            console.log(`Lisame rea tabelisse ${tableName}`);
+            console.log('Andmed:', rowData);
         }
 
-        // Convert table name to both PascalCase and camelCase for Prisma
-        // Prisma models are PascalCase but accessed with camelCase
-        const pascalCaseTableName = tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase();
-        const camelCaseTableName = tableName.charAt(0).toLowerCase() + tableName.slice(1).toLowerCase();
+        // Ettevalmistame andmed
+        const insertData = { ...rowData };
 
-        // Use the correct table name based on what exists in the Prisma client
-        const prismaModelName = prisma[pascalCaseTableName] ? pascalCaseTableName :
-            (prisma[camelCaseTableName] ? camelCaseTableName : tableName);
-
-        // Force convert id to integer regardless of schema inspection
-        const convertedData = { ...rowData };
-
-        // These are common fields that are usually integers in databases
-        const integerFields = ['id', 'affiliateId', 'recipientId', 'userId', 'planId', 'contractId',
-            'trainerId', 'classId', 'trainingId', 'groupId', 'memberId', 'creditId'];
-
-        // Convert known integer fields from strings to integers
-        for (const field of integerFields) {
-            if (convertedData[field] !== undefined && convertedData[field] !== null && convertedData[field] !== '') {
-                convertedData[field] = parseInt(convertedData[field], 10);
-                console.log(`Converted ${field} from ${rowData[field]} to ${convertedData[field]}`);
-            }
+        // Eemaldame id, kui see on tühi või 0
+        if (insertData.id === '' || insertData.id === 0 || insertData.id === '0') {
+            delete insertData.id;
         }
 
-        // Handle empty strings
-        for (const key in convertedData) {
-            if (convertedData[key] === '') {
-                convertedData[key] = null;
-            }
+        // Teisendame teadaolevad tüübid
+        convertKnownTypes(insertData);
+
+        // Asendame tühjad väärtused null-iga
+        replaceEmptyStrings(insertData);
+
+        // Eemaldame createdAt, kui see on null, et kasutada vaikeväärtust
+        if (insertData.createdAt === null) {
+            delete insertData.createdAt;
         }
 
-        // Remove createdAt if null to use default value from schema
-        if (convertedData.createdAt === null) {
-            delete convertedData.createdAt;
+        if (DEBUG) {
+            console.log('Puhastatud andmed lisamiseks:', insertData);
         }
 
-        console.log('Converted data for insertion:', convertedData);
-
-        // Try to automatically set up relations based on ID fields
-        try {
-            console.log(`Trying to create row with relations for ${prismaModelName}`);
-
-            // Prepare data with relations
-            const dataWithRelations = { ...convertedData };
-            const relationData = {};
-
-            // Get common relation fields based on ID suffix
-            const possibleRelations = {};
-
-            for (const key in dataWithRelations) {
-                // Check if field ends with Id (excluding 'id' itself) to detect foreign keys
-                if (key !== 'id' && key.endsWith('Id')) {
-                    const relationName = key.slice(0, -2).toLowerCase(); // e.g., affiliateId -> affiliate
-                    possibleRelations[relationName] = dataWithRelations[key];
-                }
-            }
-
-            // Create relation objects
-            for (const [relation, id] of Object.entries(possibleRelations)) {
-                if (id !== null && id !== undefined) {
-                    // For a relation field like "affiliateId", add "affiliate: { connect: { id: X } }"
-                    relationData[relation] = {
-                        connect: { id }
-                    };
-                }
-            }
-
-            // Remove ID fields to avoid duplicate data
-            for (const key of Object.keys(possibleRelations)) {
-                const idField = `${key}Id`;
-                if (dataWithRelations[idField] !== undefined) {
-                    delete dataWithRelations[idField];
-                }
-            }
-
-            // Combine regular data with relation data
-            const finalData = {
-                ...dataWithRelations,
-                ...relationData
-            };
-
-            console.log('Final data with relations:', finalData);
-
-            const newRow = await prisma[prismaModelName].create({
-                data: finalData
-            });
-
-            console.log('Row creation successful with relations:', newRow);
-            return res.status(201).json(newRow);
-        } catch (relationError) {
-            console.error('Creation with relations failed:', relationError);
-            // Continue to next approach if this fails
-        }
-
-        // Try Prisma create without relations
-        if (prisma[prismaModelName] && typeof prisma[prismaModelName].create === 'function') {
+        // Kasutame Prisma API-d
+        if (prisma[tableName] && typeof prisma[tableName].create === 'function') {
             try {
-                console.log(`Kasutan Prisma API-d rea lisamiseks tabelisse ${prismaModelName}`);
+                if (DEBUG) console.log(`Kasutan Prisma API-d rea lisamiseks tabelisse ${tableName}`);
 
-                const newRow = await prisma[prismaModelName].create({
-                    data: convertedData
+                // 1. Identifitseerime relatsioonid ja ID väljad
+                const { cleanData, relations } = prepareRelations(insertData);
+
+                if (DEBUG) {
+                    console.log('Töödeldud andmed:', cleanData);
+                    console.log('Relatsioonid:', relations);
+                }
+
+                // 2. Ühendame tavalised andmed ja relatsioonid
+                const finalData = {
+                    ...cleanData,
+                    ...relations
+                };
+
+                // 3. Loome uue rea
+                const newRow = await prisma[tableName].create({
+                    data: finalData
                 });
 
-                console.log('Rea lisamine õnnestus Prisma API-ga:', newRow);
+                if (DEBUG) console.log('Rea lisamine õnnestus:', newRow);
                 return res.status(201).json(newRow);
             } catch (prismaError) {
                 console.error('Prisma API viga:', prismaError);
-                // Continue to next approach
-            }
-        }
 
-        // Try Prisma createMany
-        try {
-            console.log('Kasutan otsest rea sisestamise meetodit');
-
-            const result = await prisma[prismaModelName].createMany({
-                data: [convertedData],
-                skipDuplicates: true
-            });
-
-            if (result && result.count > 0) {
-                // Return created row
-                return res.status(201).json({
-                    ...convertedData,
-                    _created: true,
-                    count: result.count
-                });
-            }
-
-            throw new Error('Rea loomine ei õnnestunud');
-        } catch (directError) {
-            console.error('Otsene sisestamine ebaõnnestus:', directError);
-
-            // One last attempt without the id field if it might be auto-incremented
-            try {
-                console.log('Proovime lisada ilma ID väljata (autoincrement võimalus)');
-
-                const dataWithoutId = { ...convertedData };
-                if ('id' in dataWithoutId) {
-                    delete dataWithoutId.id;
-                }
-
-                // Try again with the relations approach but without ID
+                // Proovime lihtsustatud andmetega
                 try {
-                    // Prepare data with relations
-                    const relationData = {};
+                    if (DEBUG) console.log('Proovime lihtsustatud andmetega');
 
-                    // Get common relation fields based on ID suffix
-                    const possibleRelations = {};
+                    // Eemaldame relatsioonid ja proovime ainult põhiandmeid
+                    const simpleData = { ...insertData };
 
-                    for (const key in dataWithoutId) {
-                        // Check if field ends with Id (excluding 'id' itself)
+                    // Eemaldame kõik väljad, mis lõppevad 'Id' aga pole 'id'
+                    for (const key in simpleData) {
                         if (key !== 'id' && key.endsWith('Id')) {
-                            const relationName = key.slice(0, -2).toLowerCase();
-                            possibleRelations[relationName] = dataWithoutId[key];
+                            // Jätame alles ainult id numbrid
+                            if (simpleData[key] !== null && simpleData[key] !== undefined) {
+                                simpleData[key] = parseInt(simpleData[key]) || simpleData[key];
+                            }
                         }
                     }
 
-                    // Create relation objects
-                    for (const [relation, id] of Object.entries(possibleRelations)) {
-                        if (id !== null && id !== undefined) {
-                            relationData[relation] = {
-                                connect: { id }
-                            };
-                        }
+                    // Eemaldame id välja, et lasta andmebaasil see genereerida
+                    if ('id' in simpleData) {
+                        delete simpleData.id;
                     }
 
-                    // Remove ID fields to avoid duplicate data
-                    for (const key of Object.keys(possibleRelations)) {
-                        const idField = `${key}Id`;
-                        if (dataWithoutId[idField] !== undefined) {
-                            delete dataWithoutId[idField];
-                        }
-                    }
+                    if (DEBUG) console.log('Lihtsustatud andmed:', simpleData);
 
-                    // Combine regular data with relation data
-                    const finalData = {
-                        ...dataWithoutId,
-                        ...relationData
-                    };
-
-                    const newRow = await prisma[prismaModelName].create({
-                        data: finalData
+                    const newRow = await prisma[tableName].create({
+                        data: simpleData
                     });
 
-                    console.log('Rea lisamine õnnestus ilma ID-ta ja relatsioonidega:', newRow);
+                    if (DEBUG) console.log('Rea lisamine õnnestus lihtsustatud andmetega:', newRow);
                     return res.status(201).json(newRow);
-                } catch (finalRelationError) {
-                    console.error('Relatsioonidega lisamine ilma ID-ta ebaõnnestus:', finalRelationError);
-
-                    // Last attempt with plain data without ID
-                    const newRow = await prisma[prismaModelName].create({
-                        data: dataWithoutId
+                } catch (simplePrismaError) {
+                    console.error('Lihtsustatud andmetega lisamine ebaõnnestus:', simplePrismaError);
+                    return res.status(500).json({
+                        error: 'Rea lisamine ebaõnnestus',
+                        details: simplePrismaError.message,
+                        originalError: prismaError.message,
+                        tableName: tableName
                     });
-
-                    console.log('Rea lisamine õnnestus ilma ID-ta:', newRow);
-                    return res.status(201).json(newRow);
                 }
-            } catch (finalError) {
-                console.error('Kõik katsed ebaõnnestusid:', finalError);
-                return res.status(500).json({
-                    error: 'Rea lisamine ebaõnnestus kõigi meetoditega',
-                    details: finalError.message
-                });
             }
+        } else {
+            return res.status(404).json({
+                error: 'Tabelit ei leitud või puudub lisamise funktsioon',
+                tableName: tableName
+            });
         }
     } catch (error) {
         console.error('Viga rea lisamisel:', error);
@@ -580,66 +415,44 @@ exports.addRow = async (req, res) => {
  */
 exports.deleteRow = async (req, res) => {
     try {
-        const { tableName, id } = req.params;
+        const { tableName: rawTableName, id } = req.params;
+        const tableName = normalizeTableName(rawTableName);
 
         if (DEBUG) console.log(`Kustutame rea tabelist ${tableName}, ID: ${id}`);
-
-        // Kontrollime, kas tabel on lubatud
-        const validTables = await getValidTables();
-        if (!validTables.includes(tableName)) {
-            return res.status(404).json({ error: 'Tabelit ei leitud' });
-        }
 
         // Kontrollime ID olemasolu
         if (!id) {
             return res.status(400).json({ error: 'Puudub rea ID' });
         }
 
-        // Kasutame Prisma API-d, kui võimalik
+        // Määrame ID väärtuse numbriliseks, kui see on number
+        const idValue = !isNaN(id) ? parseInt(id) : id;
+
+        // Kasutame Prisma API-d
         if (prisma[tableName] && typeof prisma[tableName].delete === 'function') {
             try {
                 if (DEBUG) console.log(`Kasutan Prisma API-d rea kustutamiseks tabelist ${tableName}`);
 
                 const deletedRow = await prisma[tableName].delete({
-                    where: { id: parseInt(id) || id }
+                    where: { id: idValue }
                 });
 
-                if (DEBUG) console.log('Rea kustutamine õnnestus Prisma API-ga:', deletedRow);
+                if (DEBUG) console.log('Rea kustutamine õnnestus:', deletedRow);
                 return res.json({ message: 'Rida edukalt kustutatud', deletedRow });
             } catch (prismaError) {
                 console.error('Prisma API viga:', prismaError);
-                // Jätkame SQL lähenemisega
+                return res.status(500).json({
+                    error: 'Rea kustutamine ebaõnnestus',
+                    details: prismaError.message,
+                    tableName: tableName,
+                    id: id
+                });
             }
-        }
-
-        // Proovime SQL päringut
-        try {
-            if (DEBUG) console.log('Kasutan SQL päringut rea kustutamiseks');
-
-            // DELETE päring
-            const query = `
-        DELETE FROM "${tableName}"
-        WHERE "id" = $1
-        RETURNING *
-      `;
-
-            if (DEBUG) {
-                console.log('SQL päring:', query);
-                console.log('Parameeter:', id);
-            }
-
-            const result = await prisma.$queryRaw(query, id);
-
-            if (!result || result.length === 0) {
-                if (DEBUG) console.log('SQL päring ei tagastanud tulemusi');
-                return res.status(404).json({ error: 'Rida ei leitud' });
-            }
-
-            if (DEBUG) console.log('SQL päring õnnestus, kustutatud rida:', result[0]);
-            return res.json({ message: 'Rida edukalt kustutatud', deletedRow: result[0] });
-        } catch (sqlError) {
-            console.error('SQL viga:', sqlError);
-            return res.status(500).json({ error: 'SQL viga: ' + sqlError.message });
+        } else {
+            return res.status(404).json({
+                error: 'Tabelit ei leitud või puudub kustutamise funktsioon',
+                tableName: tableName
+            });
         }
     } catch (error) {
         console.error('Viga rea kustutamisel:', error);
@@ -647,57 +460,24 @@ exports.deleteRow = async (req, res) => {
     }
 };
 
-// Helper functions
+// =================== ABIFUNKTSIOONID ===================
 
 /**
- * Tagastab kõik lubatud tabelid
+ * Kontrollib tabeli olemasolu
  */
-async function getValidTables() {
+async function checkTableExists(tableName) {
     try {
-        // Kõigepealt proovime Prisma API-d
-        const dataModels = Object.keys(prisma).filter(key =>
-            !key.startsWith('_') &&
-            typeof prisma[key] === 'object' &&
-            prisma[key] !== null &&
-            typeof prisma[key].findMany === 'function'
-        );
-
-        if (dataModels.length > 0) {
-            return dataModels;
-        }
-
-        // Siis proovime SQL päringut
-        try {
-            const dbType = process.env.DATABASE_URL?.includes('postgresql') ? 'postgresql' : 'mysql';
-
-            if (dbType === 'postgresql') {
-                const result = await prisma.$queryRaw`
-          SELECT table_name 
-          FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_type = 'BASE TABLE';
+        const result = await prisma.$queryRaw`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = ${tableName}
+            ) as exists;
         `;
-                return result.map(row => row.table_name);
-            } else {
-                const result = await prisma.$queryRaw`SHOW TABLES;`;
-                return result.map(row => Object.values(row)[0]);
-            }
-        } catch (sqlError) {
-            console.error('SQL päring tabelite nimekirja saamiseks ebaõnnestus:', sqlError);
-        }
-
-        // Viimase abinõuna tagastame staatilise nimekirja
-        return [
-            'User', 'Affiliate', 'AffiliateTrainer', 'ClassSchedule', 'ClassAttendee',
-            'Plan', 'UserPlan', 'Record', 'Training', 'Exercise', 'Contract',
-            'SignedContract', 'Message', 'Credit', 'defaultWOD', 'ClassLeaderboard',
-            'Members', 'todayWOD', 'transactions', 'PaymentHoliday', 'ContractLogs',
-            'message'
-        ];
+        return result[0].exists;
     } catch (error) {
-        console.error('Viga tabelite nimekirja pärimisel:', error);
-        // Tagastame tühja massiivi, et vältida täiendavaid vigu
-        return [];
+        console.error(`Viga tabeli ${tableName} olemasolu kontrollimisel:`, error);
+        return false;
     }
 }
 
@@ -706,46 +486,145 @@ async function getValidTables() {
  */
 async function getTableColumns(tableName) {
     try {
-        const dbType = process.env.DATABASE_URL?.includes('postgresql') ? 'postgresql' : 'mysql';
-
-        if (dbType === 'postgresql') {
-            const result = await prisma.$queryRaw`
-                SELECT
-                    column_name as "name",
-                    data_type as "type",
-                    is_nullable = 'NO' as "isNullable",
-                    column_default IS NOT NULL as "hasDefaultValue",
-                    case when pg_get_serial_sequence(quote_ident(${tableName}), column_name) IS NOT NULL
-                             then true else false end as "isAutoincrement",
-                    EXISTS (
-                        SELECT 1 FROM information_schema.table_constraints tc
-                                          JOIN information_schema.key_column_usage kcu
-                                               ON tc.constraint_name = kcu.constraint_name
-                        WHERE tc.constraint_type = 'PRIMARY KEY'
-                          AND tc.table_name = ${tableName}
-                          AND kcu.column_name = columns.column_name
-                    ) as "isPrimary"
-                FROM information_schema.columns
-                WHERE table_name = ${tableName}
-                ORDER BY ordinal_position;
-            `;
-            return result;
-        } else {
-            const result = await prisma.$queryRaw`
-        SHOW COLUMNS FROM ${prisma.raw(tableName)};
-      `;
-            return result.map(col => ({
-                name: col.Field,
-                type: col.Type.split('(')[0],
-                isNullable: col.Null === 'YES',
-                hasDefaultValue: col.Default !== null,
-                isAutoincrement: col.Extra.includes('auto_increment'),
-                isPrimary: col.Key === 'PRI'
-            }));
-        }
+        const result = await prisma.$queryRaw`
+            SELECT
+                column_name as "name",
+                data_type as "type",
+                is_nullable = 'NO' as "isNullable",
+                column_default IS NOT NULL as "hasDefaultValue",
+                pg_get_serial_sequence(quote_ident(${tableName}), column_name) IS NOT NULL as "isAutoincrement",
+                EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints tc
+                    JOIN information_schema.key_column_usage kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    WHERE tc.constraint_type = 'PRIMARY KEY'
+                    AND tc.table_name = ${tableName}
+                    AND kcu.column_name = columns.column_name
+                ) as "isPrimary"
+            FROM information_schema.columns
+            WHERE table_name = ${tableName}
+            ORDER BY ordinal_position;
+        `;
+        return result;
     } catch (error) {
         console.error(`Viga tabeli ${tableName} veergude pärimisel:`, error);
-        // Tagastame tühja massiivi vältimaks täiendavaid vigu
         return [];
     }
+}
+
+/**
+ * Teisendab teadaolevad väljad õigeteks tüüpideks
+ */
+function convertKnownTypes(data) {
+    // Väljad, mis peaksid olema täisarvud
+    const integerFields = [
+        'id', 'affiliateId', 'trainerId', 'userId', 'planId', 'contractId',
+        'recipientId', 'classId', 'trainingId', 'groupId', 'memberId', 'creditId',
+        'homeAffiliate', 'ownerId', 'seriesId', 'paymentDay', 'familyMemberId'
+    ];
+
+    // Väljad, mis peaksid olema ujukomaarvud
+    const floatFields = [
+        'price', 'amount', 'paymentAmount', 'firstPaymentAmount', 'credit', 'weight'
+    ];
+
+    // Väljad, mis peaksid olema tõeväärtused
+    const booleanFields = [
+        'isActive', 'isAcceptedTerms', 'affiliateOwner', 'active', 'emailConfirmed',
+        'repeatWeekly', 'canRegister', 'freeClass', 'checkIn', 'atRisk', 'isFirstPayment',
+        'paymentHoliday', 'decrease', 'isCredit', 'isFamilyMember'
+    ];
+
+    // Teisendame täisarvud
+    for (const field of integerFields) {
+        if (data[field] !== undefined && data[field] !== null && data[field] !== '') {
+            const parsedValue = parseInt(data[field], 10);
+            data[field] = isNaN(parsedValue) ? data[field] : parsedValue;
+        }
+    }
+
+    // Teisendame ujukomaarvud
+    for (const field of floatFields) {
+        if (data[field] !== undefined && data[field] !== null && data[field] !== '') {
+            const parsedValue = parseFloat(data[field]);
+            data[field] = isNaN(parsedValue) ? data[field] : parsedValue;
+        }
+    }
+
+    // Teisendame tõeväärtused
+    for (const field of booleanFields) {
+        if (data[field] !== undefined && data[field] !== null) {
+            if (typeof data[field] === 'string') {
+                const lowerValue = data[field].toLowerCase();
+                if (lowerValue === 'true' || lowerValue === 't' || lowerValue === '1' || lowerValue === 'yes' || lowerValue === 'y') {
+                    data[field] = true;
+                } else if (lowerValue === 'false' || lowerValue === 'f' || lowerValue === '0' || lowerValue === 'no' || lowerValue === 'n') {
+                    data[field] = false;
+                }
+            }
+        }
+    }
+
+    // Teisendame kuupäevad
+    for (const field in data) {
+        if (
+            (field === 'createdAt' || field === 'date' || field === 'startDate' ||
+                field === 'endDate' || field === 'time' || field === 'validUntil' ||
+                field === 'dateOfBirth' || field === 'acceptedAt' || field === 'purchasedAt' ||
+                field === 'signedAt' || field === 'verificationExpires' || field === 'resetTokenExpires') &&
+            data[field] !== null && data[field] !== undefined && data[field] !== ''
+        ) {
+            // Kui on juba Date objekt, siis pole vaja teisendada
+            if (!(data[field] instanceof Date)) {
+                try {
+                    data[field] = new Date(data[field]);
+                } catch (e) {
+                    console.error(`Kuupäeva teisendamine ebaõnnestus: ${field}=${data[field]}`, e);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Asendab tühjad stringid null-iga
+ */
+function replaceEmptyStrings(data) {
+    for (const key in data) {
+        if (data[key] === '') {
+            data[key] = null;
+        }
+    }
+}
+
+/**
+ * Ettevalmistab relatsioonid Prisma jaoks
+ */
+function prepareRelations(data) {
+    const cleanData = { ...data };
+    const relations = {};
+
+    // Otsime väljad, mis lõppevad ID-ga (v.a. 'id')
+    const relationFields = Object.keys(cleanData).filter(key =>
+        key !== 'id' && key.endsWith('Id') && cleanData[key] !== null && cleanData[key] !== undefined && cleanData[key] !== ''
+    );
+
+    // Iga leitud relationField jaoks loome relation objekti
+    for (const field of relationFields) {
+        const relationName = field.slice(0, -2); // Eemaldame 'Id' lõpu
+        const relationValue = cleanData[field];
+
+        // Teisendame väärtuse numbriks, kui see on numbriline string
+        const parsedValue = !isNaN(relationValue) ? parseInt(relationValue, 10) : relationValue;
+
+        // Loome relation objekti (nt { affiliate: { connect: { id: 1 } } })
+        relations[relationName] = {
+            connect: { id: parsedValue }
+        };
+
+        // Jätame ID välja alles, kuid teisendame selle numbriliseks
+        cleanData[field] = parsedValue;
+    }
+
+    return { cleanData, relations };
 }

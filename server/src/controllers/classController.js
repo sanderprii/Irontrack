@@ -94,22 +94,28 @@ const createClass = async (req, res) => {
         // Kontrollime, kas loodud kuupäev on kehtiv
 
 
+        // Esmalt loo klass ilma seriesId-ta
         const newClass = await prisma.classSchedule.create({
             data: {
                 trainingType,
                 trainingName,
-                time: classTime, // ✅ Õige DateTime väärtus Prisma jaoks
+                time: classTime,
                 duration: parseInt(duration),
                 trainer,
                 memberCapacity: parseInt(memberCapacity),
                 location,
                 repeatWeekly,
-
                 wodName: wodName.toUpperCase(),
                 wodType,
                 ownerId: owner,
                 affiliateId: parseInt(affiliateId)
             }
+        });
+
+// Seejärel uuenda sama klassi, määrates seriesId = id
+        const updatedClass = await prisma.classSchedule.update({
+            where: { id: newClass.id },
+            data: { seriesId: newClass.id }
         });
 
         // if repeatWeekly is true, create new classes for the next 52 weeks. seriedId is the id of the first class in the series
@@ -138,7 +144,7 @@ const createClass = async (req, res) => {
         }
 
 
-        res.status(201).json({message: "Class created successfully!", class: newClass});
+        res.status(201).json({message: "Class created successfully!", class: updatedClass});
     } catch (error) {
         console.error("❌ Error creating class:", error);
         res.status(500).json({error: "Failed to create class."});

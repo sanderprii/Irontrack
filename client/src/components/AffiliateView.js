@@ -37,6 +37,7 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
     const handleSave = async (updatedAffiliate) => {
         await onUpdateAffiliate(updatedAffiliate);
         setEditing(false);
+
     };
 
     // Function for uploading logo
@@ -254,7 +255,7 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography variant="body1">Holiday fee:</Typography>
                                 <Chip
-                                    label={`${affiliate.paymentHolidayFee}€`}
+                                    label={`${affiliate.paymentHolidayFee}€` || ""}
                                     color="success"
                                     variant="outlined"
                                     sx={{ fontWeight: 'bold' }}

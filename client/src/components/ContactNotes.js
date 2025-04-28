@@ -52,25 +52,12 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
         // Use either provided userId or get it from user object
         const targetUserId = userId || (user?.id || user?.userId);
 
-        if (!hasPermission) {
 
-            return;
-        }
 
-        if (!targetUserId) {
 
-            setError("Kasutaja ID puudub, ei saa märkmeid laadida");
-            return;
-        }
-
-        if (!affiliateId) {
-
-            setError("Klubi ID puudub, ei saa märkmeid laadida");
-            return;
-        }
 
         fetchNotes(targetUserId);
-    }, [user, userId, affiliateId]);
+    }, []);
 
     const fetchNotes = async (targetUserId) => {
         setIsLoading(true);

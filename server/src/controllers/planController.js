@@ -28,7 +28,7 @@ const getPlans = async (req, res) => {
 const createPlan = async (req, res) => {
     const ownerId = parseInt(req.user?.id);
     const {name, trainingType, validityDays, price, additionalData, sessions, active} = req.body;
-let trainingTypeString = trainingType;
+    let trainingTypeString = trainingType;
     if (Array.isArray(trainingTypeString)) {
         trainingTypeString = JSON.stringify(trainingTypeString);
     }
@@ -50,7 +50,7 @@ let trainingTypeString = trainingType;
                 sessions: parseInt(sessions),
                 ownerId,
                 affiliateId: affiliateId.id,
-                active: active || true // Default to true if not provided
+                active: active // Default to true if not provided
             }
         });
 
@@ -144,11 +144,11 @@ const buyPlan = async (req, res) => {
     try {
 
 
-            // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
-            const plan = await prisma.plan.findUnique({where: {id: parseInt(planData.id)}});
-            if (!plan) {
-                return res.status(404).json({error: "Plan not found."});
-            }
+        // Kontrollid, mis ei muuda andmebaasi, võid hoida eraldi
+        const plan = await prisma.plan.findUnique({where: {id: parseInt(planData.id)}});
+        if (!plan) {
+            return res.status(404).json({error: "Plan not found."});
+        }
 
         const user = await prisma.user.findUnique({
             where: {id: userId},
@@ -207,16 +207,16 @@ const buyPlan = async (req, res) => {
 
             }
             let paymentType = '';
-            if(appliedCredit === 0){
+            if (appliedCredit === 0) {
                 paymentType = 'montonio';
 
-            } else if (appliedCredit > 0 && appliedCredit < planData.price){
+            } else if (appliedCredit > 0 && appliedCredit < planData.price) {
                 paymentType = 'mixed';
-            } else if (appliedCredit === planData.price){
+            } else if (appliedCredit === planData.price) {
                 paymentType = 'credit';
             }
 
-            if(appliedCredit === planData.price){
+            if (appliedCredit === planData.price) {
                 merchantReference = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
             }
 

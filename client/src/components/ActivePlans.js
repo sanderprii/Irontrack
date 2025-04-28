@@ -75,8 +75,7 @@ const ActivePlans = ({ userId, affiliateId }) => {
     // Load affiliate plans
     useEffect(() => {
         getPlans().then((allPlans) => {
-            const activeAffiliatePlans = allPlans.filter((pl) => pl.active === true);
-            setAffiliatePlans(activeAffiliatePlans);
+            setAffiliatePlans(allPlans);
         });
     }, []);
 

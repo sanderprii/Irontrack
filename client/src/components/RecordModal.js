@@ -142,6 +142,7 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
 
     // Open edit dialog for a record
     const handleEditRecord = (record) => {
+        console.log('record', record);
         setViewEditRecord(record);
         setShowEditDialog(true);
     };

@@ -218,141 +218,7 @@ const IOSInstallModal = ({ open, handleClose }) => {
     );
 };
 
-// PWA Installation Tutorial Modal for Android
-const AndroidInstallModal = ({ open, handleClose }) => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [activeStep, setActiveStep] = useState(0);
 
-    const steps = [
-        {
-            label: "Read all 3 steps first! - Open Chrome",
-            description: "Visit the IronTrack website using Google Chrome on your Android device.",
-            image: androidImages[0],
-        },
-        {
-            label: "Menu Options",
-            description: "Tap the three dots menu in the top right corner, then select 'Add to Home screen'.",
-            image: androidImages[1],
-        },
-        {
-            label: "Confirm Installation",
-            description: "Review the app information, then tap 'Add' to install it on your home screen.",
-            image: androidImages[2],
-        }
-    ];
-
-    const handleNext = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    };
-
-    return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 2,
-                    overflow: 'hidden'
-                }
-            }}
-            fullScreen={isMobile}
-        >
-            <DialogTitle sx={{
-                bgcolor: '#3ddc84', // Android green
-                color: 'white',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                px: 3,
-                py: 2
-            }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AndroidIcon />
-                    <Typography variant="h6" component="div">
-                        Install IronTrack on Android
-                    </Typography>
-                </Box>
-                <IconButton
-                    edge="end"
-                    color="inherit"
-                    onClick={handleClose}
-                    aria-label="close"
-                >
-                    <CloseIcon />
-                </IconButton>
-            </DialogTitle>
-
-            <DialogContent sx={{ p: 3, mt: 2 }}>
-                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-                    {steps.map((step) => (
-                        <Step key={step.label}>
-                            <StepLabel>{step.label}</StepLabel>
-                        </Step>
-                    ))}
-                </Stepper>
-
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" gutterBottom>
-                        {steps[activeStep].label}
-                    </Typography>
-                    <Typography variant="body1" paragraph sx={{ mb: 3 }}>
-                        {steps[activeStep].description}
-                    </Typography>
-                    <Box
-                        component="img"
-                        src={steps[activeStep].image}
-                        alt={`Android installation step ${activeStep + 1}`}
-                        sx={{
-                            maxWidth: '100%',
-                            height: 'auto',
-                            maxHeight: '350px',
-                            border: '1px solid #eee',
-                            borderRadius: 2,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            mb: 2
-                        }}
-                    />
-                </Box>
-            </DialogContent>
-
-            <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
-                <Button
-                    disabled={activeStep === 0}
-                    onClick={handleBack}
-                    variant="outlined"
-                >
-                    Back
-                </Button>
-                <Box>
-                    {activeStep === steps.length - 1 ? (
-                        <Button
-                            onClick={handleClose}
-                            variant="contained"
-                            sx={{ bgcolor: '#3ddc84', '&:hover': { bgcolor: '#32b770' } }}
-                        >
-                            Done
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={handleNext}
-                            variant="contained"
-                            sx={{ bgcolor: '#3ddc84', '&:hover': { bgcolor: '#32b770' } }}
-                        >
-                            Next
-                        </Button>
-                    )}
-                </Box>
-            </DialogActions>
-        </Dialog>
-    );
-};
 
 // Modernne statistika komponent animeeritud numbritega
 const StatCounter = ({ value, label, icon, delay = 0.2 }) => {
@@ -686,10 +552,7 @@ export default function HomePage() {
                     open={iOSModalOpen}
                     handleClose={handleCloseIOSModal}
                 />
-                <AndroidInstallModal
-                    open={androidModalOpen}
-                    handleClose={handleCloseAndroidModal}
-                />
+
 
                 {/* HERO KARUSSELL */}
                 <Box sx={{ position: "relative" }}>
@@ -819,7 +682,8 @@ export default function HomePage() {
                                                         icon={<AndroidIcon />}
                                                         label="Android"
                                                         bgColor="#3ddc84"
-                                                        onClick={handleOpenAndroidModal}
+                                                        onClick={() => window.open('https://play.google.com/store/apps/details?id=com.irontrack.Irontrack', '_blank')}
+
                                                     />
                                                 </Box>
                                             </Box>

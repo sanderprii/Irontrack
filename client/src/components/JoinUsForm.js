@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -18,11 +18,26 @@ import {
     Paper,
     Grid,
     InputAdornment,
-    IconButton
+    IconButton,
+    CircularProgress,
+    Tooltip
 } from '@mui/material';
-import { Visibility, VisibilityOff, Person, Email, Phone, Home, Key, VerifiedUser } from '@mui/icons-material';
+import {
+    Visibility,
+    VisibilityOff,
+    Person,
+    Email,
+    Phone,
+    Home,
+    Key,
+    VerifiedUser,
+    CheckCircle,
+    Warning,
+    Error
+} from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
+import { debounce } from 'lodash';
 
 import ContractTermsModal from './ContractTermsModal';
 
@@ -100,6 +115,10 @@ export default function JoinUsForm() {
     const [success, setSuccess] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Email validation state
+    const [isValidatingEmail, setIsValidatingEmail] = useState(false);
+    const [emailValidationResult, setEmailValidationResult] = useState(null);
+
     // Validation error states
     const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
@@ -114,6 +133,70 @@ export default function JoinUsForm() {
 
     // API URL
     const API_URL = process.env.REACT_APP_API_URL;
+
+    // Email validation function
+    const validateEmailAddress = async (emailToValidate) => {
+        if (!emailToValidate || emailToValidate.length < 5 || !emailToValidate.includes('@')) {
+            return; // Don't validate incomplete emails
+        }
+
+        setIsValidatingEmail(true);
+
+        try {
+            const response = await fetch(`${API_URL}/auth/validate-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: emailToValidate }),
+            });
+
+            const data = await response.json();
+
+            setEmailValidationResult(data);
+
+            // Update email error state based on validation result
+            if (data.category === 'invalid') {
+                setEmailError(true);
+                setEmailErrorMessage(`Invalid email: ${data.details}`);
+            } else if (data.category === 'risky') {
+                setEmailError(true);
+                setEmailErrorMessage(`Warning: ${data.details}`);
+            } else if (data.category === 'valid') {
+                setEmailError(false);
+                setEmailErrorMessage('');
+            }
+        } catch (err) {
+            console.error('Email validation error:', err);
+            // Don't update email error state on API errors
+        } finally {
+            setIsValidatingEmail(false);
+        }
+    };
+
+    // Debounced email validation
+    const debouncedValidateEmail = useCallback(
+        debounce((emailValue) => {
+            if (emailValue && emailValue.includes('@') && emailValue.includes('.')) {
+                validateEmailAddress(emailValue);
+            }
+        }, 800),
+        []
+    );
+
+    // Validate email when it changes
+    useEffect(() => {
+        if (email && email.includes('@')) {
+            debouncedValidateEmail(email);
+        } else {
+            // Reset validation when email is cleared
+            setEmailValidationResult(null);
+        }
+
+        return () => {
+            debouncedValidateEmail.cancel();
+        };
+    }, [email, debouncedValidateEmail]);
 
     // Validate confirm email whenever either email or confirm email changes
     useEffect(() => {
@@ -141,14 +224,18 @@ export default function JoinUsForm() {
             setFullNameErrorMessage('');
         }
 
-        // Email validation
+        // Basic Email validation
         if (!email || !/\S+@\S+\.\S+/.test(email)) {
             setEmailError(true);
             setEmailErrorMessage('Please enter a valid email address.');
             isValid = false;
         } else {
-            setEmailError(false);
-            setEmailErrorMessage('');
+            // If we have a validation result that shows the email is invalid, keep the error
+            if (emailValidationResult && emailValidationResult.category === 'invalid') {
+                setEmailError(true);
+                setEmailErrorMessage(`Invalid email: ${emailValidationResult.details}`);
+                isValid = false;
+            }
         }
 
         // Confirm email validation
@@ -203,6 +290,18 @@ export default function JoinUsForm() {
             return;
         }
 
+        // Additional check for email validation
+        if (emailValidationResult && emailValidationResult.category === 'invalid') {
+            setError(`This email cannot be used: ${emailValidationResult.details}`);
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Show warning but allow to continue for 'risky' emails
+        if (emailValidationResult && emailValidationResult.category === 'risky') {
+            console.warn(`Proceeding with risky email: ${emailValidationResult.details}`);
+        }
+
         try {
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
@@ -236,6 +335,7 @@ export default function JoinUsForm() {
                 setConfirmPassword('');
                 setAcceptedTerms(false);
                 setIsAffiliateOwner(false);
+                setEmailValidationResult(null);
 
                 // Automatically redirect to login after 5 seconds
                 setTimeout(() => {
@@ -255,6 +355,32 @@ export default function JoinUsForm() {
     const openTerms = () => {
         setTermsId('register');
         setTermsModalOpen(true);
+    };
+
+    // Helper function to get color for email validation
+    const getEmailFieldColor = () => {
+        if (emailError) return 'error';
+        if (emailValidationResult) {
+            if (emailValidationResult.category === 'valid') return 'success';
+            if (emailValidationResult.category === 'risky') return 'warning';
+        }
+        return 'primary';
+    };
+
+    // Email field tooltip text based on validation result
+    const getEmailTooltipText = () => {
+        if (isValidatingEmail) return 'Validating email...';
+        if (!emailValidationResult) return '';
+
+        if (emailValidationResult.category === 'valid') {
+            return 'Email is valid and safe to use';
+        } else if (emailValidationResult.category === 'risky') {
+            return emailValidationResult.details;
+        } else if (emailValidationResult.category === 'invalid') {
+            return emailValidationResult.details;
+        }
+
+        return '';
     };
 
     return (
@@ -355,33 +481,50 @@ export default function JoinUsForm() {
                                     <FormLabel htmlFor="email" sx={{ mb: 1, fontWeight: 500 }}>
                                         Email
                                     </FormLabel>
-                                    <TextField
-                                        error={emailError}
-                                        helperText={emailErrorMessage}
-                                        id="email"
-                                        type="email"
-                                        name="email"
-                                        placeholder="john@smith.com"
-                                        autoComplete="email"
-                                        required
-                                        fullWidth
-                                        variant="outlined"
-                                        color={emailError ? 'error' : 'primary'}
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Email />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                            }
-                                        }}
-                                    />
+                                    <Tooltip title={getEmailTooltipText()} arrow placement="right">
+                                        <TextField
+                                            error={emailError}
+                                            helperText={emailErrorMessage}
+                                            id="email"
+                                            type="email"
+                                            name="email"
+                                            placeholder="john@smith.com"
+                                            autoComplete="email"
+                                            required
+                                            fullWidth
+                                            variant="outlined"
+                                            color={getEmailFieldColor()}
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <Email />
+                                                    </InputAdornment>
+                                                ),
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        {isValidatingEmail ? (
+                                                            <CircularProgress size={20} />
+                                                        ) : emailValidationResult ? (
+                                                            emailValidationResult.category === 'valid' ? (
+                                                                <CheckCircle color="success" />
+                                                            ) : emailValidationResult.category === 'risky' ? (
+                                                                <Warning color="warning" />
+                                                            ) : (
+                                                                <Error color="error" />
+                                                            )
+                                                        ) : null}
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '8px',
+                                                }
+                                            }}
+                                        />
+                                    </Tooltip>
                                 </StyledFormControl>
 
                                 {/* Confirm Email */}
@@ -635,7 +778,7 @@ export default function JoinUsForm() {
                                 type="submit"
                                 fullWidth
                                 variant="contained"
-                                disabled={isSubmitting || !acceptedTerms}
+                                disabled={isSubmitting || !acceptedTerms || isValidatingEmail}
                                 sx={{ mb: 3 }}
                             >
                                 {isSubmitting ? 'Creating Account...' : 'Create Account'}

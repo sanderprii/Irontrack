@@ -161,6 +161,8 @@ const createEmailTemplate = (subject, body) => {
 </html>`;
 };
 
+
+
 // Lihtsustatud e-kirja saatmise funktsioon MailerSend kaudu
 const sendEmailViaMailerSend = async (params) => {
     try {

@@ -4,24 +4,30 @@ const cors = require('cors');
 const fs = require('fs');
 const express = require('express');
 const app = express();
-app.set('trust proxy', 1);
+const rateLimit = require('express-rate-limit'); // Add rate limiter
+const path = require('path');
+const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
 const util = require('util');
 require('dotenv').config();
 
-JSON.stringify = (function(originaalStringify) {
-    return function(väärtus, asendaja, tühimik) {
-        return originaalStringify(väärtus, function(võti, väärtus) {
-            // Teisenda BigInt stringiks
-            if (typeof väärtus === 'bigint') {
-                return väärtus.toString();
+// Configure trust proxy for accurate IP detection behind reverse proxies
+app.set('trust proxy', 1);
+
+// Override JSON.stringify to handle BigInt values
+JSON.stringify = (function(originalStringify) {
+    return function(value, replacer, space) {
+        return originalStringify(value, function(key, value) {
+            // Convert BigInt to string
+            if (typeof value === 'bigint') {
+                return value.toString();
             }
-            return asendaja ? asendaja(võti, väärtus) : väärtus;
-        }, tühimik);
+            return replacer ? replacer(key, value) : value;
+        }, space);
     };
 })(JSON.stringify);
 
-const path = require('path');
-
+// Define allowed origins for CORS
 const allowedOrigins = [
     'http://localhost:3000',
     'https://www.irontrack.ee',
@@ -35,20 +41,86 @@ const allowedOrigins = [
     'https://www.crossfitviljandi.irontrack.ee',
 ];
 
+// Set up global rate limiter
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // limit each IP to 500 requests per windowMs
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: 'Too many requests from this IP, please try again later.'
+});
 
+// Apply global rate limiter to all requests
+app.use(globalLimiter);
+
+// More restrictive rate limiter for authentication routes
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour window
+    max: 10, // limit each IP to 10 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many authentication attempts. Please try again later.'
+});
+
+// IP tracking middleware
+const trackIP = async (req, res, next) => {
+    try {
+        // Get IP address
+        const ip = req.ip ||
+            req.headers['x-forwarded-for'] ||
+            req.connection.remoteAddress ||
+            'unknown';
+
+        // Store IP information in request for further use
+        req.clientIP = ip;
+
+        // Track request in database if you have an IPTracker model
+        // This would require adding the IPTracker model to your Prisma schema
+        /* Uncomment and modify this section if you implement IPTracker in Prisma
+        await prisma.iPTracker.upsert({
+            where: { ip },
+            update: {
+                requestCount: { increment: 1 },
+                lastRequest: new Date()
+            },
+            create: {
+                ip,
+                requestCount: 1,
+                lastRequest: new Date()
+            }
+        });
+
+        // Check if IP is blocked
+        const ipRecord = await prisma.iPTracker.findUnique({
+            where: { ip }
+        });
+
+        if (ipRecord && ipRecord.blocked) {
+            return res.status(403).json({ error: 'Access forbidden due to suspicious activity.' });
+        }
+        */
+
+        next();
+    } catch (error) {
+        console.error('IP tracking error:', error);
+        next(); // Allow request to proceed even if tracking fails
+    }
+};
+
+// Apply IP tracking middleware
+app.use(trackIP);
+
+// Configure CORS
 app.use(cors({
     origin: function(origin, callback) {
-        // Debug: Logi origin, et näha, mida täpselt võrreldakse
-
-
-        // Kui päringu päritolu pole määratud (nt Postmani või server-to-server päringud), lase see läbi
+        // If no origin (e.g., Postman or server-to-server requests), allow the request
         if (!origin) return callback(null, true);
 
-        // Lisa dünaamiline localhost subdomainide kontroll
-        const isLocalSubdomain = origin &&
+        // Check for allowed subdomain pattern
+        const isIrontrackSubdomain = origin &&
             origin.match(/^https:\/\/[a-z0-9-]+\.irontrack.ee$/);
 
-        if (allowedOrigins.indexOf(origin) !== -1 || isLocalSubdomain) {
+        if (allowedOrigins.indexOf(origin) !== -1 || isIrontrackSubdomain) {
             return callback(null, true);
         }
 
@@ -59,8 +131,10 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }));
 
-// Lisa see enne marsruutide defineerimist
+// Serve static files from React build
 app.use(express.static(path.join(__dirname, '../../client/build')));
+
+// Parse JSON requests
 app.use(express.json({
     replacer: (key, value) => {
         if (typeof value === 'bigint') {
@@ -69,17 +143,15 @@ app.use(express.json({
         return value;
     }
 }));
-// Middleware to handle subdomains
 
+// Middleware to handle subdomains
 app.use(async (req, res, next) => {
     // Parse hostname to extract subdomain
     const hostname = req.hostname;
 
-
     // Skip for direct domain access but allow localhost subdomains
     if ((hostname === 'localhost' || hostname === 'irontrack.ee' || hostname === 'www.irontrack.ee') &&
         !hostname.match(/^[^.]+\.localhost$/)) {
-
         return next();
     }
 
@@ -87,11 +159,8 @@ app.use(async (req, res, next) => {
     const parts = hostname.split('.');
     const subdomain = parts.length > 2 ? parts[0] : null;
 
-
-
     if (subdomain) {
         try {
-
             // Find affiliate by subdomain
             const affiliate = await prisma.affiliate.findFirst({
                 where: { subdomain },
@@ -106,39 +175,29 @@ app.use(async (req, res, next) => {
             });
 
             if (affiliate) {
-
                 // Store affiliate data for use in frontend
                 res.locals.affiliate = affiliate;
 
                 // For API requests, continue to regular routing
                 if (req.path.startsWith('/api/')) {
-
                     return next();
                 }
 
                 // Serve React app for all non-API requests
-
-                
-                // TÄRGE KOHT: Teenuse React rakenduse index.html
+                // KEY POINT: Serve the React application's index.html
                 const indexPath = path.join(__dirname, '../../client/build/index.html');
 
-                
-                // Kontrolli kas fail eksisteerib
+                // Check if file exists
                 if (fs.existsSync(indexPath)) {
-
                     return res.sendFile(indexPath);
                 } else {
-
                     return res.status(500).send("React build not found");
                 }
-            } else {
-
             }
         } catch (error) {
-
+            console.error('Error handling subdomain:', error);
         }
     }
-
 
     next();
 });
@@ -155,7 +214,6 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     // First try: check if subdomain was passed in query parameter
     if (req.query.subdomain) {
         subdomain = req.query.subdomain;
-
     } else {
         // Second try: extract from hostname
         const hostname = req.hostname;
@@ -165,8 +223,6 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
         if (hostname.includes('localhost') && hostname !== 'localhost') {
             subdomain = hostname.split('.')[0];
         }
-
-
     }
 
     if (!subdomain || subdomain === 'www') {
@@ -174,7 +230,6 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     }
 
     try {
-
         const affiliate = await prisma.affiliate.findFirst({
             where: { subdomain },
             include: {
@@ -188,10 +243,8 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
         });
 
         if (!affiliate) {
-
             return res.status(404).json({ error: 'Affiliate not found' });
         }
-
 
         res.json(affiliate);
     } catch (error) {
@@ -200,10 +253,7 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     }
 });
 
-
-
-const session = require('express-session');
-const MemoryStore = require('memorystore')(session);
+// Import route modules
 const trainingRoutes = require('./routes/trainingRoutes');
 const recordsRoutes = require('./routes/recordsRoutes');
 const authRoutes = require('./routes/auth');
@@ -230,58 +280,26 @@ const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const contactNoteRoutes = require('./routes/contactNoteRoutes');
 
+// Import schedulers
 const { startScheduler } = require('./schedulers/contractChecker');
 const { startScheduler: startClassExtenderScheduler } = require('./schedulers/classExtenderScheduler');
 
+// Apply specific rate limiters to auth routes
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/request-password-reset', authLimiter);
 
-
-
-
-
-
-
-{/*
-app.use(cors({
-    origin: function(origin, callback) {
-        // Debug: Logi origin, et näha, mida täpselt võrreldakse
-        console.log('Origin header:', origin);
-
-        // Kui päringu päritolu pole määratud (nt Postmani või server-to-server päringud), lase see läbi
-        if (!origin) return callback(null, true);
-
-        // Lisa dünaamiline localhost subdomainide kontroll
-        const isLocalSubdomain = origin &&
-            origin.match(/^http:\/\/[a-z0-9-]+\.localhost:3000$/);
-
-        if (allowedOrigins.indexOf(origin) !== -1 || isLocalSubdomain) {
-            return callback(null, true);
-        }
-
-        const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
-        return callback(new Error(msg), false);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-}));
-//*/}
-
-
-
-
-// Liidame auth-routingu
+// Set up all API routes
 app.use('/api/auth', authRoutes);
-
 app.use('/api/training', trainingRoutes);
 app.use('/api/trainings', trainingRoutes);
 app.use('/api/wods', defaultWodRoutes);
 app.use('/api/records', recordsRoutes);
-
 app.use('/api/user', userRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/my-affiliate', affiliateRoutes);
 app.use("/api", affiliateRoutes);
 app.use('/api/affiliate', affiliateRoutes);
-
 app.use("/api", planRoutes);
 app.use("/api", classRoutes);
 app.use("/api", wodRoutes);
@@ -301,37 +319,47 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api', contactNoteRoutes);
 
-// Lihtne test endpoint
+// Simple test endpoint
 app.get('/api', (req, res) => {
-    res.json({ message: 'Tere tulemast meie API-sse!' });
+    res.json({ message: 'Welcome to our API!' });
 });
 
+// Serve React app for any other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/build/index.html'));
+});
+
+// Error handling for uncaught exceptions
 process.on('uncaughtException', (err) => {
-    console.error('Kritiline viga:', err);
+    console.error('Critical error:', err);
     process.exit(1);
 });
 
+// Error handling for unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Töötlemata lubamus:', promise, 'Põhjus:', reason);
+    console.error('Unhandled promise rejection:', promise, 'Reason:', reason);
 });
 
+// Function to check database connection
 async function checkDatabase() {
     try {
         await prisma.$connect();
-        console.log('Andmebaasi ühendus OK');
+        console.log('Database connection OK');
     } catch (error) {
-        console.error('Andmebaasi ühenduse viga:', error);
+        console.error('Database connection error:', error);
         process.exit(1);
     }
 }
 
+// Check database connection
 checkDatabase();
 
-// Serveri käivitamine
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server käivitunud pordil ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 
+    // Start schedulers
     startScheduler();
     startClassExtenderScheduler();
 });

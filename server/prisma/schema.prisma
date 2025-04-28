@@ -524,3 +524,27 @@ model ContactNote {
   note        String
   createdAt   DateTime  @default(now())
 }
+
+model IPTracker {
+  id            Int      @id @default(autoincrement())
+  ip            String   @unique
+  requestCount  Int      @default(1)
+  lastRequest   DateTime @default(now())
+  registrations Int      @default(0)
+  loginAttempts Int      @default(0)
+  blocked       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([ip])
+}
+
+model RevokedToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime
+  revokedAt DateTime @default(now())
+  userId    Int?
+
+  @@index([token])
+}

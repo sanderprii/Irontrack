@@ -129,9 +129,9 @@ exports.getTrainingPlanById = async (req, res) => {
 // Create a new training plan
 exports.createTrainingPlan = async (req, res) => {
     try {
-        const { name, userId, trainingDays } = req.body;
+        const { name, trainingDays } = req.body;
         const creatorId = req.user.id;
-
+let userId = req.body.userId;
         // Validate required fields
         if (!name || !userId || !trainingDays || !Array.isArray(trainingDays)) {
             return res.status(400).json({ error: 'Missing required fields.' });
@@ -147,6 +147,11 @@ exports.createTrainingPlan = async (req, res) => {
                     return res.status(400).json({ error: 'Invalid sector format.' });
                 }
             }
+        }
+
+        if ( userId === "self" ) {
+            // If userId is "self", set it to the creatorId
+            userId = creatorId;
         }
 
         const trainingPlan = await prisma.trainingPlan.create({

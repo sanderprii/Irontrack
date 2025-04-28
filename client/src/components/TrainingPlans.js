@@ -548,7 +548,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                 </Typography>
 
                 {/* Only affiliates and trainers can create plans */}
-                {(role === 'affiliate' || role === 'trainer') && (
+
                     <Button
                         variant="contained"
                         color="primary"
@@ -557,7 +557,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                     >
                         Create Training Plan
                     </Button>
-                )}
+
             </Box>
 
             {loading ? (

@@ -75,7 +75,6 @@ export default function ClassModal({
                                        onEdit,
                                        onDelete,
                                        refreshClasses,
-                                       attendeesCount,
                                        affiliateId,
                                        affiliateEmail,
                                        trainers = [],
@@ -137,10 +136,10 @@ export default function ClassModal({
 
     // Kontrollime, kas klass on täis
     useEffect(() => {
-        if (cls && typeof attendeesCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
-            setIsClassFull(attendeesCount >= cls.memberCapacity);
+        if (cls && typeof cls.enrolledCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
+            setIsClassFull(cls.enrolledCount >= cls.memberCapacity);
         }
-    }, [cls, attendeesCount, isInWaitlist]);
+    }, [cls, isInWaitlist]);
 
     // Kui modal avatakse ja meil on olemas klassi ID, toome klassi osalejad
     // ja uurime, kas kasutaja on nende hulgas.
@@ -754,7 +753,7 @@ export default function ClassModal({
                         </Typography>
                     )}
 
-                    {cls.wodType && cls.trainingType === "WOD" && (
+                    {cls.wodType && cls.trainingType === "WOD" && cls.wodType !== "NONE" && (
                         <Typography
                             sx={{
                                 color: "#64b5f6",
@@ -855,7 +854,7 @@ export default function ClassModal({
                                 <strong>📍 Location:</strong> {cls.location || "N/A"}
                             </Typography>
                             <Typography>
-                                <strong>👥 Capacity:</strong> {attendeesCount} /{" "}
+                                <strong>👥 Capacity:</strong> {cls.enrolledCount} /{" "}
                                 {cls.memberCapacity}
                             </Typography>
                             <Typography>
@@ -916,7 +915,7 @@ export default function ClassModal({
                                         <strong>🔥{cls.wodName}</strong>
                                     </Typography>
                                 )}
-                                { cls.wodType  && (
+                                { cls.wodType && cls.wodType !== "NONE"  && (
                                     <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                         <strong>{cls.wodType}</strong>
                                     </Typography>

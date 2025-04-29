@@ -354,6 +354,8 @@ exports.acceptContract = async (req, res) => {
             });
         }
 
+
+
         // Leiame lepingu andmed, et saada vajalik info UserPlan jaoks
         const contract = await prisma.contract.findUnique({
             where: { id: parseInt(contractId) },
@@ -364,6 +366,15 @@ exports.acceptContract = async (req, res) => {
 
         if (!contract) {
             return res.status(404).json({ error: "Contract not found" });
+        }
+
+        // Mark first payment as completed if it was used
+        if (contract.isFirstPayment) {
+            await prisma.contract.update({
+                where: { id: parseInt(contractId) },
+                data: { isFirstPayment: false }
+            });
+
         }
 
         // Uuendame Contract staatust
@@ -448,7 +459,7 @@ exports.acceptContract = async (req, res) => {
                         trainingType: contract.trainingType,
                         validityDays: 30, // Default
                         price: contract.paymentAmount || 0,
-                        sessionsLeft: 999, // Unlimited for contract
+                        sessionsLeft: 9999, // Unlimited for contract
                         purchasedAt: new Date(),
                         endDate,
                         paymentHoliday: false,
@@ -457,27 +468,7 @@ exports.acceptContract = async (req, res) => {
                 });
             }
 
-            // Mark first payment as completed if it was used
-            if (contract.isFirstPayment) {
-                await prisma.contract.update({
-                    where: { id: parseInt(contractId) },
-                    data: { isFirstPayment: false }
-                });
 
-                // Create a transaction record for the payment
-                const invoiceNumber = "Credit-" + new Date().getTime();
-                await prisma.transactions.create({
-                    data: {
-                        userId,
-                        affiliateId: parseInt(affiliateId),
-                        amount: contract.firstPaymentAmount || contract.paymentAmount || 0,
-                        invoiceNumber,
-                        description: `First payment for contract ${contractId} paid with credit`,
-                        status: "success",
-                        type: "credit"
-                    }
-                });
-            }
 
         }
 

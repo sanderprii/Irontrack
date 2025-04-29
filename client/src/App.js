@@ -10,6 +10,9 @@ import AppTheme from './shared-theme/AppTheme';
 import {AuthContext} from './context/AuthContext';
 import { Helmet } from 'react-helmet-async';
 import './App.css';
+import { checkRateLimit } from './utils/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Import other components
 import ResponsiveNavbar from './components/ResponsiveNavbar';
@@ -60,6 +63,28 @@ const HomeRedirect = () => {
 function App() {
     const [isPWA, setIsPWA] = useState(false);
     const [showRefreshMessage, setShowRefreshMessage] = useState(false);
+
+    useEffect(() => {
+        // Kontrolli kas kasutaja oli varem rate-limited
+        const rateLimitInfo = checkRateLimit();
+
+        if (rateLimitInfo) {
+            // Näita hoiatust, kui limiit pole veel aegunud
+            toast.warning(
+                <div>
+                    <h4>Päringulimiit on saavutatud</h4>
+                    <p>Mõned funktsioonid võivad olla piiratud {rateLimitInfo.remainingMinutes} minuti jooksul.</p>
+                    <p>Taastub: {rateLimitInfo.expiresAt.toLocaleString()}</p>
+                </div>,
+                {
+                    autoClose: 5000,
+                    type: 'warning'
+                }
+            );
+        }
+    }, []);
+
+
 
     useEffect(() => {
         // Check if the app is running in PWA mode
@@ -147,6 +172,7 @@ function App() {
 
     return (
         <HelmetProvider>
+            <ToastContainer />
             <AppTheme>
                 <CssBaseline/>
                 <Helmet>

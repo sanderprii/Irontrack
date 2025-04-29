@@ -196,6 +196,7 @@ export default function Classes() {
         try {
             const response = await getClasses(affiliateId, startOfWeek);
             setClasses(response || []);
+
         } catch (error) {
             console.error("❌ Fetch error:", error);
             setClasses([]);
@@ -209,27 +210,9 @@ export default function Classes() {
         }
     }, [affiliateId, fetchClasses]);
 
-    const fetchAttendeesCount = useCallback(async () => {
-        const counts = {};
-        await Promise.all(
-            classes.map(async (cls) => {
-                try {
-                    const count = await getClassAttendeesCount(cls.id);
-                    counts[cls.id] = count || 0;
-                } catch (error) {
-                    console.error(`❌ Error fetching attendees for class ${cls.id}:`, error);
-                    counts[cls.id] = 0;
-                }
-            })
-        );
-        setAttendeesCount(counts);
-    }, [classes]);
 
-    useEffect(() => {
-        if (classes.length > 0) {
-            fetchAttendeesCount();
-        }
-    }, [classes, fetchAttendeesCount]);
+
+
 
     // Get classes for selected day
     const getClassesForSelectedDay = (dayIndex) => {

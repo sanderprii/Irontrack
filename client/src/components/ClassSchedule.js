@@ -122,7 +122,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                                         <Box display="flex" alignItems="center">
                                             <GroupIcon sx={{ mr: 1 }} />
                                             <Typography>
-                                                {attendeesCount[cls.id] || 0} / {cls.memberCapacity} spots
+                                                {cls.enrolledCount || 0} / {cls.memberCapacity} spots
                                             </Typography>
                                         </Box>
                                     </Grid>
@@ -149,7 +149,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                                     <Box display="flex" alignItems="center" sx={{ fontSize: "0.65rem", mt: 0.5 }}>
                                         <GroupIcon sx={{ fontSize: 12, mr: 0.5 }} />
                                         <Typography variant="body2" sx={{ fontSize: "0.65rem"}}>
-                                            {attendeesCount[cls.id] || 0} / {cls.memberCapacity} spots
+                                            {cls.enrolledCount || 0} / {cls.memberCapacity} spots
                                         </Typography>
                                     </Box>
                                 </Box>

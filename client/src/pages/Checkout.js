@@ -336,87 +336,91 @@ export default function Checkout(props) {
                 // Check payment status
                 checkPaymentStatus(orderToken)
                     .then(response => {
-
-                        if (response.paymentStatus === 'PAID') {
-                            setPaymentSuccess(true);
-                            setActiveStep(steps.length); // Move to last step
-                            setMerchantReference(response.merchantReference);
-
-                            // Määra vajalikud muutujad
-                            const currentPlanData = planData.id ? planData : parsedPlanData;
-                            const currentAffiliateId = planData.affiliateId || parsedAffiliateInfo?.id;
-                            const currentAppliedCredit = appliedCredit || parsedAppliedCredit;
-                            const currentContract = contract || parsedContract;
-                            const currentUserData = userData || parsedUserData;
-                            const currentIsContractPayment = isContractPayment || savedIsContractPayment || (currentPlanData?.id === 'contract-payment');
-                            const currentMerchantReference = response.merchantReference || merchantReference;
-                            const currentFamilyMember = isFamilyMember || parsedFamilyMember;
-                            const currentFamilyMemberId = familyMemberId || parsedFamilyMemberId;
-
-                            setTimeout(() => {
-                                // Kui tegemist on lepingumaksega
-                                if (currentIsContractPayment && currentContract?.id) {
+                        setTimeout( () => {
 
 
-                                    // Aktsepteeri leping ilma buyPlan-i kutsumata
-                                    acceptContract(currentContract.id, {
-                                        userId: currentUserData.id,
-                                        affiliateId: currentAffiliateId,
-                                        acceptType: 'checkout',
-                                        contractTermsId: 1, // Vaikimisi 1
-                                        paymentCompleted: true
-                                    })
-                                        .then(() => {
+                            if (response.paymentStatus === 'PAID') {
+                                setPaymentSuccess(true);
+                                setActiveStep(steps.length); // Move to last step
+                                setMerchantReference(response.merchantReference);
 
-                                            setInvoiceNumber(currentMerchantReference || "N/A");
+                                // Määra vajalikud muutujad
+                                const currentPlanData = planData.id ? planData : parsedPlanData;
+                                const currentAffiliateId = planData.affiliateId || parsedAffiliateInfo?.id;
+                                const currentAppliedCredit = appliedCredit || parsedAppliedCredit;
+                                const currentContract = contract || parsedContract;
+                                const currentUserData = userData || parsedUserData;
+                                const currentIsContractPayment = isContractPayment || savedIsContractPayment || (currentPlanData?.id === 'contract-payment');
+                                const currentMerchantReference = response.merchantReference || merchantReference;
+                                const currentFamilyMember = isFamilyMember || parsedFamilyMember;
+                                const currentFamilyMemberId = familyMemberId || parsedFamilyMemberId;
+
+                                setTimeout(() => {
+                                    // Kui tegemist on lepingumaksega
+                                    if (currentIsContractPayment && currentContract?.id) {
+
+
+                                        // Aktsepteeri leping ilma buyPlan-i kutsumata
+                                        acceptContract(currentContract.id, {
+                                            userId: currentUserData.id,
+                                            affiliateId: currentAffiliateId,
+                                            acceptType: 'checkout',
+                                            contractTermsId: 1, // Vaikimisi 1
+                                            paymentCompleted: true
                                         })
-                                        .catch(error => {
-                                            console.error("Error accepting contract after payment:", error);
-                                            setPaymentError("Payment was successful but contract could not be accepted. Please contact support.");
-                                        })
-                                        .finally(() => {
-                                            // Kustuta localStorage andmed
-                                            localStorage.removeItem('checkout_planData');
-                                            localStorage.removeItem('checkout_affiliateInfo');
-                                            localStorage.removeItem('checkout_contract');
-                                            localStorage.removeItem('checkout_appliedCredit');
-                                            localStorage.removeItem('checkout_userData');
-                                            localStorage.removeItem('checkout_isContractPayment');
-                                            localStorage.removeItem('checkout_familyMember');
-                                            localStorage.removeItem('checkout_familyMemberId');
-                                        });
-                                }
-                                // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
-                                else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
-                                    console.log("familyMemberId", currentFamilyMemberId);
-                                    console.log("currentFamilyMember", currentFamilyMember);
-                                    buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference, currentIsContractPayment, currentFamilyMember, currentFamilyMemberId)
-                                        .then(response => {
-                                            setInvoiceNumber(response.invoiceNumber);
+                                            .then(() => {
 
-                                            // Kustuta localStorage andmed
-                                            localStorage.removeItem('checkout_planData');
-                                            localStorage.removeItem('checkout_affiliateInfo');
-                                            localStorage.removeItem('checkout_contract');
-                                            localStorage.removeItem('checkout_appliedCredit');
-                                            localStorage.removeItem('checkout_userData');
-                                            localStorage.removeItem('checkout_isContractPayment');
-                                            localStorage.removeItem('checkout_familyMember');
-                                            localStorage.removeItem('checkout_familyMemberId');
+                                                setInvoiceNumber(currentMerchantReference || "N/A");
+                                            })
+                                            .catch(error => {
+                                                console.error("Error accepting contract after payment:", error);
+                                                setPaymentError("Payment was successful but contract could not be accepted. Please contact support.");
+                                            })
+                                            .finally(() => {
+                                                // Kustuta localStorage andmed
+                                                localStorage.removeItem('checkout_planData');
+                                                localStorage.removeItem('checkout_affiliateInfo');
+                                                localStorage.removeItem('checkout_contract');
+                                                localStorage.removeItem('checkout_appliedCredit');
+                                                localStorage.removeItem('checkout_userData');
+                                                localStorage.removeItem('checkout_isContractPayment');
+                                                localStorage.removeItem('checkout_familyMember');
+                                                localStorage.removeItem('checkout_familyMemberId');
+                                            });
+                                    }
+                                    // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
+                                    else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
+                                        console.log("familyMemberId", currentFamilyMemberId);
+                                        console.log("currentFamilyMember", currentFamilyMember);
+                                        buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference, currentIsContractPayment, currentFamilyMember, currentFamilyMemberId)
+                                            .then(response => {
+                                                setInvoiceNumber(response.invoiceNumber);
 
-                                        })
-                                        .catch(error => {
-                                            console.error("Error finalizing plan purchase:", error);
-                                            setPaymentError("Payment was successful but plan purchase could not be completed. Please contact support.");
-                                        });
-                                } else {
-                                    console.warn("No valid plan or contract data found after payment.");
-                                    setPaymentError("Payment was successful but we couldn't process your order. Please contact support.");
-                                }
-                            }, 1000);
-                        } else {
-                            setPaymentError('Payment failed or was cancelled');
-                        }
+                                                // Kustuta localStorage andmed
+                                                localStorage.removeItem('checkout_planData');
+                                                localStorage.removeItem('checkout_affiliateInfo');
+                                                localStorage.removeItem('checkout_contract');
+                                                localStorage.removeItem('checkout_appliedCredit');
+                                                localStorage.removeItem('checkout_userData');
+                                                localStorage.removeItem('checkout_isContractPayment');
+                                                localStorage.removeItem('checkout_familyMember');
+                                                localStorage.removeItem('checkout_familyMemberId');
+
+                                            })
+                                            .catch(error => {
+                                                console.error("Error finalizing plan purchase:", error);
+                                                setPaymentError("Payment was successful but plan purchase could not be completed. Please contact support.");
+                                            });
+                                    } else {
+                                        console.warn("No valid plan or contract data found after payment.");
+                                        setPaymentError("Payment was successful but we couldn't process your order. Please contact support.");
+                                    }
+                                }, 1000);
+
+                            } else {
+                                setPaymentError('Payment failed or was cancelled');
+                            }
+                        } , 1000);
                     })
                     .catch(error => {
                         console.error("Error checking payment status:", error);

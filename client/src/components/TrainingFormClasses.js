@@ -81,7 +81,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
     // Dropdowni valikud - added Rowing and Gymnastics
     const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Rowing", "Gymnastics", "Open Gym", "Other"];
-    const wodTypes = ["For Time", "EMOM", "AMRAP", "TABATA"];
+    const wodTypes = ["For Time", "EMOM", "AMRAP", "TABATA", "For load", "NONE"];
 
     const formatDateForInput = (isoString) => {
         if (!isoString) return "";
@@ -265,6 +265,60 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                     margin="dense"
                 />
 
+
+
+                {/* Repeat Weekly Radio Buttons */}
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Repeat Weekly?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="repeatWeekly"
+                        value={trainingData.repeatWeekly.toString()}
+                        onChange={(e) => setTrainingData({ ...trainingData, repeatWeekly: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Apply to all future trainings?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="applyToAllFutureTraining"
+                        value={trainingData.applyToAllFutureTrainings ? "true" : "false"}
+                        onChange={(e) => setTrainingData({ ...trainingData, applyToAllFutureTrainings: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Can user register for class?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="canRegister"
+                        value={trainingData.canRegister.toString()}
+                        onChange={(e) => setTrainingData({ ...trainingData, canRegister: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
+
+                <FormControl component="fieldset" margin="dense" fullWidth>
+                    <FormLabel component="legend">Is this class free?</FormLabel>
+                    <RadioGroup
+                        row
+                        name="freeClass"
+                        value={trainingData.freeClass.toString()}
+                        onChange={(e) => setTrainingData({ ...trainingData, freeClass: e.target.value === "true" })}
+                    >
+                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+                </FormControl>
                 {/* WOD Type Radio Buttons */}
                 <FormControl component="fieldset" margin="dense">
                     <FormLabel component="legend">WOD Type</FormLabel>
@@ -382,59 +436,6 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                     {/* Preview of formatted description */}
                     <DescriptionPreview />
                 </Box>
-
-                {/* Repeat Weekly Radio Buttons */}
-                <FormControl component="fieldset" margin="dense" fullWidth>
-                    <FormLabel component="legend">Repeat Weekly?</FormLabel>
-                    <RadioGroup
-                        row
-                        name="repeatWeekly"
-                        value={trainingData.repeatWeekly.toString()}
-                        onChange={(e) => setTrainingData({ ...trainingData, repeatWeekly: e.target.value === "true" })}
-                    >
-                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
-
-                <FormControl component="fieldset" margin="dense" fullWidth>
-                    <FormLabel component="legend">Apply to all future trainings?</FormLabel>
-                    <RadioGroup
-                        row
-                        name="applyToAllFutureTraining"
-                        value={trainingData.applyToAllFutureTrainings ? "true" : "false"}
-                        onChange={(e) => setTrainingData({ ...trainingData, applyToAllFutureTrainings: e.target.value === "true" })}
-                    >
-                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
-
-                <FormControl component="fieldset" margin="dense" fullWidth>
-                    <FormLabel component="legend">Can user register for class?</FormLabel>
-                    <RadioGroup
-                        row
-                        name="canRegister"
-                        value={trainingData.canRegister.toString()}
-                        onChange={(e) => setTrainingData({ ...trainingData, canRegister: e.target.value === "true" })}
-                    >
-                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
-
-                <FormControl component="fieldset" margin="dense" fullWidth>
-                    <FormLabel component="legend">Is this class free?</FormLabel>
-                    <RadioGroup
-                        row
-                        name="freeClass"
-                        value={trainingData.freeClass.toString()}
-                        onChange={(e) => setTrainingData({ ...trainingData, freeClass: e.target.value === "true" })}
-                    >
-                        <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
             </DialogContent>
 
             <DialogActions>

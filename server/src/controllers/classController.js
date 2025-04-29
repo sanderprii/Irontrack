@@ -61,7 +61,20 @@ const getClasses = async (req, res) => {
             orderBy: {time: "asc"}
         });
 
-        res.json(classes);
+        // lisa igale klassile juurde, mitu attendeed on registreeritud
+        const classesWithAttendees = await Promise.all(classes.map(async (cls) => {
+            const count = await prisma.classAttendee.count({
+                where: {classId: cls.id}
+            });
+
+            return {
+                ...cls,
+                enrolledCount: count
+            };
+
+        }));
+
+        res.json(classesWithAttendees);
     } catch (error) {
         console.error("❌ Error fetching classes:", error);
         res.status(500).json({error: "Failed to fetch classes."});

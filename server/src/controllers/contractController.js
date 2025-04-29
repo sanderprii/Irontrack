@@ -293,11 +293,12 @@ exports.getUserContracts = async (req, res) => {
     try {
         const userId = parseInt(req.params.userId, 10);
         const affiliateId = req.query.affiliateId || '';
+
         if (!userId) {
             return res.status(400).json({ error: 'Invalid userId' });
         }
 
-        if(!isNaN(affiliateId)){
+        if(affiliateId > 0) {
             const affiliateIds = parseInt(affiliateId, 10);
 
             const contracts = await prisma.contract.findMany({

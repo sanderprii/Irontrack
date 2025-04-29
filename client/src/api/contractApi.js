@@ -120,12 +120,16 @@ export const getLatestContractTemplate = async (affiliateId) => {
 // GET user contracts
 export const getUserContracts = async (userId, affiliateId) => {
     const token = localStorage.getItem('token');
+
     try {
         const resp = await fetch(`${API_BASE}/contracts/user/${userId}?affiliateId=${affiliateId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
+
             }
+
         });
+
         return await resp.json();
     } catch (error) {
         console.error('Error getUserContracts:', error);

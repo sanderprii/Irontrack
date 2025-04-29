@@ -81,7 +81,7 @@ export default function UserContracts({ user, affiliateId }) {
     }, [user]);
 
     const loadContracts = async () => {
-        const data = await getUserContracts(user.id, affiliateId);
+        const data = await getUserContracts(user.id);
         if (Array.isArray(data)) {
             setContracts(data);
         }

@@ -76,7 +76,7 @@ const trackIP = async (req, res, next) => {
 
         // Track request in database if you have an IPTracker model
         // This would require adding the IPTracker model to your Prisma schema
-        /* Uncomment and modify this section if you implement IPTracker in Prisma
+
         await prisma.iPTracker.upsert({
             where: { ip },
             update: {
@@ -98,7 +98,7 @@ const trackIP = async (req, res, next) => {
         if (ipRecord && ipRecord.blocked) {
             return res.status(403).json({ error: 'Access forbidden due to suspicious activity.' });
         }
-        */
+
 
         next();
     } catch (error) {

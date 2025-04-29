@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -20,7 +20,9 @@ import {
     InputAdornment,
     IconButton,
     CircularProgress,
-    Tooltip
+    Tooltip,
+    Fade,
+    Chip
 } from '@mui/material';
 import {
     Visibility,
@@ -33,11 +35,11 @@ import {
     VerifiedUser,
     CheckCircle,
     Warning,
-    Error
+    Error,
+    Verified
 } from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { debounce } from 'lodash';
 
 import ContractTermsModal from './ContractTermsModal';
 
@@ -93,9 +95,41 @@ const StyledButton = styled(Button)(({ theme }) => ({
     },
 }));
 
+const VerifyButton = styled(Button)(({ theme }) => ({
+    borderRadius: '8px',
+    fontWeight: 600,
+    textTransform: 'none',
+    minWidth: '100px',
+    marginLeft: theme.spacing(1),
+    height: '56px', // Match height with TextField
+}));
+
+const ValidationResultChip = styled(Chip)(({ theme, category }) => ({
+    marginTop: theme.spacing(1),
+    fontWeight: 500,
+    backgroundColor: category === 'valid' || category === 'basic_valid'
+        ? theme.palette.success.light
+        : category === 'risky'
+            ? theme.palette.warning.light
+            : category === 'invalid'
+                ? theme.palette.error.light
+                : theme.palette.grey[300],
+    color: category === 'valid' || category === 'basic_valid'
+        ? theme.palette.success.contrastText
+        : category === 'risky'
+            ? theme.palette.warning.contrastText
+            : category === 'invalid'
+                ? theme.palette.error.contrastText
+                : theme.palette.text.primary,
+    '& .MuiChip-icon': {
+        color: 'inherit'
+    }
+}));
+
 export default function JoinUsForm() {
     const navigate = useNavigate();
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Form state
     const [fullName, setFullName] = useState('');
@@ -118,6 +152,8 @@ export default function JoinUsForm() {
     // Email validation state
     const [isValidatingEmail, setIsValidatingEmail] = useState(false);
     const [emailValidationResult, setEmailValidationResult] = useState(null);
+    const [showValidationResult, setShowValidationResult] = useState(false);
+    const [emailsMatch, setEmailsMatch] = useState(true);
 
     // Validation error states
     const [emailError, setEmailError] = useState(false);
@@ -134,82 +170,127 @@ export default function JoinUsForm() {
     // API URL
     const API_URL = process.env.REACT_APP_API_URL;
 
+    // Basic email format validation
+    const validateBasicEmailFormat = (emailToValidate) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(emailToValidate);
+    };
+
     // Email validation function
-    const validateEmailAddress = async (emailToValidate) => {
-        if (!emailToValidate || emailToValidate.length < 5 || !emailToValidate.includes('@')) {
-            return; // Don't validate incomplete emails
+    const validateEmailAddress = async () => {
+        // First check if email has basic valid format
+        if (!email || !validateBasicEmailFormat(email)) {
+            setEmailError(true);
+            setEmailErrorMessage('Please enter a valid email address');
+            return;
         }
 
         setIsValidatingEmail(true);
+        setShowValidationResult(false);
 
         try {
+            // Try API validation
             const response = await fetch(`${API_URL}/auth/validate-email`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: emailToValidate }),
+                body: JSON.stringify({ email: email }),
             });
 
-            const data = await response.json();
-
-            setEmailValidationResult(data);
-
-            // Update email error state based on validation result
-            if (data.category === 'invalid') {
-                setEmailError(true);
-                setEmailErrorMessage(`Invalid email: ${data.details}`);
-            } else if (data.category === 'risky') {
-                setEmailError(true);
-                setEmailErrorMessage(`Warning: ${data.details}`);
-            } else if (data.category === 'valid') {
+            // Handle API errors like quota limits
+            if (response.status === 402 || response.status === 429) {
+                // Fallback to basic validation if API quota is exceeded
+                setEmailValidationResult({
+                    category: 'basic_valid',
+                    details: 'Basic format validation passed',
+                    valid: true
+                });
                 setEmailError(false);
                 setEmailErrorMessage('');
+            } else {
+                const data = await response.json();
+                setEmailValidationResult(data);
+
+                // Update email error state based on validation result
+                if (data.category === 'invalid') {
+                    setEmailError(true);
+                    setEmailErrorMessage(`Invalid email: ${data.details}`);
+                } else if (data.category === 'risky') {
+                    setEmailError(true);
+                    setEmailErrorMessage(`Warning: ${data.details}`);
+                } else if (data.category === 'valid' || data.category === 'basic_valid') {
+                    setEmailError(false);
+                    setEmailErrorMessage('');
+                }
             }
         } catch (err) {
             console.error('Email validation error:', err);
-            // Don't update email error state on API errors
+            // Use basic validation as fallback on errors
+            if (validateBasicEmailFormat(email)) {
+                setEmailValidationResult({
+                    category: 'basic_valid',
+                    details: 'Basic format validation passed',
+                    valid: true
+                });
+                setEmailError(false);
+                setEmailErrorMessage('');
+            } else {
+                setEmailValidationResult({
+                    category: 'invalid',
+                    details: 'Invalid email format',
+                    valid: false
+                });
+                setEmailError(true);
+                setEmailErrorMessage('Invalid email format');
+            }
         } finally {
             setIsValidatingEmail(false);
+            setShowValidationResult(true);
         }
     };
 
-    // Debounced email validation
-    const debouncedValidateEmail = useCallback(
-        debounce((emailValue) => {
-            if (emailValue && emailValue.includes('@') && emailValue.includes('.')) {
-                validateEmailAddress(emailValue);
-            }
-        }, 800),
-        []
-    );
-
-    // Validate email when it changes
-    useEffect(() => {
-        if (email && email.includes('@')) {
-            debouncedValidateEmail(email);
+    // Handle verify button click
+    const handleVerifyEmail = (e) => {
+        e.preventDefault();
+        if (email) {
+            validateEmailAddress();
         } else {
-            // Reset validation when email is cleared
-            setEmailValidationResult(null);
+            setEmailError(true);
+            setEmailErrorMessage('Please enter an email address');
         }
+    };
 
-        return () => {
-            debouncedValidateEmail.cancel();
-        };
-    }, [email, debouncedValidateEmail]);
-
-    // Validate confirm email whenever either email or confirm email changes
-    useEffect(() => {
+    // Check if emails match and update relevant states
+    const checkEmailsMatch = () => {
         if (confirmEmail) {
             if (email !== confirmEmail) {
                 setConfirmEmailError(true);
                 setConfirmEmailErrorMessage('Emails do not match');
+                setEmailsMatch(false);
             } else {
                 setConfirmEmailError(false);
                 setConfirmEmailErrorMessage('');
+                setEmailsMatch(true);
             }
+        } else {
+            // If confirmEmail is empty, we don't show an error yet
+            setEmailsMatch(true);
         }
+    };
+
+    // Validate confirm email whenever either email or confirm email changes
+    useEffect(() => {
+        checkEmailsMatch();
     }, [email, confirmEmail]);
+
+    // Reset validation results when email changes
+    useEffect(() => {
+        if (emailValidationResult) {
+            setShowValidationResult(false);
+            setEmailValidationResult(null);
+        }
+    }, [email]);
 
     const validateInputs = () => {
         let isValid = true;
@@ -225,7 +306,7 @@ export default function JoinUsForm() {
         }
 
         // Basic Email validation
-        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        if (!email || !validateBasicEmailFormat(email)) {
             setEmailError(true);
             setEmailErrorMessage('Please enter a valid email address.');
             isValid = false;
@@ -336,6 +417,7 @@ export default function JoinUsForm() {
                 setAcceptedTerms(false);
                 setIsAffiliateOwner(false);
                 setEmailValidationResult(null);
+                setShowValidationResult(false);
 
                 // Automatically redirect to login after 5 seconds
                 setTimeout(() => {
@@ -360,20 +442,38 @@ export default function JoinUsForm() {
     // Helper function to get color for email validation
     const getEmailFieldColor = () => {
         if (emailError) return 'error';
-        if (emailValidationResult) {
-            if (emailValidationResult.category === 'valid') return 'success';
-            if (emailValidationResult.category === 'risky') return 'warning';
+        if (emailValidationResult && showValidationResult) {
+            if (emailValidationResult.category === 'valid' || emailValidationResult.category === 'basic_valid')
+                return 'success';
+            if (emailValidationResult.category === 'risky')
+                return 'warning';
         }
         return 'primary';
     };
 
-    // Email field tooltip text based on validation result
-    const getEmailTooltipText = () => {
-        if (isValidatingEmail) return 'Validating email...';
-        if (!emailValidationResult) return '';
+    // Get validation icon based on result
+    const getValidationIcon = () => {
+        if (!emailValidationResult || !showValidationResult) return null;
+
+        if (emailValidationResult.category === 'valid' || emailValidationResult.category === 'basic_valid') {
+            return <CheckCircle />;
+        } else if (emailValidationResult.category === 'risky') {
+            return <Warning />;
+        } else if (emailValidationResult.category === 'invalid') {
+            return <Error />;
+        }
+
+        return null;
+    };
+
+    // Get validation message based on result
+    const getValidationMessage = () => {
+        if (!emailValidationResult || !showValidationResult) return '';
 
         if (emailValidationResult.category === 'valid') {
             return 'Email is valid and safe to use';
+        } else if (emailValidationResult.category === 'basic_valid') {
+            return 'Email format is valid';
         } else if (emailValidationResult.category === 'risky') {
             return emailValidationResult.details;
         } else if (emailValidationResult.category === 'invalid') {
@@ -383,6 +483,23 @@ export default function JoinUsForm() {
         return '';
     };
 
+    // Get tooltip message for verify button
+    const getVerifyTooltipMessage = () => {
+        if (!email) {
+            return "Please enter an email address first";
+        } else if (confirmEmail && !emailsMatch) {
+            return "Emails must match before verification";
+        } else if (isValidatingEmail) {
+            return "Verifying email...";
+        }
+        return "";
+    };
+
+    // Should the verify button be disabled?
+    const isVerifyButtonDisabled = () => {
+        return isValidatingEmail || !email || (confirmEmail && !emailsMatch);
+    };
+
     return (
         <AppTheme>
             <CssBaseline enableColorScheme />
@@ -390,7 +507,6 @@ export default function JoinUsForm() {
             <SignUpContainer direction="column" justifyContent="space-between">
                 <Card elevation={6}>
                     <Box sx={{ textAlign: 'center', mb: 3 }}>
-
                         <Typography
                             component="h1"
                             variant="h4"
@@ -476,12 +592,12 @@ export default function JoinUsForm() {
                                     />
                                 </StyledFormControl>
 
-                                {/* Email */}
+                                {/* Email with Verify Button */}
                                 <StyledFormControl fullWidth>
                                     <FormLabel htmlFor="email" sx={{ mb: 1, fontWeight: 500 }}>
                                         Email
                                     </FormLabel>
-                                    <Tooltip title={getEmailTooltipText()} arrow placement="right">
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
                                         <TextField
                                             error={emailError}
                                             helperText={emailErrorMessage}
@@ -502,21 +618,6 @@ export default function JoinUsForm() {
                                                         <Email />
                                                     </InputAdornment>
                                                 ),
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        {isValidatingEmail ? (
-                                                            <CircularProgress size={20} />
-                                                        ) : emailValidationResult ? (
-                                                            emailValidationResult.category === 'valid' ? (
-                                                                <CheckCircle color="success" />
-                                                            ) : emailValidationResult.category === 'risky' ? (
-                                                                <Warning color="warning" />
-                                                            ) : (
-                                                                <Error color="error" />
-                                                            )
-                                                        ) : null}
-                                                    </InputAdornment>
-                                                ),
                                             }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
@@ -524,7 +625,49 @@ export default function JoinUsForm() {
                                                 }
                                             }}
                                         />
-                                    </Tooltip>
+                                        <Tooltip
+                                            title={getVerifyTooltipMessage()}
+                                            arrow
+                                            placement="top"
+                                            disableHoverListener={!isVerifyButtonDisabled()}
+                                        >
+                                            <span> {/* Wrapper span is needed for disabled buttons in tooltips */}
+                                                <VerifyButton
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={handleVerifyEmail}
+                                                    disabled={isVerifyButtonDisabled()}
+                                                    sx={{
+                                                        mt: isMobile ? 1 : 0,
+                                                        width: isMobile ? '100%' : 'auto',
+                                                    }}
+                                                >
+                                                    {isValidatingEmail ? (
+                                                        <CircularProgress size={24} color="inherit" />
+                                                    ) : (
+                                                        <>
+                                                            <Verified sx={{ mr: 1 }} />
+                                                            Verify
+                                                        </>
+                                                    )}
+                                                </VerifyButton>
+                                            </span>
+                                        </Tooltip>
+                                    </Box>
+
+                                    {/* Validation Result Chip */}
+                                    <Fade in={showValidationResult && !!emailValidationResult}>
+                                        <Box sx={{ mt: 1 }}>
+                                            {emailValidationResult && showValidationResult && (
+                                                <ValidationResultChip
+                                                    icon={getValidationIcon()}
+                                                    label={getValidationMessage()}
+                                                    category={emailValidationResult.category}
+                                                    variant="filled"
+                                                />
+                                            )}
+                                        </Box>
+                                    </Fade>
                                 </StyledFormControl>
 
                                 {/* Confirm Email */}

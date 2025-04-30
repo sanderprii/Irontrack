@@ -110,6 +110,8 @@ export default function PlanFormModal({ open, onClose, onSave, plan }) {
                     <MenuItem value="Rowing">Rowing</MenuItem>
                     <MenuItem value="Gymnastics">Gymnastics</MenuItem>
                     <MenuItem value="Open Gym">Open Gym</MenuItem>
+                    <MenuItem value="Kids">Kids</MenuItem>
+                    <MenuItem value="Basic">Basic</MenuItem>
                 </TextField>
                 <TextField
                     label="Plan Name"

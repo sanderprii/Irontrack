@@ -15,7 +15,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
     const [wod, setWod] = useState({ wodName: "", type: "For Time", description: "", notes: "" });
     const [showSearch, setShowSearch] = useState(true);
     const [selectedColorOption, setSelectedColorOption] = useState(null);
-    const wodTypes = ["For Time", "EMOM", "TABATA", "AMRAP"];
+    const wodTypes = ["For Time", "EMOM", "TABATA", "AMRAP", "For Load", "For Quality", "NONE"];
 
     // Color options for formatting
     const colorOptions = [

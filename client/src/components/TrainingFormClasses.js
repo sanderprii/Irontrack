@@ -70,7 +70,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                 memberCapacity: "",
                 repeatWeekly: false,
                 wodName: "",
-                wodType: "For Time",
+                wodType: "NONE",
                 description: "",
                 canRegister: true,
                 freeClass: false,
@@ -81,7 +81,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
     // Dropdowni valikud - added Rowing and Gymnastics
     const trainingTypes = ["WOD", "Weightlifting", "Cardio", "Rowing", "Gymnastics", "Open Gym", "Kids", "Basic", "Other"];
-    const wodTypes = ["For Time", "EMOM", "AMRAP", "TABATA", "For load", "NONE"];
+    const wodTypes = ["For Time", "EMOM", "AMRAP", "TABATA", "For load", "For Quality", "NONE"];
 
     const formatDateForInput = (isoString) => {
         if (!isoString) return "";

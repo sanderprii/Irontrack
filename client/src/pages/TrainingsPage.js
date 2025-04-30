@@ -762,7 +762,7 @@ export default function TrainingsPage() {
                                                     value={wodType}
                                                     onChange={(e) => setWodType(e.target.value)}
                                                 >
-                                                    {['For Time', 'EMOM', 'Tabata', 'AMRAP'].map((val) => (
+                                                    {['For Time', 'EMOM', 'Tabata', 'AMRAP', 'For Load', 'For Quality', 'NONE'].map((val) => (
                                                         <FormControlLabel
                                                             key={val}
                                                             value={val}

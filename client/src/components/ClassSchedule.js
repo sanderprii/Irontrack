@@ -48,7 +48,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
     };
 
     return (
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", pb: 10 }}>
             {sortedClasses.length === 0 ? (
                 <Typography
                     variant={weeklyView ? "body2" : "h6"}

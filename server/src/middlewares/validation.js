@@ -14,7 +14,7 @@ const validateRegistration = [
     body('fullName')
         .trim()
         .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2-100 characters long')
-        .matches(/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/).withMessage('Name can only contain letters and spaces'),
+        .matches(/^[A-Za-zÀ-ÖØ-öø-ÿ\s\-]+$/).withMessage('Name can only contain letters, spaces, and hyphens'),
 
     // Email validation
     body('email')

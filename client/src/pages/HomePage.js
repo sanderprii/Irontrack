@@ -21,7 +21,7 @@ import {
     StepLabel,
     Paper
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -46,17 +46,27 @@ import AddToHomeScreenIcon from "@mui/icons-material/AddToHomeScreen";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { motion } from "framer-motion";
+import {motion} from "framer-motion";
 
-import { getAllStatistics } from "../api/statisticsApi";
+import {getAllStatistics} from "../api/statisticsApi";
 import CountUp from 'react-countup';
 
 // Modernne hero taustapilt ja täiendavad pildid
 const carouselImages = [
-    "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1519505907962-0a6cb0167c73?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-];
+        {
+            src: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            webp: "/images/optimized/hero-1.webp"
+        },
+        {
+            src: "https://images.unsplash.com/photo-1519505907962-0a6cb0167c73?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            webp: "/images/optimized/hero-2.webp"
+        },
+        {
+            src: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            webp: "/images/optimized/hero-3.webp"
+        },
+    ]
+;
 
 // Images for PWA installation guides
 const iOSImages = [
@@ -65,11 +75,6 @@ const iOSImages = [
     "/pic/IOSimage2.png",
 ];
 
-const androidImages = [
-    "/images/pwa/android-step1.jpg",
-    "/images/pwa/android-step2.jpg",
-    "/images/pwa/android-step3.jpg",
-];
 
 // Värvipalett
 const colors = {
@@ -83,7 +88,7 @@ const colors = {
 };
 
 // PWA Installation Tutorial Modal for iOS
-const IOSInstallModal = ({ open, handleClose }) => {
+const IOSInstallModal = ({open, handleClose}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [activeStep, setActiveStep] = useState(0);
@@ -137,8 +142,8 @@ const IOSInstallModal = ({ open, handleClose }) => {
                 px: 3,
                 py: 2
             }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AppleIcon />
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                    <AppleIcon/>
                     <Typography variant="h6" component="div">
                         Install IronTrack on iOS
                     </Typography>
@@ -149,12 +154,12 @@ const IOSInstallModal = ({ open, handleClose }) => {
                     onClick={handleClose}
                     aria-label="close"
                 >
-                    <CloseIcon />
+                    <CloseIcon/>
                 </IconButton>
             </DialogTitle>
 
-            <DialogContent sx={{ p: 3, mt: 2 }}>
-                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+            <DialogContent sx={{p: 3, mt: 2}}>
+                <Stepper activeStep={activeStep} alternativeLabel sx={{mb: 4}}>
                     {steps.map((step) => (
                         <Step key={step.label}>
                             <StepLabel>{step.label}</StepLabel>
@@ -162,11 +167,11 @@ const IOSInstallModal = ({ open, handleClose }) => {
                     ))}
                 </Stepper>
 
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Box sx={{mt: 2, textAlign: 'center'}}>
                     <Typography variant="h6" gutterBottom>
                         {steps[activeStep].label}
                     </Typography>
-                    <Typography variant="body1" paragraph sx={{ mb: 3 }}>
+                    <Typography variant="body1" paragraph sx={{mb: 3}}>
                         {steps[activeStep].description}
                     </Typography>
                     <Box
@@ -186,7 +191,7 @@ const IOSInstallModal = ({ open, handleClose }) => {
                 </Box>
             </DialogContent>
 
-            <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
+            <DialogActions sx={{px: 3, py: 2, justifyContent: 'space-between'}}>
                 <Button
                     disabled={activeStep === 0}
                     onClick={handleBack}
@@ -219,18 +224,17 @@ const IOSInstallModal = ({ open, handleClose }) => {
 };
 
 
-
 // Modernne statistika komponent animeeritud numbritega
-const StatCounter = ({ value, label, icon, delay = 0.2 }) => {
+const StatCounter = React.memo(({ value, label, icon, delay = 0.2 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
         <Card
             component={motion.div}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay, duration: 0.5 }}
+            initial={{y: 20, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
+            transition={{delay, duration: 0.5}}
             elevation={2}
             sx={{
                 borderRadius: 4,
@@ -243,7 +247,7 @@ const StatCounter = ({ value, label, icon, delay = 0.2 }) => {
                 }
             }}
         >
-            <CardContent sx={{ p: 3, textAlign: 'center' }}>
+            <CardContent sx={{p: 3, textAlign: 'center'}}>
                 <Box
                     sx={{
                         mb: 2,
@@ -298,16 +302,16 @@ const StatCounter = ({ value, label, icon, delay = 0.2 }) => {
             </CardContent>
         </Card>
     );
-};
+});
 
 // Modernne funktsionaalsuse kaart
-const FeatureCard = ({ icon, title, description, delay = 0.3 }) => {
+const FeatureCard = React.memo(({ icon, title, description, delay = 0.3 }) => {
     return (
         <Card
             component={motion.div}
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay, duration: 0.5 }}
+            initial={{y: 30, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
+            transition={{delay, duration: 0.5}}
             elevation={2}
             sx={{
                 borderRadius: 4,
@@ -326,7 +330,7 @@ const FeatureCard = ({ icon, title, description, delay = 0.3 }) => {
                 }
             }}
         >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{p: 3}}>
                 <Box
                     className="icon-container"
                     sx={{
@@ -364,23 +368,23 @@ const FeatureCard = ({ icon, title, description, delay = 0.3 }) => {
                 <Typography
                     variant="body1"
                     color="text.secondary"
-                    sx={{ lineHeight: 1.6 }}
+                    sx={{lineHeight: 1.6}}
                 >
                     {description}
                 </Typography>
             </CardContent>
         </Card>
     );
-};
+});
 
 // SectionTitle komponent
-const SectionTitle = ({ title, subtitle, align = "center", delay = 0.2 }) => {
+const SectionTitle = ({title, subtitle, align = "center", delay = 0.2}) => {
     return (
         <Box
             component={motion.div}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay, duration: 0.5 }}
+            initial={{y: 20, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
+            transition={{delay, duration: 0.5}}
             sx={{
                 mb: 5,
                 textAlign: align,
@@ -437,7 +441,7 @@ export default function HomePage() {
     });
     const [loading, setLoading] = useState(true);
     const [iOSModalOpen, setIOSModalOpen] = useState(false);
-    const [androidModalOpen, setAndroidModalOpen] = useState(false);
+
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -448,14 +452,6 @@ export default function HomePage() {
 
     const handleCloseIOSModal = () => {
         setIOSModalOpen(false);
-    };
-
-    const handleOpenAndroidModal = () => {
-        setAndroidModalOpen(true);
-    };
-
-    const handleCloseAndroidModal = () => {
-        setAndroidModalOpen(false);
     };
 
     useEffect(() => {
@@ -478,7 +474,7 @@ export default function HomePage() {
     }, []);
 
     const settings = {
-        dots: true,
+
         infinite: true,
         speed: 800,
         slidesToShow: 1,
@@ -487,31 +483,12 @@ export default function HomePage() {
         autoplaySpeed: 6000,
         fade: true,
         cssEase: 'cubic-bezier(0.7, 0, 0.3, 1)',
-        dotsClass: "slick-dots custom-dots",
-        appendDots: dots => (
-            <Box
-                sx={{
-                    position: "absolute",
-                    bottom: 30,
-                    width: "100%",
-                    "& .custom-dots li button:before": {
-                        fontSize: 12,
-                        color: "white",
-                        opacity: 0.5,
-                    },
-                    "& .custom-dots li.slick-active button:before": {
-                        opacity: 1,
-                        color: "white"
-                    }
-                }}
-            >
-                <ul style={{ margin: 0, padding: 0 }}>{dots}</ul>
-            </Box>
-        ),
+
+
     };
 
     // Styled AppButton component for iOS and Android
-    const AppButton = ({ icon, label, bgColor, onClick }) => (
+    const AppButton = ({icon, label, bgColor, onClick}) => (
         <Button
             variant="contained"
             startIcon={icon}
@@ -546,7 +523,7 @@ export default function HomePage() {
                 canonicalUrl="https://www.irontrack.ee/"
                 ogImage="https://www.irontrack.ee/images/og-image.jpg"
             />
-            <Box sx={{ overflowX: 'hidden' }}>
+            <Box sx={{overflowX: 'hidden'}}>
                 {/* PWA Installation Modals */}
                 <IOSInstallModal
                     open={iOSModalOpen}
@@ -555,13 +532,13 @@ export default function HomePage() {
 
 
                 {/* HERO KARUSSELL */}
-                <Box sx={{ position: "relative" }}>
+                <Box sx={{position: "relative"}}>
                     <Slider {...settings}>
                         {carouselImages.map((imgSrc, i) => (
                             <div key={i}>
                                 <Box
                                     sx={{
-                                        minHeight: { xs: "70vh", md: "80vh" },
+                                        minHeight: { xs: "50vh", md: "50vh" },
                                         position: "relative",
                                         "&::before": {
                                             content: '""',
@@ -570,7 +547,7 @@ export default function HomePage() {
                                             left: 0,
                                             width: "100%",
                                             height: "100%",
-                                            background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${imgSrc})`,
+                                            background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${imgSrc.webp || imgSrc.src})`,
                                             backgroundPosition: "center",
                                             backgroundSize: "cover",
                                             backgroundRepeat: "no-repeat",
@@ -581,17 +558,26 @@ export default function HomePage() {
                                         justifyContent: "center",
                                         textAlign: "center",
                                         color: "#fff",
-                                        p: { xs: 2, md: 4 },
+                                        p: {xs: 2, md: 4},
                                     }}
                                 >
+                                    {i === 0 && (
+                                        <link
+                                            rel="preload"
+                                            href={imgSrc.webp || imgSrc.src}
+                                            as="image"
+                                            type={imgSrc.webp ? "image/webp" : "image/jpeg"}
+                                        />
+                                    )}
                                     <Container maxWidth="lg">
                                         <Box
                                             component={motion.div}
-                                            initial={{ y: 30, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            transition={{ duration: 0.8 }}
-                                            sx={{ maxWidth: 900, mx: "auto" }}
+                                            initial={{y: 30, opacity: 0}}
+                                            animate={{y: 0, opacity: 1}}
+                                            transition={{duration: 0.8}}
+                                            sx={{maxWidth: 900, mx: "auto"}}
                                         >
+
                                             <Typography
                                                 variant={isMobile ? "h3" : "h1"}
                                                 sx={{
@@ -621,7 +607,7 @@ export default function HomePage() {
                                                     "Specifically designed for CrossFit owners and coaches, our platform simplifies member management, automates payments, and powers your community—so you can focus on what really matters: helping athletes reach their goals."}
                                             </Typography>
 
-                                            <Box sx={{ mt: 3 }}>
+                                            <Box sx={{mt: 3}}>
                                                 <Button
                                                     variant="contained"
                                                     size="large"
@@ -660,12 +646,12 @@ export default function HomePage() {
 
                                                 <Box
                                                     component={motion.div}
-                                                    initial={{ y: 10, opacity: 0 }}
-                                                    animate={{ y: 0, opacity: 1 }}
-                                                    transition={{ delay: 0.4, duration: 0.5 }}
+                                                    initial={{y: 10, opacity: 0}}
+                                                    animate={{y: 0, opacity: 1}}
+                                                    transition={{delay: 0.4, duration: 0.5}}
                                                 >
                                                     <AppButton
-                                                        icon={<AppleIcon />}
+                                                        icon={<AppleIcon/>}
                                                         label="iOS"
                                                         bgColor="#000000"
                                                         onClick={handleOpenIOSModal}
@@ -674,12 +660,12 @@ export default function HomePage() {
 
                                                 <Box
                                                     component={motion.div}
-                                                    initial={{ y: 10, opacity: 0 }}
-                                                    animate={{ y: 0, opacity: 1 }}
-                                                    transition={{ delay: 0.5, duration: 0.5 }}
+                                                    initial={{y: 10, opacity: 0}}
+                                                    animate={{y: 0, opacity: 1}}
+                                                    transition={{delay: 0.5, duration: 0.5}}
                                                 >
                                                     <AppButton
-                                                        icon={<AndroidIcon />}
+                                                        icon={<AndroidIcon/>}
                                                         label="Android"
                                                         bgColor="#3ddc84"
                                                         onClick={() => window.open('https://play.google.com/store/apps/details?id=com.irontrack.Irontrack', '_blank')}
@@ -706,12 +692,12 @@ export default function HomePage() {
                         }}
                         sx={{
                             position: 'absolute',
-                            bottom: 40,
+                            bottom: 5,
                             left: '50%',
                             transform: 'translateX(-50%)',
                             cursor: 'pointer',
                             zIndex: 10,
-                            display: { xs: 'none', md: 'block' }
+                            display: {xs: 'none', md: 'block'}
                         }}
                         onClick={() => {
                             window.scrollTo({
@@ -732,7 +718,7 @@ export default function HomePage() {
                 </Box>
 
                 {/* MEIE MISSIOON */}
-                <Container sx={{ py: { xs: 6, md: 8 } }}>
+                <Container sx={{py: {xs: 6, md: 8}}}>
                     <SectionTitle
                         title="Our Mission"
                         subtitle="We're a team of CrossFit enthusiasts dedicated to building tools that simplify everyday operations for gym owners and enhance the training experience for every athlete. From the workout floor to the management back-office, we understand the challenges you face and strive to solve them with innovative and user-friendly solutions."
@@ -743,7 +729,7 @@ export default function HomePage() {
                 <Box
                     sx={{
                         backgroundColor: colors.statsBg,
-                        py: { xs: 5, md: 8 },
+                        py: {xs: 5, md: 8},
                         px: 2,
                         position: 'relative',
                         overflow: 'hidden'
@@ -752,8 +738,8 @@ export default function HomePage() {
                     <Container maxWidth="lg">
                         <Box
                             component={motion.div}
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
+                            initial={{y: 20, opacity: 0}}
+                            animate={{y: 0, opacity: 1}}
                         >
                             <Typography
                                 variant={isMobile ? "h4" : "h3"}
@@ -786,7 +772,7 @@ export default function HomePage() {
                                 <StatCounter
                                     value={stats.users}
                                     label="Active Users"
-                                    icon={<PeopleIcon sx={{ fontSize: 30, color: colors.primary }} />}
+                                    icon={<PeopleIcon sx={{fontSize: 30, color: colors.primary}}/>}
                                     delay={0.2}
                                 />
                             </Grid>
@@ -795,7 +781,7 @@ export default function HomePage() {
                                 <StatCounter
                                     value={stats.trainings}
                                     label="Trainings"
-                                    icon={<FitnessCenterIcon sx={{ fontSize: 30, color: colors.primary }} />}
+                                    icon={<FitnessCenterIcon sx={{fontSize: 30, color: colors.primary}}/>}
                                     delay={0.4}
                                 />
                             </Grid>
@@ -804,7 +790,7 @@ export default function HomePage() {
                                 <StatCounter
                                     value={stats.records}
                                     label="Records Broken"
-                                    icon={<EmojiEventsIcon sx={{ fontSize: 30, color: colors.primary }} />}
+                                    icon={<EmojiEventsIcon sx={{fontSize: 30, color: colors.primary}}/>}
                                     delay={0.6}
                                 />
                             </Grid>
@@ -813,7 +799,7 @@ export default function HomePage() {
                 </Box>
 
                 {/* AFFILIATE OWNER FEATURES */}
-                <Container sx={{ py: { xs: 6, md: 10 } }}>
+                <Container sx={{py: {xs: 6, md: 10}}}>
                     <SectionTitle
                         title="Built for Affiliate Owners"
                         subtitle="Your passion is guiding your athletes to success, not juggling spreadsheets. We equip you with the tools you need to run your box smoothly."
@@ -823,7 +809,7 @@ export default function HomePage() {
                     <Grid container spacing={4}>
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<AssignmentIcon />}
+                                icon={<AssignmentIcon/>}
                                 title="Manage & Draft Contracts"
                                 description="Easily create, edit, and organize membership contracts. Keep everything in one place without the fuss of endless paperwork."
                                 delay={0.3}
@@ -832,7 +818,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<ClassIcon />}
+                                icon={<ClassIcon/>}
                                 title="Add Classes & WODs"
                                 description="Schedule your box's workouts, classes, and events with just a few clicks. Share the daily WOD and track attendance seamlessly."
                                 delay={0.4}
@@ -841,7 +827,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<GroupIcon />}
+                                icon={<GroupIcon/>}
                                 title="Member Management & Engagement"
                                 description="Add, remove, and organize members effortlessly. Keep them engaged with automated communications and updates."
                                 delay={0.5}
@@ -850,7 +836,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<EmailIcon />}
+                                icon={<EmailIcon/>}
                                 title="Send Bulk Emails"
                                 description="Quickly inform your entire membership about schedule changes, new events, or box news. No more chaotic email chains."
                                 delay={0.6}
@@ -859,7 +845,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<PaymentIcon />}
+                                icon={<PaymentIcon/>}
                                 title="Handle Payments with Ease"
                                 description="Automate your billing and track payments. Lower transaction fees save you money so you can reinvest in your community."
                                 delay={0.7}
@@ -868,7 +854,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<SavingsIcon />}
+                                icon={<SavingsIcon/>}
                                 title="Save Money on Transactions"
                                 description="We offer lower payment processing fees compared to other platforms. Keep more of your revenue and invest in growing your gym."
                                 delay={0.8}
@@ -878,7 +864,7 @@ export default function HomePage() {
                 </Container>
 
                 {/* REGULAR USERS FEATURES */}
-                <Box sx={{ backgroundColor: colors.lightGray, py: { xs: 6, md: 10 } }}>
+                <Box sx={{backgroundColor: colors.lightGray, py: {xs: 6, md: 10}}}>
                     <Container>
                         <SectionTitle
                             title="Perfect for Athletes & Regular Users"
@@ -889,7 +875,7 @@ export default function HomePage() {
                         <Grid container spacing={4}>
                             <Grid item xs={12} md={4}>
                                 <FeatureCard
-                                    icon={<PaymentIcon />}
+                                    icon={<PaymentIcon/>}
                                     title="Purchase Affiliate Plans"
                                     description="Browse and sign up for the membership plan that suits your goals. Enjoy a transparent and secure checkout process."
                                     delay={0.3}
@@ -898,7 +884,7 @@ export default function HomePage() {
 
                             <Grid item xs={12} md={4}>
                                 <FeatureCard
-                                    icon={<ClassIcon />}
+                                    icon={<ClassIcon/>}
                                     title="Register for Classes"
                                     description="Book your spot in upcoming WODs or special events. Receive reminders, track your attendance, and never miss a session."
                                     delay={0.4}
@@ -907,7 +893,7 @@ export default function HomePage() {
 
                             <Grid item xs={12} md={4}>
                                 <FeatureCard
-                                    icon={<TimelineIcon />}
+                                    icon={<TimelineIcon/>}
                                     title="Track Workouts & Stats"
                                     description="Log your PRs and workout results. Monitor your progress over time and celebrate every victory, big or small."
                                     delay={0.5}
@@ -918,7 +904,7 @@ export default function HomePage() {
                 </Box>
 
                 {/* WHY CHOOSE OUR PLATFORM - Modernne sektsioon */}
-                <Container sx={{ py: { xs: 6, md: 10 } }}>
+                <Container sx={{py: {xs: 6, md: 10}}}>
                     <SectionTitle
                         title="Why Choose Our Platform?"
                         subtitle="Our comprehensive gym management solution helps CrossFit box owners save time, increase revenue, and deliver exceptional member experiences."
@@ -928,7 +914,7 @@ export default function HomePage() {
                     <Grid container spacing={4}>
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<PeopleIcon />}
+                                icon={<PeopleIcon/>}
                                 title="Manage Your Community Easily"
                                 description="Our platform is built to help affiliate owners run their business smoothly. Engage your members, track attendance, and ensure a strong and active community."
                                 delay={0.3}
@@ -937,7 +923,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<SavingsIcon />}
+                                icon={<SavingsIcon/>}
                                 title="Save Money on Transactions"
                                 description="We offer lower payment processing fees compared to other platforms. Keep more of your revenue and invest in growing your gym."
                                 delay={0.5}
@@ -946,7 +932,7 @@ export default function HomePage() {
 
                         <Grid item xs={12} md={4}>
                             <FeatureCard
-                                icon={<DescriptionIcon />}
+                                icon={<DescriptionIcon/>}
                                 title="Simple Contract Management"
                                 description="Easily create, manage, and track contracts for your members. Our system ensures compliance and simplifies document handling."
                                 delay={0.7}
@@ -959,7 +945,7 @@ export default function HomePage() {
                 <Box
                     sx={{
                         backgroundColor: alpha(colors.primary, 0.03),
-                        py: { xs: 6, md: 10 },
+                        py: {xs: 6, md: 10},
                         position: 'relative',
                         overflow: 'hidden'
                     }}
@@ -967,14 +953,14 @@ export default function HomePage() {
                     <Container maxWidth="md">
                         <Box
                             component={motion.div}
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.5 }}
+                            initial={{scale: 0.95, opacity: 0}}
+                            animate={{scale: 1, opacity: 1}}
+                            transition={{duration: 0.5}}
                             sx={{
                                 textAlign: "center",
                                 position: 'relative',
                                 zIndex: 1,
-                                p: { xs: 3, md: 6 },
+                                p: {xs: 3, md: 6},
                                 borderRadius: 4,
                                 backgroundColor: 'white',
                                 boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
@@ -998,12 +984,14 @@ export default function HomePage() {
                                     mb: 4,
                                     maxWidth: 600,
                                     mx: 'auto',
-                                    fontSize: { xs: "1rem", md: "1.1rem" },
+                                    fontSize: {xs: "1rem", md: "1.1rem"},
                                     lineHeight: 1.6
                                 }}
                             >
-                                Whether you're an affiliate owner or an ambitious athlete, we have all the tools you need.
-                                Join hundreds of gym owners who are streamlining their operations and creating better experiences for their members.
+                                Whether you're an affiliate owner or an ambitious athlete, we have all the tools you
+                                need.
+                                Join hundreds of gym owners who are streamlining their operations and creating better
+                                experiences for their members.
                             </Typography>
 
                             <Button
@@ -1033,16 +1021,16 @@ export default function HomePage() {
                 </Box>
 
                 {/* FOOTER */}
-                <Box sx={{ backgroundColor: colors.secondary, color: colors.white, py: 4 }}>
+                <Box sx={{backgroundColor: colors.secondary, color: colors.white, py: 4}}>
                     <Container>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5}}>
                             <Typography variant="body2" align="center">
                                 © {new Date().getFullYear()} Irontrack OÜ | All rights reserved.
                             </Typography>
-                            <Typography variant="body2" align="center" sx={{ opacity: 0.8 }}>
+                            <Typography variant="body2" align="center" sx={{opacity: 0.8}}>
                                 Reg. nr: 17184398 | Email: info@irontrack.ee
                             </Typography>
-                            <Box sx={{ mt: 1 }}>
+                            <Box sx={{mt: 1}}>
                                 <Typography
                                     variant="body2"
                                     component="span"

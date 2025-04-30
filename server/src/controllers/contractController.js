@@ -346,7 +346,7 @@ exports.acceptContract = async (req, res) => {
     try {
         const { contractId } = req.params;
         const { userId, affiliateId, acceptType, contractTermsId, paymentCompleted } = req.body;
-
+    console.log("Payment completed:", paymentCompleted);
         // Kui makse pole lõpetatud, saadame tagasi hoiatava teate
         if (!paymentCompleted) {
             return res.status(400).json({

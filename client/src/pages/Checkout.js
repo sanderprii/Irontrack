@@ -420,7 +420,7 @@ export default function Checkout(props) {
                             } else {
                                 setPaymentError('Payment failed or was cancelled');
                             }
-                        } , 1000);
+                        } , 2000);
                     })
                     .catch(error => {
                         console.error("Error checking payment status:", error);

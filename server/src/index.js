@@ -44,7 +44,7 @@ const allowedOrigins = [
 // Set up global rate limiter
 const globalLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 15 minutes
-    max: 500, // limit each IP to 500 requests per windowMs
+    max: 1000, // limit each IP to 500 requests per windowMs
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: 'Too many requests from this IP, please try again later.'

@@ -4,6 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const { MailerSend, EmailParams, Recipient, Sender } = require("mailersend");
 const path = require("path");
 const fs = require("fs");
+const axios = require("axios"); // Vajalik URL-ist piltide allalaadimiseks - peate selle installima
 require("dotenv").config();
 
 // Initsialiseerime Prisma klient
@@ -17,8 +18,114 @@ const mailerSend = new MailerSend({
 // Loome saatja
 const defaultSender = new Sender("info@irontrack.ee", "IronTrack");
 
-// Logo faili sisselugemine attachmendina
+// Vaikimisi logo faili asukoht
 const logoPath = path.join(__dirname, "logo2.png");
+
+/**
+ * Hankib affiliate logo vastavalt affiliate.logo väärtusele
+ * @param {Object|Number} affiliate - Affiliate objekt või affiliateId
+ * @returns {Promise<Object|null>} Logo objekt või null, kui logo ei leitud
+ */
+const getAffiliateLogo = async (affiliate) => {
+    try {
+        // Kui edastati ID, mitte objekt, siis leia affiliate andmebaasist
+        if (typeof affiliate === 'number') {
+            affiliate = await prisma.affiliate.findUnique({
+                where: { id: affiliate },
+            });
+        }
+
+        if (!affiliate || !affiliate.logo) return null;
+
+        const logoId = 'logo';
+
+        // VÕIMALUS 1: Logo on failinimi (kõige tõenäolisem)
+        // Kontrolli erinevaid võimalikke asukohti
+        const potentialPaths = [
+            path.join(__dirname, "../uploads/affiliate-logos", affiliate.logo),
+            path.join(__dirname, "../public/logos", affiliate.logo),
+            path.join(__dirname, "../assets/logos", affiliate.logo),
+            // Lisa siia täiendavaid teid vastavalt vajadusele
+        ];
+
+        for (const logoPath of potentialPaths) {
+            if (fs.existsSync(logoPath)) {
+                const logoFile = fs.readFileSync(logoPath);
+                const base64Logo = logoFile.toString('base64');
+
+                return {
+                    content: base64Logo,
+                    filename: affiliate.logo,
+                    disposition: 'inline',
+                    id: logoId
+                };
+            }
+        }
+
+        // VÕIMALUS 2: Logo on URL
+        if (affiliate.logo.startsWith('http://') || affiliate.logo.startsWith('https://')) {
+            try {
+                const response = await axios.get(affiliate.logo, { responseType: 'arraybuffer' });
+                const base64Logo = Buffer.from(response.data).toString('base64');
+
+                return {
+                    content: base64Logo,
+                    filename: 'logo.png',
+                    disposition: 'inline',
+                    id: logoId
+                };
+            } catch (urlError) {
+                console.error("Error downloading logo from URL:", urlError);
+                return null;
+            }
+        }
+
+        // VÕIMALUS 3: Logo on base64 kodeeritud sisu (vähem tõenäoline)
+        if (affiliate.logo.startsWith('data:image/')) {
+            // Extract base64 content from data URL
+            const base64Content = affiliate.logo.split(',')[1];
+
+            return {
+                content: base64Content,
+                filename: 'logo.png',
+                disposition: 'inline',
+                id: logoId
+            };
+        }
+
+        console.log("Could not resolve affiliate logo:", affiliate.logo);
+        return null;
+    } catch (error) {
+        console.error("Error processing affiliate logo:", error);
+        return null;
+    }
+};
+
+/**
+ * Hankib vaikimisi logo, kui affiliate logot pole saadaval
+ * @returns {Promise<Object|null>} Logo objekt või null, kui vaikimisi logo ei leitud
+ */
+const getDefaultLogo = async () => {
+    try {
+        if (fs.existsSync(logoPath)) {
+            const defaultLogoFile = fs.readFileSync(logoPath);
+            const base64Logo = defaultLogoFile.toString('base64');
+
+            return {
+                content: base64Logo,
+                filename: 'logo2.png',
+                disposition: 'inline',
+                id: 'logo'
+            };
+        } else {
+            console.log("Default logo file not found at:", logoPath);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting default logo:", error);
+        return null;
+    }
+};
 
 // E-kirja mall
 const createEmailTemplate = (subject, body) => {
@@ -161,13 +268,9 @@ const createEmailTemplate = (subject, body) => {
 </html>`;
 };
 
-
-
 // Lihtsustatud e-kirja saatmise funktsioon MailerSend kaudu
 const sendEmailViaMailerSend = async (params) => {
     try {
-
-
         // Create EmailParams object
         const emailParams = new EmailParams()
             .setFrom(params.from)
@@ -177,29 +280,31 @@ const sendEmailViaMailerSend = async (params) => {
             .setHtml(params.html)
             .setText(params.text);
 
-        // Try to add logo attachment if exists
-        try {
-            if (fs.existsSync(logoPath)) {
-                const logoAttachment = fs.readFileSync(logoPath);
-                const base64Logo = logoAttachment.toString('base64');
+        // Lisa logo kui see on olemas params objektis
+        if (params.attachment) {
+            emailParams.setAttachments([params.attachment]);
+        } else {
+            // Kui params-is pole logo, proovi lisada vaikimisi logo
+            try {
+                if (fs.existsSync(logoPath)) {
+                    const logoAttachment = fs.readFileSync(logoPath);
+                    const base64Logo = logoAttachment.toString('base64');
 
-                // Use the correct method based on MailerSend library
-                // For newer versions, use setAttachments
-                emailParams.setAttachments([
-                    {
-                        content: base64Logo,
-                        filename: 'logo2.png',
-                        disposition: 'inline',
-                        id: 'logo'
-                    }
-                ]);
-
-            } else {
-                console.log("Logo file not found at:", logoPath);
+                    emailParams.setAttachments([
+                        {
+                            content: base64Logo,
+                            filename: 'logo2.png',
+                            disposition: 'inline',
+                            id: 'logo'
+                        }
+                    ]);
+                } else {
+                    console.log("Logo file not found at:", logoPath);
+                }
+            } catch (logoError) {
+                console.error("Error adding logo:", logoError);
+                // Continue sending the email without logo
             }
-        } catch (logoError) {
-            console.error("Error adding logo:", logoError);
-            // Continue sending the email without logo
         }
 
         const response = await mailerSend.email.send(emailParams);
@@ -214,8 +319,6 @@ const sendEmailViaMailerSend = async (params) => {
 // Express controller - HTTP request processing
 const sendMessage = async (req, res) => {
     try {
-
-
         // Extract data from req.body object
         let { recipientType, groupName, senderId, recipientId, subject, body, affiliateEmail } = req.body;
 
@@ -224,6 +327,17 @@ const sendMessage = async (req, res) => {
 
         // Default value for recipientId
         let finalRecipientId = recipientId;
+
+        // Püüa saada affiliate logo
+        let logoAttachment = null;
+        if (senderId) {
+            logoAttachment = await getAffiliateLogo(senderId);
+        }
+
+        // Kui affiliate logo pole saadaval, kasuta vaikimisi logo
+        if (!logoAttachment) {
+            logoAttachment = await getDefaultLogo();
+        }
 
         if (recipientType === 'user') {
             // Find user email
@@ -251,6 +365,11 @@ const sendMessage = async (req, res) => {
                 html: htmlContent,
                 text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
             };
+
+            // Lisa logo kui see on saadaval
+            if (logoAttachment) {
+                params.attachment = logoAttachment;
+            }
 
             try {
                 // Send email via MailerSend
@@ -292,6 +411,11 @@ const sendMessage = async (req, res) => {
                     text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
                 };
 
+                // Lisa logo kui see on saadaval
+                if (logoAttachment) {
+                    params.attachment = logoAttachment;
+                }
+
                 try {
                     await sendEmailViaMailerSend(params);
                 } catch (emailError) {
@@ -320,6 +444,11 @@ const sendMessage = async (req, res) => {
                     text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
                 };
 
+                // Lisa logo kui see on saadaval
+                if (logoAttachment) {
+                    params.attachment = logoAttachment;
+                }
+
                 try {
                     await sendEmailViaMailerSend(params);
                 } catch (emailError) {
@@ -328,8 +457,6 @@ const sendMessage = async (req, res) => {
                 }
             }
         }
-
-
 
         const savedMessage = await prisma.message.create({
             data: {
@@ -354,20 +481,35 @@ const sendMessage = async (req, res) => {
 // Täienda samamoodi sendMessageToAffiliate funktsioon
 const sendMessageToAffiliate = async (req, res) => {
     try {
-        const { senderEmail, affiliateEmail, subject, body } = req.body;
+        const { senderEmail, affiliateEmail, subject, body, affiliateId } = req.body;
 
         // Use new HTML template
         const htmlContent = createEmailTemplate(subject, body);
 
+        // Püüa saada affiliate logo kui affiliateId on olemas
+        let logoAttachment = null;
+        if (affiliateId) {
+            logoAttachment = await getAffiliateLogo(affiliateId);
+        }
+
+        // Kui affiliate logo pole saadaval, kasuta vaikimisi logo
+        if (!logoAttachment) {
+            logoAttachment = await getDefaultLogo();
+        }
 
         const params = {
             from: defaultSender,
-            recipients: [new Recipient(affiliateEmail)], // For testing - change later to: affiliateEmail
+            recipients: [new Recipient(affiliateEmail)],
             replyTo: new Sender(senderEmail, "Reply To"),
             subject: subject,
             html: htmlContent,
             text: body.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
         };
+
+        // Lisa logo kui see on saadaval
+        if (logoAttachment) {
+            params.attachment = logoAttachment;
+        }
 
         try {
             await sendEmailViaMailerSend(params);

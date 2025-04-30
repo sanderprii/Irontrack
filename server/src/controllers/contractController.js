@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const {parse} = require("dotenv");
 const prisma = new PrismaClient();
+const { sendOrderConfirmation } = require("../utils/emailService");
 
 /**
  * Lepingute toomine (otsing + sortimine)
@@ -346,7 +347,8 @@ exports.acceptContract = async (req, res) => {
     try {
         const { contractId } = req.params;
         const { userId, affiliateId, acceptType, contractTermsId, paymentCompleted } = req.body;
-    console.log("Payment completed:", paymentCompleted);
+        console.log("Payment completed:", paymentCompleted);
+
         // Kui makse pole lõpetatud, saadame tagasi hoiatava teate
         if (!paymentCompleted) {
             return res.status(400).json({
@@ -354,8 +356,6 @@ exports.acceptContract = async (req, res) => {
                 requiresPayment: true
             });
         }
-
-
 
         // Leiame lepingu andmed, et saada vajalik info UserPlan jaoks
         const contract = await prisma.contract.findUnique({
@@ -375,7 +375,6 @@ exports.acceptContract = async (req, res) => {
                 where: { id: parseInt(contractId) },
                 data: { isFirstPayment: false }
             });
-
         }
 
         // Uuendame Contract staatust
@@ -468,10 +467,61 @@ exports.acceptContract = async (req, res) => {
                     }
                 });
             }
-
-
-
         }
+
+        // === START: ADD EMAIL SENDING CODE ===
+
+        try {
+            // Get user data
+            const userData = await prisma.user.findUnique({
+                where: { id: userId }
+            });
+
+            // Get affiliate data
+            const affiliateData = await prisma.affiliate.findUnique({
+                where: { id: parseInt(affiliateId) }
+            });
+
+            if (!userData || !affiliateData) {
+                console.error("Missing user or affiliate data for email");
+            } else {
+                // Create invoice number (either use an existing one or generate a new one)
+                const invoiceNumber = "Contract-" + contractId + "-" + new Date().getTime();
+
+                // Determine the amount (either first payment or regular payment)
+                const paymentAmount = contract.isFirstPayment && contract.firstPaymentAmount
+                    ? contract.firstPaymentAmount
+                    : contract.paymentAmount || 0;
+
+                // Create required objects for email
+                const planDetails = {
+                    name: contract.contractType || "Membership Contract",
+                    price: paymentAmount
+                };
+
+                const orderDetails = {
+                    invoiceNumber: invoiceNumber,
+                    amount: paymentAmount,
+                    appliedCredit: 0, // Adjust if credit was applied
+                    isContractPayment: true
+                };
+
+                // Send the confirmation email
+                await sendOrderConfirmation(
+                    userData,
+                    orderDetails,
+                    planDetails,
+                    affiliateData
+                );
+
+                console.log(`Order confirmation email sent to ${userData.email}`);
+            }
+        } catch (emailError) {
+            console.error("Failed to send contract confirmation email:", emailError);
+            // Continue processing even if email fails
+        }
+
+        // === END: EMAIL SENDING CODE ===
 
         res.json(updatedContract);
     } catch (error) {

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 require('dotenv').config();
 const {PrismaClient} = require('@prisma/client');
+const { sendOrderConfirmation } = require("../utils/emailService");
 const prisma = new PrismaClient();
 
 const NOTIFICATION_URL = process.env.NOTIFICATION_URL;
@@ -318,6 +319,8 @@ const handleMontonioWebhook = async (req, res) => {
                     console.error(`Error updating transaction: ${updateError.message}`);
                 }
 
+
+
                 // 2. Kui EI OLE payment holiday, siis uuenda userPlan
                 // Leia lepinguga seotud leping ja kasutaja plaan
                 const contract = await prisma.contract.findUnique({
@@ -411,6 +414,54 @@ const handleMontonioWebhook = async (req, res) => {
                                 data: {paymentHoliday: false}
                             });
                         }
+
+                        // Send email for regular contract payment
+                        try {
+
+                            const transactionData = await prisma.transactions.findUnique({
+                                where: {id: transactionId}
+                            });
+
+                            // Get user data
+                            const user = await prisma.user.findUnique({
+                                where: { id: contract.userId }
+                            });
+
+                            // Get affiliate data
+                            const affiliate = await prisma.affiliate.findUnique({
+                                where: { id: contract.affiliateId }
+                            });
+
+                            // Create plan details for regular payment
+                            const planDetails = {
+                                name: `${contract.contractType}`,
+                                price: contract.paymentAmount
+                            };
+
+                            // Build description based on payment holiday
+                            const paymentDescription = isPaymentHoliday
+                                ? "Payment Holiday Fee"
+                                : `Regular contract payment for ${contract.contractType || 'Membership'}`;
+
+                            // Send confirmation email
+                            await sendOrderConfirmation(
+                                user,
+                                {
+                                    invoiceNumber: transactionData.invoiceNumber,
+                                    amount: contract.paymentAmount || grandTotal,
+                                    appliedCredit: 0,
+                                    isContractPayment: true,
+                                    description: paymentDescription,
+                                    affiliateName: affiliate.name
+                                },
+                                planDetails,
+                                affiliate
+                            );
+                            console.log(`Regular contract payment confirmation email sent to ${user.email}`);
+                        } catch (emailError) {
+                            console.error("Failed to send regular payment confirmation email:", emailError);
+                        }
+
                     } else {
                         console.error(`UserPlan not found for contract ${contractId}`);
                     }

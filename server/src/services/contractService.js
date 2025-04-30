@@ -663,55 +663,110 @@ async function recordPendingPayment(
 }
 
 // Täielikult krediidiga tasutud makse e-maili saatmiseks
+// Täielikult krediidiga tasutud makse e-maili saatmiseks
 async function sendCreditPaymentEmail(contract, paymentAmount, appliedCredit, isPaymentHoliday, currentMonth, isEarlyNotification = false) {
-    const dueDate = new Date();
-    dueDate.setDate(contract.paymentDay);
-    const formattedDueDate = dueDate.toLocaleDateString();
+    try {
+        const dueDate = new Date();
+        dueDate.setDate(contract.paymentDay);
+        const formattedDueDate = dueDate.toLocaleDateString();
+        const invoiceNumber = `CREDIT-${contract.id}-${new Date().getTime()}`;
 
-    // Add "Early Payment Notification" to subject if applicable
-    const emailSubject = `${isEarlyNotification ? "Early Payment Notification: " : ""}${
-        isPaymentHoliday
-            ? `Payment Holiday Fee for ${contract.affiliate.name} - ${currentMonth} (Paid with Credit)`
-            : `Monthly payment for ${contract.affiliate.name} (Paid with Credit)`
-    }`;
+        // Add "Early Payment Notification" to subject if applicable
+        const emailSubject = `${isEarlyNotification ? "Early Payment Notification: " : ""}${
+            isPaymentHoliday
+                ? `Payment Holiday Fee for ${contract.affiliate.name} - ${currentMonth}`
+                : `Monthly payment for ${contract.affiliate.name}`
+        }`;
 
-    // Add early payment information to the email body
-    const earlyNotificationText = isEarlyNotification
-        ? `This is an early payment notification for your payment due on ${formattedDueDate}.\n\n`
-        : '';
+        // Create content for the email body - WITHOUT the HTML structure
+        const emailBody = `
+<div class="invoice-details">
+  <p><strong>Invoice #:</strong> ${invoiceNumber}</p>
+  <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+  <p><strong>Customer:</strong> ${contract.user.fullName}</p>
+  <p><strong>Email:</strong> ${contract.user.email}</p>
+</div>
 
-    const emailBody = isPaymentHoliday
-        ? `
-    Dear ${contract.user.fullName},
-    
-    ${earlyNotificationText}This is a payment holiday month for your subscription with ${contract.affiliate.name}.
-    
-    A reduced fee of €${paymentAmount} was due for ${currentMonth}.
-    
-    Good news! This payment has been fully covered by your available credit (€${appliedCredit} used). No further action is required.
-    
-    Thank you!
-    IronTrack Team
-  `
-        : `
-    Dear ${contract.user.fullName},
-    
-    ${earlyNotificationText}Your monthly payment of €${paymentAmount} for ${contract.affiliate.name} was due.
-    
-    Good news! This payment has been fully covered by your available credit (€${appliedCredit} used). No further action is required.
-    
-    Thank you!
-    IronTrack Team
-  `;
+${isEarlyNotification ? `
+<div style="background-color: #fff8e1; padding: 10px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+  <p><strong>Early Payment Notice:</strong> This is an advance notification for your payment due on ${formattedDueDate}.</p>
+</div>
+` : ''}
 
-    await sendMessage({
-        recipientType: 'user',
-        senderId: contract.affiliateId,
-        recipientId: contract.userId,
-        subject: emailSubject,
-        body: emailBody,
-        affiliateEmail: contract.affiliate.email
-    });
+<p>Dear ${contract.user.fullName},</p>
+
+<p>${isPaymentHoliday ?
+            `This is a payment holiday month for your subscription with ${contract.affiliate.name}.` :
+            `Your monthly payment for ${contract.affiliate.name} was due.`
+        }</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+  <thead>
+    <tr>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9f9f9;">Description</th>
+      <th style="padding: 10px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9f9f9;">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">${isPaymentHoliday ?
+            `Payment Holiday Fee for ${currentMonth}` :
+            `Monthly Payment for ${contract.contractType || 'Membership'}`
+        }</td>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">€${paymentAmount.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">Applied Credit</td>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">-€${appliedCredit.toFixed(2)}</td>
+    </tr>
+    <tr style="font-weight: bold; background-color: #f5f5f5;">
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;"><strong>Amount Due</strong></td>
+      <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;"><strong>€0.00</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Good news!</strong> This payment has been fully covered by your available credit (€${appliedCredit.toFixed(2)} used). No further action is required.</p>
+
+<p>Thank you for being a valued member!</p>`;
+
+        // Create plain text version as fallback
+        const textContent = `
+Dear ${contract.user.fullName},
+
+${isEarlyNotification ? `EARLY PAYMENT NOTICE: This is an advance notification for your payment due on ${formattedDueDate}.\n\n` : ''}
+
+${isPaymentHoliday ?
+            `This is a payment holiday month for your subscription with ${contract.affiliate.name}.\nA reduced fee of €${paymentAmount.toFixed(2)} was due for ${currentMonth}.` :
+            `Your monthly payment of €${paymentAmount.toFixed(2)} for ${contract.affiliate.name} was due.`
+        }
+
+Good news! This payment has been fully covered by your available credit (€${appliedCredit.toFixed(2)} used). No further action is required.
+
+Invoice #: ${invoiceNumber}
+Date: ${new Date().toLocaleDateString()}
+Amount: €${paymentAmount.toFixed(2)}
+Credit Applied: €${appliedCredit.toFixed(2)}
+Balance Due: €0.00
+
+Thank you for being a valued member!
+`;
+
+        await sendMessage({
+            recipientType: 'user',
+            senderId: contract.affiliateId,
+            recipientId: contract.userId,
+            subject: emailSubject,
+            body: emailBody,
+            text: textContent,
+            affiliateEmail: contract.affiliate.email
+        });
+
+        return true;
+    } catch (error) {
+        console.error("Error sending credit payment email:", error);
+        return false;
+    }
 }
 
 // Makselingiga emaili saatmine

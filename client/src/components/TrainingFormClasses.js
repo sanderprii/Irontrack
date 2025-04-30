@@ -32,10 +32,10 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
     // Color options for formatting
     const colorOptions = [
-        { name: "Red", color: "#ff0000" },
-        { name: "Green", color: "#00ff00" },
-        { name: "Blue", color: "#0000ff" },
-        { name: "Yellow", color: "#ffff00" },
+        { name: "Red", color: "#c62929" },
+        { name: "Green", color: "#1a7e1a" },
+        { name: "Blue", color: "#3434d6" },
+        { name: "Yellow", color: "#a1a166" },
         { name: "Orange", color: "#ffa500" },
         { name: "Purple", color: "#800080" },
     ];

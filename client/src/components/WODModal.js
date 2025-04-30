@@ -19,10 +19,10 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
 
     // Color options for formatting
     const colorOptions = [
-        { name: "Red", color: "#ff0000" },
-        { name: "Green", color: "#00ff00" },
-        { name: "Blue", color: "#0000ff" },
-        { name: "Yellow", color: "#ffff00" },
+        { name: "Red", color: "#c62929" },
+        { name: "Green", color: "#1a7e1a" },
+        { name: "Blue", color: "#3434d6" },
+        { name: "Yellow", color: "#a1a166" },
         { name: "Orange", color: "#ffa500" },
         { name: "Purple", color: "#800080" },
     ];
@@ -57,8 +57,13 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
         try {
             const formattedDate = new Date(selectedDate).toISOString().split("T")[0];
 
-            // Sanitize HTML before saving
+            // Sanitize HTML before saving for both fields
             const sanitizedDescription = DOMPurify.sanitize(wod.description, {
+                ALLOWED_TAGS: ['b', 'i', 'span'],
+                ALLOWED_ATTR: ['style'],
+            });
+
+            const sanitizedCompetitionInfo = DOMPurify.sanitize(wod.competitionInfo, {
                 ALLOWED_TAGS: ['b', 'i', 'span'],
                 ALLOWED_ATTR: ['style'],
             });
@@ -70,7 +75,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                 description: sanitizedDescription,
                 date: formattedDate,
                 notes: wod.notes,
-                competitionInfo: wod.competitionInfo,
+                competitionInfo: sanitizedCompetitionInfo,
             };
 
             await saveTodayWOD(selectedAffiliateId, wodPayload);
@@ -91,14 +96,16 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
         setShowSearch(false);
     };
 
-    // Function to apply formatting to selected text
-    const applyFormatting = (formatType, value = null) => {
-        const textarea = document.getElementById('wod-description');
+    const applyFormatting = (formatType, value = null, fieldId) => {
+        const textarea = document.getElementById(fieldId);
         if (!textarea) return;
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const selectedText = wod.description.substring(start, end);
+
+        // Valin õige välja stringi vastavalt ID-le
+        const fieldContent = fieldId === 'wod-description' ? wod.description : wod.competitionInfo;
+        const selectedText = fieldContent.substring(start, end);
 
         let formattedText = '';
 
@@ -117,18 +124,45 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     formattedText = selectedText;
             }
 
-            const newDescription =
-                wod.description.substring(0, start) +
+            const newContent =
+                fieldContent.substring(0, start) +
                 formattedText +
-                wod.description.substring(end);
+                fieldContent.substring(end);
 
-            setWod({ ...wod, description: newDescription });
+            // Uuendan õiget välja vastavalt ID-le
+            if (fieldId === 'wod-description') {
+                setWod({ ...wod, description: newContent });
+            } else {
+                setWod({ ...wod, competitionInfo: newContent });
+            }
 
             // Close color menu after selection
             if (formatType === 'color') {
                 setSelectedColorOption(null);
             }
         }
+    };
+
+// Lisa uus eelvaate komponent competitionInfo välja jaoks
+    const CompetitionInfoPreview = () => {
+        if (!wod.competitionInfo) return null;
+
+        return (
+            <Box sx={{ mt: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, maxHeight: '200px', overflow: 'auto' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Competition Info Preview:</Typography>
+                <div
+                    dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(wod.competitionInfo, {
+                            ALLOWED_TAGS: ['b', 'i', 'span'],
+                            ALLOWED_ATTR: ['style'],
+                        })
+                    }}
+                    style={{
+                        whiteSpace: "pre-line" // This preserves line breaks
+                    }}
+                />
+            </Box>
+        );
     };
 
     // Preview component that shows how the formatted text will look
@@ -192,12 +226,12 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                 <Box sx={{ mb: 1, mt: 2, display: 'flex', alignItems: 'center' }}>
                     <Typography variant="body2" sx={{ mr: 1 }}>Formatting:</Typography>
                     <Tooltip title="Bold">
-                        <IconButton size="small" onClick={() => applyFormatting('bold')}>
+                        <IconButton size="small" onClick={() => applyFormatting('bold', null, 'wod-description')}>
                             <FormatBoldIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Italic">
-                        <IconButton size="small" onClick={() => applyFormatting('italic')}>
+                        <IconButton size="small" onClick={() => applyFormatting('italic', null, 'wod-description')}>
                             <FormatItalicIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
@@ -207,13 +241,14 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                         <Tooltip title="Text Color">
                             <IconButton
                                 size="small"
-                                onClick={() => setSelectedColorOption(prev => prev ? null : true)}
+                                onClick={() => setSelectedColorOption(prev => prev === 'description' ? null : 'description')}
+
                             >
                                 <FormatColorTextIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
 
-                        {selectedColorOption && (
+                        {selectedColorOption === 'description' && (
                             <Box sx={{
                                 position: 'absolute',
                                 top: '100%',
@@ -241,7 +276,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                                                     borderRadius: 0.5,
                                                     cursor: 'pointer'
                                                 }}
-                                                onClick={() => applyFormatting('color', option.color)}
+                                                onClick={() => applyFormatting('color', option.color, 'wod-description')}
                                             />
                                         </Tooltip>
                                     ))}
@@ -278,10 +313,75 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                         * To format text: Select the text you want to format, then click a formatting button above.
                     </Typography>
                 </Box>
+                <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>Competition Info:</Typography>
+                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ mr: 1 }}>Formatting:</Typography>
+                    <Tooltip title="Bold">
+                        <IconButton size="small" onClick={() => applyFormatting('bold', null, 'competition-info')}>
+                            <FormatBoldIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Italic">
+                        <IconButton size="small" onClick={() => applyFormatting('italic', null, 'competition-info')}>
+                            <FormatItalicIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+
+                    {/* Värvi valikmenüü */}
+                    <Box sx={{ position: 'relative' }}>
+                        <Tooltip title="Text Color">
+                            <IconButton
+                                size="small"
+                                onClick={() => setSelectedColorOption(prev => prev === 'competition-info' ? null : 'competition-info')}
+
+
+                            >
+                                <FormatColorTextIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+
+                        {selectedColorOption === 'competition-info' && (
+                            <Box sx={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                zIndex: 1000,
+                                width: '200px',
+                                backgroundColor: 'white',
+                                border: '1px solid #ddd',
+                                borderRadius: 1,
+                                boxShadow: 3,
+                                p: 1
+                            }}>
+                                <Typography variant="caption" sx={{ mb: 1, display: 'block' }}>
+                                    Select color:
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {colorOptions.map((option) => (
+                                        <Tooltip key={option.name} title={option.name}>
+                                            <Box
+                                                sx={{
+                                                    width: 24,
+                                                    height: 24,
+                                                    backgroundColor: option.color,
+                                                    border: '1px solid #888',
+                                                    borderRadius: 0.5,
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => applyFormatting('color', option.color, 'competition-info')}
+                                            />
+                                        </Tooltip>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
+                </Box>
                 <TextareaAutosize
+                    id="competition-info"
                     minRows={3}
                     maxRows={10}
-                    placeholder="Competition Info"
+                    placeholder="Competition Info (you can format selected text with the tools above)"
                     style={{
                         width: '100%',
                         padding: '10px',
@@ -295,6 +395,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     value={wod.competitionInfo}
                     onChange={(e) => setWod({ ...wod, competitionInfo: e.target.value })}
                 />
+                {wod.competitionInfo && <CompetitionInfoPreview />}
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleSaveWOD} color="primary">Save</Button>

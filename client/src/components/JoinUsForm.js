@@ -562,7 +562,7 @@ export default function JoinUsForm() {
                                 {/* Full Name */}
                                 <StyledFormControl fullWidth>
                                     <FormLabel htmlFor="fullName" sx={{ mb: 1, fontWeight: 500 }}>
-                                        Full Name
+                                        Full Name (required)
                                     </FormLabel>
                                     <TextField
                                         error={fullNameError}
@@ -713,7 +713,7 @@ export default function JoinUsForm() {
                                 {/* Phone (optional) */}
                                 <StyledFormControl fullWidth>
                                     <FormLabel htmlFor="phone" sx={{ mb: 1, fontWeight: 500 }}>
-                                        Phone (optional)
+                                        Phone (required)
                                     </FormLabel>
                                     <TextField
                                         id="phone"

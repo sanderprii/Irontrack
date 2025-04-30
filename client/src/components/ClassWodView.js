@@ -149,12 +149,26 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                                 }}
                                             />
                                             <Typography variant="h6" sx={{ fontWeight: "bold", color: "text.primary" }}
-                                                mt={2}>
+                                                        mt={2}>
                                                 Competition Info
                                             </Typography>
-                                            <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "pre-line" }}>
-                                                {wod.competitionInfo}
-                                            </Typography>
+                                            {wod.competitionInfo && (
+                                                <div
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: DOMPurify.sanitize(wod.competitionInfo, {
+                                                            ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                            ALLOWED_ATTR: ['style'],
+                                                        })
+                                                    }}
+                                                    style={{
+                                                        color: "text.secondary",
+                                                        whiteSpace: "pre-line",
+                                                        fontSize: "14px",
+                                                        lineHeight: "1.5",
+                                                        textAlign: "center"
+                                                    }}
+                                                />
+                                            )}
                                         </Box>
 
                                     ) : (

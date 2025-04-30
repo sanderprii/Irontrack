@@ -497,7 +497,7 @@ export default function JoinUsForm() {
 
     // Should the verify button be disabled?
     const isVerifyButtonDisabled = () => {
-        return isValidatingEmail || !email || (confirmEmail && !emailsMatch);
+        return isValidatingEmail || !email || !confirmEmail || !emailsMatch;
     };
 
     return (

@@ -40,7 +40,7 @@ export default function SentMessage({ affiliate }) {
             const data = await getSentMessages(affiliate, page, search);
 
             // Veendume, et andmed on õiges vormis
-            console.log("Serveri vastus:", data);
+
 
             setMessages(data.messages || []);
             if (data.pagination) {
@@ -82,10 +82,7 @@ export default function SentMessage({ affiliate }) {
     const renderPagination = () => {
         if (!pagination) return null;
 
-        // Kuva debug info
-        console.log("Pagination info:", pagination);
-        console.log("Current page:", page);
-        console.log("Total pages:", totalPages);
+
 
         // Kui on ainult üks lehekülg, siis ei näita leheküljestamist
         if (totalPages <= 1) return null;

@@ -1,11 +1,58 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+// Globaalne flag, mis jälgib rate limiti olekut
+window.isRateLimited = false;
+
+// Lisa see funktsioon window objekti külge
+window.showRateLimitToast = function() {
+    // Kutsu toast siin välja
+    if (typeof toast === 'function') {
+        toast.error('Rate limit exceeded! Please wait a few minutes before continuing.', {
+            position: "top-center",
+            autoClose: 10000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true
+        });
+    }
+};
+
+
+// Globaalne funktsioon teate näitamiseks
+window.showRateLimitMessage = function() {
+    if (!window.isRateLimited) {
+        window.isRateLimited = true;
+        // Salvesta localStorage
+        try {
+            const limitExpires = new Date(Date.now() + 60000);
+            localStorage.setItem('rateLimitedUntil', limitExpires.toISOString());
+
+        } catch (err) {
+            console.error('Failed to save to localStorage:', err);
+        }
+
+        checkRateLimit();
+
+
+        // Kutsu toast notification
+        window.showRateLimitToast();
+
+        // Lähtesta pärast 60 sekundit
+        setTimeout(function() {
+
+            window.isRateLimited = false;
+            localStorage.removeItem('rateLimitedUntil');
+        }, 60000);
+    }
+};
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-const debug = (message, data) => {
-    console.log(`[API DEBUG] ${message}`, JSON.stringify(data, null, 2));
-};
+
+
+
 
 const api = axios.create({
     baseURL: API_URL,
@@ -15,113 +62,57 @@ const api = axios.create({
     }
 });
 
-api.interceptors.request.use(config => {
-    debug('REQUEST CONFIG', {
-        url: config.url,
-        method: config.method,
-        headers: config.headers
-    });
-    return config;
-});
 
-// Global variable to track if we're already rate limited
-// This helps us avoid excessive localStorage operations
-let isCurrentlyRateLimited = false;
 
+// Lihtsustatud interceptor kasutades globaalset meetodit
 api.interceptors.response.use(
     response => {
-        debug('RESPONSE SUCCESS', {
-            status: response.status,
-            data: response.data
-        });
+
         return response;
     },
     error => {
-        console.group('🚨 AXIOS INTERCEPTOR ERROR');
-        console.error('Error:', error.message);
+        console.log('❌ Error in request:', error.message);
 
-        // Don't try to handle if we're already rate limited
-        if (isCurrentlyRateLimited) {
-            console.log('Already rate limited, skipping additional processing');
-            console.groupEnd();
-            return Promise.reject(error);
-        }
-
-        // Check if this is a rate limit error
+        // Check for 429 status
         if (error.response && error.response.status === 429) {
-            console.log('🔒 Rate limit detected (429 status)');
 
-            try {
-                // Extract rate limit info from response data instead of headers
-                // This works better with CORS restrictions
-                const responseData = error.response.data;
-                console.log('Rate limit response data:', responseData);
-
-                // Get retry info from response data
-                const retryAfter = responseData?.retryAfter || 1; // Default to 1 minute
-
-                // Calculate expiry time - convert minutes to milliseconds
-                const limitExpires = new Date(Date.now() + retryAfter * 60 * 1000);
-
-                // Save to localStorage
-                localStorage.setItem('rateLimitedUntil', limitExpires.toISOString());
-                console.log('Rate limit saved until:', limitExpires.toISOString());
-
-                // Set our global tracking variable
-                isCurrentlyRateLimited = true;
-
-                // Show toast notification with detailed info
-                toast.error(
-                    <div>
-                        <h4>⏳ Päringute limiit ületatud</h4>
-                        <p>Palun oodake {retryAfter} minutit enne uute päringute tegemist.</p>
-                        <p>Taastub: {limitExpires.toLocaleTimeString()}</p>
-                    </div>,
-                    {
-                        position: "top-right",
-                        autoClose: 10000,
-                        closeOnClick: true,
-                        pauseOnHover: true
-                    }
-                );
-
-                // Set a timeout to clear the rate limit after it expires
-                setTimeout(() => {
-                    console.log('Rate limit timeout expired, clearing state');
-                    isCurrentlyRateLimited = false;
-                    localStorage.removeItem('rateLimitedUntil');
-                }, retryAfter * 60 * 1000);
-            } catch (storageError) {
-                console.error('Error saving rate limit info:', storageError);
-            }
+            // Use setTimeout to ensure this runs after current execution
+            setTimeout(() => window.showRateLimitMessage(), 0);
         }
 
-        console.groupEnd();
         return Promise.reject(error);
     }
 );
 
 // Enhanced rate limit check function
 export const checkRateLimit = () => {
+    console.group('🔍 Checking Rate Limit State');
     try {
+        // Loe localStorage väärtus
         const rateLimitedUntil = localStorage.getItem('rateLimitedUntil');
-        console.log('Checking rate limit, stored value:', rateLimitedUntil);
+
 
         if (!rateLimitedUntil) {
-            isCurrentlyRateLimited = false;
+
+            window.isRateLimited = false;
+            console.groupEnd();
             return null;
         }
 
+        // Kontrolli kas aegumistähtaeg on tulevikus
         const limitExpires = new Date(rateLimitedUntil);
         const now = new Date();
 
+
         if (limitExpires > now) {
+            // Arvuta järelejäänud aeg
             const remainingMinutes = Math.ceil((limitExpires - now) / 1000 / 60);
-            console.log('Rate limit is active, remaining minutes:', remainingMinutes);
+
 
             // Update our global tracking variable
-            isCurrentlyRateLimited = true;
+            window.isRateLimited = true;
 
+            console.groupEnd();
             return {
                 limited: true,
                 remainingMinutes,
@@ -129,15 +120,49 @@ export const checkRateLimit = () => {
             };
         }
 
-        // Limit has expired, clean up localStorage
-        console.log('Rate limit has expired, removing from localStorage');
+        // Limiit on aegunud, puhasta localStorage
+
         localStorage.removeItem('rateLimitedUntil');
-        isCurrentlyRateLimited = false;
+        window.isRateLimited = false;
+        console.groupEnd();
         return null;
     } catch (error) {
         console.error('Error checking rate limit:', error);
+        console.groupEnd();
         return null;
     }
 };
+
+// Ülekirjuta XMLHttpRequest, et püüda kõik 429 vead kinni
+(function() {
+
+    const originalXHR = window.XMLHttpRequest;
+
+    function newXHR() {
+        const xhr = new originalXHR();
+        const originalOpen = xhr.open;
+
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 429) {
+
+                window.showRateLimitMessage();
+            }
+        });
+
+        return xhr;
+    }
+
+    window.XMLHttpRequest = newXHR;
+})();
+
+
+
+// Ka siin lisa väga nähtav logi
+window.addEventListener('load', () => {
+
+
+    // Check rate limit on load
+    checkRateLimit();
+});
 
 export default api;

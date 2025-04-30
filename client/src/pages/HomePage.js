@@ -547,7 +547,7 @@ export default function HomePage() {
                                             left: 0,
                                             width: "100%",
                                             height: "100%",
-                                            background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${imgSrc.webp || imgSrc.src})`,
+                                            background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${typeof imgSrc === 'string' ? imgSrc : imgSrc.src})`,
                                             backgroundPosition: "center",
                                             backgroundSize: "cover",
                                             backgroundRepeat: "no-repeat",

@@ -44,9 +44,9 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
     const fetchTerms = async () => {
         try {
             setLoading(true);
-            console.log("Fetching terms with type:", termsType);
+
             const data = await getContractTermsById(termsType);
-            console.log("Fetched data:", data);
+
             setTermsData(data || null);
         } catch (error) {
             console.error("Error fetching terms:", error);
@@ -60,11 +60,11 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
         // Choose the Estonian terms type based on whether user has a role
         if (userRole) {
             // If user has a role, use contractEST type
-            console.log("Changing language to Estonian, setting terms type to 'contractEST'");
+
             setTermsType('contractEST');
         } else {
             // If user has no role, use registerEST type
-            console.log("Changing language to Estonian, setting terms type to 'registerEST'");
+
             setTermsType('registerEST');
         }
     };

@@ -63,7 +63,7 @@ const Trainer = () => {
                     const affiliateData = await getAffiliate(data[0].id);
 
                     // Debug - log the structure
-                    console.log("Single affiliate data:", affiliateData);
+
 
                     // Make sure we have id and name properties
                     if (!affiliateData.id || !affiliateData.name) {
@@ -99,7 +99,7 @@ const Trainer = () => {
     const saveAffiliateToStorage = (affiliate) => {
         if (!affiliate) return;
 
-        console.log("Saving to localStorage:", affiliate);
+
 
         // Save to localStorage for persistence
         localStorage.setItem("affiliateId", affiliate.id);

@@ -141,7 +141,7 @@ async function sendWeeklyPaymentReminders() {
 
         // Kontrolli, kas täna on esmaspäev (0 = pühapäev, 1 = esmaspäev, jne)
         if (today.getDay() !== 1) {
-            console.log('Today is not Monday. Weekly reminders are sent only on Mondays.');
+
             return { success: true, notifiedCount: 0, skipped: true };
         }
 
@@ -200,7 +200,7 @@ async function sendWeeklyPaymentReminders() {
             }
         }
 
-        console.log(`Sent weekly reminders for ${notifiedCount} pending transactions`);
+
         return { success: true, notifiedCount };
     } catch (error) {
         console.error('Error sending weekly payment reminders:', error);
@@ -249,18 +249,18 @@ async function processContractPayments() {
                 }))
             });
 
-            console.log(`Marked ${expiredContracts.length} expired contracts as ended`);
+
         }
 
         // 2. Kontrolli ja saada meeldetuletused tasumata maksetele
         const pendingPaymentsResult = await checkAndNotifyPendingPayments();
-        console.log(`Sent payment reminders for ${pendingPaymentsResult.notifiedCount} pending transactions with due date today`);
+
 
         // 3. Kontrolli, kas täna on esmaspäev ja saada iganädalased meeldetuletused kõigile pending tehingutele
         let weeklyRemindersResult = { notifiedCount: 0 };
         if (today.getDay() === 1) { // 1 = esmaspäev
             weeklyRemindersResult = await sendWeeklyPaymentReminders();
-            console.log(`Sent weekly payment reminders for ${weeklyRemindersResult.notifiedCount} pending transactions`);
+
         }
 
         // 4. Jätkame tavapärase maksetöötlusega

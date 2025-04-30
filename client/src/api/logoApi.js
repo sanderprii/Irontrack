@@ -1,4 +1,5 @@
 // src/api/logoApi.js
+import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL
 
@@ -9,21 +10,21 @@ export async function uploadAffiliateLogo(file, affiliateId) {
 
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/upload-logo`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
+    try {
+        const response = await axios.post(`${API_URL}/upload-logo`, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // Content-Type pole vaja käsitsi määrata, Axios teeb seda automaatselt FormData puhul
+            }
+        });
 
-        },
-        body: formData,
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload logo');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw new Error(error.response.data.error || 'Failed to upload logo');
+        }
+        throw error;
     }
-
-    return response.json();
 }
 
 export async function uploadProfilePicture(file, userId) {
@@ -33,18 +34,19 @@ export async function uploadProfilePicture(file, userId) {
 
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/upload-profile-picture`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-    });
+    try {
+        const response = await axios.post(`${API_URL}/upload-profile-picture`, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // Content-Type pole vaja käsitsi määrata, Axios teeb seda automaatselt FormData puhul
+            }
+        });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload profile picture');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw new Error(error.response.data.error || 'Failed to upload profile picture');
+        }
+        throw error;
     }
-
-    return response.json();
 }

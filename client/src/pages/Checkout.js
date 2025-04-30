@@ -390,8 +390,7 @@ export default function Checkout(props) {
                                     }
                                     // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
                                     else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
-                                        console.log("familyMemberId", currentFamilyMemberId);
-                                        console.log("currentFamilyMember", currentFamilyMember);
+
                                         buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference, currentIsContractPayment, currentFamilyMember, currentFamilyMemberId)
                                             .then(response => {
                                                 setInvoiceNumber(response.invoiceNumber);
@@ -501,8 +500,7 @@ export default function Checkout(props) {
                     setInvoiceNumber("Credit-" + new Date().getTime());
                 } else {
                     // Tavalise paketi ostu puhul kutsu buyPlan
-                    console.log("familyMemberId", familyMemberId);
-                    console.log("isFamilyMember", isFamilyMember);
+
                     const response = await buyPlan(planData, affiliateInfo?.id, appliedCredit, contract, null, null, isFamilyMember, familyMemberId);
                     setPaymentSuccess(true);
                     setActiveStep(activeStep + 1);

@@ -1,35 +1,26 @@
 // src/api/statisticsApi.js
+import axios from 'axios';
+
 export async function getStatistics(params = {}) {
-    const query = new URLSearchParams(params).toString();
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/statistics?${query.toString()}`, {
-            method: 'GET',
+        const response = await axios.get('/api/statistics', {
+            params: params,
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        if (!response.ok) {
-            throw new Error('Failed to fetch statistics');
-        }
-        return await response.json();
+        return response.data;
     } catch (error) {
         console.error('❌ Error fetching statistics:', error);
         return null;
     }
 }
 
-export async function getAllStatistics () {
+export async function getAllStatistics() {
     try {
-
-        const response = await fetch('/api/statistics/all', {
-            method: 'GET',
-
-        });
-        if (!response.ok) {
-            throw new Error('Failed to fetch statistics');
-        }
-        return await response.json();
+        const response = await axios.get('/api/statistics/all');
+        return response.data;
     } catch (error) {
         console.error('❌ Error fetching statistics:', error);
         return null;

@@ -124,6 +124,10 @@ export default function ClassModal({
     const [deleteClassConfirmOpen, setDeleteClassConfirmOpen] = useState(false);
     const [isAddAttendeeModalOpen, setAddAttendeeModalOpen] = useState(false);
 
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState("");
+    const [notificationType, setNotificationType] = useState("success");
+
     useEffect(() => {
         const role = localStorage.getItem("role");
         setUserRole(role);
@@ -289,7 +293,7 @@ export default function ClassModal({
     async function handleSaveScore() {
         try {
             if (!scoreValue || !scoreType) {
-                alert("Please fill the score and scoreType!");
+                showNotification("Please fill the score and scoreType!", "info");
                 return;
             }
 
@@ -307,15 +311,21 @@ export default function ClassModal({
                 await addClassScore(cls, scoreType, scoreValue);
             }
 
-            alert("Score saved successfully!");
+            showNotification("Score saved successfully!", "success");
             setShowScoreForm(false);
             setHasScore(true);
 
         } catch (error) {
             console.error("Error saving score:", error);
-            alert("Failed to save score");
+            showNotification("Failed to save score", "error");
         }
     }
+
+    const showNotification = (message, type = "info") => {
+        setNotificationMessage(message);
+        setNotificationType(type);
+        setNotificationOpen(true);
+    };
 
     // Filter plans based on expiration, training type and available sessions
     async function loadUserPlans(affiliateId) {
@@ -403,10 +413,10 @@ export default function ClassModal({
                 await addClassToMyTrainings(cls.id, addCompetition);
             }
 
-            alert("Class added to your trainings!");
+            showNotification("Class added to your trainings!", "success");
         } catch (error) {
             console.error("Error adding class to my trainings:", error);
-            alert("Failed to add class to my trainings");
+            showNotification("Failed to add class to my trainings", "error");
         }
     }
 
@@ -444,14 +454,14 @@ export default function ClassModal({
         try {
             if (!cls.freeClass) {
                 if (!selectedPlanId) {
-                    alert("Please select a plan first!");
+                    showNotification("Please select a plan first!", "info");
                     return;
                 }
 
                 // Check if selected plan is in filtered plans
                 const selectedPlan = filteredPlans.find(plan => plan.id === selectedPlanId);
                 if (!selectedPlan) {
-                    alert("Please select a valid plan for this class type!");
+                    showNotification("Please select a valid plan for this class type!", "info");
                     return;
                 }
             }
@@ -475,7 +485,7 @@ export default function ClassModal({
             await refreshClasses();
         } catch (error) {
             console.error("Error registering for class:", error);
-            alert(error.message || "Registration failed");
+            showNotification(error.message || "Registration failed", "error");
         }
     };
 
@@ -494,7 +504,7 @@ export default function ClassModal({
             await refreshClasses();
         } catch (error) {
             console.error("Error canceling registration:", error);
-            alert(error.message || "Cancellation failed");
+            showNotification(error.message || "Cancellation failed", "error");
         }
     };
 
@@ -504,14 +514,14 @@ export default function ClassModal({
             // Require plan selection for paid classes
             if (!cls.freeClass) {
                 if (!selectedPlanId) {
-                    alert("Please select a plan first!");
+                    showNotification("Please select a plan first!", "info");
                     return;
                 }
 
                 // Verify that selected plan is in filtered plans
                 const selectedPlan = filteredPlans.find(plan => plan.id === selectedPlanId);
                 if (!selectedPlan) {
-                    alert("Selected plan is not compatible with this class type!");
+                    showNotification("Selected plan is not compatible with this class type!", "info");
                     return;
                 }
             }
@@ -531,10 +541,10 @@ export default function ClassModal({
             // Force re-check waitlist status
             await checkWaitlistStatus();
 
-            alert("You have been added to the waitlist!");
+            showNotification("You have been added to the waitlist!", "success");
         } catch (error) {
             console.error("Error adding to waitlist:", error);
-            alert(error.message || "Failed to add to waitlist");
+            showNotification(error.message || "Failed to add to waitlist", "error");
         }
     };
 
@@ -546,10 +556,10 @@ export default function ClassModal({
             // Force re-check waitlist status
             await checkWaitlistStatus();
 
-            alert("You have been removed from the waitlist");
+            showNotification("You have been removed from the waitlist", "success");
         } catch (error) {
             console.error("Error removing from waitlist:", error);
-            alert(error.message || "Failed to remove from waitlist");
+            showNotification(error.message || "Failed to remove from waitlist", "error");
         }
     };
 
@@ -561,7 +571,7 @@ export default function ClassModal({
             );
         } catch (error) {
             console.error("Error checking in attendee:", error);
-            alert("Failed to check in attendee");
+            showNotification("Failed to check in attendee", "error");
         }
     };
 
@@ -579,7 +589,7 @@ export default function ClassModal({
             }
         } catch (error) {
             console.error("Error deleting attendee:", error);
-            alert("Failed to delete attendee");
+            showNotification("Failed to delete attendee", "error");
         }
     };
 
@@ -1633,6 +1643,28 @@ export default function ClassModal({
                         handleCloseDeleteAttendeeConfirm();
                     }} color="error">
                         Remove Attendee
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Notification Dialog */}
+            <Dialog
+                open={notificationOpen}
+                onClose={() => setNotificationOpen(false)}
+            >
+                <DialogTitle>
+                    {notificationType === "success" && "Success"}
+                    {notificationType === "error" && "Error"}
+                    {notificationType === "info" && "Information"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {notificationMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setNotificationOpen(false)} color="primary" autoFocus>
+                        OK
                     </Button>
                 </DialogActions>
             </Dialog>

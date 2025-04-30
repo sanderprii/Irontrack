@@ -1,13 +1,17 @@
+import axios from 'axios';
+
 const API_URL = process.env.REACT_APP_API_URL
 
 export const getUserProfile = async () => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user`, {
-            headers: { Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'},
+        const response = await axios.get(`${API_URL}/user`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
         });
-        return response.ok ? await response.json() : null;
+        return response.data;
     } catch (error) {
         console.error('Error fetching profile:', error);
         return null;
@@ -17,15 +21,16 @@ export const getUserProfile = async () => {
 export const updateUserProfile = async (userData) => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(userData),
-        });
-        return response.ok;
+        const response = await axios.put(`${API_URL}/user`,
+            userData,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                }
+            }
+        );
+        return true;
     } catch (error) {
         console.error('Error updating profile:', error);
         return false;
@@ -35,15 +40,16 @@ export const updateUserProfile = async (userData) => {
 export const changeUserPassword = async (passwordData) => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(passwordData),
-        });
-        return response.ok;
+        await axios.post(`${API_URL}/user/change-password`,
+            passwordData,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                }
+            }
+        );
+        return true;
     } catch (error) {
         console.error('Error changing password:', error);
         return false;
@@ -52,17 +58,17 @@ export const changeUserPassword = async (passwordData) => {
 
 export const getUserPlansByAffiliate = async (affiliateId) => {
     try {
-
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/user/user-plans?affiliateId=${affiliateId}`,
-            {
-                method: "GET",
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-        return response.ok ? await response.json() : [];
+        const response = await axios.get(`${API_URL}/user/user-plans`, {
+            params: {
+                affiliateId
+            },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            }
+        });
+        return response.data;
     } catch (error) {
         console.error('Error fetching plans:', error);
         return [];
@@ -73,18 +79,16 @@ export async function addUserNote(userId, noteData) {
     // noteData = { note, flag }
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/notes/${userId}/notes`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(noteData),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to add note');
-        }
-        return await response.json(); // Tagastab loodud note
+        const response = await axios.post(`${API_URL}/user/notes/${userId}/notes`,
+            noteData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            }
+        );
+        return response.data; // Tagastab loodud note
     } catch (error) {
         console.error("❌ addUserNote error:", error);
         throw error;
@@ -94,15 +98,11 @@ export async function addUserNote(userId, noteData) {
 export async function deleteUserNote(userId, noteId) {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/notes/${userId}/notes/${noteId}`, {
-            method: 'DELETE',
+        await axios.delete(`${API_URL}/user/notes/${userId}/notes/${noteId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
-            },
+            }
         });
-        if (!response.ok) {
-            throw new Error('Failed to delete note');
-        }
         return true;
     } catch (error) {
         console.error("❌ deleteUserNote error:", error);
@@ -113,13 +113,17 @@ export async function deleteUserNote(userId, noteId) {
 export async function getUserAttendees(affiliateId, userId) {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/attendees?affiliateId=${affiliateId}&userId=${userId}`, {
+        const response = await axios.get(`${API_URL}/user/attendees`, {
+            params: {
+                affiliateId,
+                userId
+            },
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
-            },
+            }
         });
-        return response.ok ? await response.json() : [];
+        return response.data;
     } catch (error) {
         console.error('Error fetching attendees:', error);
         return [];

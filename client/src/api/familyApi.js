@@ -1,4 +1,6 @@
 // api/familyApi.js
+import axios from 'axios';
+
 const API_URL = process.env.REACT_APP_API_URL;
 
 /**
@@ -8,20 +10,14 @@ const API_URL = process.env.REACT_APP_API_URL;
 export const getFamilyMembers = async () => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/family-members`, {
-            method: 'GET',
+        const response = await axios.get(`${API_URL}/user/family-members`, {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
         });
 
-        if (!response.ok) {
-            console.error('Error response:', await response.text());
-            return [];
-        }
-
-        return await response.json();
+        return response.data;
     } catch (error) {
         console.error('Error fetching family members:', error);
         return [];
@@ -36,22 +32,17 @@ export const getFamilyMembers = async () => {
 export const addFamilyMember = async (fullName) => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/family-members`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ fullName }),
-        });
+        const response = await axios.post(`${API_URL}/user/family-members`,
+            { fullName },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(errorText || 'Failed to add family member');
-        }
-
-        return await response.json();
+        return response.data;
     } catch (error) {
         console.error('Error adding family member:', error);
         throw error;
@@ -66,19 +57,12 @@ export const addFamilyMember = async (fullName) => {
 export const deleteFamilyMember = async (id) => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/family-members/${id}`, {
-            method: 'DELETE',
+        await axios.delete(`${API_URL}/user/family-members/${id}`, {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(errorText || 'Failed to delete family member');
-        }
 
         return true;
     } catch (error) {
@@ -88,23 +72,16 @@ export const deleteFamilyMember = async (id) => {
 };
 
 export const getAffiliateFamilyMembers = async (userId) => {
-
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/user/family-members/${userId}`, {
-            method: 'GET',
+        const response = await axios.get(`${API_URL}/user/family-members/${userId}`, {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
         });
 
-        if (!response.ok) {
-            console.error('Error response:', await response.text());
-            return [];
-        }
-
-        return await response.json();
+        return response.data;
     } catch (error) {
         console.error('Error fetching affiliate family members:', error);
         return [];

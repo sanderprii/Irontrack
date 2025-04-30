@@ -270,16 +270,15 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Debug paroolide võrdlust
-        console.log(`Login attempt - hashed password in DB: ${user.password.slice(0, 10)}...`);
+
 
         // Verify password - kasuta lihtsalt bcrypt.compare ilma muude tingimusteta
         const isMatch = await bcrypt.compare(password, user.password);
 
-        console.log(`Password match result: ${isMatch}`);
+
 
         if (!isMatch) {
-            console.log(`Failed login attempt for email: ${email} from IP: ${clientIP} - Invalid password`);
+
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
 
@@ -323,7 +322,7 @@ exports.requestPasswordReset = async (req, res) => {
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             // For security reasons, don't reveal that the email doesn't exist
-            console.log(`Password reset requested for non-existent email: ${email} from IP: ${clientIP}`);
+
             return res.status(200).json({ message: 'If your email is registered, you will receive a password reset link.' });
         }
 
@@ -374,7 +373,7 @@ exports.requestPasswordReset = async (req, res) => {
             htmlContent
         );
 
-        console.log(`Password reset link sent to: ${email} from IP: ${clientIP}`);
+
         return res.status(200).json({ message: 'If your email is registered, you will receive a password reset link.' });
     } catch (error) {
         console.error('Password reset request error:', error);
@@ -435,7 +434,7 @@ exports.resetPassword = async (req, res) => {
             }
         });
 
-        console.log(`Password reset successful for user ID: ${user.id} from IP: ${clientIP}`);
+
         return res.status(200).json({ message: 'Password has been reset successfully.' });
     } catch (error) {
         console.error('Password reset error:', error);
@@ -757,8 +756,7 @@ exports.register = async (req, res) => {
             // Validate the email first
             const verification = await verifyEmailInternal(email);
 
-            // Log the result
-            console.log(`Email validation for ${email}: ${verification.status}`);
+
 
             // If the email is clearly invalid, reject the registration
             if (['syntax_error', 'disposables', 'mailbox_blocked'].includes(verification.status)) {

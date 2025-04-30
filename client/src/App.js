@@ -14,6 +14,7 @@ import { checkRateLimit } from './utils/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+
 // Import other components
 import ResponsiveNavbar from './components/ResponsiveNavbar';
 import HomePage from './pages/HomePage';
@@ -64,25 +65,6 @@ function App() {
     const [isPWA, setIsPWA] = useState(false);
     const [showRefreshMessage, setShowRefreshMessage] = useState(false);
 
-    useEffect(() => {
-        // Kontrolli kas kasutaja oli varem rate-limited
-        const rateLimitInfo = checkRateLimit();
-
-        if (rateLimitInfo) {
-            // Näita hoiatust, kui limiit pole veel aegunud
-            toast.warning(
-                <div>
-                    <h4>Päringulimiit on saavutatud</h4>
-                    <p>Mõned funktsioonid võivad olla piiratud {rateLimitInfo.remainingMinutes} minuti jooksul.</p>
-                    <p>Taastub: {rateLimitInfo.expiresAt.toLocaleString()}</p>
-                </div>,
-                {
-                    autoClose: 5000,
-                    type: 'warning'
-                }
-            );
-        }
-    }, []);
 
 
 
@@ -124,7 +106,7 @@ function App() {
     // Function to refresh the application data
     const handleRefresh = useCallback(async () => {
         try {
-            console.log("Refresh started");
+
 
             // Simple delay to show the refreshing effect
             await new Promise(resolve => setTimeout(resolve, 800));
@@ -145,6 +127,40 @@ function App() {
     };
 
     const hostname = window.location.hostname;
+
+    useEffect(() => {
+        // Kontrolli kas kasutaja oli varem rate-limited
+        const rateLimitInfo = checkRateLimit();
+
+        if (rateLimitInfo) {
+            // Näita hoiatust, kui limiit pole veel aegunud
+            toast.warning(
+                <div>
+                    <h4>Rate Limit Reached</h4>
+                    <p>Some features may be limited for {rateLimitInfo.remainingMinutes} minute(s).</p>
+                    <p>Resets at: {rateLimitInfo.expiresAt.toLocaleString()}</p>
+                </div>,
+                {
+                    autoClose: 5000,
+                    type: 'warning'
+                }
+            );
+        }
+    }, []);
+
+    useEffect(() => {
+        // Seadista globaalne toast viide
+        window.showRateLimitToast = () => {
+            toast.error('Rate limit exceeded! Please wait a few minutes before continuing.', {
+                position: "top-center",
+                autoClose: 10000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+        };
+    }, []);
 
     // Check if we're on a subdomain
     const isSubdomain =
@@ -173,6 +189,7 @@ function App() {
     return (
         <HelmetProvider>
             <ToastContainer />
+
             <AppTheme>
                 <CssBaseline/>
                 <Helmet>

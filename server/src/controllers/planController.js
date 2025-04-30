@@ -138,8 +138,7 @@ const buyPlan = async (req, res) => {
     const familyMemberId = req.body.familyMemberId;
     let merchantReference = req.body.currentMerchantReference;
 
-    console.log("familyMemberId", familyMemberId);
-    console.log("isFamilyMember", isFamilyMember);
+
 
     try {
 

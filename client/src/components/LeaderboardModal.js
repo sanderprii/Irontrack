@@ -73,16 +73,13 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
             const response = await getClassLeaderboard(classId);
             setLeaderboard(response || []);
 
-            console.log("Leaderboard data:", response);
-            console.log("Current user's full name:", userFullName);
-
             // Find user's score by matching their full name
             if (userFullName && response && response.length > 0) {
                 const score = response.find(entry =>
                     entry.fullName === userFullName
                 );
 
-                console.log("Found user score:", score);
+
                 setUserScore(score || null);
             }
         } catch (error) {

@@ -18,7 +18,7 @@ export const sendMessage = async ({ recipientType, groupName, senderId, recipien
             affiliateEmail,
         };
 
-        console.log("Saadan päringu andmetega:", payload);
+
 
         const response = await fetch(`${API_URL}/messages/send`, {
             method: 'POST',

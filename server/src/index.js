@@ -41,26 +41,31 @@ const allowedOrigins = [
     'https://www.crossfitviljandi.irontrack.ee',
 ];
 
-// Set up global rate limiter
-const globalLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 15 minutes
-    max: 1000, // limit each IP to 500 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    message: 'Too many requests from this IP, please try again later.'
-});
+app.use(cors({
+    origin: function(origin, callback) {
+        // If no origin (e.g., Postman or server-to-server requests), allow the request
+        if (!origin) return callback(null, true);
 
-// Apply global rate limiter to all requests
-app.use(globalLimiter);
+        // Check for allowed subdomain pattern
+        const isIrontrackSubdomain = origin &&
+            origin.match(/^https:\/\/[a-z0-9-]+\.irontrack.ee$/);
 
-// More restrictive rate limiter for authentication routes
-const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour window
-    max: 10, // limit each IP to 10 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many authentication attempts. Please try again later.'
-});
+        if (allowedOrigins.indexOf(origin) !== -1 || isIrontrackSubdomain) {
+            return callback(null, true);
+        }
+
+        const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
+        return callback(new Error(msg), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    exposedHeaders: ['Retry-After',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset']
+}));
+
+app.options('*', cors());
 
 // IP tracking middleware
 const trackIP = async (req, res, next) => {
@@ -110,26 +115,41 @@ const trackIP = async (req, res, next) => {
 // Apply IP tracking middleware
 app.use(trackIP);
 
+
+
+
+
+// Server.js - muuda rate limiter seadistust
+const globalLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 1 minut
+    max: 500,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        // Saada struktureeritud JSON vastus
+        res.status(429).json({
+            status: 'error',
+            message: 'Päringute limiit ületatud, proovi hiljem uuesti',
+            retryAfter: 60 // sekundites
+        });
+    }
+});
+
+// Apply global rate limiter to all requests
+app.use(globalLimiter);
+
+// More restrictive rate limiter for authentication routes
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour window
+    max: 10, // limit each IP to 10 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many authentication attempts. Please try again later.'
+});
+
+
 // Configure CORS
-app.use(cors({
-    origin: function(origin, callback) {
-        // If no origin (e.g., Postman or server-to-server requests), allow the request
-        if (!origin) return callback(null, true);
 
-        // Check for allowed subdomain pattern
-        const isIrontrackSubdomain = origin &&
-            origin.match(/^https:\/\/[a-z0-9-]+\.irontrack.ee$/);
-
-        if (allowedOrigins.indexOf(origin) !== -1 || isIrontrackSubdomain) {
-            return callback(null, true);
-        }
-
-        const msg = 'CORS error: This site (' + origin + ') is not allowed to access the resource.';
-        return callback(new Error(msg), false);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-}));
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../../client/build')));

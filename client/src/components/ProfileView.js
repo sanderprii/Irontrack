@@ -132,41 +132,6 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
         }
     };
 
-    // Parem WebView tuvastamise funktsioon
-    const isRunningInWebView = () => {
-        // Üldisem WebView tuvastamine
-        return (
-            // Android WebView
-            /; wv/.test(navigator.userAgent) ||
-            // iOS WebView
-            (/iPhone|iPod|iPad/.test(navigator.userAgent) && !window.navigator.standalone) ||
-            // Flutter WebView spetsiifilisem tunnus (võib puududa)
-            window.flutter_inappwebview !== undefined ||
-            // Üldine mobiilseadme tuvastus
-            /Android|iPhone|iPad|iPod/.test(navigator.userAgent)
-        );
-    };
-
-// Lihtne ja otsekohene käitleja igat tüüpi WebView jaoks
-    const handleUploadClick = () => {
-        // Loome uue input elemendi
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-
-        // Lisame evento käitleja
-        input.addEventListener('change', (event) => {
-            if (event.target.files && event.target.files.length > 0) {
-                const file = event.target.files[0];
-                handleFileChange({ target: { files: [file] } });
-            }
-        });
-
-        // Käivitame kliki programmiliselt
-        document.body.appendChild(input);
-        input.click();
-        document.body.removeChild(input);
-    };
 
     const role = localStorage.getItem("role");
 
@@ -186,14 +151,24 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                             }}
                         />
 
-                        <Button
-                            variant="outlined"
-                            onClick={handleUploadClick}
-                            sx={{mt: 2}}
-                        >
-                            Upload Profile Picture
-                        </Button>
-                        <Divider sx={{my: 2}}/>
+                        <Box sx={{ mt: 2 }}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                id="profile-pic-input"
+                                style={{ display: 'none' }}
+                                onChange={handleFileChange}
+                            />
+                            <label htmlFor="profile-pic-input">
+                                <Button
+                                    variant="outlined"
+                                    component="span"
+                                    fullWidth
+                                >
+                                    Upload Profile Picture
+                                </Button>
+                            </label>
+                        </Box>
 
                         <Stack spacing={1} sx={{textAlign: 'left'}}>
                             {/* Nimi */}

@@ -231,6 +231,25 @@ export default function Checkout(props) {
 
         if (orderToken) {
             setLoading(true);
+            console.log("Montonio tagasisuunamine tuvastatud, token:", orderToken);
+
+            if (localStorage.getItem('checkout_payment_in_progress') === 'true') {
+                console.log("Maksmine oli käimas, taastame sessiooni andmed");
+
+                // Taasta token ÕIGE nimega
+                if (localStorage.getItem('checkout_token')) {
+                    localStorage.setItem('token', localStorage.getItem('checkout_token'));
+                    console.log("Token taastatud:", localStorage.getItem('token'));
+                } else {
+                    console.error("Tokenit ei leitud!");
+                }
+
+                // Eemalda makse marker
+                localStorage.removeItem('checkout_payment_in_progress');
+                localStorage.setItem('role', localStorage.getItem('checkout_role'));
+                localStorage.setItem('pricingPlan', localStorage.getItem('checkout_pricingPlan'));
+
+            }
 
             // Laadi andmed localStorage'ist
             const savedPlanData = localStorage.getItem('checkout_planData');
@@ -386,6 +405,10 @@ export default function Checkout(props) {
                                                 localStorage.removeItem('checkout_isContractPayment');
                                                 localStorage.removeItem('checkout_familyMember');
                                                 localStorage.removeItem('checkout_familyMemberId');
+                                                localStorage.removeItem('checkout_auth_token');
+                                                localStorage.removeItem('checkout_role')
+                                                localStorage.removeItem('checkout_pricingPlan')
+
                                                 setLoading(false);
                                             });
                                     }
@@ -405,7 +428,9 @@ export default function Checkout(props) {
                                                 localStorage.removeItem('checkout_isContractPayment');
                                                 localStorage.removeItem('checkout_familyMember');
                                                 localStorage.removeItem('checkout_familyMemberId');
-
+                                                localStorage.removeItem('checkout_auth_token');
+                                                localStorage.removeItem('checkout_role')
+                                                localStorage.removeItem('checkout_pricingPlan')
                                             })
                                             .catch(error => {
                                                 console.error("Error finalizing plan purchase:", error);
@@ -463,12 +488,31 @@ export default function Checkout(props) {
                 localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
                 localStorage.setItem('checkout_contract', JSON.stringify(contract));
                 localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
+
+                if (localStorage.getItem('token')) {
+                    localStorage.setItem('checkout_token', localStorage.getItem('token'));
+                    console.log("Token salvestatud enne makset:", localStorage.getItem('token'));
+                }
+
+                localStorage.setItem('checkout_token', localStorage.getItem('token'));
+                localStorage.setItem('checkout_payment_in_progress', 'true');
+                localStorage.setItem('checkout_role', localStorage.getItem('role'));
+                localStorage.setItem('checkout_pricingPlan', localStorage.getItem('pricingPlan'));
+
                 if (userData) {
                     localStorage.setItem('checkout_userData', JSON.stringify(userData));
                 }
                 if (isContractPayment || planData?.id === 'contract-payment') {
                     localStorage.setItem('checkout_isContractPayment', 'true');
                 }
+
+                console.log('Maksele minnes salvestatud andmed:', {
+                    planData: JSON.stringify(planData),
+                    affiliateInfo: JSON.stringify(affiliateInfo),
+                    contract: JSON.stringify(contract),
+                    appliedCredit: appliedCredit,
+                    auth_token: localStorage.getItem('auth_token')
+                });
 
                 await new Promise(resolve => setTimeout(resolve, 500));
 

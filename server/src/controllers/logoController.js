@@ -59,83 +59,101 @@ const uploadProfilePicture = async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        // Kontrolli algse faili suurust - vajadusel saab logida
-        console.log(`Original file size: ${req.file.size} bytes`);
+        // Logi faili info debugging'uks
+        console.log(`File info: size=${req.file.size}, type=${req.file.mimetype}`);
 
-        // Vähenda faili kvaliteeti ja suurust, et see oleks alla 0.5MB (512KB)
-        const MAX_SIZE_BYTES = 512 * 1024; // 0.5MB
-        let quality = 80; // Alusta 80% kvaliteediga
-        let outputBuffer = null;
-        let currentSize = req.file.size;
-
-        // Resize alati kindla suuruseni
-        const resizedImage = sharp(req.file.buffer)
-            .resize({
-                width: 300,
-                height: 300,
-                fit: 'cover',
-                position: 'center'
-            });
-
-        // Proovi erinevaid kvaliteedi seadeid, kuni pilt on piisavalt väike
-        while (quality >= 10 && (outputBuffer === null || currentSize > MAX_SIZE_BYTES)) {
-            if (req.file.mimetype.includes('png')) {
-                outputBuffer = await resizedImage.png({ quality }).toBuffer();
-            } else {
-                outputBuffer = await resizedImage.jpeg({ quality }).toBuffer();
-            }
-
-            currentSize = outputBuffer.length;
-
-            if (currentSize > MAX_SIZE_BYTES) {
-                quality -= 10; // Vähenda kvaliteeti
-            }
+        // Failisuuruse kontroll - pole vajalik, kuna multer juba kontrollib
+        // aga võib logimiseks alles jätta
+        if (req.file.size > 15 * 1024 * 1024) {
+            return res.status(400).json({ error: 'File too large, maximum is 15MB' });
         }
 
-        // Kui ikka liiga suur, vähenda veel füüsilist suurust
-        if (currentSize > MAX_SIZE_BYTES) {
-            outputBuffer = await sharp(outputBuffer)
-                .resize({ width: 150, height: 150, fit: 'cover' })
-                .jpeg({ quality: 60 })
+        // Pildi töötlemine sharp teegiga, vähendame pildi suurust tugevalt
+        // ja tagame, et väljundfail on alati alla 0.5MB
+        const MAX_OUTPUT_SIZE = 512 * 1024; // 0.5MB
+
+        try {
+            // Muudame alati pildi JPEG formaati, et kindlustada ühilduvus
+            const processedImage = sharp(req.file.buffer);
+            const metadata = await processedImage.metadata();
+
+            // Määrame kindla maksimaalse suuruse
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+
+            // Vähendame pildi suurust
+            let outputBuffer = await processedImage
+                .resize({
+                    width: MAX_WIDTH,
+                    height: MAX_HEIGHT,
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .jpeg({ quality: 80 }) // Konverteerime JPEG formaati
                 .toBuffer();
 
-            currentSize = outputBuffer.length;
-        }
+            // Kontrollime, kas saavutasime soovitud faili suuruse
+            if (outputBuffer.length > MAX_OUTPUT_SIZE) {
+                // Kui ikka liiga suur, vähendame kvaliteeti
+                let quality = 70;
+                while (outputBuffer.length > MAX_OUTPUT_SIZE && quality > 30) {
+                    outputBuffer = await sharp(req.file.buffer)
+                        .resize({
+                            width: MAX_WIDTH,
+                            height: MAX_HEIGHT,
+                            fit: 'inside',
+                            withoutEnlargement: true
+                        })
+                        .jpeg({ quality })
+                        .toBuffer();
 
-        console.log(`Processed file size: ${currentSize} bytes, quality: ${quality}%`);
+                    quality -= 10;
+                }
 
-        // Kontrolli, kas töödeldud pilt on ikka liiga suur
-        if (currentSize > MAX_SIZE_BYTES) {
-            return res.status(400).json({
-                error: 'Unable to reduce file size sufficiently. Please use a smaller image.'
-            });
-        }
-
-        // Konverteeri pilt Base64 formaati
-        const base64Image = outputBuffer.toString('base64');
-        const dataUrl = `data:${req.file.mimetype};base64,${base64Image}`;
-
-        // Uuenda kasutaja profiilipilti andmebaasis
-        const updatedUser = await prisma.user.update({
-            where: { id: parseInt(req.body.userId) },
-            data: { logo: dataUrl },
-            select : {
-                id: true,
-                email: true,
-                fullName: true,
-                dateOfBirth: true,
-                affiliateOwner: true,
-                isAcceptedTerms: true,
-                phone: true,
-                address: true,
-                logo: true,
-                emergencyContact: true,
-                homeAffiliate: true,
+                // Kui ikka liiga suur, vähendame füüsilist suurust
+                if (outputBuffer.length > MAX_OUTPUT_SIZE) {
+                    outputBuffer = await sharp(req.file.buffer)
+                        .resize({
+                            width: MAX_WIDTH / 2,
+                            height: MAX_HEIGHT / 2,
+                            fit: 'inside',
+                            withoutEnlargement: true
+                        })
+                        .jpeg({ quality: 60 })
+                        .toBuffer();
+                }
             }
 
-        });
+            // Logi lõpptulemus
+            console.log(`Processed file size: ${outputBuffer.length} bytes`);
 
-        return res.status(200).json(updatedUser);
+            // Konverteeri pilt Base64 formaati
+            const base64Image = outputBuffer.toString('base64');
+            const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
+            // Uuenda kasutaja profiilipilti andmebaasis, aga ära tagasta parooli
+            const updatedUser = await prisma.user.update({
+                where: { id: parseInt(req.body.userId) },
+                data: { logo: dataUrl },
+                select: {
+                    id: true,
+                    fullName: true,
+                    email: true,
+                    phone: true,
+                    address: true,
+                    dateOfBirth: true,
+                    emergencyContact: true,
+                    logo: true,
+                    isAcceptedTerms: true,
+                    // Parool on välja jäetud
+                }
+            });
+
+            return res.status(200).json(updatedUser);
+        } catch (imageError) {
+            console.error('Error processing image:', imageError);
+            return res.status(500).json({ error: 'Error processing image: ' + imageError.message });
+        }
     } catch (error) {
         console.error('Error uploading profile picture:', error);
         return res.status(500).json({ error: 'Error uploading profile picture: ' + error.message });

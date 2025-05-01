@@ -274,6 +274,12 @@ app.get('/api/affiliate-by-subdomain', async (req, res) => {
     }
 });
 
+const multer = require('multer');
+const upload = multer({
+    limits: { fileSize: 15 * 1024 * 1024 }, // 5MB
+    storage: multer.memoryStorage()
+});
+
 // Import route modules
 const trainingRoutes = require('./routes/trainingRoutes');
 const recordsRoutes = require('./routes/recordsRoutes');

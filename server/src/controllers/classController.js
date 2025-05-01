@@ -35,6 +35,7 @@ const getClasses = async (req, res) => {
     // Kontrolli ja teisenda kuupäevad õigesse formaati
     let startDate = new Date(start);
     let endDate = new Date(end);
+const userId = req.user?.id;
 
     // Kui start või end on kehtetu, määrame vaikimisi käesoleva nädala alguse ja lõpu
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
@@ -73,6 +74,25 @@ const getClasses = async (req, res) => {
             };
 
         }));
+
+        // lisa igale klassile juurde, kas kasutaja on registreeritud isregister = true või false
+
+        if (userId) {
+            const userRegistrations = await prisma.classAttendee.findMany({
+                where: {
+                    userId: parseInt(userId),
+                    classId: {in: classes.map(cls => cls.id)}
+                },
+                select: {classId: true}
+            });
+
+            const registeredClassIds = new Set(userRegistrations.map(reg => reg.classId));
+
+            classesWithAttendees.forEach(cls => {
+                cls.isRegistered = registeredClassIds.has(cls.id);
+            });
+        }
+
 
         res.json(classesWithAttendees);
     } catch (error) {

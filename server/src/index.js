@@ -11,6 +11,7 @@ const MemoryStore = require('memorystore')(session);
 const util = require('util');
 require('dotenv').config();
 
+
 // Configure trust proxy for accurate IP detection behind reverse proxies
 app.set('trust proxy', 1);
 

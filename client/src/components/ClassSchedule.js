@@ -4,6 +4,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime"; // ⏰ Kellaaeg
 import PersonIcon from "@mui/icons-material/Person"; // 👤 Treener
 import GroupIcon from "@mui/icons-material/Group"; // 👥 Mahutavus
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 Trophy icon for leaderboard
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // ✅ Registreerimise märk
 import LeaderboardModal from "./LeaderboardModal"; // Import LeaderboardModal
 
 export default function ClassSchedule({ classes, attendeesCount, onClassClick, weeklyView }) {
@@ -78,7 +79,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                                 sx={{
                                     position: "absolute",
                                     top: 5,
-                                    right: 5,
+                                    right: cls.isRegistered ? 40 : 5, // Kui registreeritud, siis nihutatakse vasakule
                                     zIndex: 1,
                                     color: "goldenrod",
                                     backgroundColor: "rgba(255,255,255,0.5)",
@@ -93,6 +94,26 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                             >
                                 <EmojiEventsIcon fontSize="small" />
                             </IconButton>
+                        )}
+
+                        {/* Register check mark icon */}
+                        {cls.isRegistered && (
+                            <Box
+                                sx={{
+                                    position: "absolute",
+                                    top: 5,
+                                    right: 5,
+                                    zIndex: 1,
+                                    color: "#4caf50", // roheline
+                                    width: 32,
+                                    height: 32,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <CheckCircleIcon />
+                            </Box>
                         )}
 
                         <CardContent>

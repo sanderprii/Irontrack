@@ -3,6 +3,8 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL
 
 export const getClasses = async (affiliateId, date) => {
+
+    const token = localStorage.getItem("token");
     try {
         if (!date || isNaN(new Date(date).getTime())) {
             console.error("❌ Invalid date received, using default today.");
@@ -26,6 +28,7 @@ export const getClasses = async (affiliateId, date) => {
                 end: endOfWeek.toISOString()
             },
             headers: {
+                "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });

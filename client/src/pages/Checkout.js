@@ -419,7 +419,7 @@ export default function Checkout(props) {
                             } else {
                                 setPaymentError('Payment failed or was cancelled');
                             }
-                        } , 2000);
+                        } , 500);
                     })
                     .catch(error => {
                         console.error("Error checking payment status:", error);

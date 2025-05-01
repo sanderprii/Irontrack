@@ -132,6 +132,11 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
         }
     };
 
+    const isMobileWebView = () => {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            && window.navigator.userAgent.indexOf('wv') > -1;
+    };
+
     const role = localStorage.getItem("role");
 
     return (
@@ -149,10 +154,28 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                                 margin: 'auto',
                             }}
                         />
-                        <Button variant="outlined" component="label" sx={{mt: 2}}>
-                            Upload Profile Picture
-                            <input type="file" accept="image/*" hidden onChange={handleFileChange}/>
-                        </Button>
+
+                        {isMobileWebView() ? (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.capture = 'user';
+                                    input.onchange = (e) => handleFileChange(e);
+                                    input.click();
+                                }}
+                                sx={{mt: 2}}
+                            >
+                                Tee pilt
+                            </Button>
+                        ) : (
+                            <Button variant="outlined" component="label" sx={{mt: 2}}>
+                                Upload Profile Picture
+                                <input type="file" accept="image/*" hidden onChange={handleFileChange}/>
+                            </Button>
+                        )}
                         <Divider sx={{my: 2}}/>
 
                         <Stack spacing={1} sx={{textAlign: 'left'}}>

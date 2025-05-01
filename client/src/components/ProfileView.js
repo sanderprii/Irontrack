@@ -132,9 +132,40 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
         }
     };
 
-    const isMobileWebView = () => {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            && window.navigator.userAgent.indexOf('wv') > -1;
+    // Parem WebView tuvastamise funktsioon
+    const isRunningInWebView = () => {
+        // Üldisem WebView tuvastamine
+        return (
+            // Android WebView
+            /; wv/.test(navigator.userAgent) ||
+            // iOS WebView
+            (/iPhone|iPod|iPad/.test(navigator.userAgent) && !window.navigator.standalone) ||
+            // Flutter WebView spetsiifilisem tunnus (võib puududa)
+            window.flutter_inappwebview !== undefined ||
+            // Üldine mobiilseadme tuvastus
+            /Android|iPhone|iPad|iPod/.test(navigator.userAgent)
+        );
+    };
+
+// Lihtne ja otsekohene käitleja igat tüüpi WebView jaoks
+    const handleUploadClick = () => {
+        // Loome uue input elemendi
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+
+        // Lisame evento käitleja
+        input.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files.length > 0) {
+                const file = event.target.files[0];
+                handleFileChange({ target: { files: [file] } });
+            }
+        });
+
+        // Käivitame kliki programmiliselt
+        document.body.appendChild(input);
+        input.click();
+        document.body.removeChild(input);
     };
 
     const role = localStorage.getItem("role");
@@ -155,27 +186,13 @@ export default function ProfileView({user, onEditProfile, onChangePassword, onUp
                             }}
                         />
 
-                        {isMobileWebView() ? (
-                            <Button
-                                variant="outlined"
-                                onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = 'image/*';
-                                    input.capture = 'user';
-                                    input.onchange = (e) => handleFileChange(e);
-                                    input.click();
-                                }}
-                                sx={{mt: 2}}
-                            >
-                                Tee pilt
-                            </Button>
-                        ) : (
-                            <Button variant="outlined" component="label" sx={{mt: 2}}>
-                                Upload Profile Picture
-                                <input type="file" accept="image/*" hidden onChange={handleFileChange}/>
-                            </Button>
-                        )}
+                        <Button
+                            variant="outlined"
+                            onClick={handleUploadClick}
+                            sx={{mt: 2}}
+                        >
+                            Upload Profile Picture
+                        </Button>
                         <Divider sx={{my: 2}}/>
 
                         <Stack spacing={1} sx={{textAlign: 'left'}}>

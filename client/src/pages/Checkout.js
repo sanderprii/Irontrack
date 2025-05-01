@@ -523,6 +523,8 @@ export default function Checkout(props) {
                     localStorage.removeItem('checkout_isContractPayment');
                     localStorage.removeItem('checkout_familyMember');
                     localStorage.removeItem('checkout_familyMemberId');
+
+                    setLoading(false)
                 }
             } else {
                 // Kui maksta on vaja Montonio kaudu

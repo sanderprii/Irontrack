@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { MailerSend, EmailParams, Recipient, Sender } = require("mailersend");
 require("dotenv").config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRY = '24h'; // Set a reasonable token expiry time
 
 // MailerSend config

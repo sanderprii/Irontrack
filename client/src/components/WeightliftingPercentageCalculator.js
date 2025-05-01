@@ -111,7 +111,7 @@ const WeightliftingPercentageCalculator = () => {
                                             width: '80px'
                                         }}
                                     >
-                                        1RM (lb)
+                                        1RM
                                     </TableCell>
                                     {percentages.map(percentage => (
                                         <TableCell

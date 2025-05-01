@@ -139,7 +139,7 @@
         const familyMemberId = req.body.familyMemberId;
         let merchantReference = req.body.currentMerchantReference;
 
-
+console.log("all data", req.body);
         try {
 
 

@@ -40,6 +40,8 @@ module.exports = function secureAuth(req, res, next) {
         return res.status(401).json({ error: 'Invalid Authorization format' });
     }
 
+
+
     try {
         // Kontrollime JWT tokenit
         const decoded = jwt.verify(token, JWT_SECRET);

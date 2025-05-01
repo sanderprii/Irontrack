@@ -386,6 +386,7 @@ export default function Checkout(props) {
                                                 localStorage.removeItem('checkout_isContractPayment');
                                                 localStorage.removeItem('checkout_familyMember');
                                                 localStorage.removeItem('checkout_familyMemberId');
+                                                setLoading(false);
                                             });
                                     }
                                     // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
@@ -409,15 +410,21 @@ export default function Checkout(props) {
                                             .catch(error => {
                                                 console.error("Error finalizing plan purchase:", error);
                                                 setPaymentError("Payment was successful but plan purchase could not be completed. Please contact support.");
-                                            });
+                                            })
+                                    .finally(() => {
+                                            // IMPORTANT: Move setLoading(false) here for regular purchases
+                                            setLoading(false);
+                                        });
                                     } else {
                                         console.warn("No valid plan or contract data found after payment.");
                                         setPaymentError("Payment was successful but we couldn't process your order. Please contact support.");
+                                        setLoading(false);
                                     }
                                 }, 1000);
 
                             } else {
                                 setPaymentError('Payment failed or was cancelled');
+                                setLoading(false);
                             }
                         } , 500);
                     })
@@ -425,10 +432,8 @@ export default function Checkout(props) {
                         console.error("Error checking payment status:", error);
                         setPaymentError('Error checking payment status');
                     })
-                    .finally(() => {
-                        setLoading(false);
-                    });
-            }, 2000);
+
+            }, 4000);
         }
     }, [searchParams]);
 
@@ -452,17 +457,22 @@ export default function Checkout(props) {
     const handlePlaceOrder = async () => {
         try {
             setLoading(true);
+            const saveDataAndRedirect = async (paymentUrl) => {
+                // Salvesta oleku andmed localStorage'i enne makset
+                localStorage.setItem('checkout_planData', JSON.stringify(planData));
+                localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
+                localStorage.setItem('checkout_contract', JSON.stringify(contract));
+                localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
+                if (userData) {
+                    localStorage.setItem('checkout_userData', JSON.stringify(userData));
+                }
+                if (isContractPayment || planData?.id === 'contract-payment') {
+                    localStorage.setItem('checkout_isContractPayment', 'true');
+                }
 
-            // Salvesta oleku andmed localStorage'i enne makset
-            localStorage.setItem('checkout_planData', JSON.stringify(planData));
-            localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
-            localStorage.setItem('checkout_contract', JSON.stringify(contract));
-            localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
-            if (userData) {
-                localStorage.setItem('checkout_userData', JSON.stringify(userData));
-            }
-            if (isContractPayment || planData?.id === 'contract-payment') {
-                localStorage.setItem('checkout_isContractPayment', 'true');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                window.location.href = paymentUrl;
             }
 
             // Arvuta lõplik summa - UUENDATUD LOOGIKA esimeseks makseks
@@ -540,9 +550,8 @@ export default function Checkout(props) {
                 );
 
                 if (paymentResponse.payment_url) {
-                    // Redirect user to Montonio payment page
-                    window.location.href = paymentResponse.payment_url;
-                    return; // Exit the function as we're redirecting
+                    await saveDataAndRedirect(paymentResponse.payment_url);
+                    return;
                 } else {
                     throw new Error('Invalid payment response');
                 }
@@ -550,8 +559,7 @@ export default function Checkout(props) {
         } catch (error) {
             console.error(error);
             setPaymentError('Failed to process payment');
-        } finally {
-            setLoading(false);
+            setLoading(false)
         }
     };
 

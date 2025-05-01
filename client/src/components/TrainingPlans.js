@@ -355,6 +355,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
         }
     };
 
+
     const handlePlanClick = async (plan) => {
         try {
 
@@ -365,6 +366,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
             const planDetails = await getTrainingPlanById(plan.id);
             setViewPlan(planDetails);
+
         } catch (err) {
             setError('Failed to load training plan details');
             console.error(err);
@@ -861,7 +863,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                 </Typography>
                                 <Box>
                                     {/* Plan creator or the user can edit */}
-                                    {(viewPlan.creatorId === parseInt(userId) || viewPlan.userId === parseInt(userId)) && (
+                                    {(userId === "self" || Number(viewPlan.creatorId) === Number(userId) || Number(viewPlan.userId) === Number(userId)) && (
                                         <Tooltip title="Edit Plan">
                                             <IconButton onClick={handleEditPlan} sx={{ mr: 1 }}>
                                                 <EditIcon />

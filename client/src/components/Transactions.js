@@ -134,10 +134,10 @@ const Transactions = ({ user, affiliateId }) => {
                                                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                ID:
+                                                                                Affiliate Name:
                                                                             </Typography>
                                                                             <Typography variant="body1">
-                                                                                {tx.id}
+                                                                                {tx.affiliate.name}
                                                                             </Typography>
                                                                         </Box>
 
@@ -166,14 +166,7 @@ const Transactions = ({ user, affiliateId }) => {
                                                                             />
                                                                         </Box>
 
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Type:
-                                                                            </Typography>
-                                                                            <Typography variant="body1">
-                                                                                {tx.type || 'N/A'}
-                                                                            </Typography>
-                                                                        </Box>
+
 
 
                                                                     </Box>
@@ -192,9 +185,19 @@ const Transactions = ({ user, affiliateId }) => {
                                                                     <Divider sx={{ mb: 2 }} />
 
                                                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+
                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Amount:
+                                                                                Total Amount:
+                                                                            </Typography>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.decrease ? '#e74c3c' : '#2ecc71' }}>
+                                                                                {tx.amount} €
+                                                                            </Typography>
+                                                                        </Box>
+
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                Paid by Bank:
                                                                             </Typography>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.decrease ? '#e74c3c' : '#2ecc71' }}>
                                                                                 {displayAmount} €
@@ -202,16 +205,16 @@ const Transactions = ({ user, affiliateId }) => {
                                                                         </Box>
 
 
-
+                                                                        {tx.creditAmount > 0 && (
                                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Credit Operation:
+                                                                                Credit applied:
                                                                             </Typography>
                                                                             <Typography variant="body1">
-                                                                                {tx.isCredit ? "Yes" : "No"}
+                                                                                {tx.creditAmount}
                                                                             </Typography>
                                                                         </Box>
-
+                                                                            )}
                                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                             <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
                                                                                 Created At:
@@ -244,47 +247,8 @@ const Transactions = ({ user, affiliateId }) => {
                                                             </Card>
                                                         </Grid>
 
-                                                        {/* Additional Info Card - for any other properties */}
-                                                        {(tx.planId || tx.memberId) && (
-                                                            <Grid item xs={12}>
-                                                                <Card elevation={1}>
-                                                                    <CardContent>
-                                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                            <DateRangeIcon sx={{ mr: 1 }} />
-                                                                            Additional Information
-                                                                        </Typography>
-                                                                        <Divider sx={{ mb: 2 }} />
 
-                                                                        <Grid container spacing={2}>
-                                                                            {tx.planId && (
-                                                                                <Grid item xs={6}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1 }}>
-                                                                                            Plan ID:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {tx.planId}
-                                                                                        </Typography>
-                                                                                    </Box>
-                                                                                </Grid>
-                                                                            )}
-                                                                            {tx.memberId && (
-                                                                                <Grid item xs={6}>
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1 }}>
-                                                                                            Member ID:
-                                                                                        </Typography>
-                                                                                        <Typography variant="body1">
-                                                                                            {tx.memberId}
-                                                                                        </Typography>
-                                                                                    </Box>
-                                                                                </Grid>
-                                                                            )}
-                                                                        </Grid>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            </Grid>
-                                                        )}
+
                                                     </Grid>
                                                 </Box>
                                             </Collapse>

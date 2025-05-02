@@ -12,15 +12,15 @@ const {
 
 // API endpointid
 // GET /credit?affiliateId=...&userId=...
-router.get('/credit', getUserCredits);
+router.get('/credit', ensureAuthenticated, getUserCredits);
 
 // POST /credit
-router.post('/credit', addCredit);
+router.post('/credit', ensureAuthenticated, addCredit);
 
 // GET /credit/history?affiliateId=...&userId=...
-router.get('/credit/history', getCreditHistory);
-router.get('/credit/transactions', getUserTransactions);
-router.get('/credit/affiliate-transactions', getAffiliateTransactions);
+router.get('/credit/history', ensureAuthenticated, getCreditHistory);
+router.get('/credit/transactions', ensureAuthenticated, getUserTransactions);
+router.get('/credit/affiliate-transactions', ensureAuthenticated,  getAffiliateTransactions);
 
 
 module.exports = router;

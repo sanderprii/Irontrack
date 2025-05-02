@@ -208,6 +208,10 @@ const RegisterTrainingPage = () => {
         const affiliateInfo = affiliateData.affiliate;
         setSelectedAffiliate(affiliateInfo);
 
+        // Check if the selected affiliate is the user's home gym
+        const userHomeAffiliate = await checkHomeAffiliate();
+        setIsHomeGym(userHomeAffiliate === affiliate.id);
+
         setPlans([]);
         setSuggestions([]);
         setSearchQuery("");

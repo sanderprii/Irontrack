@@ -139,7 +139,8 @@ let creditAccount;
 const getUserTransactions = async (req, res) => {
     try {
         const { userId, affiliateId } = req.query;
-
+        const user = req.user?.id;
+        console.log( "userId and user", userId, user)
         // Kontrollime, et userId on olemas
         if (!userId) {
             return res.status(400).json({ error: "userId is required." });
@@ -152,7 +153,7 @@ const getUserTransactions = async (req, res) => {
 
 
         // Kui affiliateId on antud, lisame ka selle
-        if (parseInt(affiliateId) > 0) {
+        if (parseInt(affiliateId) > 0 && parseInt(userId) !== user) {
             whereClause.affiliateId = parseInt(affiliateId, 10);
         }
 
@@ -162,6 +163,9 @@ const getUserTransactions = async (req, res) => {
             orderBy: {
                 createdAt: "desc", // sort kahanevas järjekorras
             },
+            include: {
+                affiliate: {select: { name: true}}
+            }
         });
 
         res.json(transactions);

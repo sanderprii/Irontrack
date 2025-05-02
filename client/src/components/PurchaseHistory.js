@@ -167,6 +167,16 @@ export default function PurchaseHistory({ userId, affiliateId }) {
                                                                         <Divider sx={{ mb: 2 }} />
 
                                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            {purchase.affiliateName && (
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Affiliate Name:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {purchase.affiliateName}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                            )}
                                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                 <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
                                                                                     Plan Name:

@@ -450,22 +450,7 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
 
         const finalAmount = contract.paymentAmount - (parseInt(appliedCredit) || 0);
 
-        await prisma.transactions.create(
-            {
-                data: {
-                    userId: parseInt(userId),
-                    contractId: parseInt(contractId),
-                    affiliateId: parseInt(affiliateId),
-                    status: 'success',
-                    amount: finalAmount,
-                    type: 'montonio',
-                   invoiceNumber: invoiceNumber || "Contract-" + contractId + "-" + new Date().getTime(),
 
-                    creditAmount: parseInt(appliedCredit) || 0,
-                    description: contract.contractType || "Membership Contract",
-                }
-            }
-        )
 
         // Handle email sending as in your original function...
         try {

@@ -321,6 +321,17 @@ const ActivePlans = ({ userId, affiliateId }) => {
                                                                         <Divider sx={{ mb: 2 }} />
 
                                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            {plan.affiliate && (
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+
+                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                    Affiliate Name:
+                                                                                </Typography>
+                                                                                <Typography variant="body1">
+                                                                                    {plan.affiliateName}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                            )}
                                                                             {plan.familyMember?.fullName && (
                                                                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                     <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>

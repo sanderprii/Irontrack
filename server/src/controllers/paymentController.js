@@ -197,7 +197,7 @@ const createMontonioPayment = async (req, res) => {
                     data: {
                         userId: userData.id,
                         affiliateId: parsedAffiliateId,
-                        amount: parsedAmount,
+                        amount: parseFloat(formattedAmount) + (appliedCredit || 0),
                         invoiceNumber: merchantReference,
                         description: `Contract payment: ${description || 'Contract Payment'}`,
                         type: 'Montonio',

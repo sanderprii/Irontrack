@@ -53,6 +53,7 @@ model User {
   sectorComments        SectorComment[]
   contactNotes          ContactNote[]
   familyMembers         FamilyMember[]
+  sessions              Session[]
 }
 
 model FamilyMember {
@@ -551,4 +552,13 @@ model RevokedToken {
   userId    Int?
 
   @@index([token])
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  sessionId String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
 }

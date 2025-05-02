@@ -38,7 +38,8 @@ const createMontonioPayment = async (req, res) => {
             contractId,
             planData,
             isFamilyMember,
-            familyMemberId
+            familyMemberId,
+            sessionToken,
         } = req.body;
         const userEmail = userData?.email || '';
         const userPhone = userData?.phone || '';
@@ -51,6 +52,35 @@ const createMontonioPayment = async (req, res) => {
                 success: false,
                 message: "Amount must be a valid number greater than or equal to 0.01"
             });
+        }
+
+        const getSessionData = await prisma.session.findFirst({
+            where: {
+                userId: userData.id
+
+            }
+        })
+
+        if (getSessionData) {
+            await prisma.session.update({
+                where: {
+                    id: getSessionData.id
+                },
+                data: {
+                    sessionId: sessionToken,
+                    createdAt: new Date(),
+                    expiresAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365)
+                }
+            })
+        } else {
+            await prisma.session.create({
+                data: {
+                    userId: userData.id,
+                    sessionId: sessionToken,
+                    createdAt: new Date(),
+                    expiresAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365)
+                }
+            })
         }
 
         // Ensure orderId is provided
@@ -108,7 +138,7 @@ const createMontonioPayment = async (req, res) => {
         const paymentData = {
             accessKey: affiliateAccessKey,
             merchantReference: merchantReference,
-            returnUrl: `${process.env.FRONTEND_URL}/after-checkout`,
+            returnUrl: `${process.env.FRONTEND_URL}/checkout`,
             notificationUrl: notificationUrl,
             currency: "EUR",
             grandTotal: parseFloat(formattedAmount),
@@ -692,12 +722,18 @@ const checkPaymentStatus = async (req, res) => {
 
         }
 
-
+        const sessionToken = await prisma.session.findFirst({
+            where: {
+                userId: parseInt(transaction.userId)
+            }
+        });
+console.log("sessionToken", sessionToken);
         // Only send response after database operation completes
         res.json({
             success: true,
             paymentStatus: decoded.paymentStatus,
             merchantReference: decoded.merchantReference,
+            sessionToken: sessionToken.sessionId
             // Add any other fields you need
         });
     } catch (error) {

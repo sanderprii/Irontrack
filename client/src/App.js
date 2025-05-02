@@ -46,7 +46,7 @@ import ResetPassword from './components/ResetPassword';
 import Checkin from './pages/Checkin';
 import Admin from './pages/Admin';
 import PullToRefresh from './components/PullToRefresh';
-import AfterCheckout from "./pages/AfterCheckout";
+import AfterCheckout  from "./pages/AfterCheckout";
 
 const HomeRedirect = () => {
     const {isLoggedIn} = useContext(AuthContext);// Assuming you have an auth context with these values
@@ -244,6 +244,7 @@ function App() {
                             <Route path="/checkin" element={<Checkin/>}/>
                             <Route path="/admin" element={<Admin/>}/>
                             <Route path="/after-checkout" element={<AfterCheckout/>}/>
+
                         </Routes>
                     </Box>
                 </PullToRefresh>

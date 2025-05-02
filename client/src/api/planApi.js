@@ -157,7 +157,8 @@ export const createMontonioPayment = async (
     returnUrl,
     userData,
     isFamilyMember,
-    familyMemberId
+    familyMemberId,
+
 
 ) => {
     // Determine the correct payment amount
@@ -208,6 +209,7 @@ export const createMontonioPayment = async (
                 planData,
                 isFamilyMember,
                 familyMemberId,
+                sessionToken: token
 
             }),
         });

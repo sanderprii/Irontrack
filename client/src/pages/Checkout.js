@@ -221,7 +221,6 @@ export default function Checkout(props) {
                 console.error('Error parsing saved applied credit', error);
             }
         }
-
     }, [location.state]);
 
     // Lisa useEffect Montonio tagasisuunamise käsitlemiseks
@@ -231,18 +230,15 @@ export default function Checkout(props) {
 
         if (orderToken) {
             setLoading(true);
-
-
-
-
             // Check payment status (backend now handles buyPlan and acceptContract)
             checkPaymentStatus(orderToken)
                 .then(response => {
                     if (response.paymentStatus === 'PAID') {
+                        localStorage.setItem("token", response.sessionToken);
+                        localStorage.setItem("role", "regular");
+                        localStorage.setItem("pricingPlan", "premium")
 
-
-                        // Eemalda kõik checkout andmed
-                        clearCheckoutData();
+                        
 
                         // Suuna kasutaja registreerima
                         navigate('/after-checkout');
@@ -348,7 +344,7 @@ export default function Checkout(props) {
                             clearCheckoutData();
 
                             // Suuname registreerimislehele
-                            navigate("/after-checkout");
+                            navigate("/register-training");
                         } catch (contractError) {
                             console.error("Viga lepingu kinnitamisel:", contractError);
                             setPaymentError('Lepingu kinnitamine ebaõnnestus');
@@ -384,7 +380,7 @@ export default function Checkout(props) {
                         clearCheckoutData();
 
                         // Suuname registreerimislehele
-                        navigate("/after-checkout");
+                        navigate("/register-training");
                     }
                 } catch (error) {
                     console.error("Viga krediidiga maksmisel:", error);
@@ -419,7 +415,8 @@ export default function Checkout(props) {
                     returnUrl,
                     userDataForApi,
                     isFamilyMember,
-                    familyMemberId
+                    familyMemberId,
+
                 );
 
 
@@ -429,6 +426,9 @@ export default function Checkout(props) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                     // Suuna kasutaja maksele
                     window.location.href = paymentResponse.payment_url;
+
+
+
                 } else {
                     throw new Error('Vigane makse vastus');
                 }

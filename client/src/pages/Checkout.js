@@ -345,7 +345,7 @@ export default function Checkout(props) {
                             clearCheckoutData();
 
                             // Suuname registreerimislehele
-                            navigate("/register-training");
+                            navigate("/after-checkout");
                         } catch (contractError) {
                             console.error("Viga lepingu kinnitamisel:", contractError);
                             setPaymentError('Lepingu kinnitamine ebaõnnestus');
@@ -381,7 +381,7 @@ export default function Checkout(props) {
                         clearCheckoutData();
 
                         // Suuname registreerimislehele
-                        navigate("/register-training");
+                        navigate("/after-checkout");
                     }
                 } catch (error) {
                     console.error("Viga krediidiga maksmisel:", error);
@@ -708,7 +708,7 @@ export default function Checkout(props) {
                                             variant="text"
                                             sx={{display: {xs: 'none', sm: 'flex'}}}
                                         >
-                                            Tagasi
+                                            Previous
                                         </Button>
                                     )}
                                     {activeStep !== 0 && (
@@ -719,7 +719,7 @@ export default function Checkout(props) {
                                             fullWidth
                                             sx={{display: {xs: 'flex', sm: 'none'}}}
                                         >
-                                            Tagasi
+                                            Previous
                                         </Button>
                                     )}
                                     <Button
@@ -730,8 +730,8 @@ export default function Checkout(props) {
                                         disabled={loading}
                                     >
                                         {activeStep === steps.length - 1 ? (
-                                            totalPrice === 0 ? 'Lõpeta krediidiga' : 'Maksa Montonioga'
-                                        ) : 'Edasi'}
+                                            totalPrice === 0 ? 'Pay with credit' : 'Pay with Bank'
+                                        ) : 'Next'}
                                     </Button>
                                 </Box>
                             </React.Fragment>

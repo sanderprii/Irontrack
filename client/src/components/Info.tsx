@@ -35,22 +35,25 @@ export default function Info({
         </Typography>
 
 
-            <Box>
+          {firstPaymentPrice ? (
+              <>
+                  <Box>
+                      <Typography variant="h4" gutterBottom>
+                          {firstPaymentPrice}
+                      </Typography>
+                      <Chip
+                          label="First payment"
+                          color="primary"
+                          size="small"
+                          sx={{ mb: 2 }}
+                      />
+                  </Box>
+              </>
+          ) : (
               <Typography variant="h4" gutterBottom>
-                {firstPaymentPrice}
+                  {formattedRegularPrice}
               </Typography>
-              <Chip
-                  label="First payment"
-                  color="primary"
-                  size="small"
-                  sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Typography variant="h4" gutterBottom>
-              {formattedRegularPrice}
-            </Typography>
-
+          )}
 
         <List disablePadding>
           <ListItem sx={{ py: 1, px: 0 }}>

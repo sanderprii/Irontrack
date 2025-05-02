@@ -108,7 +108,7 @@ const createMontonioPayment = async (req, res) => {
         const paymentData = {
             accessKey: affiliateAccessKey,
             merchantReference: merchantReference,
-            returnUrl: `${process.env.FRONTEND_URL}/`,
+            returnUrl: `${process.env.FRONTEND_URL}/after-checkout`,
             notificationUrl: notificationUrl,
             currency: "EUR",
             grandTotal: parseFloat(formattedAmount),

@@ -95,36 +95,36 @@ export default function Checkout(props) {
             if (plan.id === 'contract-payment') {
                 setIsContractPayment(true);
             }
-            localStorage.setItem('checkout_planData', JSON.stringify(plan));
+
         }
 
         if (affiliate) {
             setAffiliateInfo(affiliate);
-            localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliate));
+
         }
 
         if (contractData) {
             setContract(contractData);
-            localStorage.setItem('checkout_contract', JSON.stringify(contractData));
+
         }
 
         if (userData) {
             setUserData(userData);
-            localStorage.setItem('checkout_userData', JSON.stringify(userData));
+
         }
         if (familyMember) {
             setIsFamilyMember(true);
-            localStorage.setItem('checkout_familyMember', JSON.stringify(familyMember));
+
         }
 
         if (familyMemberId) {
             setFamilyMemberId(familyMemberId);
-            localStorage.setItem('checkout_familyMemberId', JSON.stringify(familyMemberId));
+
         }
 
         if (isContractPmt) {
             setIsContractPayment(true);
-            localStorage.setItem('checkout_isContractPayment', 'true');
+
         }
 
         // Kui location.state pole saadaval, proovi localStorage'ist
@@ -221,6 +221,7 @@ export default function Checkout(props) {
                 console.error('Error parsing saved applied credit', error);
             }
         }
+
     }, [location.state]);
 
     // Lisa useEffect Montonio tagasisuunamise käsitlemiseks
@@ -244,7 +245,7 @@ export default function Checkout(props) {
                         clearCheckoutData();
 
                         // Suuna kasutaja registreerima
-                        navigate('/register-training');
+                        navigate('/after-checkout');
                     } else {
                         console.error("Makse ebaõnnestus:", response);
                         setPaymentError('Makse ebaõnnestus või tühistati');
@@ -347,7 +348,7 @@ export default function Checkout(props) {
                             clearCheckoutData();
 
                             // Suuname registreerimislehele
-                            navigate("/register-training");
+                            navigate("/after-checkout");
                         } catch (contractError) {
                             console.error("Viga lepingu kinnitamisel:", contractError);
                             setPaymentError('Lepingu kinnitamine ebaõnnestus');
@@ -383,7 +384,7 @@ export default function Checkout(props) {
                         clearCheckoutData();
 
                         // Suuname registreerimislehele
-                        navigate("/");
+                        navigate("/after-checkout");
                     }
                 } catch (error) {
                     console.error("Viga krediidiga maksmisel:", error);
@@ -405,30 +406,7 @@ export default function Checkout(props) {
                     adjustedPlanData.price = contract.firstPaymentAmount;
                 }
 
-                // Salvesta andmed enne maksele suunamist
-                localStorage.setItem('checkout_planData', JSON.stringify(planData));
-                localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
-                localStorage.setItem('checkout_contract', JSON.stringify(contract));
-                localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
 
-                if (userData) {
-                    localStorage.setItem('checkout_userData', JSON.stringify(userData));
-                }
-
-                if (isContractPmt || planData?.id === 'contract-payment') {
-                    localStorage.setItem('checkout_isContractPayment', 'true');
-                }
-
-                // Salvesta autentimisandmed
-                if (localStorage.getItem('token')) {
-                    localStorage.setItem('checkout_token', localStorage.getItem('token'));
-
-                }
-
-                // Salvesta muud sessiooni andmed
-                localStorage.setItem('checkout_role', localStorage.getItem('role'));
-                localStorage.setItem('checkout_pricingPlan', localStorage.getItem('pricingPlan'));
-                localStorage.setItem('checkout_payment_in_progress', 'true');
 
 
                 const userDataForApi = { ...userData, logo: undefined };

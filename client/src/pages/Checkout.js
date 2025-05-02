@@ -431,7 +431,7 @@ export default function Checkout(props) {
                 localStorage.setItem('checkout_payment_in_progress', 'true');
 
 
-
+                const userDataForApi = { ...userData, logo: undefined };
                 // Loo Montonio makse
                 const paymentResponse = await createMontonioPayment(
                     adjustedPlanData,
@@ -439,7 +439,7 @@ export default function Checkout(props) {
                     appliedCredit,
                     contract,
                     returnUrl,
-                    userData,
+                    userDataForApi,
                     isFamilyMember,
                     familyMemberId
                 );

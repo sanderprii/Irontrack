@@ -234,11 +234,12 @@ export default function Checkout(props) {
             checkPaymentStatus(orderToken)
                 .then(response => {
                     if (response.paymentStatus === 'PAID') {
+
                         localStorage.setItem("token", response.sessionToken);
                         localStorage.setItem("role", "regular");
                         localStorage.setItem("pricingPlan", "premium")
 
-                        
+
 
                         // Suuna kasutaja registreerima
                         navigate('/after-checkout');

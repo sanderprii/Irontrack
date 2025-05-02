@@ -23,9 +23,8 @@ import SitemarkIcon from '../components/SitemarkIcon';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
 
-import {buyPlan, getUserCredit, createMontonioPayment, checkPaymentStatus} from "../api/planApi";
-import {acceptContract} from "../api/contractApi";
-
+import {getUserCredit, createMontonioPayment, checkPaymentStatus, handleBuyPlan} from "../api/planApi";
+import { acceptContract } from "../api/contractApi";
 // Sammude nimed
 const steps = ['Payment details', 'Review your order'];
 
@@ -231,236 +230,50 @@ export default function Checkout(props) {
 
         if (orderToken) {
             setLoading(true);
-            console.log("Montonio tagasisuunamine tuvastatud, token:", orderToken);
-
-            if (localStorage.getItem('checkout_payment_in_progress') === 'true') {
-                console.log("Maksmine oli käimas, taastame sessiooni andmed");
-
-                // Taasta token ÕIGE nimega
-                if (localStorage.getItem('checkout_token')) {
-                    localStorage.setItem('token', localStorage.getItem('checkout_token'));
-                    console.log("Token taastatud:", localStorage.getItem('token'));
-                } else {
-                    console.error("Tokenit ei leitud!");
-                }
-
-                // Eemalda makse marker
-                localStorage.removeItem('checkout_payment_in_progress');
-                localStorage.setItem('role', localStorage.getItem('checkout_role'));
-                localStorage.setItem('pricingPlan', localStorage.getItem('checkout_pricingPlan'));
-
-            }
-
-            // Laadi andmed localStorage'ist
-            const savedPlanData = localStorage.getItem('checkout_planData');
-            const savedAppliedCredit = localStorage.getItem('checkout_appliedCredit');
-            const savedAffiliateInfo = localStorage.getItem('checkout_affiliateInfo');
-            const savedContract = localStorage.getItem('checkout_contract');
-            const savedUserData = localStorage.getItem('checkout_userData');
-            const savedIsContractPayment = localStorage.getItem('checkout_isContractPayment') === 'true';
-            const savedFamilyMember = localStorage.getItem('checkout_familyMember');
-            const savedFamilyMemberId = localStorage.getItem('checkout_familyMemberId');
 
 
-            let parsedPlanData = null;
-            let parsedAppliedCredit = 0;
-            let parsedAffiliateInfo = null;
-            let parsedContract = null;
-            let parsedUserData = null;
-            let parsedIsContractPayment = false;
-            let parsedFamilyMember = null;
-            let parsedFamilyMemberId = null;
 
-            // Parse saved data
-            if (savedPlanData) {
-                try {
-                    parsedPlanData = JSON.parse(savedPlanData);
 
-                    if (parsedPlanData) {
-                        setPlanData(parsedPlanData);
-                        if (parsedPlanData.id === 'contract-payment') {
-                            setIsContractPayment(true);
-                        }
+            // Check payment status (backend now handles buyPlan and acceptContract)
+            checkPaymentStatus(orderToken)
+                .then(response => {
+                    if (response.paymentStatus === 'PAID') {
+
+
+                        // Eemalda kõik checkout andmed
+                        clearCheckoutData();
+
+                        // Suuna kasutaja registreerima
+                        navigate('/register-training');
+                    } else {
+                        console.error("Makse ebaõnnestus:", response);
+                        setPaymentError('Makse ebaõnnestus või tühistati');
+                        setLoading(false);
                     }
-                } catch (error) {
-                    console.error('Error parsing saved plan data', error);
-                }
-            }
-
-            if (savedAppliedCredit) {
-                try {
-                    parsedAppliedCredit = parseFloat(savedAppliedCredit);
-                    setAppliedCredit(parsedAppliedCredit);
-                } catch (error) {
-                    console.error('Error parsing saved applied credit', error);
-                }
-            }
-
-            if (savedAffiliateInfo) {
-                try {
-                    parsedAffiliateInfo = JSON.parse(savedAffiliateInfo);
-                    if (parsedAffiliateInfo) {
-                        setAffiliateInfo(parsedAffiliateInfo);
-                    }
-                } catch (error) {
-                    console.error('Error parsing saved affiliate info', error);
-                }
-            }
-
-            if (savedContract) {
-                try {
-                    parsedContract = JSON.parse(savedContract);
-                    if (parsedContract) {
-                        setContract(parsedContract);
-                    }
-                } catch (error) {
-                    console.error('Error parsing saved contract', error);
-                }
-            }
-
-            if (savedUserData) {
-                try {
-                    parsedUserData = JSON.parse(savedUserData);
-                    if (parsedUserData) {
-                        setUserData(parsedUserData);
-                    }
-                } catch (error) {
-                    console.error('Error parsing saved user data', error);
-                }
-            }
-
-            if (savedFamilyMember) {
-                try {
-                    parsedFamilyMember = JSON.parse(savedFamilyMember);
-                    if (parsedFamilyMember) {
-                        setIsFamilyMember(parsedFamilyMember);
-                    }
-                } catch (error) {
-                    console.error('Error parsing saved family member', error);
-                }
-            }
-
-            if (savedFamilyMemberId) {
-                try {
-                    parsedFamilyMemberId = JSON.parse(savedFamilyMemberId);
-                    if (parsedFamilyMemberId) {
-                        setFamilyMemberId(parsedFamilyMemberId);
-                    }
-                } catch (error) {
-                    console.error('Error parsing saved family member ID', error);
-                }
-            }
-
-            setTimeout(() => {
-                // Check payment status
-                checkPaymentStatus(orderToken)
-                    .then(response => {
-                        setTimeout( () => {
-
-
-                            if (response.paymentStatus === 'PAID') {
-                                setPaymentSuccess(true);
-                                setActiveStep(steps.length); // Move to last step
-                                setMerchantReference(response.merchantReference);
-
-                                // Määra vajalikud muutujad
-                                const currentPlanData = planData.id ? planData : parsedPlanData;
-                                const currentAffiliateId = planData.affiliateId || parsedAffiliateInfo?.id;
-                                const currentAppliedCredit = appliedCredit || parsedAppliedCredit;
-                                const currentContract = contract || parsedContract;
-                                const currentUserData = userData || parsedUserData;
-                                const currentIsContractPayment = isContractPayment || savedIsContractPayment || (currentPlanData?.id === 'contract-payment');
-                                const currentMerchantReference = response.merchantReference || merchantReference;
-                                const currentFamilyMember = isFamilyMember || parsedFamilyMember;
-                                const currentFamilyMemberId = familyMemberId || parsedFamilyMemberId;
-
-                                setTimeout(() => {
-                                    // Kui tegemist on lepingumaksega
-                                    if (currentIsContractPayment && currentContract?.id) {
-
-
-                                        // Aktsepteeri leping ilma buyPlan-i kutsumata
-                                        acceptContract(currentContract.id, {
-                                            userId: currentUserData.id,
-                                            affiliateId: currentAffiliateId,
-                                            acceptType: 'checkout',
-                                            contractTermsId: 1, // Vaikimisi 1
-                                            paymentCompleted: true
-                                        })
-                                            .then(() => {
-
-                                                setInvoiceNumber(currentMerchantReference || "N/A");
-                                            })
-                                            .catch(error => {
-                                                console.error("Error accepting contract after payment:", error);
-                                                setPaymentError("Payment was successful but contract could not be accepted. Please contact support.");
-                                            })
-                                            .finally(() => {
-                                                // Kustuta localStorage andmed
-                                                localStorage.removeItem('checkout_planData');
-                                                localStorage.removeItem('checkout_affiliateInfo');
-                                                localStorage.removeItem('checkout_contract');
-                                                localStorage.removeItem('checkout_appliedCredit');
-                                                localStorage.removeItem('checkout_userData');
-                                                localStorage.removeItem('checkout_isContractPayment');
-                                                localStorage.removeItem('checkout_familyMember');
-                                                localStorage.removeItem('checkout_familyMemberId');
-                                                localStorage.removeItem('checkout_auth_token');
-                                                localStorage.removeItem('checkout_role')
-                                                localStorage.removeItem('checkout_pricingPlan')
-
-                                                setLoading(false);
-                                            });
-                                    }
-                                    // Kui tegemist ei ole lepingumaksega, siis tee tavaline buyPlan
-                                    else if (currentPlanData?.id && currentPlanData?.id !== 'contract-payment') {
-
-                                        buyPlan(currentPlanData, currentAffiliateId, currentAppliedCredit, currentContract, currentMerchantReference, currentIsContractPayment, currentFamilyMember, currentFamilyMemberId)
-                                            .then(response => {
-                                                setInvoiceNumber(response.invoiceNumber);
-
-                                                // Kustuta localStorage andmed
-                                                localStorage.removeItem('checkout_planData');
-                                                localStorage.removeItem('checkout_affiliateInfo');
-                                                localStorage.removeItem('checkout_contract');
-                                                localStorage.removeItem('checkout_appliedCredit');
-                                                localStorage.removeItem('checkout_userData');
-                                                localStorage.removeItem('checkout_isContractPayment');
-                                                localStorage.removeItem('checkout_familyMember');
-                                                localStorage.removeItem('checkout_familyMemberId');
-                                                localStorage.removeItem('checkout_auth_token');
-                                                localStorage.removeItem('checkout_role')
-                                                localStorage.removeItem('checkout_pricingPlan')
-                                            })
-                                            .catch(error => {
-                                                console.error("Error finalizing plan purchase:", error);
-                                                setPaymentError("Payment was successful but plan purchase could not be completed. Please contact support.");
-                                            })
-                                    .finally(() => {
-                                            // IMPORTANT: Move setLoading(false) here for regular purchases
-                                            setLoading(false);
-                                        });
-                                    } else {
-                                        console.warn("No valid plan or contract data found after payment.");
-                                        setPaymentError("Payment was successful but we couldn't process your order. Please contact support.");
-                                        setLoading(false);
-                                    }
-                                }, 1000);
-
-                            } else {
-                                setPaymentError('Payment failed or was cancelled');
-                                setLoading(false);
-                            }
-                        } , 500);
-                    })
-                    .catch(error => {
-                        console.error("Error checking payment status:", error);
-                        setPaymentError('Error checking payment status');
-                    })
-
-            }, 4000);
+                })
+                .catch(error => {
+                    console.error("Viga makse staatuse kontrollimisel:", error);
+                    setPaymentError('Viga makse staatuse kontrollimisel');
+                    setLoading(false);
+                });
         }
-    }, [searchParams]);
+    }, [searchParams, navigate]);
+
+    // Funktsioon checkout andmete kustutamiseks
+    const clearCheckoutData = () => {
+        localStorage.removeItem('checkout_planData');
+        localStorage.removeItem('checkout_affiliateInfo');
+        localStorage.removeItem('checkout_contract');
+        localStorage.removeItem('checkout_appliedCredit');
+        localStorage.removeItem('checkout_userData');
+        localStorage.removeItem('checkout_isContractPayment');
+        localStorage.removeItem('checkout_familyMember');
+        localStorage.removeItem('checkout_familyMemberId');
+        localStorage.removeItem('checkout_token');
+        localStorage.removeItem('checkout_role');
+        localStorage.removeItem('checkout_pricingPlan');
+        localStorage.removeItem('checkout_payment_in_progress');
+    };
 
     // Lae affiliaadi krediidi info
     useEffect(() => {
@@ -477,113 +290,147 @@ export default function Checkout(props) {
         }
     }, [affiliateInfo?.id]);
 
-    // Modified portion of handlePlaceOrder in Checkout.js
+    // Uuendatud handlePlaceOrder ilma buyPlan ja acceptContract käskudeta
+    // Inside the Checkout.jsx file, the handlePlaceOrder function needs to be modified
 
     const handlePlaceOrder = async () => {
         try {
             setLoading(true);
-            const saveDataAndRedirect = async (paymentUrl) => {
-                // Salvesta oleku andmed localStorage'i enne makset
-                localStorage.setItem('checkout_planData', JSON.stringify(planData));
-                localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
-                localStorage.setItem('checkout_contract', JSON.stringify(contract));
-                localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
 
-                if (localStorage.getItem('token')) {
-                    localStorage.setItem('checkout_token', localStorage.getItem('token'));
-                    console.log("Token salvestatud enne makset:", localStorage.getItem('token'));
-                }
-
-                localStorage.setItem('checkout_token', localStorage.getItem('token'));
-                localStorage.setItem('checkout_payment_in_progress', 'true');
-                localStorage.setItem('checkout_role', localStorage.getItem('role'));
-                localStorage.setItem('checkout_pricingPlan', localStorage.getItem('pricingPlan'));
-
-                if (userData) {
-                    localStorage.setItem('checkout_userData', JSON.stringify(userData));
-                }
-                if (isContractPayment || planData?.id === 'contract-payment') {
-                    localStorage.setItem('checkout_isContractPayment', 'true');
-                }
-
-                console.log('Maksele minnes salvestatud andmed:', {
-                    planData: JSON.stringify(planData),
-                    affiliateInfo: JSON.stringify(affiliateInfo),
-                    contract: JSON.stringify(contract),
-                    appliedCredit: appliedCredit,
-                    auth_token: localStorage.getItem('auth_token')
-                });
-
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                window.location.href = paymentUrl;
-            }
-
-            // Arvuta lõplik summa - UUENDATUD LOOGIKA esimeseks makseks
+            // Arvuta lõplik summa
             let finalAmount;
             const isContractPmt = isContractPayment || planData?.id === 'contract-payment';
 
-            // Kui tegemist on lepingumaksega, kontrolli, kas on esimene makse ja kasuta firstPaymentAmount-i
+            // Määra õige summa
             if (isContractPmt && contract) {
                 if (contract.isFirstPayment && contract.firstPaymentAmount) {
-                    // Kasuta firstPaymentAmount-i kui see on määratud
                     finalAmount = Math.max(contract.firstPaymentAmount - appliedCredit, 0);
                 } else {
-                    // Tavaline lepingu makse
                     finalAmount = Math.max((planData?.price || 0) - appliedCredit, 0);
                 }
             } else {
-                // Tavaline mitte-lepingu ost
                 finalAmount = Math.max((planData?.price || 0) - appliedCredit, 0);
             }
 
-            // Kui kogu summa on kaetud krediidiga
+            // Kui kogu summa on kaetud krediidiga, saada info backendile
             if (finalAmount === 0) {
-                if (isContractPmt && contract?.id) {
-                    // Lepingumakse puhul kutsu ainult acceptContract
-                    await acceptContract(contract.id, {
-                        userId: userData.id,
-                        affiliateId: affiliateInfo?.id,
-                        acceptType: 'checkout',
-                        contractTermsId: 1,
-                        paymentCompleted: true,
-                    });
+                try {
+                    // Genereerime unikaalse merchantReference
+                    const creditMerchantReference = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
 
-                    setPaymentSuccess(true);
-                    setActiveStep(activeStep + 1);
-                    setInvoiceNumber("Credit-" + new Date().getTime());
-                } else {
-                    // Tavalise paketi ostu puhul kutsu buyPlan
+                    if (isContractPmt && contract) {
+                        // Kui on tegemist lepingumaksega ja summa on 0, siis kutsume otse acceptContract
+                        try {
+                            const contractId = contract.id;
+                            const acceptType = "checkbox";
+                            const userId = userData?.id;
+                            const affiliateId = affiliateInfo?.id;
+                            // Leiame contract terms ID - tavaliselt 1, kuid võibolla vaja dünaamiliselt laadida
+                            const contractTermsId = 1;
 
-                    const response = await buyPlan(planData, affiliateInfo?.id, appliedCredit, contract, null, null, isFamilyMember, familyMemberId);
-                    setPaymentSuccess(true);
-                    setActiveStep(activeStep + 1);
-                    setInvoiceNumber(response.invoiceNumber);
-                    localStorage.removeItem('checkout_planData');
-                    localStorage.removeItem('checkout_affiliateInfo');
-                    localStorage.removeItem('checkout_contract');
-                    localStorage.removeItem('checkout_appliedCredit');
-                    localStorage.removeItem('checkout_userData');
-                    localStorage.removeItem('checkout_isContractPayment');
-                    localStorage.removeItem('checkout_familyMember');
-                    localStorage.removeItem('checkout_familyMemberId');
+                            // Kutsu acceptContract API
+                            const result = await acceptContract(contractId, {
+                                userId,
+                                affiliateId,
+                                acceptType,
+                                contractTermsId,
+                                contractId,
+                                appliedCredit,
+                                invoiceNumber: creditMerchantReference,
+                            });
 
-                    setLoading(false)
+
+
+
+
+                            // Kustutame checkout andmed
+                            clearCheckoutData();
+
+                            // Suuname registreerimislehele
+                            navigate("/register-training");
+                        } catch (contractError) {
+                            console.error("Viga lepingu kinnitamisel:", contractError);
+                            setPaymentError('Lepingu kinnitamine ebaõnnestus');
+                            setLoading(false);
+                        }
+                    } else {
+                        // Kui pole lepingumakse, siis tavaline planData ost krediidiga
+                        const data = {
+                            planData: planData,
+                            currentAppliedCredit: appliedCredit,
+                            contract: contract,
+                            currentMerchantReference: creditMerchantReference,
+                            currentIsContractPayment: isContractPmt || false,
+                            isFamilyMember: isFamilyMember || false,
+                            familyMemberId: familyMemberId || null
+                        };
+
+                        // Kutsume API funktsiooni välja õigete parameetritega
+                        const result = await handleBuyPlan(
+                            planData,
+                            affiliateInfo.id,
+                            appliedCredit,
+                            contract,
+                            creditMerchantReference,
+                            isContractPmt || false,
+                            isFamilyMember || false,
+                            familyMemberId || null
+                        );
+
+
+
+                        // Kustutame checkout andmed
+                        clearCheckoutData();
+
+                        // Suuname registreerimislehele
+                        navigate("/register-training");
+                    }
+                } catch (error) {
+                    console.error("Viga krediidiga maksmisel:", error);
+                    setPaymentError('Krediidiga maksmine ebaõnnestus');
+                    setLoading(false);
                 }
             } else {
-                // Kui maksta on vaja Montonio kaudu
-                const returnUrl = window.location.href.split('?')[0]; // Remove existing query parameters
+                // Kui on vaja kasutada Montoniot (jätame olemasoleva koodi siia)
+                const returnUrl = window.location.href.split('?')[0]; // Eemaldame olemasolevad parameetrid
 
-                // Määra õige summa makseks, sõltuvalt kas tegemist on firstPayment-iga või mitte
+                // Loo vajalikud andmed vastavalt maksele
                 const paymentPrice = isContractPmt && contract?.isFirstPayment && contract?.firstPaymentAmount
                     ? contract.firstPaymentAmount
                     : planData?.price;
 
                 // Uuenda planData hinda kui tegemist on esimese lepingumaksega
-                const adjustedPlanData = { ...planData };
+                const adjustedPlanData = {...planData};
                 if (isContractPmt && contract?.isFirstPayment && contract?.firstPaymentAmount) {
                     adjustedPlanData.price = contract.firstPaymentAmount;
                 }
+
+                // Salvesta andmed enne maksele suunamist
+                localStorage.setItem('checkout_planData', JSON.stringify(planData));
+                localStorage.setItem('checkout_affiliateInfo', JSON.stringify(affiliateInfo));
+                localStorage.setItem('checkout_contract', JSON.stringify(contract));
+                localStorage.setItem('checkout_appliedCredit', appliedCredit.toString());
+
+                if (userData) {
+                    localStorage.setItem('checkout_userData', JSON.stringify(userData));
+                }
+
+                if (isContractPmt || planData?.id === 'contract-payment') {
+                    localStorage.setItem('checkout_isContractPayment', 'true');
+                }
+
+                // Salvesta autentimisandmed
+                if (localStorage.getItem('token')) {
+                    localStorage.setItem('checkout_token', localStorage.getItem('token'));
+
+                }
+
+                // Salvesta muud sessiooni andmed
+                localStorage.setItem('checkout_role', localStorage.getItem('role'));
+                localStorage.setItem('checkout_pricingPlan', localStorage.getItem('pricingPlan'));
+                localStorage.setItem('checkout_payment_in_progress', 'true');
+
+
 
                 // Loo Montonio makse
                 const paymentResponse = await createMontonioPayment(
@@ -593,19 +440,25 @@ export default function Checkout(props) {
                     contract,
                     returnUrl,
                     userData,
+                    isFamilyMember,
+                    familyMemberId
                 );
 
+
+
                 if (paymentResponse.payment_url) {
-                    await saveDataAndRedirect(paymentResponse.payment_url);
-                    return;
+                    // Viivitus, et andmed jõuaksid salvestuda
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Suuna kasutaja maksele
+                    window.location.href = paymentResponse.payment_url;
                 } else {
-                    throw new Error('Invalid payment response');
+                    throw new Error('Vigane makse vastus');
                 }
             }
         } catch (error) {
             console.error(error);
-            setPaymentError('Failed to process payment');
-            setLoading(false)
+            setPaymentError('Makse töötlemine ebaõnnestus');
+            setLoading(false);
         }
     };
 
@@ -624,14 +477,13 @@ export default function Checkout(props) {
     // Arvutame uue kogusumma, millest lahutatakse rakendatud krediit
     const totalPrice = Math.max((planData?.price || 0) - appliedCredit, 0);
 
-
     // Lisa laadimise ja vigade käsitlemise renderdus
     if (loading) {
         return (
             <AppTheme {...props}>
                 <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
                     <CircularProgress/>
-                    <Typography variant="h6" sx={{ml: 2}}>Processing payment...</Typography>
+                    <Typography variant="h6" sx={{ml: 2}}>Töötleme makset...</Typography>
                 </Box>
             </AppTheme>
         );
@@ -648,7 +500,7 @@ export default function Checkout(props) {
                     height: '100vh',
                     p: 3
                 }}>
-                    <Typography variant="h5" color="error" gutterBottom>Payment Error</Typography>
+                    <Typography variant="h5" color="error" gutterBottom>Makse viga</Typography>
                     <Typography variant="body1">{paymentError}</Typography>
                     <Button
                         variant="contained"
@@ -658,7 +510,7 @@ export default function Checkout(props) {
                             setActiveStep(0);
                         }}
                     >
-                        Try Again
+                        Proovi uuesti
                     </Button>
                 </Box>
             </AppTheme>
@@ -828,19 +680,16 @@ export default function Checkout(props) {
                         {activeStep === steps.length ? (
                             <Stack spacing={2}>
                                 <Typography variant="h1">📦</Typography>
-                                <Typography variant="h5">Thank you for your order!</Typography>
+                                <Typography variant="h5">Aitäh tellimuse eest!</Typography>
                                 <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                                    Your order number is <strong>{invoiceNumber}</strong>.
-                                    {isContractPayment || planData?.id === 'contract-payment'
-                                        ? " Your contract has been accepted and is now active."
-                                        : " We have emailed your order confirmation and your plan is active."}
+                                    Sinu makse on töötlemisel. Kohe suunatakse sind registreerimislehele.
                                 </Typography>
                                 <Button
                                     variant="contained"
                                     sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
-                                    onClick={() => navigate("/training-diary")}
+                                    onClick={() => navigate("/register-training")}
                                 >
-                                    Go to my dashboard
+                                    Mine registreerima
                                 </Button>
                             </Stack>
                         ) : (
@@ -880,7 +729,7 @@ export default function Checkout(props) {
                                             variant="text"
                                             sx={{display: {xs: 'none', sm: 'flex'}}}
                                         >
-                                            Previous
+                                            Tagasi
                                         </Button>
                                     )}
                                     {activeStep !== 0 && (
@@ -891,7 +740,7 @@ export default function Checkout(props) {
                                             fullWidth
                                             sx={{display: {xs: 'flex', sm: 'none'}}}
                                         >
-                                            Previous
+                                            Tagasi
                                         </Button>
                                     )}
                                     <Button
@@ -902,8 +751,8 @@ export default function Checkout(props) {
                                         disabled={loading}
                                     >
                                         {activeStep === steps.length - 1 ? (
-                                            totalPrice === 0 ? 'Complete with Credit' : 'Pay with Montonio'
-                                        ) : 'Next'}
+                                            totalPrice === 0 ? 'Lõpeta krediidiga' : 'Maksa Montonioga'
+                                        ) : 'Edasi'}
                                     </Button>
                                 </Box>
                             </React.Fragment>

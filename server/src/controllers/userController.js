@@ -129,7 +129,7 @@ exports.changePassword = async (req, res) => {
 // Edit profile
 exports.editProfile = async (req, res) => {
     const userId = req.user.id;
-    const { fullName, phone, address, dateOfBirth, email } = req.body;
+    const { fullName, phone, address, dateOfBirth, email, emergencyContact } = req.body;
 
     try {
         await prisma.user.update({
@@ -137,9 +137,10 @@ exports.editProfile = async (req, res) => {
             data: {
                 fullName: fullName.toUpperCase() || null,
                 dateOfBirth: new Date(dateOfBirth) || null,
-                email: email || null,
+
                 phone: phone || null,
                 address: address || null,
+                emergencyContact: emergencyContact || null,
             },
         });
 
@@ -181,15 +182,16 @@ exports.getUser = async (req, res) => {
 // Update user data (PUT /api/user)
 exports.updateUserData = async (req, res) => {
     const userId = req.user.id;
-    const { fullName, email, dateOfBirth } = req.body;
+    const { fullName, email, dateOfBirth, emergencyContact } = req.body;
 
     try {
         await prisma.user.update({
             where: { id: userId },
             data: {
                 fullName,
-                email,
+
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                emergencyContact: emergencyContact || null,
 
             },
         });

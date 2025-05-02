@@ -343,41 +343,23 @@ exports.getUserContracts = async (req, res) => {
  * 3) Loome SignedContract kirje (nt acceptType = 'checkbox')
  * PUT /contracts/:contractId/accept
  */
-exports.acceptContract = async (req, res) => {
+
+// Add this to contractController.js
+const acceptContractInternal = async (contractId, userId, affiliateId, contractTermsId, acceptType, appliedCredit, invoiceNumber) => {
     try {
-        const { contractId } = req.params;
-        const { userId, affiliateId, acceptType, contractTermsId, paymentCompleted } = req.body;
-        console.log("Payment completed:", paymentCompleted);
-
-        // Kui makse pole lõpetatud, saadame tagasi hoiatava teate
-        if (!paymentCompleted) {
-            return res.status(400).json({
-                error: "Payment must be completed before accepting the contract",
-                requiresPayment: true
-            });
-        }
-
-        // Leiame lepingu andmed, et saada vajalik info UserPlan jaoks
+        // Find contract
         const contract = await prisma.contract.findUnique({
             where: { id: parseInt(contractId) },
             include: {
-                userPlan: true // Kontrollime, kas on juba seotud UserPlan
+                userPlan: true
             }
         });
 
         if (!contract) {
-            return res.status(404).json({ error: "Contract not found" });
+            throw new Error("Contract not found");
         }
 
-        // Mark first payment as completed if it was used
-        if (contract.isFirstPayment) {
-            await prisma.contract.update({
-                where: { id: parseInt(contractId) },
-                data: { isFirstPayment: false }
-            });
-        }
-
-        // Uuendame Contract staatust
+        // Update contract status
         const updatedContract = await prisma.contract.update({
             where: { id: parseInt(contractId) },
             data: {
@@ -387,7 +369,7 @@ exports.acceptContract = async (req, res) => {
             },
         });
 
-        // Lisa logi
+        // Add log
         await prisma.contractLogs.create({
             data: {
                 contractId: parseInt(contractId),
@@ -397,7 +379,7 @@ exports.acceptContract = async (req, res) => {
             },
         });
 
-        // Lisa SignedContract
+        // Add SignedContract
         await prisma.signedContract.create({
             data: {
                 contractId: parseInt(contractId),
@@ -408,12 +390,9 @@ exports.acceptContract = async (req, res) => {
             },
         });
 
-        // Kontrolli kas UserPlan on juba olemas selle lepinguga
-        // Kui ei ole, siis loome uue UserPlan
+        // Create or update UserPlan as in your original function...
         if (!contract.userPlan || contract.userPlan.length === 0) {
-            // ===== UPDATED: Create UserPlan with correctly aligned end date =====
-
-            // Get the contract data for calculations
+            // Calculate end date logic...
             const startDate = new Date(contract.startDate || new Date());
             const paymentDay = contract.paymentDay || 1;
 
@@ -469,8 +448,26 @@ exports.acceptContract = async (req, res) => {
             }
         }
 
-        // === START: ADD EMAIL SENDING CODE ===
+        const finalAmount = contract.paymentAmount - (parseInt(appliedCredit) || 0);
 
+        await prisma.transactions.create(
+            {
+                data: {
+                    userId: parseInt(userId),
+                    contractId: parseInt(contractId),
+                    affiliateId: parseInt(affiliateId),
+                    status: 'success',
+                    amount: finalAmount,
+                    type: 'montonio',
+                   invoiceNumber: invoiceNumber || "Contract-" + contractId + "-" + new Date().getTime(),
+
+                    creditAmount: parseInt(appliedCredit) || 0,
+                    description: contract.contractType || "Membership Contract",
+                }
+            }
+        )
+
+        // Handle email sending as in your original function...
         try {
             // Get user data
             const userData = await prisma.user.findUnique({
@@ -485,10 +482,10 @@ exports.acceptContract = async (req, res) => {
             if (!userData || !affiliateData) {
                 console.error("Missing user or affiliate data for email");
             } else {
-                // Create invoice number (either use an existing one or generate a new one)
+                // Create invoice number
                 const invoiceNumber = "Contract-" + contractId + "-" + new Date().getTime();
 
-                // Determine the amount (either first payment or regular payment)
+                // Determine the amount
                 const paymentAmount = contract.isFirstPayment && contract.firstPaymentAmount
                     ? contract.firstPaymentAmount
                     : contract.paymentAmount || 0;
@@ -502,7 +499,7 @@ exports.acceptContract = async (req, res) => {
                 const orderDetails = {
                     invoiceNumber: invoiceNumber,
                     amount: paymentAmount,
-                    appliedCredit: 0, // Adjust if credit was applied
+                    appliedCredit: 0,
                     isContractPayment: true
                 };
 
@@ -518,18 +515,35 @@ exports.acceptContract = async (req, res) => {
             }
         } catch (emailError) {
             console.error("Failed to send contract confirmation email:", emailError);
-            // Continue processing even if email fails
         }
 
-        // === END: EMAIL SENDING CODE ===
+        return updatedContract;
+    } catch (error) {
+        console.error('Error in acceptContractInternal:', error);
+        throw error;
+    }
+};
 
-        res.json(updatedContract);
+exports.acceptContract = async (req, res) => {
+    try {
+        const { userId, affiliateId, acceptType, contractTermsId, contractId, appliedCredit, invoiceNumber } = req.body;
+console.log("acceptContract", req.body);
+        const result = await acceptContractInternal(
+            contractId,
+            userId,
+            affiliateId,
+            contractTermsId,
+            acceptType,
+            appliedCredit,
+            invoiceNumber
+        );
+
+        res.json(result);
     } catch (error) {
         console.error('Error acceptContract:', error);
         res.status(500).json({ error: 'Failed to accept contract' });
     }
 };
-
 /**
  * Toome contractTerms sisu
  * GET /contracts/terms/:termsId
@@ -744,4 +758,24 @@ exports.updateUnpaidUser = async (req, res) => {
         console.error('Error updating unpaid user:', error);
         res.status(500).json({ error: 'Failed to update unpaid user' });
     }
+};
+
+// At the bottom of contractController.js:
+module.exports = {
+    getAllContracts: exports.getAllContracts,
+    createContract: exports.createContract,
+    getContractById: exports.getContractById,
+    updateContract: exports.updateContract,
+    deleteContract: exports.deleteContract,
+    createContractTemplate: exports.createContractTemplate,
+    getLatestContractTemplate: exports.getLatestContractTemplate,
+    getUserContracts: exports.getUserContracts,
+    acceptContract: exports.acceptContract,
+    getContractTermsById: exports.getContractTermsById,
+    createPaymentHoliday: exports.createPaymentHoliday,
+    updatePaymentHoliday: exports.updatePaymentHoliday,
+    getUnpaidUsers: exports.getUnpaidUsers,
+    updateUnpaidUser: exports.updateUnpaidUser,
+    // Add our new function:
+    acceptContractInternal
 };

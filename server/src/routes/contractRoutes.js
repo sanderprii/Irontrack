@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const contractController = require('../controllers/contractController');
-// const { authMiddleware } = require('../middleware/auth'); // eeldame, et sul on mingisugune auth
+const ensureAuthenticated = require("../middlewares/ensureAuthenticatedJWT");
 
-// router.use(authMiddleware); // rakendame autentimise kogu routerile, kui vaja
+router.use(ensureAuthenticated); // rakendame autentimise kogu routerile, kui vaja
 
 // GET /contracts?search=&sortBy=&sortOrder=
 router.get('/', contractController.getAllContracts);

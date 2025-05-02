@@ -63,6 +63,7 @@ model FamilyMember {
   createdAt        DateTime        @default(now())
   classAttendances ClassAttendee[]
   userplans        UserPlan[]
+  transactions     transactions[]
 }
 
 model Message {
@@ -402,27 +403,30 @@ model todayWOD {
 }
 
 model transactions {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
-  amount        Float
-  invoiceNumber String
-  description   String
-  createdAt     DateTime @default(now())
-  status        String?
-  type          String?
-  affiliateId   Int
-  planId        Int?
-  creditId      Int?
-  contractId    Int?
-
-  isCredit  Boolean?  @default(false)
-  decrease  Boolean   @default(true)
-  plan      Plan?     @relation(fields: [planId], references: [id])
-  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
-  memberId  Int?
-  member    Members?  @relation(fields: [memberId], references: [id])
-  credit    Credit?   @relation(fields: [creditId], references: [id])
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
+  amount         Float
+  invoiceNumber  String
+  description    String
+  createdAt      DateTime      @default(now())
+  status         String?
+  type           String?
+  affiliateId    Int
+  planId         Int?
+  creditId       Int?
+  contractId     Int?
+  creditAmount   Float?
+  isFamilyMember Boolean?      @default(false)
+  familyMemberId Int?
+  isCredit       Boolean?      @default(false)
+  decrease       Boolean       @default(true)
+  plan           Plan?         @relation(fields: [planId], references: [id])
+  affiliate      Affiliate     @relation(fields: [affiliateId], references: [id])
+  memberId       Int?
+  member         Members?      @relation(fields: [memberId], references: [id])
+  credit         Credit?       @relation(fields: [creditId], references: [id])
+  familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
 }
 
 model PaymentHoliday {

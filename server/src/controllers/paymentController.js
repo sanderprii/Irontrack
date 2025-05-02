@@ -3,8 +3,11 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 require('dotenv').config();
 const {PrismaClient} = require('@prisma/client');
-const { sendOrderConfirmation } = require("../utils/emailService");
+const {sendOrderConfirmation} = require("../utils/emailService");
 const prisma = new PrismaClient();
+
+const contractController = require('./contractController');
+const {buyPlan} = require('./planController');
 
 const NOTIFICATION_URL = process.env.NOTIFICATION_URL;
 
@@ -25,11 +28,22 @@ let affiliateAccessKey = '';
 const createMontonioPayment = async (req, res) => {
     try {
         // Extract and validate payment data
-        const {amount, orderId, description, userData, affiliateId, appliedCredit, contractId} = req.body;
+        const {
+            amount,
+            orderId,
+            description,
+            userData,
+            affiliateId,
+            appliedCredit,
+            contractId,
+            planData,
+            isFamilyMember,
+            familyMemberId
+        } = req.body;
         const userEmail = userData?.email || '';
         const userPhone = userData?.phone || '';
         const userFullName = userData?.fullName || '';
-
+        console.log("createMontonioPayment", req.body)
         // Ensure amount is a valid number
         const parsedAmount = parseFloat(amount);
         if (isNaN(parsedAmount) || parsedAmount < 0.01) {
@@ -156,8 +170,11 @@ const createMontonioPayment = async (req, res) => {
                         amount: parsedAmount,
                         invoiceNumber: merchantReference,
                         description: `Contract payment: ${description || 'Contract Payment'}`,
-                        type: 'contract',
-                        status: 'pending'
+                        type: 'Montonio',
+                        status: 'pending',
+                        creditAmount: appliedCredit,
+                        contractId: parseInt(contractId),
+
                     }
                 });
 
@@ -177,6 +194,36 @@ const createMontonioPayment = async (req, res) => {
             } catch (dbError) {
                 console.error("Error creating payment metadata:", dbError);
                 // Isegi kui metadata kirjutamine ebaõnnestub, laseme maksel jätkuda
+            }
+        } else {
+            // Kui tegemist ei ole lepingumaksega, siis loome lihtsalt transaktsiooni
+            try {
+
+                const finalAmount = parseFloat(formattedAmount) + (appliedCredit || 0);
+
+                await prisma.transactions.create({
+                    data: {
+                        userId: userData.id,
+                        affiliateId: parsedAffiliateId,
+                        amount: finalAmount,
+                        invoiceNumber: merchantReference,
+                        description: `Plan purchase: ${planData.name || 'Plan Purchase'}`,
+                        type: 'plan',
+                        status: 'pending',
+                        planId: planData.id,
+                        isFamilyMember: isFamilyMember,
+                        familyMemberId: familyMemberId,
+                        creditAmount: appliedCredit,
+
+                    }
+                });
+            } catch (dbError) {
+                console.error("Error creating transaction:", dbError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Transaction creation failed",
+                    error: dbError.message
+                });
             }
         }
 
@@ -320,7 +367,6 @@ const handleMontonioWebhook = async (req, res) => {
                 }
 
 
-
                 // 2. Kui EI OLE payment holiday, siis uuenda userPlan
                 // Leia lepinguga seotud leping ja kasutaja plaan
                 const contract = await prisma.contract.findUnique({
@@ -404,12 +450,12 @@ const handleMontonioWebhook = async (req, res) => {
                         });
 
                         if (isPaymentHoliday) {
-                            await prisma.userPlan.update ({
+                            await prisma.userPlan.update({
                                 where: {id: userPlan.id},
                                 data: {paymentHoliday: true}
                             });
                         } else {
-                            await prisma.userPlan.update ({
+                            await prisma.userPlan.update({
                                 where: {id: userPlan.id},
                                 data: {paymentHoliday: false}
                             });
@@ -424,12 +470,12 @@ const handleMontonioWebhook = async (req, res) => {
 
                             // Get user data
                             const user = await prisma.user.findUnique({
-                                where: { id: contract.userId }
+                                where: {id: contract.userId}
                             });
 
                             // Get affiliate data
                             const affiliate = await prisma.affiliate.findUnique({
-                                where: { id: contract.affiliateId }
+                                where: {id: contract.affiliateId}
                             });
 
                             // Create plan details for regular payment
@@ -560,7 +606,92 @@ const checkPaymentStatus = async (req, res) => {
             data: {
                 status: 'success'
             }
+
         });
+
+        const transaction = await prisma.transactions.findFirst({
+            where: {invoiceNumber: decoded.merchantReference},
+        });
+
+
+        if (transaction.planId > 0) {
+            const selectedPlan = await prisma.plan.findUnique({
+                where: {
+                    id: transaction.planId
+                }
+            });
+
+            console.log("transaction", transaction)
+            const planData = selectedPlan
+            const userId = parseInt(transaction.userId)
+            const affiliateId = transaction.affiliateId;
+            const currentAppliedCredit = transaction.creditAmount;
+            const contract = null;
+
+            const isFamilyMember = transaction.isFamilyMember;
+            const familyMemberId = transaction.familyMemberId
+            let merchantReference = decoded.merchantReference;
+
+            try {
+                const result = await buyPlan(
+                    planData,
+                    currentAppliedCredit,
+                    affiliateId,
+                    userId,
+                    contract,
+                    isFamilyMember,
+                    familyMemberId,
+                    merchantReference
+                );
+                console.log("Plan purchase successful:", result);
+            } catch (error) {
+                console.error("Failed to buy plan:", error.message);
+            }
+
+
+        } else if (transaction.contractId > 0) {
+            const contract = await prisma.contract.findUnique({
+                where: {
+                    id: transaction.contractId
+                }
+            });
+
+            if (contract) {
+                await prisma.contract.update({
+                    where: {
+                        id: contract.id
+                    },
+                    data: {
+                        isFirstPayment: false,
+                        status: 'accepted',
+                        acceptedAt: new Date(),
+                    }
+                });
+
+                const contractId = contract.id;
+                const acceptType = "checkbox";
+                const userId = parseInt(transaction.userId);
+                const affiliateId = transaction.affiliateId;
+                const contractTermsId = 1;
+
+                try {
+                    contractController.acceptContractInternal(
+                        contractId,
+                        userId,
+                        affiliateId,
+                        contractTermsId,
+                        acceptType
+                    );
+                    console.log("Contract accepted successfully", userId);
+                } catch (error) {
+                    console.error("Failed to accept contract:", error.message);
+                }
+
+            }
+
+
+        }
+
 
         // Only send response after database operation completes
         res.json({

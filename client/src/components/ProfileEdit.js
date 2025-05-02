@@ -18,14 +18,7 @@ export default function ProfileEdit({ user, onSave, onCancel }) {
                 sx={{ mb: 2 }}
                 fullWidth
             />
-            <TextField
-                label="Email"
-                name="email"
-                value={draft.email || ''}
-                onChange={handleChange}
-                sx={{ mb: 2 }}
-                fullWidth
-            />
+
             <TextField
                 label="Phone"
                 name="phone"

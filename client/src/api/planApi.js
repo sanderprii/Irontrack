@@ -65,7 +65,7 @@ export const deletePlan = async (planId) => {
     }
 };
 
-export const buyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment, isFamilyMember, familyMemberId) => {
+export const handleBuyPlan = async (planData, currentAffiliateId, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment, isFamilyMember, familyMemberId) => {
     try {
 
         const data = { planData, currentAppliedCredit, contract, currentMerchantReference, currentIsContractPayment, isFamilyMember, familyMemberId };
@@ -155,7 +155,10 @@ export const createMontonioPayment = async (
     appliedCredit,
     contract,
     returnUrl,
-    userData
+    userData,
+    isFamilyMember,
+    familyMemberId
+
 ) => {
     // Determine the correct payment amount
     let paymentAmount = planData.price;
@@ -202,6 +205,10 @@ export const createMontonioPayment = async (
                 affiliateId,
                 appliedCredit,
                 contractId: contract?.id,
+                planData,
+                isFamilyMember,
+                familyMemberId,
+
             }),
         });
 

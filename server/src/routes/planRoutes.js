@@ -7,7 +7,7 @@ router.get("/plans", ensureAuthenticated, planController.getPlans);
 router.post("/plans", ensureAuthenticated, planController.createPlan);
 router.put("/plans/:id", ensureAuthenticated,  planController.updatePlan);
 router.delete("/plans/:id", ensureAuthenticated, planController.deletePlan);
-router.post("/plans/buy-plan/:affiliateId", ensureAuthenticated, planController.buyPlan);
+router.post("/plans/buy-plan/:affiliateId", ensureAuthenticated, planController.handleBuyPlan);
 router.get("/plans/credit/:affiliateId", ensureAuthenticated, planController.getUserCredit);
 // PUT: uuendab olemasolevat plaani
 router.put("/plans/user/:id", ensureAuthenticated, planController.updateUserPlan);

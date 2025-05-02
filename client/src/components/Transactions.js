@@ -71,7 +71,7 @@ const Transactions = ({ user, affiliateId }) => {
                             <TableCell>Created At</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Amount</TableCell>
-                            <TableCell>Status</TableCell>
+
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -97,18 +97,7 @@ const Transactions = ({ user, affiliateId }) => {
                                         }}>
                                             {displayAmount} €
                                         </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                label={tx.status || "N/A"}
-                                                color={
-                                                    tx.status === 'completed' ? 'success' :
-                                                        tx.status === 'pending' ? 'warning' :
-                                                            tx.status === 'failed' ? 'error' :
-                                                                'default'
-                                                }
-                                                size="small"
-                                            />
-                                        </TableCell>
+
                                     </TableRow>
 
                                     {/* Detail Row */}

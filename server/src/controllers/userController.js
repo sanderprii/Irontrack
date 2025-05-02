@@ -416,21 +416,53 @@ exports.getPurchaseHistory = async (req, res) => {
     };
 
 // Get all family members for the current user
-    exports.getFamilyMembers = async (req, res) => {
-        const userId = req.user.id;
+exports.getFamilyMembers = async (req, res) => {
+    const userId = req.user.id;
 
-        try {
-            const familyMembers = await prisma.familyMember.findMany({
-                where: {userId},
-                orderBy: {createdAt: 'desc'}
-            });
+    try {
+        const familyMembers = await prisma.familyMember.findMany({
+            where: {userId},
+            orderBy: {createdAt: 'desc'},
+            include: {
+                userplans: true
+            }
+        });
 
-            res.json(familyMembers);
-        } catch (error) {
-            console.error('Error fetching family members:', error);
-            res.status(500).json({error: 'Failed to fetch family members.'});
-        }
-    };
+        // Enhance the userplans with affiliate names
+        const enhancedFamilyMembers = await Promise.all(familyMembers.map(async (member) => {
+            // If the member has plans, add affiliate names
+            if (member.userplans && member.userplans.length > 0) {
+                const enhancedPlans = await Promise.all(member.userplans.map(async (plan) => {
+                    // Fetch affiliate name for this plan
+                    const affiliate = await prisma.affiliate.findUnique({
+                        where: { id: plan.affiliateId },
+                        select: { name: true }
+                    });
+
+                    // Return the plan with added affiliate name
+                    return {
+                        ...plan,
+                        affiliateName: affiliate ? affiliate.name : 'Unknown Affiliate'
+                    };
+                }));
+
+                // Return member with enhanced plans
+                return {
+                    ...member,
+                    userplans: enhancedPlans
+                };
+            }
+
+            // Return member unchanged if no plans
+            return member;
+        }));
+
+        res.json(enhancedFamilyMembers);
+    } catch (error) {
+        console.error('Error fetching family members:', error);
+        res.status(500).json({error: 'Failed to fetch family members.'});
+    }
+};
 
 // Add a new family member
     exports.addFamilyMember = async (req, res) => {

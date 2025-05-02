@@ -10,7 +10,7 @@ router.post("/payments/montonio", ensureAuthenticated, paymentController.createM
 router.post("/payments/montonio-webhook", paymentController.handleMontonioWebhook);
 
 // Makse staatuse kontrollimine
-router.get("/payments/montonio/status", ensureAuthenticated, paymentController.checkPaymentStatus);
+router.get("/payments/montonio/status", paymentController.checkPaymentStatus);
 
 
 

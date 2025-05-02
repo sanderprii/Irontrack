@@ -83,6 +83,7 @@ const uploadProfilePicture = async (req, res) => {
 
             // Vähendame pildi suurust
             let outputBuffer = await processedImage
+                .rotate()
                 .resize({
                     width: MAX_WIDTH,
                     height: MAX_HEIGHT,
@@ -98,6 +99,7 @@ const uploadProfilePicture = async (req, res) => {
                 let quality = 70;
                 while (outputBuffer.length > MAX_OUTPUT_SIZE && quality > 30) {
                     outputBuffer = await sharp(req.file.buffer)
+                        .rotate()
                         .resize({
                             width: MAX_WIDTH,
                             height: MAX_HEIGHT,
@@ -113,6 +115,7 @@ const uploadProfilePicture = async (req, res) => {
                 // Kui ikka liiga suur, vähendame füüsilist suurust
                 if (outputBuffer.length > MAX_OUTPUT_SIZE) {
                     outputBuffer = await sharp(req.file.buffer)
+                        .rotate()
                         .resize({
                             width: MAX_WIDTH / 2,
                             height: MAX_HEIGHT / 2,

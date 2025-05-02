@@ -230,12 +230,12 @@ export const createMontonioPayment = async (
 export const checkPaymentStatus = async (orderToken) => {
     try {
 
-        const token = localStorage.getItem("token");
+
         const response = await fetch(`${API_URL}/payments/montonio/status?token=${orderToken}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+
             }
         });
 

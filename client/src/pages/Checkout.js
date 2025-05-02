@@ -383,7 +383,7 @@ export default function Checkout(props) {
                         clearCheckoutData();
 
                         // Suuname registreerimislehele
-                        navigate("/register-training");
+                        navigate("/");
                     }
                 } catch (error) {
                     console.error("Viga krediidiga maksmisel:", error);

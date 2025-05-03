@@ -170,7 +170,7 @@ export default function Checkout(props) {
         }
 
         if (!userData) {
-            const savedUserData = localStorage.getItem('checkout_userData');
+                const savedUserData = localStorage.getItem('checkout_userData');
             if (savedUserData) {
                 try {
                     const parsedUserData = JSON.parse(savedUserData);
@@ -235,9 +235,6 @@ export default function Checkout(props) {
                 .then(response => {
                     if (response.paymentStatus === 'PAID') {
 
-                        localStorage.setItem("token", response.sessionToken);
-                        localStorage.setItem("role", "regular");
-                        localStorage.setItem("pricingPlan", "premium")
 
 
 
@@ -403,10 +400,8 @@ export default function Checkout(props) {
                     adjustedPlanData.price = contract.firstPaymentAmount;
                 }
 
-
-
-
-                const userDataForApi = { ...userData, logo: undefined };
+                const { id, fullName, email } = userData;
+                const userDataForApi = { id, fullName, email };
                 // Loo Montonio makse
                 const paymentResponse = await createMontonioPayment(
                     adjustedPlanData,

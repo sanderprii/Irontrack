@@ -209,7 +209,7 @@ function App() {
                     <Box
                         sx={{
                             height: '5px',
-                            pb: '0px',
+                            pb: 16,
                             width: '100%',
                             minHeight: 'calc(100vh - 56px)',
                             overflowX: 'hidden'

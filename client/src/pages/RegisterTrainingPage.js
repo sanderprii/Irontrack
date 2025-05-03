@@ -312,7 +312,8 @@ const RegisterTrainingPage = () => {
                 contract: false,
                 userData: userData,
                 familyMember: isFamilyMember,
-                familyMemberId: familyMemberId
+                familyMemberId: familyMemberId,
+                isContractPayment: false,
             }
         });
     };

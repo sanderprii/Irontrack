@@ -216,7 +216,7 @@ const createMontonioPayment = async (req, res) => {
                         montonioUuid: response.data.uuid,
                         contractId: parseInt(contractId),
                         affiliateId: parsedAffiliateId,
-                        isPaymentHoliday: false
+                        isPaymentHoliday: false,
                     }
                 });
 

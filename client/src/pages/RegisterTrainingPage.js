@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
     Container,
     Typography,
@@ -154,6 +154,30 @@ const RegisterTrainingPage = () => {
     const [selectedFamilyMember, setSelectedFamilyMember] = useState("self"); // Default to "self"
 
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        // Check if we were redirected with affiliate information
+        const loadAffiliateFromRedirect = async () => {
+            if (location.state?.affiliateId) {
+                try {
+                    const affiliateData = await fetchAffiliateInfo(location.state.affiliateId);
+                    setSelectedAffiliate(affiliateData.affiliate);
+
+                    // If openPlans is true, immediately load the plans
+                    if (location.state?.openPlans) {
+                        // We need to wait for selectedAffiliate to be set
+                        // so we pass the affiliate directly to loadAffiliatePlans
+                        await loadAffiliatePlans(affiliateData.affiliate);
+                    }
+                } catch (error) {
+                    console.error("Error loading affiliate from redirect:", error);
+                }
+            }
+        };
+
+        loadAffiliateFromRedirect();
+    }, [location.state]);
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -217,14 +241,14 @@ const RegisterTrainingPage = () => {
         setSearchQuery("");
     };
 
-    const loadAffiliatePlans = async () => {
-        if (!selectedAffiliate || !selectedAffiliate.id) {
+    const loadAffiliatePlans = async (affiliateToUse = null) => {
+        const affiliate = affiliateToUse || selectedAffiliate;
+
+        if (!affiliate || !affiliate.id) {
             return;
         }
-
         try {
-            const affiliatePlans = await fetchPlans(selectedAffiliate.ownerId);
-
+            const affiliatePlans = await fetchPlans(affiliate.ownerId);
             // Filter out inactive plans, then process the remaining ones
             const filteredPlans = affiliatePlans.filter(plan => plan.active);
 
@@ -236,7 +260,7 @@ const RegisterTrainingPage = () => {
 
             setPlans(processedPlans);
 
-            const getUserPlans = await getUserPlansByAffiliate(selectedAffiliate.id);
+            const getUserPlans = await getUserPlansByAffiliate(affiliate.id);
             setUserPlans(getUserPlans);
 
             // Set viewing plans to true to hide affiliate info
@@ -492,7 +516,7 @@ const RegisterTrainingPage = () => {
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        onClick={loadAffiliatePlans}
+                                        onClick={() => loadAffiliatePlans()}
                                         sx={{ borderRadius: 2 }}
                                     >
                                         View Plans

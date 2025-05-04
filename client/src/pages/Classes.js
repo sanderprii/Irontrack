@@ -1,6 +1,6 @@
-    import React, {useState, useEffect, useCallback} from "react";
-import { useLocation } from "react-router-dom";
-import { useTheme } from "@mui/material/styles";
+import React, {useState, useEffect, useCallback} from "react";
+import {useLocation} from "react-router-dom";
+import {useTheme} from "@mui/material/styles";
 import {
     Container,
     Typography,
@@ -25,20 +25,23 @@ import {
     ToggleButtonGroup,
     CircularProgress
 } from "@mui/material";
-    import { Snackbar, Alert } from '@mui/material';
+import {Snackbar, Alert} from '@mui/material';
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import TodayIcon from "@mui/icons-material/Today";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // Trophy icon for day leaderboard
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
 import LeaderboardModal from "../components/LeaderboardModal";
-import { getClassesForDay, assignTrainerToClasses } from "../api/classesApi";
+import {getClassesForDay, assignTrainerToClasses} from "../api/classesApi";
 import TrainerAssignmentModal from "../components/TrainerAssignmentModal";
 
 import ClassDetailsModal from "../components/ClassModal";
-import { getClasses, deleteClass, createTraining, updateTraining, getClassAttendeesCount} from "../api/classesApi";
-import { getAffiliate } from "../api/affiliateApi";
+import {getClasses, deleteClass, createTraining, updateTraining, getClassAttendeesCount} from "../api/classesApi";
+import {getAffiliate} from "../api/affiliateApi";
 import ClassWodView from "../components/ClassWodView";
-import { getClassLeaderboard } from "../api/leaderboardApi";
-import { getUserProfile } from "../api/profileApi";
+import {getClassLeaderboard} from "../api/leaderboardApi";
+import {getUserProfile} from "../api/profileApi";
 
 
 export default function Classes() {
@@ -217,9 +220,6 @@ export default function Classes() {
     }, [affiliateId, fetchClasses]);
 
 
-
-
-
     // Get classes for selected day
     const getClassesForSelectedDay = (dayIndex) => {
         const startOfWeek = new Date(currentDate);
@@ -269,7 +269,10 @@ export default function Classes() {
                         ...entry,
                         className: classData.trainingName,
                         wodName: classData.wodName || "WOD",
-                        classTime: new Date(classData.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        classTime: new Date(classData.time).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
                         classId: classData.id
                     }));
                     combinedLeaderboard.push(...classLeaderboard);
@@ -315,6 +318,16 @@ export default function Classes() {
         newDate.setDate(currentDate.getDate() - 7);
         setCurrentDate(newDate);
         setSelectedDayIndex(0);
+    };
+
+    const handleToday = () => {
+        const today = new Date();
+        setCurrentDate(today);
+
+        // Set the selected day to today
+        const todayIndex = today.getDay();
+        const correctedIndex = todayIndex === 0 ? 6 : todayIndex - 1;
+        setSelectedDayIndex(correctedIndex);
     };
 
     const handleNextWeek = () => {
@@ -421,11 +434,18 @@ export default function Classes() {
 
     // Format date for display
     const getFormattedDate = () => {
-        return new Date(
+        const date = new Date(
             currentDate.getFullYear(),
             currentDate.getMonth(),
             currentDate.getDate() - (currentDate.getDay() || 7) + selectedDayIndex + 1
-        ).toLocaleDateString();
+        );
+
+        // Format as DD.MM.YYYY
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+
+        return `${day}.${month}.${year}`;
     };
 
     const handleOpenTrainerAssignment = () => {
@@ -522,7 +542,8 @@ export default function Classes() {
         <Container maxWidth={false}>
             <Box textAlign="center" my={4}>
 
-                {selectedAffiliate?.name && <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
+                {selectedAffiliate?.name &&
+                    <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
                 <Typography variant="h5" color="primary">Class Schedule
                     {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
                     {hasWodClasses && (
@@ -537,7 +558,7 @@ export default function Classes() {
                                 }
                             }}
                         >
-                            <EmojiEventsIcon />
+                            <EmojiEventsIcon/>
                         </IconButton>
                     )}
                 </Typography>
@@ -572,32 +593,49 @@ export default function Classes() {
 
             {/* ✅ Kuvab kas WOD vaate või klasside vaate */}
             {showWODView ? (
-                <ClassWodView affiliateId={affiliateId} selectedAffiliateId={affiliateId} currentDate={currentDate} onClose={() => setShowWODView(false)} />
+                <ClassWodView affiliateId={affiliateId} selectedAffiliateId={affiliateId} currentDate={currentDate}
+                              onClose={() => setShowWODView(false)}/>
             ) : (
                 <>
                     {/* ✅ Nädala ja päeva vahetus */}
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Button variant="contained" color="secondary" onClick={handlePrevWeek}>
-                            Previous Week
-                        </Button>
+                        <IconButton
+                            color="primary"
+                            onClick={handlePrevWeek}
+                            sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}
+                        >
+                            <ArrowBackIosNewIcon />
+                        </IconButton>
+
                         {!showWeekly && (
                             <Box display="flex" alignItems="center">
-                                <Typography variant="h6">
+                                <Typography variant="h6" sx={{ mr: 1 }}>
                                     {getFormattedDate()}
                                 </Typography>
-
-
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<TodayIcon />}
+                                    onClick={handleToday}
+                                >
+                                    Today
+                                </Button>
                             </Box>
                         )}
+
                         {!isMobile && (
                             <Button variant="contained" color="primary" onClick={handleToggleView}>
                                 {showWeekly ? "As Day" : "Show Weekly"}
                             </Button>
                         )}
 
-                        <Button variant="contained" color="secondary" onClick={handleNextWeek}>
-                            Next Week
-                        </Button>
+                        <IconButton
+                            color="primary"
+                            onClick={handleNextWeek}
+                            sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}
+                        >
+                            <ArrowForwardIosIcon />
+                        </IconButton>
                     </Box>
 
                     {/* ✅ Kui showWeekly = false -> päeva kaupa */}
@@ -615,10 +653,10 @@ export default function Classes() {
                                     color={selectedDayIndex === index ? "primary" : "default"}
                                     onClick={() => handleDaySelect(index)}
                                     sx={{
-                                        minWidth: { xs: "40px", sm: "80px" }, // ✅ Väiksematel ekraanidel vähendab suurust
+                                        minWidth: {xs: "40px", sm: "80px"}, // ✅ Väiksematel ekraanidel vähendab suurust
                                         flexGrow: 1, // ✅ Jaotab ruumi võrdselt
-                                        fontSize: { xs: "0.75rem", sm: "1rem" }, // ✅ Väiksem tekst kitsamal ekraanil
-                                        padding: { xs: "4px", sm: "8px" }, // ✅ Kohandatud padding väiksematel ekraanidel
+                                        fontSize: {xs: "0.75rem", sm: "1rem"}, // ✅ Väiksem tekst kitsamal ekraanil
+                                        padding: {xs: "4px", sm: "8px"}, // ✅ Kohandatud padding väiksematel ekraanidel
                                     }}
                                 >
                                     {day}
@@ -640,7 +678,7 @@ export default function Classes() {
                                     <Grid item xs={12} sm={6} md={1.7} lg={1.7} key={index}>
                                         <Box textAlign="center">
                                             <Box display="flex" alignItems="center" justifyContent="center">
-                                                <Typography variant="h6" sx={{ fontWeight: "bold", my: 1 }}>
+                                                <Typography variant="h6" sx={{fontWeight: "bold", my: 1}}>
                                                     {day} - {dayDate.toLocaleDateString("en-GB")}
                                                 </Typography>
 
@@ -661,7 +699,7 @@ export default function Classes() {
                                                             }
                                                         }}
                                                     >
-                                                        <EmojiEventsIcon fontSize="small" />
+                                                        <EmojiEventsIcon fontSize="small"/>
                                                     </IconButton>
                                                 )}
                                             </Box>
@@ -730,16 +768,16 @@ export default function Classes() {
                 fullWidth
                 PaperProps={{
                     sx: {
-                        m: { xs: 0 },  // Mobiilis eemaldame ääred
-                        width: { xs: '100%' },  // Mobiilis täislaius
-                        maxWidth: { xs: '100%' },  // Mobiilis täislaius
-                        borderRadius: { xs: 0 }  // Mobiilis eemaldame ümarad nurgad
+                        m: {xs: 0},  // Mobiilis eemaldame ääred
+                        width: {xs: '100%'},  // Mobiilis täislaius
+                        maxWidth: {xs: '100%'},  // Mobiilis täislaius
+                        borderRadius: {xs: 0}  // Mobiilis eemaldame ümarad nurgad
                     }
                 }}
             >
                 <DialogTitle>
                     <Box display="flex" alignItems="center">
-                        <EmojiEventsIcon sx={{ color: "goldenrod", mr: 1 }} />
+                        <EmojiEventsIcon sx={{color: "goldenrod", mr: 1}}/>
                         <Typography variant="h6">
                             Daily WOD Leaderboard - {getFormattedDate()}
                         </Typography>
@@ -753,7 +791,7 @@ export default function Classes() {
                         onChange={handleDayLeaderboardFilterChange}
                         aria-label="Filter results"
                         size="small"
-                        sx={{ mb: 2 }}
+                        sx={{mb: 2}}
                     >
                         <ToggleButton value="all">All</ToggleButton>
                         <ToggleButton value="rx">Rx</ToggleButton>
@@ -764,7 +802,7 @@ export default function Classes() {
                     {/* Show loading indicator or data table */}
                     {loadingLeaderboard ? (
                         <Box display="flex" justifyContent="center" my={3}>
-                            <CircularProgress />
+                            <CircularProgress/>
                         </Box>
                     ) : filteredDayLeaderboard.length > 0 ? (
                         <TableContainer component={Paper}>
@@ -778,7 +816,7 @@ export default function Classes() {
                                             <Typography
                                                 component="span"
                                                 color="text.secondary"
-                                                sx={{ ml: 1, fontSize: '0.9em' }}
+                                                sx={{ml: 1, fontSize: '0.9em'}}
                                             >
                                                 (previous)
                                             </Typography>
@@ -796,7 +834,7 @@ export default function Classes() {
                                             } : {}}
                                         >
                                             <TableCell>
-                                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                <Typography variant="body2" sx={{fontWeight: 'bold'}}>
                                                     {entry.classTime} - {entry.className}
                                                 </Typography>
                                                 {entry.wodName && (
@@ -813,7 +851,7 @@ export default function Classes() {
                                                         <Typography
                                                             component="span"
                                                             color="text.secondary"
-                                                            sx={{ ml: 1, fontSize: '0.9em' }}
+                                                            sx={{ml: 1, fontSize: '0.9em'}}
                                                         >
                                                             ({entry.previousScore})
                                                         </Typography>
@@ -899,12 +937,12 @@ export default function Classes() {
                 open={notificationOpen}
                 autoHideDuration={6000}
                 onClose={() => setNotificationOpen(false)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                anchorOrigin={{vertical: 'top', horizontal: 'center'}}
             >
                 <Alert
                     onClose={() => setNotificationOpen(false)}
                     severity={notificationSeverity}
-                    sx={{ width: '100%' }}
+                    sx={{width: '100%'}}
                 >
                     {notificationMessage}
                 </Alert>

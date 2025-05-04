@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Dialog,
     DialogTitle,
@@ -80,6 +81,7 @@ export default function ClassModal({
                                        trainers = [],
                                        props
                                    }) {
+    const navigate = useNavigate();
     const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [attendees, setAttendees] = useState([]);
@@ -325,6 +327,13 @@ export default function ClassModal({
         setNotificationMessage(message);
         setNotificationType(type);
         setNotificationOpen(true);
+    };
+
+    const handleBuyPlans = () => {
+        navigate("/register-training", { state: {
+                affiliateId: cls.affiliateId,
+                openPlans: true
+            }});
     };
 
     // Filter plans based on expiration, training type and available sessions
@@ -884,7 +893,7 @@ export default function ClassModal({
                     </Grid>
 
                     { cls.wodName || cls.wodType || cls.description ? (
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} md={6} sx={{ display: { xs: 'none', sm: 'block' } }}>
                             <Box
                                 sx={{
                                     backgroundColor: "#ccc",
@@ -1037,12 +1046,12 @@ export default function ClassModal({
                 {userRole === "regular" && (
                     <Box mb={2}>
                         {isRegistered ? (
-                            // CHANGED: Use confirmation dialog
                             <Button
                                 variant="contained"
                                 color="error"
                                 disabled={isClassOver()}
                                 onClick={handleOpenCancelConfirm}
+                                sx={{ width: { xs: "100%", sm: "auto" } }}
                             >
                                 Cancel Registration
                             </Button>
@@ -1053,6 +1062,7 @@ export default function ClassModal({
                                 color="warning"
                                 disabled={isClassOver()}
                                 onClick={handleOpenWaitlistRemoveConfirm}
+                                sx={{ width: { xs: "100%", sm: "auto" } }}
                             >
                                 Remove from Waitlist
                             </Button>
@@ -1126,9 +1136,26 @@ export default function ClassModal({
                                             </Typography>
                                         ) : (
                                             // If no plans available at all
-                                            <Typography color="error">
-                                                You have no valid plans.
-                                            </Typography>
+                                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                <Typography color="error">
+                                                    You have no valid plans.
+                                                </Typography>
+                                                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                    <Typography color="error">
+                                                        You have no valid plans.
+                                                    </Typography>
+                                                    {!isClassTimePassed() && (
+                                                        <Button
+                                                            variant="contained"
+                                                            color="success"
+                                                            onClick={handleBuyPlans}
+                                                            sx={{ width: { xs: "100%", sm: "auto" } }}
+                                                        >
+                                                            Buy Plans
+                                                        </Button>
+                                                    )}
+                                                </Box>
+                                            </Box>
                                         )}
                                     </Box>
                                 )}
@@ -1170,9 +1197,21 @@ export default function ClassModal({
                                         )}
 
                                         {hasCompatiblePlans ? (
-                                            // Show only compatible plans in dropdown
-                                            <Box display="flex" alignItems="center" gap={2}>
-                                                <FormControl sx={{minWidth: 200}}>
+                                            // Change from horizontal to vertical layout on mobile
+                                            <Box
+                                                sx={{
+                                                    display: { xs: "flex", sm: "flex" },
+                                                    flexDirection: { xs: "column", sm: "row" },
+                                                    alignItems: { xs: "stretch", sm: "center" },
+                                                    gap: 2
+                                                }}
+                                            >
+                                                <FormControl
+                                                    sx={{
+                                                        minWidth: 200,
+                                                        width: { xs: "100%", sm: "auto" }
+                                                    }}
+                                                >
                                                     <InputLabel id="plan-select-label">Select Plan</InputLabel>
                                                     <Select
                                                         labelId="plan-select-label"
@@ -1192,6 +1231,7 @@ export default function ClassModal({
                                                     color="success"
                                                     disabled={isClassTimePassed()}
                                                     onClick={handleRegister}
+                                                    sx={{ width: { xs: "100%", sm: "auto" } }}
                                                 >
                                                     Register
                                                 </Button>
@@ -1202,10 +1242,28 @@ export default function ClassModal({
                                                 No compatible plans found for {selectedBookFor === "self" ? "yourself" : "this family member"}.
                                             </Typography>
                                         ) : (
+
                                             // User has no plans at all
-                                            <Typography color="error">
-                                                You have no valid plans.
-                                            </Typography>
+                                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                <Typography color="error">
+                                                    You have no valid plans.
+                                                </Typography>
+                                                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                    <Typography color="error">
+                                                        You have no valid plans.
+                                                    </Typography>
+                                                    {!isClassTimePassed() && (
+                                                        <Button
+                                                            variant="contained"
+                                                            color="success"
+                                                            onClick={handleBuyPlans}
+                                                            sx={{ width: { xs: "100%", sm: "auto" } }}
+                                                        >
+                                                            Buy Plans
+                                                        </Button>
+                                                    )}
+                                                </Box>
+                                            </Box>
                                         )}
                                     </Box>
                                 )}
@@ -1439,7 +1497,7 @@ export default function ClassModal({
                                 variant="contained"
                                 color="primary"
                                 onClick={() => setShowScoreForm(true)}
-                                sx={{mr: 2}}
+                                sx={{mr: 2, width: { xs: "100%", sm: "auto" }}}
                             >
                                 {hasScore ? "Edit Score" : "Add Score"}
                             </Button>
@@ -1505,6 +1563,153 @@ export default function ClassModal({
                                 </Box>
                             </Box>
                         )}
+                    </Box>
+                )}
+                {(cls.wodName || cls.wodType || cls.description) && (
+                    <Box
+                        sx={{
+                            display: { xs: 'block', sm: 'none' },
+                            mb: 2
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                backgroundColor: "#ccc",
+                                padding: 2,
+                                borderRadius: "8px",
+                                position: "relative",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                "&:hover": {
+                                    backgroundColor: "#bbb",
+                                }
+                            }}
+                            onClick={toggleWorkoutInfoFullScreen}
+                        >
+                            <Box sx={{
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
+                                backgroundColor: "rgba(0,0,0,0.1)",
+                                borderRadius: "50%",
+                                width: 32,
+                                height: 32,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}>
+                                <FullscreenIcon fontSize="small" />
+                            </Box>
+
+                            <Typography
+                                variant="h6"
+                                sx={{fontWeight: "bold", marginBottom: 1}}
+                            >
+                                Workout Info
+                            </Typography>
+                            { cls.wodName && (
+                                <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
+                                    <strong>🔥{cls.wodName}</strong>
+                                </Typography>
+                            )}
+                            { cls.wodType && cls.wodType !== "NONE"  && (
+                                <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
+                                    <strong>{cls.wodType}</strong>
+                                </Typography>
+                            )}
+                            { cls.description && (
+                                <>
+                                    <Box sx={{pb: 2}}>
+                                        <div
+                                            dangerouslySetInnerHTML={{
+                                                __html: DOMPurify.sanitize(cls.description, {
+                                                    ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                    ALLOWED_ATTR: ['style'],
+                                                })
+                                            }}
+                                            style={{
+                                                color: "text.primary",
+                                                whiteSpace: "pre-line"
+                                            }}
+                                        />
+                                    </Box>
+                                    {/* Competition info section (conditionally rendered) */}
+                                    {showCompetitionInfo && cls.competitionInfo && (
+                                        <Box sx={{
+                                            mt: 2,
+                                            pt: 2,
+                                            pb: 2,
+                                            borderTop: '1px dashed #aaa',
+                                            color: 'text.primary'
+                                        }}>
+                                            <Typography sx={{ fontWeight: "bold", mb: 1, color: "#ff9800" }}>
+                                                Competition Extra:
+                                            </Typography>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: DOMPurify.sanitize(cls.competitionInfo, {
+                                                        ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                        ALLOWED_ATTR: ['style'],
+                                                    })
+                                                }}
+                                                style={{
+                                                    whiteSpace: "pre-line"
+                                                }}
+                                            />
+                                        </Box>
+                                    )}
+
+                                    {/* Competition button (duplicate but needed for mobile view) */}
+                                    {cls.competitionInfo && (
+                                        <Button
+                                            onClick={toggleCompetitionInfo}
+                                            endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                            size="small"
+                                            sx={{
+                                                position: "absolute",
+                                                bottom: -18,
+                                                left: "50%",
+                                                transform: "translateX(-50%)",
+                                                backgroundColor: '#f0f0f0',
+                                                color: '#666',
+                                                fontSize: '0.75rem',
+                                                padding: '2px 8px',
+                                                minWidth: 'auto',
+                                                '&:hover': {
+                                                    backgroundColor: '#e0e0e0',
+                                                }
+                                            }}
+                                        >
+                                            Competition
+                                        </Button>
+                                    )}
+
+                                    {/* Add to trainings button (duplicate but needed for mobile view) */}
+                                    {userRole === "regular" && (
+                                        <IconButton
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddClassToMyTrainings();
+                                            }}
+                                            color="primary"
+                                            size="small"
+                                            sx={{
+                                                position: "absolute",
+                                                bottom: 8,
+                                                right: 8,
+                                                border: '1px solid',
+                                                borderColor: 'primary.main',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                                                }
+                                            }}
+                                        >
+                                            <AddIcon />
+                                        </IconButton>
+                                    )}
+                                </>
+                            )}
+                        </Box>
                     </Box>
                 )}
             </DialogContent>

@@ -7,6 +7,7 @@ const { checkClassScore, addClassScore, updateClassScore } = require("../control
 
 // API endpointid
 router.get("/class-info",  classController.getClassInfo);
+router.get("/classes/subdomain", classController.getClassesForSubdomain);
 router.get("/classes", ensureAuthenticated, classController.getClasses);
 router.post("/classes", ensureAuthenticated, classController.createClass);
 router.put("/classes/:id", ensureAuthenticated, classController.updateClass);

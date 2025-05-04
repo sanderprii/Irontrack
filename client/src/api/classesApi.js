@@ -36,9 +36,47 @@ export const getClasses = async (affiliateId, date) => {
         return response.data;
     } catch (error) {
         console.error("❌ Error fetching classes:", error);
+        return [];
     }
 };
 
+export const getClassesForSubdomain = async (affiliateId, date) => {
+
+
+    try {
+        if (!date || isNaN(new Date(date).getTime())) {
+            console.error("❌ Invalid date received, using default today.");
+            date = new Date();
+        } else {
+            date = new Date(date);
+        }
+
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        const response = await axios.get(`${API_URL}/classes/subdomain`, {
+            params: {
+                affiliateId,
+                start: startOfWeek.toISOString(),
+                end: endOfWeek.toISOString()
+            },
+            headers: {
+
+                "Content-Type": "application/json"
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("❌ Error fetching classes:", error);
+        return [];
+    }
+};
 
 export const createTraining = async (affiliateId, trainingData) => {
     try {

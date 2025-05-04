@@ -33,7 +33,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // Trophy icon fo
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
 import LeaderboardModal from "../components/LeaderboardModal";
-import {getClassesForDay, assignTrainerToClasses} from "../api/classesApi";
+import {getClassesForDay, assignTrainerToClasses, getClassesForSubdomain} from "../api/classesApi";
 import TrainerAssignmentModal from "../components/TrainerAssignmentModal";
 
 import ClassDetailsModal from "../components/ClassModal";
@@ -97,21 +97,31 @@ export default function Classes() {
     const [notificationMessage, setNotificationMessage] = useState('');
     const [notificationSeverity, setNotificationSeverity] = useState('info'); // 'success', 'info', 'warning', 'error'
 
+    useEffect(() => {
+        const role = localStorage.getItem("role");
+        setUserRole(role);
+    }, []);
+
     // Fix affiliateId issue
     useEffect(() => {
         const fetchUserProfile = async () => {
-            try {
-                const profile = await getUserProfile();
-                if (profile && profile.fullName) {
-                    setUserFullName(profile.fullName);
-                } else {
+            const role = localStorage.getItem("role");
+            if (role === "affiliate") {
+
+
+                try {
+                    const profile = await getUserProfile();
+                    if (profile && profile.fullName) {
+                        setUserFullName(profile.fullName);
+                    } else {
+                        const storedName = localStorage.getItem('fullName');
+                        if (storedName) setUserFullName(storedName);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
                     const storedName = localStorage.getItem('fullName');
                     if (storedName) setUserFullName(storedName);
                 }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-                const storedName = localStorage.getItem('fullName');
-                if (storedName) setUserFullName(storedName);
             }
         };
 
@@ -171,10 +181,7 @@ export default function Classes() {
     }, [selectedAffiliate]);
 
     // Set userRole
-    useEffect(() => {
-        const role = localStorage.getItem("role");
-        setUserRole(role);
-    }, []);
+
 
     // Show success message
     const showSuccessMessage = (message) => {
@@ -193,7 +200,7 @@ export default function Classes() {
         if (!affiliateId) {
             return; // Just return silently without a warning
         }
-
+        const role = localStorage.getItem("role");
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
         startOfWeek.setHours(0, 0, 0, 0);
@@ -203,9 +210,13 @@ export default function Classes() {
         endOfWeek.setHours(23, 59, 59, 999);
 
         try {
-            const response = await getClasses(affiliateId, startOfWeek);
-            setClasses(response || []);
-
+            if (role) {
+                const response = await getClasses(affiliateId, startOfWeek);
+                setClasses(response || []);
+            } else {
+                const response = await getClassesForSubdomain(affiliateId, startOfWeek);
+                setClasses(response || []);
+            }
         } catch (error) {
             console.error("❌ Fetch error:", error);
             setClasses([]);
@@ -214,9 +225,13 @@ export default function Classes() {
 
     // Dedicated effect to call fetchClasses when affiliateId changes
     useEffect(() => {
+
+
         if (affiliateId) {
-            fetchClasses();
-        }
+
+                fetchClasses();
+            }
+
     }, [affiliateId, fetchClasses]);
 
 

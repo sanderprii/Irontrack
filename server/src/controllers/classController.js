@@ -101,6 +101,78 @@ const userId = req.user?.id;
     }
 };
 
+const getClassesForSubdomain = async (req, res) => {
+
+    let {affiliateId, start, end} = req.query;
+    // Kontrolli ja teisenda kuupäevad õigesse formaati
+    let startDate = new Date(start);
+    let endDate = new Date(end);
+    const userId = req.user?.id;
+
+    // Kui start või end on kehtetu, määrame vaikimisi käesoleva nädala alguse ja lõpu
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.warn("⚠️ Kehtetu kuupäev, määrame vaikimisi väärtused.");
+        startDate = new Date(); // Tänane kuupäev
+        startDate.setDate(startDate.getDate() - startDate.getDay() + 1); // Esmaspäev
+        startDate.setHours(0, 0, 0, 0); // Alustame päeva algusega
+
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6); // Pühapäev
+        endDate.setHours(23, 59, 59, 999); // Päeva lõpp
+    }
+
+
+    try {
+        const classes = await prisma.classSchedule.findMany({
+            where: {
+                affiliateId: parseInt(affiliateId),
+                time: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            orderBy: {time: "asc"}
+        });
+
+        // lisa igale klassile juurde, mitu attendeed on registreeritud
+        const classesWithAttendees = await Promise.all(classes.map(async (cls) => {
+            const count = await prisma.classAttendee.count({
+                where: {classId: cls.id}
+            });
+
+            return {
+                ...cls,
+                enrolledCount: count
+            };
+
+        }));
+
+        // lisa igale klassile juurde, kas kasutaja on registreeritud isregister = true või false
+
+        if (userId) {
+            const userRegistrations = await prisma.classAttendee.findMany({
+                where: {
+                    userId: parseInt(userId),
+                    classId: {in: classes.map(cls => cls.id)}
+                },
+                select: {classId: true}
+            });
+
+            const registeredClassIds = new Set(userRegistrations.map(reg => reg.classId));
+
+            classesWithAttendees.forEach(cls => {
+                cls.isRegistered = registeredClassIds.has(cls.id);
+            });
+        }
+
+
+        res.json(classesWithAttendees);
+    } catch (error) {
+        console.error("❌ Error fetching classes:", error);
+        res.status(500).json({error: "Failed to fetch classes."});
+    }
+};
+
 // Uue klassi loomine
 const createClass = async (req, res) => {
     try {
@@ -1407,5 +1479,6 @@ module.exports = {
     getWaitlist,
     createWaitlist,
     deleteWaitlist,
-    addClassToMyTrainings
+    addClassToMyTrainings,
+    getClassesForSubdomain
 };

@@ -142,21 +142,27 @@ export default function ClassModal({
 
     // Kontrollime, kas klass on täis
     useEffect(() => {
-        if (cls && typeof cls.enrolledCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
-            setIsClassFull(cls.enrolledCount >= cls.memberCapacity);
-        }
+
+
+            if (cls && typeof cls.enrolledCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
+                setIsClassFull(cls.enrolledCount >= cls.memberCapacity);
+            }
+
     }, [cls, isInWaitlist]);
 
     // Kui modal avatakse ja meil on olemas klassi ID, toome klassi osalejad
     // ja uurime, kas kasutaja on nende hulgas.
     useEffect(() => {
-        if (!cls || !cls.id) return;
-        fetchAttendees();
-        if (userRole === "regular") {
-            checkWaitlistStatus();
-        }
-        if (userRole === "affiliate" || userRole === "trainer") {
-            fetchWaitlistEntries();
+        const role = localStorage.getItem("role");
+        if (role) {
+            if (!cls || !cls.id) return;
+            fetchAttendees();
+            if (userRole === "regular") {
+                checkWaitlistStatus();
+            }
+            if (userRole === "affiliate" || userRole === "trainer") {
+                fetchWaitlistEntries();
+            }
         }
     }, [cls, open, userRole]);
 
@@ -1137,9 +1143,7 @@ export default function ClassModal({
                                         ) : (
                                             // If no plans available at all
                                             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                                <Typography color="error">
-                                                    You have no valid plans.
-                                                </Typography>
+
                                                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                                     <Typography color="error">
                                                         You have no valid plans.
@@ -1245,9 +1249,7 @@ export default function ClassModal({
 
                                             // User has no plans at all
                                             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                                <Typography color="error">
-                                                    You have no valid plans.
-                                                </Typography>
+
                                                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                                     <Typography color="error">
                                                         You have no valid plans.

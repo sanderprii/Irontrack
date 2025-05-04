@@ -41,25 +41,30 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
 
     // Get user profile info when the component loads
     useEffect(() => {
-        const fetchUserProfile = async () => {
-            try {
-                const profile = await getUserProfile();
-                if (profile && profile.fullName) {
-                    setUserFullName(profile.fullName);
-                } else {
-                    // Fallback to localStorage if available
+        const role = localStorage.getItem('role');
+
+            const fetchUserProfile = async () => {
+
+                try {
+                    const profile = await getUserProfile();
+                    if (profile && profile.fullName) {
+                        setUserFullName(profile.fullName);
+                    } else {
+                        // Fallback to localStorage if available
+                        const storedName = localStorage.getItem('fullName');
+                        if (storedName) setUserFullName(storedName);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                    // Fallback to localStorage
                     const storedName = localStorage.getItem('fullName');
                     if (storedName) setUserFullName(storedName);
                 }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-                // Fallback to localStorage
-                const storedName = localStorage.getItem('fullName');
-                if (storedName) setUserFullName(storedName);
-            }
-        };
 
-        fetchUserProfile();
+            };
+            if (role) {
+                fetchUserProfile();
+            }
     }, []);
 
     useEffect(() => {

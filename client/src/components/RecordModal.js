@@ -69,6 +69,9 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
     const sliceAmount = isMobile ? 3 : 10;
     const [startIndex, setStartIndex] = useState(0);
 
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState(null);
+
     // Load all records for this name
     const loadAllRecords = async () => {
         try {
@@ -116,15 +119,20 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
         setStartIndex(clampedStart);
     }, [allRecords, sliceAmount]);
 
-    // Handle record deletion
-    const handleDeleteRecord = async (recordId) => {
+    // Handle record deletion - updated to use Dialog
+    const handleDeleteRecord = (recordId) => {
+        setRecordToDelete(recordId);
+        setDeleteConfirmOpen(true);
+    };
+
+    // Handle confirmed deletion
+    const handleConfirmDeleteRecord = async () => {
         try {
-            const confirmDelete = window.confirm('Do you want to delete this record?');
-            if (!confirmDelete) return;
+            if (!recordToDelete) return;
 
             const token = localStorage.getItem('token');
             const baseUrl = process.env.REACT_APP_API_URL;
-            const response = await fetch(`${baseUrl}/records/${recordId}`, {
+            const response = await fetch(`${baseUrl}/records/${recordToDelete}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -135,8 +143,11 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                 throw new Error('Failed to delete record');
             }
             loadAllRecords();
+            setDeleteConfirmOpen(false);
+            setRecordToDelete(null);
         } catch (err) {
             console.error(err);
+            setDeleteConfirmOpen(false);
         }
     };
 
@@ -699,7 +710,26 @@ const RecordModal = ({ open, onClose, recordType, recordName }) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+            >
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete this record? This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDeleteRecord} color="error" variant="contained">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
             {/* Edit Record Modal */}
             {showEditDialog && viewEditRecord && (
                 <RecordEditModal

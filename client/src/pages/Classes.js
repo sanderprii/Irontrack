@@ -25,6 +25,7 @@ import {
     ToggleButtonGroup,
     CircularProgress
 } from "@mui/material";
+    import { Snackbar, Alert } from '@mui/material';
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // Trophy icon for day leaderboard
 import ClassSchedule from "../components/ClassSchedule";
 import TrainingModal from "../components/TrainingFormClasses";
@@ -38,6 +39,7 @@ import { getAffiliate } from "../api/affiliateApi";
 import ClassWodView from "../components/ClassWodView";
 import { getClassLeaderboard } from "../api/leaderboardApi";
 import { getUserProfile } from "../api/profileApi";
+
 
 export default function Classes() {
     const theme = useTheme();
@@ -87,6 +89,10 @@ export default function Classes() {
     const [selectedAssignmentDate, setSelectedAssignmentDate] = useState(new Date());
     const [dayClasses, setDayClasses] = useState([]);
     const [selectedClassIds, setSelectedClassIds] = useState([]);
+
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationSeverity, setNotificationSeverity] = useState('info'); // 'success', 'info', 'warning', 'error'
 
     // Fix affiliateId issue
     useEffect(() => {
@@ -229,6 +235,12 @@ export default function Classes() {
         });
     };
 
+    const showNotification = (message, severity = 'info') => {
+        setNotificationMessage(message);
+        setNotificationSeverity(severity);
+        setNotificationOpen(true);
+    };
+
     // Fetch leaderboard data for all WOD classes on the selected day
     const fetchDayLeaderboard = async () => {
         try {
@@ -271,7 +283,7 @@ export default function Classes() {
             if (combinedLeaderboard.length > 0) {
                 setDayLeaderboardOpen(true);
             } else {
-                showErrorMessage("No leaderboard entries found for WOD classes today");
+                showNotification("No leaderboard entries found for WOD classes today");
             }
 
         } catch (error) {
@@ -883,6 +895,23 @@ export default function Classes() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <Snackbar
+                open={notificationOpen}
+                autoHideDuration={6000}
+                onClose={() => setNotificationOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={() => setNotificationOpen(false)}
+                    severity={notificationSeverity}
+                    sx={{ width: '100%' }}
+                >
+                    {notificationMessage}
+                </Alert>
+            </Snackbar>
         </Container>
+
+
     );
+
 }

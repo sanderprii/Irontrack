@@ -10,33 +10,22 @@ import {
     TableRow,
     TextField,
     Typography,
-    IconButton,
-    Collapse,
     Card,
     CardContent,
     Divider,
     Chip,
-    Grid
 } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PaymentIcon from '@mui/icons-material/Payment';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import { getUserCredits, getCreditHistory, addCredit } from '../api/creditApi';
+import { getUserCredits, addCredit } from '../api/creditApi';
 
 const CreditView = ({ user, affiliateId }) => {
     // Algväärtused on tühjad massiivid
     const [credits, setCredits] = useState([]);
-    const [creditHistory, setCreditHistory] = useState([]);
 
     // Juba olemasolev AddCredit plokk
     const [openRow, setOpenRow] = useState(null);
     const [creditInputs, setCreditInputs] = useState({});
-
-    // UUS state detailivaate avamiseks creditHistory reas
-    const [openHistoryRow, setOpenHistoryRow] = useState(null);
 
     // Laadime kasutaja krediidi andmed
     useEffect(() => {
@@ -50,20 +39,6 @@ const CreditView = ({ user, affiliateId }) => {
             }
         };
         fetchCredits();
-    }, [affiliateId, user.id]);
-
-    // Laadime krediidi ajalugu
-    useEffect(() => {
-        const fetchCreditHistory = async () => {
-            try {
-                const data = await getCreditHistory(affiliateId, user.id);
-                setCreditHistory(Array.isArray(data) ? data : []);
-            } catch (error) {
-                console.error("Error fetching credit history", error);
-                setCreditHistory([]);
-            }
-        };
-        fetchCreditHistory();
     }, [affiliateId, user.id]);
 
     const handleToggleAdd = (creditId) => {
@@ -88,33 +63,36 @@ const CreditView = ({ user, affiliateId }) => {
         }));
     };
 
+    // Check if inputs for a specific credit ID are valid
+    const areInputsValid = (creditId) => {
+        const inputs = creditInputs[creditId];
+        if (!inputs) return false;
+
+        const amount = inputs.amount?.trim();
+        const description = inputs.description?.trim();
+
+        // Both fields must be filled and amount must be a valid number
+        return amount && description && !isNaN(parseFloat(amount));
+    };
+
     const handleAddCredit = async (creditId, affiliateId) => {
+        // Additional validation before proceeding
+        if (!areInputsValid(creditId)) {
+            return;
+        }
+
         const inputs = creditInputs[creditId];
         const amount = parseFloat(inputs.amount);
         const description = inputs.description;
-        if (isNaN(amount)) {
-            alert("Please enter a valid amount");
-            return;
-        }
+
         try {
             await addCredit(user.id, affiliateId, amount, description);
             // Värskendame andmeid pärast edukat API vastust
             const updatedCredits = await getUserCredits(affiliateId, user.id);
             setCredits(Array.isArray(updatedCredits) ? updatedCredits : []);
-            const updatedHistory = await getCreditHistory(affiliateId, user.id);
-            setCreditHistory(Array.isArray(updatedHistory) ? updatedHistory : []);
             setOpenRow(null);
         } catch (error) {
             console.error("Error adding credit", error);
-        }
-    };
-
-    // Kui klikime CreditHistory rea peale, avame/sulgeme detailvaate
-    const handleHistoryRowClick = (id) => {
-        if (openHistoryRow === id) {
-            setOpenHistoryRow(null);
-        } else {
-            setOpenHistoryRow(id);
         }
     };
 
@@ -122,15 +100,6 @@ const CreditView = ({ user, affiliateId }) => {
 
     // Lisamise funktsiooni võib kasutada ainult, kui kasutaja roll on affiliate või trainer
     const canAddCredit = role === 'affiliate';
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('et-EE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
 
     return (
         <Box>
@@ -167,6 +136,11 @@ const CreditView = ({ user, affiliateId }) => {
                                 variant="contained"
                                 onClick={() => handleAddCredit('new', affiliateId)}
                                 startIcon={<AddCircleIcon />}
+                                disabled={!areInputsValid('new')}
+                                sx={{
+                                    opacity: areInputsValid('new') ? 1 : 0.7,
+                                    cursor: areInputsValid('new') ? 'pointer' : 'not-allowed',
+                                }}
                             >
                                 Apply
                             </Button>
@@ -238,6 +212,11 @@ const CreditView = ({ user, affiliateId }) => {
                                                     variant="contained"
                                                     onClick={() => handleAddCredit(credit.id, credit.affiliateId)}
                                                     startIcon={<AddCircleIcon />}
+                                                    disabled={!areInputsValid(credit.id)}
+                                                    sx={{
+                                                        opacity: areInputsValid(credit.id) ? 1 : 0.7,
+                                                        cursor: areInputsValid(credit.id) ? 'pointer' : 'not-allowed',
+                                                    }}
                                                 >
                                                     Apply
                                                 </Button>
@@ -245,183 +224,6 @@ const CreditView = ({ user, affiliateId }) => {
                                         </TableCell>
                                     </TableRow>
                                 )}
-                            </React.Fragment>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
-
-            {/* Credit History tabel */}
-            <Card elevation={2} sx={{ overflow: 'hidden' }}>
-                <CardContent sx={{ pb: 0 }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <ReceiptIcon sx={{ mr: 1, color: 'primary.main' }} />
-                        Credit History
-                    </Typography>
-                    <Divider sx={{ mb: 1 }} />
-                </CardContent>
-
-                <Table>
-                    <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                        <TableRow>
-
-                            <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {creditHistory.map((entry) => (
-                            <React.Fragment key={entry.id}>
-                                {/* Peamine rida */}
-                                <TableRow
-                                    hover
-                                    onClick={() => handleHistoryRowClick(entry.id)}
-                                    sx={{ cursor: 'pointer' }}
-                                >
-
-                                    <TableCell>{formatDate(entry.createdAt)}</TableCell>
-                                    <TableCell>{entry.description}</TableCell>
-                                    <TableCell>
-                                        <Typography sx={{
-                                            fontWeight: 'bold',
-                                            color: entry.decrease ? '#e74c3c' : '#2ecc71'
-                                        }}>
-                                            {entry.decrease ? '-' : '+'}{entry.amount}€
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-
-                                {/* Kui rida on avatud => Näitame detailset vaadet */}
-                                <TableRow>
-                                    <TableCell colSpan={4} style={{ paddingBottom: 0, paddingTop: 0 }}>
-                                        <Collapse in={openHistoryRow === entry.id} timeout="auto" unmountOnExit>
-                                            <Box sx={{ margin: 2 }}>
-                                                <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
-                                                    Transaction Details
-                                                </Typography>
-
-                                                <Grid container spacing={3}>
-                                                    {/* Transaction Information Card */}
-                                                    <Grid item xs={12} md={6}>
-                                                        <Card elevation={1} sx={{ height: '100%' }}>
-                                                            <CardContent>
-                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                    <ReceiptIcon sx={{ mr: 1 }} />
-                                                                    Transaction Information
-                                                                </Typography>
-                                                                <Divider sx={{ mb: 2 }} />
-
-                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            ID:
-                                                                        </Typography>
-                                                                        <Typography variant="body1">
-                                                                            {entry.id}
-                                                                        </Typography>
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Invoice Number:
-                                                                        </Typography>
-                                                                        <Typography variant="body1">
-                                                                            {entry.invoiceNumber || 'N/A'}
-                                                                        </Typography>
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Date:
-                                                                        </Typography>
-                                                                        <Typography variant="body1">
-                                                                            {formatDate(entry.createdAt)}
-                                                                        </Typography>
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Status:
-                                                                        </Typography>
-                                                                        <Chip
-                                                                            label={entry.status || 'N/A'}
-                                                                            color={
-                                                                                entry.status === 'completed' ? 'success' :
-                                                                                    entry.status === 'pending' ? 'warning' :
-                                                                                        entry.status === 'failed' ? 'error' :
-                                                                                            'default'
-                                                                            }
-                                                                            size="small"
-                                                                        />
-                                                                    </Box>
-                                                                </Box>
-                                                            </CardContent>
-                                                        </Card>
-                                                    </Grid>
-
-                                                    {/* Payment Information Card */}
-                                                    <Grid item xs={12} md={6}>
-                                                        <Card elevation={1} sx={{ height: '100%' }}>
-                                                            <CardContent>
-                                                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>
-                                                                    <PaymentIcon sx={{ mr: 1 }} />
-                                                                    Payment Details
-                                                                </Typography>
-                                                                <Divider sx={{ mb: 2 }} />
-
-                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Amount:
-                                                                        </Typography>
-                                                                        <Typography variant="body1" sx={{
-                                                                            fontWeight: 'bold',
-                                                                            color: entry.decrease ? '#e74c3c' : '#2ecc71'
-                                                                        }}>
-                                                                            {entry.decrease ? '-' : '+'}{entry.amount} €
-                                                                        </Typography>
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Type:
-                                                                        </Typography>
-                                                                        <Typography variant="body1">
-                                                                            {entry.type || 'N/A'}
-                                                                        </Typography>
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Direction:
-                                                                        </Typography>
-                                                                        <Chip
-                                                                            label={entry.decrease ? "Debit" : "Credit"}
-                                                                            color={entry.decrease ? "error" : "success"}
-                                                                            size="small"
-                                                                        />
-                                                                    </Box>
-
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                            Credit Operation:
-                                                                        </Typography>
-                                                                        <Typography variant="body1">
-                                                                            {entry.isCredit ? "Yes" : "No"}
-                                                                        </Typography>
-                                                                    </Box>
-                                                                </Box>
-                                                            </CardContent>
-                                                        </Card>
-                                                    </Grid>
-
-
-                                                </Grid>
-                                            </Box>
-                                        </Collapse>
-                                    </TableCell>
-                                </TableRow>
                             </React.Fragment>
                         ))}
                     </TableBody>

@@ -91,6 +91,9 @@ export default function Checkout(props) {
         const familyMember = location.state?.familyMember;
         const familyMemberId = location.state?.familyMemberId;
 
+        console.log("familyMemberId", familyMemberId);
+        console.log("isfamilyMember", familyMember);
+
         if (plan) {
             setPlanData(plan);
             // Kontrollime, kas tegemist on lepingumaksega

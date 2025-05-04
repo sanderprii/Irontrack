@@ -14,6 +14,8 @@ import { checkRateLimit } from './utils/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Import ProtectedRoute component
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Import other components
 import ResponsiveNavbar from './components/ResponsiveNavbar';
@@ -66,9 +68,6 @@ function App() {
     const [isPWA, setIsPWA] = useState(false);
     const [showRefreshMessage, setShowRefreshMessage] = useState(false);
 
-
-
-
     useEffect(() => {
         // Check if the app is running in PWA mode
         const checkIfPWA = () => {
@@ -107,8 +106,6 @@ function App() {
     // Function to refresh the application data
     const handleRefresh = useCallback(async () => {
         try {
-
-
             // Simple delay to show the refreshing effect
             await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -216,35 +213,39 @@ function App() {
                         }}
                     >
                         <Routes>
+                            {/* Public routes */}
                             <Route path="/" element={<HomeRedirect/>}/>
-                            <Route path="/trainings" element={<TrainingsPage/>}/>
-                            <Route path="/records" element={<RecordsPage/>}/>
-                            <Route path="/find-users" element={<FindUsersPage/>}/>
-                            <Route path="/register-training" element={<RegisterTrainingPage/>}/>
-                            <Route path="/my-profile" element={<MyProfile/>}/>
                             <Route path="/login" element={<LoginForm/>}/>
                             <Route path="/register" element={<JoinUsForm/>}/>
-                            <Route path="/select-role" element={<RoleSelectionPage/>}/>
-                            <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
-                            <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
-                            <Route path="/my-affiliate" element={<MyAffiliate/>}/>
-                            <Route path="/classes" element={<Classes/>}/>
-                            <Route path="/members" element={<Members/>}/>
-                            <Route path="/plans" element={<Plans/>}/>
-                            <Route path="/Messages" element={<Messages/>}/>
-                            <Route path="/checkout" element={<Checkout/>}/>
                             <Route path="/pricing" element={<Pricing/>}/>
                             <Route path="/marketing" element={<MarketingPage/>}/>
-                            <Route path="/trainer" element={<Trainer/>}/>
                             <Route path="/help" element={<Help/>}/>
                             <Route path="/privacy-app" element={<PrivacyApp/>}/>
                             <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                             <Route path="/verify-email" element={<VerifyEmail/>}/>
                             <Route path="/reset-password" element={<ResetPassword/>}/>
                             <Route path="/checkin" element={<Checkin/>}/>
-                            <Route path="/admin" element={<Admin/>}/>
-                            <Route path="/after-checkout" element={<AfterCheckout/>}/>
 
+                            {/* Protected routes - require authentication */}
+                            <Route element={<ProtectedRoute />}>
+                                <Route path="/trainings" element={<TrainingsPage/>}/>
+                                <Route path="/records" element={<RecordsPage/>}/>
+                                <Route path="/find-users" element={<FindUsersPage/>}/>
+                                <Route path="/register-training" element={<RegisterTrainingPage/>}/>
+                                <Route path="/my-profile" element={<MyProfile/>}/>
+                                <Route path="/select-role" element={<RoleSelectionPage/>}/>
+                                <Route path="/training-diary" element={<TrainingDiaryPage/>}/>
+                                <Route path="/affiliate-owner" element={<AffiliateOwnerPage/>}/>
+                                <Route path="/my-affiliate" element={<MyAffiliate/>}/>
+                                <Route path="/classes" element={<Classes/>}/>
+                                <Route path="/members" element={<Members/>}/>
+                                <Route path="/plans" element={<Plans/>}/>
+                                <Route path="/Messages" element={<Messages/>}/>
+                                <Route path="/checkout" element={<Checkout/>}/>
+                                <Route path="/trainer" element={<Trainer/>}/>
+                                <Route path="/admin" element={<Admin/>}/>
+                                <Route path="/after-checkout" element={<AfterCheckout/>}/>
+                            </Route>
                         </Routes>
                     </Box>
                 </PullToRefresh>

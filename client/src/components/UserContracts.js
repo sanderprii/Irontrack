@@ -57,6 +57,7 @@ export default function UserContracts({ user, affiliateId }) {
     const [acceptCheckbox, setAcceptCheckbox] = useState({});
     const [termsModalOpen, setTermsModalOpen] = useState(false);
     const [selectedContractTermsId, setSelectedContractTermsId] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
 
     // Payment Holiday Modal state
     const [phModalOpen, setPhModalOpen] = useState(false);
@@ -193,6 +194,11 @@ export default function UserContracts({ user, affiliateId }) {
         setPhData({ fromDate: '', toDate: '', reason: '' });
     };
 
+    const showSuccessMessage = (message) => {
+        setSuccessMessage(message);
+        setTimeout(() => setSuccessMessage(null), 3000); // Auto-hide after 3 seconds
+    };
+
     // Väljade muutmise handler
     const handlePhDataChange = (e) => {
         const { name, value } = e.target;
@@ -258,9 +264,10 @@ export default function UserContracts({ user, affiliateId }) {
     const handleConfirmDeactivate = () => {
         if (newEndDate && contractToDeactivate) {
             handleDeActivate({ ...contractToDeactivate, endDate: newEndDate, affiliateId });
+            showSuccessMessage("Contract end date updated successfully!");
         }
         setOpenDeactivateDialog(false);
-        setNewEndDate(""); // Lähtestame sisestatud väärtuse
+        setNewEndDate("");
         setContractToDeactivate(null);
     };
 
@@ -298,6 +305,12 @@ export default function UserContracts({ user, affiliateId }) {
             <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', ml: 2 }}>
                 My Contracts
             </Typography>
+            {/* Success message - add this after your "My Contracts" Typography */}
+            {successMessage && (
+                <Box sx={{ mb: 2, p: 1, bgcolor: '#e6f7e6', borderRadius: 1 }}>
+                    <Typography color="success">{successMessage}</Typography>
+                </Box>
+            )}
             {contracts.length === 0 ? (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography>No contracts found.</Typography>
@@ -350,9 +363,7 @@ export default function UserContracts({ user, affiliateId }) {
                                                         size='small'
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            if (window.confirm('Are you sure you want to change end date on this contract?')) {
-                                                                handleOpenDeactivateDialog(contract);
-                                                            }
+                                                            handleOpenDeactivateDialog(contract);
                                                         }}
                                                     >
                                                         End Date
@@ -871,7 +882,7 @@ export default function UserContracts({ user, affiliateId }) {
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText>
-                        Please enter the new end date for the contract deactivation.
+                        Are you sure you want to change the end date for this contract?
                     </DialogContentText>
                     <TextField
                         autoFocus

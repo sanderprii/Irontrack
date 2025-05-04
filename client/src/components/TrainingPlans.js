@@ -155,6 +155,13 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [planToDelete, setPlanToDelete] = useState(null);
 
+    const [modalError, setModalError] = useState(null);
+
+    const [addToTrainingConfirmOpen, setAddToTrainingConfirmOpen] = useState(false);
+    const [sectorToAdd, setSectorToAdd] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+
     const fetchTrainingPlans = async () => {
         try {
             setLoading(true);
@@ -200,6 +207,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
     const handleClose = () => {
         setOpen(false);
+        setModalError(null);
     };
 
     const handleAddDay = () => {
@@ -275,13 +283,37 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
     const handleSavePlan = async () => {
         try {
+            setModalError(null);
+
             if (!planName.trim()) {
-                setError('Please enter a plan name');
+                setModalError('Please enter a plan name');
                 return;
             }
 
             if (!targetUserId && role !== 'regular') {
-                setError('Please select a user for this training plan');
+                setModalError('Please select a user for this training plan');
+                return;
+            }
+
+            // Check if all sectors have content
+            let emptySectorFound = false;
+            let emptyDayName = '';
+            let emptySectorType = '';
+
+            for (const day of trainingDays) {
+                for (const sector of day.sectors) {
+                    if (!sector.content || !sector.content.trim()) {
+                        emptySectorFound = true;
+                        emptyDayName = day.name;
+                        emptySectorType = sector.type;
+                        break;
+                    }
+                }
+                if (emptySectorFound) break;
+            }
+
+            if (emptySectorFound) {
+                setModalError(`Please enter content for ${emptySectorType} sector in ${emptyDayName}`);
                 return;
             }
 
@@ -461,13 +493,25 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
         }
     };
 
-    const handleAddToTraining = async (sectorId) => {
+    const handleAddToTraining = (sectorId) => {
+        setSectorToAdd(sectorId);
+        setAddToTrainingConfirmOpen(true);
+    };
+
+    const handleConfirmAddToTraining = async () => {
         try {
-            alert('Adding to trainings');
-            await addSectorToTraining(sectorId);
-            setError({ severity: 'success', message: 'Successfully added to your trainings!' });
+            if (!sectorToAdd) return;
+
+            await addSectorToTraining(sectorToAdd);
+            setAddToTrainingConfirmOpen(false);
+            setSectorToAdd(null);
+
+            // Show success message in modal
+            setSuccessMessage('Successfully added to your trainings!');
+            setSuccessDialogOpen(true);
         } catch (err) {
             setError('Failed to add to trainings');
+            setAddToTrainingConfirmOpen(false);
             console.error(err);
         }
     };
@@ -650,6 +694,16 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                 </DialogTitle>
 
                 <DialogContent dividers>
+
+                    {modalError && (
+                        <Alert
+                            severity="error"
+                            sx={{ mb: 2 }}
+                            onClose={() => setModalError(null)}
+                        >
+                            {typeof modalError === 'object' ? modalError.message : modalError}
+                        </Alert>
+                    )}
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                             <TextField
@@ -1197,6 +1251,44 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                     </Button>
                     <Button onClick={handleConfirmDelete} color="error" variant="contained">
                         Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* Add to Training Confirmation Dialog */}
+            <Dialog
+                open={addToTrainingConfirmOpen}
+                onClose={() => setAddToTrainingConfirmOpen(false)}
+            >
+                <DialogTitle>Add to My Trainings</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to add this workout to your trainings?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setAddToTrainingConfirmOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmAddToTraining} color="primary" variant="contained">
+                        Add
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Success Dialog */}
+            <Dialog
+                open={successDialogOpen}
+                onClose={() => setSuccessDialogOpen(false)}
+            >
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        {successMessage}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                        OK
                     </Button>
                 </DialogActions>
             </Dialog>

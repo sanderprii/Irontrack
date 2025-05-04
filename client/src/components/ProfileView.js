@@ -134,6 +134,9 @@ export default function ProfileView({
         green: { light: "rgba(0, 255, 0, 0.08)", main: "#4caf50" }
     };
 
+    // Check if note is valid for submission
+    const isNoteValid = newNote.trim().length > 0;
+
     return (
         <Box sx={{ maxWidth: 800, margin: '0 auto' }}>
             <Paper
@@ -487,11 +490,13 @@ export default function ProfileView({
                                         variant="contained"
                                         color="primary"
                                         onClick={handleAddNote}
+                                        disabled={!isNoteValid}
                                         sx={{
-                                            cursor: 'pointer',
+                                            cursor: isNoteValid ? 'pointer' : 'not-allowed',
+                                            opacity: isNoteValid ? 1 : 0.7,
                                             '&:hover': {
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                                                transform: isNoteValid ? 'translateY(-2px)' : 'none',
+                                                boxShadow: isNoteValid ? '0 4px 8px rgba(0,0,0,0.1)' : 'none'
                                             },
                                             transition: 'all 0.2s'
                                         }}

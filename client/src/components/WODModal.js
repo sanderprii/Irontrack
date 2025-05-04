@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Select, MenuItem, FormControl, InputLabel,
-    Box, IconButton, Tooltip, Divider, Typography
+    Box, IconButton, Tooltip, Divider, Typography, FormHelperText
 } from "@mui/material";
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -15,6 +15,12 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
     const [wod, setWod] = useState({ wodName: "", type: "For Time", description: "", notes: "" });
     const [showSearch, setShowSearch] = useState(true);
     const [selectedColorOption, setSelectedColorOption] = useState(null);
+
+    // Add errors state to track validation errors
+    const [errors, setErrors] = useState({
+        description: false
+    });
+
     const wodTypes = ["For Time", "EMOM", "TABATA", "AMRAP", "For Load", "For Quality", "NONE"];
 
     // Color options for formatting
@@ -38,6 +44,8 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     notes: response.notes || "",
                     competitionInfo: response.competitionInfo || "",
                 });
+                // Reset errors when loading existing WOD
+                setErrors({ description: false });
             } else {
                 setWod({ wodName: "", type: "For Time", description: "" });
             }
@@ -53,7 +61,26 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
         }
     }, [open, selectedDate, loadTodayWOD]);
 
+    // Function to validate the form
+    const validateForm = () => {
+        const newErrors = {
+            description: !wod.description
+        };
+
+        setErrors(newErrors);
+
+        // Form is valid if there are no errors (all required fields are filled)
+        return !Object.values(newErrors).some(error => error);
+    };
+
     const handleSaveWOD = async () => {
+        // Validate the form before submission
+        const isValid = validateForm();
+
+        if (!isValid) {
+            return; // Don't proceed if validation fails
+        }
+
         try {
             const formattedDate = new Date(selectedDate).toISOString().split("T")[0];
 
@@ -94,6 +121,22 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
             description: selectedWOD.description || "",
         });
         setShowSearch(false);
+
+        // Clear error for description if it's filled
+        if (selectedWOD.description) {
+            setErrors({...errors, description: false});
+        }
+    };
+
+    // Handle description change with error clearing
+    const handleDescriptionChange = (e) => {
+        const value = e.target.value;
+        setWod({ ...wod, description: value });
+
+        // Clear error when user types something
+        if (value && errors.description) {
+            setErrors({...errors, description: false});
+        }
     };
 
     const applyFormatting = (formatType, value = null, fieldId) => {
@@ -132,6 +175,10 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
             // Uuendan õiget välja vastavalt ID-le
             if (fieldId === 'wod-description') {
                 setWod({ ...wod, description: newContent });
+                // Clear error if there was one
+                if (errors.description) {
+                    setErrors({...errors, description: false});
+                }
             } else {
                 setWod({ ...wod, competitionInfo: newContent });
             }
@@ -143,7 +190,7 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
         }
     };
 
-// Lisa uus eelvaate komponent competitionInfo välja jaoks
+    // Lisa uus eelvaate komponent competitionInfo välja jaoks
     const CompetitionInfoPreview = () => {
         if (!wod.competitionInfo) return null;
 
@@ -222,9 +269,11 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     </Select>
                 </FormControl>
 
-                {/* Text formatting toolbar */}
+                {/* Text formatting toolbar with required field indicator */}
                 <Box sx={{ mb: 1, mt: 2, display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="body2" sx={{ mr: 1 }}>Formatting:</Typography>
+                    <Typography variant="body2" sx={{ mr: 1 }}>
+                        Formatting: <Typography component="span" color="error">*</Typography>
+                    </Typography>
                     <Tooltip title="Bold">
                         <IconButton size="small" onClick={() => applyFormatting('bold', null, 'wod-description')}>
                             <FormatBoldIcon fontSize="small" />
@@ -242,7 +291,6 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                             <IconButton
                                 size="small"
                                 onClick={() => setSelectedColorOption(prev => prev === 'description' ? null : 'description')}
-
                             >
                                 <FormatColorTextIcon fontSize="small" />
                             </IconButton>
@@ -286,33 +334,40 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                     </Box>
                 </Box>
 
-                <TextareaAutosize
-                    id="wod-description"
-                    minRows={3}
-                    maxRows={10}
-                    placeholder="Description (you can format selected text with the tools above)"
-                    style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '4px',
-                        borderColor: '#AAAAAA',
-                        fontSize: '14px',
-                        lineHeight: '1.5',
-                        resize: 'vertical',
-                        fontFamily: 'inherit'
-                    }}
-                    value={wod.description}
-                    onChange={(e) => setWod({ ...wod, description: e.target.value })}
-                />
+                {/* Description field with error state */}
+                <FormControl fullWidth error={errors.description} sx={{ mb: 1 }}>
+                    <TextareaAutosize
+                        id="wod-description"
+                        minRows={3}
+                        maxRows={10}
+                        placeholder="Description (you can format selected text with the tools above) *"
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '4px',
+                            borderColor: errors.description ? '#d32f2f' : '#AAAAAA',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            resize: 'vertical',
+                            fontFamily: 'inherit'
+                        }}
+                        value={wod.description}
+                        onChange={handleDescriptionChange}
+                    />
+                    {errors.description && (
+                        <FormHelperText error>Description is required</FormHelperText>
+                    )}
+                </FormControl>
 
                 {/* Preview of formatted description */}
                 {wod.description && <DescriptionPreview />}
 
                 <Box sx={{ mt: 2 }}>
                     <Typography variant="caption" color="text.secondary">
-                        * To format text: Select the text you want to format, then click a formatting button above.
+                        * Required field. To format text: Select the text you want to format, then click a formatting button above.
                     </Typography>
                 </Box>
+
                 <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>Competition Info:</Typography>
                 <Box sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
                     <Typography variant="body2" sx={{ mr: 1 }}>Formatting:</Typography>
@@ -333,8 +388,6 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                             <IconButton
                                 size="small"
                                 onClick={() => setSelectedColorOption(prev => prev === 'competition-info' ? null : 'competition-info')}
-
-
                             >
                                 <FormatColorTextIcon fontSize="small" />
                             </IconButton>

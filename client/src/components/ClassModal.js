@@ -1472,7 +1472,7 @@ export default function ClassModal({
                                 </RadioGroup>
 
                                 <Typography variant="caption">
-                                    Reps/Time/Weight. For example: 147, 5:30, 50.
+                                    Reps/Time/Weight. For example: 147, 5:30, 50. Your name and score will be visible to others.
                                 </Typography>
 
                                 {/* Score field */}

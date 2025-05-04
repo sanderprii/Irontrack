@@ -16,8 +16,7 @@ import {
 import { Paper } from '@mui/material';
 
 import Statistics from '../components/Statistics';
-import PurchaseHistory from '../components/PurchaseHistory';
-import ActivePlans from '../components/ActivePlans';
+import ActivePlansAndHistory from "../components/ActivePlansAndHistory";
 import ProfileEdit from '../components/ProfileEdit';
 import ChangePassword from '../components/ChangePassword';
 import ProfileView from '../components/ProfileView';
@@ -37,9 +36,8 @@ const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
     { id: 'family-members', label: 'Children', component: FamilyMembers },
     { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
-    { id: 'purchase-history', label: 'Purchase History', component: PurchaseHistory },
+    { id: 'active-plans', label: 'Active Plans', component: ActivePlansAndHistory },
     { id: 'visit-history', label: 'Visit History', component: VisitHistory },
-    { id: 'active-plans', label: 'Active Plans', component: ActivePlans },
     { id: 'credit', label: 'Credit', component: CreditView },
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
     { id: 'transactions', label: 'Transactions', component: Transactions },

@@ -18,6 +18,7 @@ import {
     Chip,
     Tooltip,
     Alert,
+    FormHelperText,
 } from '@mui/material';
 
 import InfoIcon from '@mui/icons-material/Info';
@@ -70,6 +71,21 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
     // First payment calculation preview
     const [paymentPreview, setPaymentPreview] = useState(null);
 
+    // Add error state tracking for all fields
+    const [errors, setErrors] = useState({
+        selectedUser: false,
+        contractType: false,
+        content: false,
+        paymentType: false,
+        paymentAmount: false,
+        paymentInterval: false,
+        paymentDay: false,
+        startDate: false,
+        validUntil: false,
+        trainingTypes: false,
+        firstPaymentAmount: false
+    });
+
     // Load contract data if editing or template if creating
     useEffect(() => {
         if (open && contractToEdit) {
@@ -118,6 +134,9 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             if (contractToEdit.startDate && contractToEdit.paymentDay && contractToEdit.paymentAmount) {
                 calculateFirstPayment();
             }
+
+            // Reset errors when loading an existing contract
+            resetErrors();
         } else if (open && !contractToEdit) {
             // Reset form for new contract
             setSelectedUser(null);
@@ -134,10 +153,31 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             setCalculationComplete(false);
             setPaymentPreview(null);
 
+            // Reset errors for new contract
+            resetErrors();
+
             // Load template for new contracts
             loadTemplate();
         }
     }, [open, contractToEdit]);
+
+    // Reset all error states
+    const resetErrors = () => {
+        setErrors({
+            selectedUser: false,
+            contractType: false,
+            content: false,
+            paymentType: false,
+            paymentAmount: false,
+            paymentInterval: false,
+            paymentDay: false,
+            startDate: false,
+            validUntil: false,
+            trainingTypes: false,
+            firstPaymentAmount: false
+        });
+        setValidationError('');
+    };
 
     // Calculate first payment amount when relevant fields change
     useEffect(() => {
@@ -207,6 +247,12 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 paymentDayFormatted: startDateObj.toLocaleDateString()
             });
             setCalculationComplete(true);
+
+            // Clear error for first payment amount when calculation is successful
+            if (errors.firstPaymentAmount) {
+                setErrors(prev => ({ ...prev, firstPaymentAmount: false }));
+            }
+
             return;
         }
 
@@ -258,6 +304,11 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
         calculatedFirstPayment = Math.round(calculatedFirstPayment * 100) / 100;
 
         setFirstPaymentAmount(calculatedFirstPayment.toString());
+
+        // Clear error for first payment amount when calculation is successful
+        if (errors.firstPaymentAmount) {
+            setErrors(prev => ({ ...prev, firstPaymentAmount: false }));
+        }
 
         // Create explanatory text for preview
         let explanation = "";
@@ -314,53 +365,142 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
         };
     }, [userQuery]);
 
+    // Generic change handler that updates value and clears error
+    const handleChange = (field, value) => {
+        // Update the field value using the appropriate setter function
+        switch (field) {
+            case 'selectedUser':
+                setSelectedUser(value);
+                break;
+            case 'contractType':
+                setContractType(value);
+                break;
+            case 'content':
+                setContent(value);
+                break;
+            case 'paymentType':
+                setPaymentType(value);
+                break;
+            case 'paymentAmount':
+                setPaymentAmount(value);
+                break;
+            case 'paymentInterval':
+                setPaymentInterval(value);
+                break;
+            case 'paymentDay':
+                setPaymentDay(value);
+                break;
+            case 'startDate':
+                setStartDate(value);
+                break;
+            case 'validUntil':
+                setValidUntil(value);
+                break;
+            case 'trainingTypes':
+                setTrainingTypes(value);
+                break;
+            case 'firstPaymentAmount':
+                setFirstPaymentAmount(value);
+                break;
+            default:
+                break;
+        }
+
+        // Clear the error for this field
+        if (errors[field]) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                [field]: false
+            }));
+        }
+    };
+
     // Handle start date change with automatic calculation
     const handleStartDateChange = (e) => {
-        setStartDate(e.target.value);
+        const value = e.target.value;
+        setStartDate(value);
+
+        // Clear the error for this field
+        if (errors.startDate) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                startDate: false
+            }));
+        }
+
         // Calculation will happen in useEffect
     };
 
     // Handle payment day change with automatic calculation
     const handlePaymentDayChange = (e) => {
-        setPaymentDay(e.target.value);
+        const value = e.target.value;
+        setPaymentDay(value);
+
+        // Clear the error for this field
+        if (errors.paymentDay) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                paymentDay: false
+            }));
+        }
+
         // Calculation will happen in useEffect
     };
 
     // Handle payment amount change with automatic calculation
     const handlePaymentAmountChange = (e) => {
-        setPaymentAmount(e.target.value);
+        const value = e.target.value;
+        setPaymentAmount(value);
+
+        // Clear the error for this field
+        if (errors.paymentAmount) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                paymentAmount: false
+            }));
+        }
+
         // Calculation will happen in useEffect
+    };
+
+    // Validate all form fields
+    const validateForm = () => {
+        const newErrors = {
+            selectedUser: !selectedUser,
+            contractType: !contractType,
+            content: !content,
+            paymentType: !paymentType,
+            paymentAmount: !paymentAmount,
+            paymentInterval: !paymentInterval,
+            paymentDay: !paymentDay,
+            startDate: !startDate,
+            validUntil: !validUntil,
+            trainingTypes: trainingTypes.length === 0,
+            firstPaymentAmount: !firstPaymentAmount
+        };
+
+        setErrors(newErrors);
+
+        // Check if any errors exist
+        const hasErrors = Object.values(newErrors).some(error => error);
+
+        if (hasErrors) {
+            // Display generic validation error
+            setValidationError('Please fill in all required fields before saving.');
+        } else {
+            setValidationError('');
+        }
+
+        return !hasErrors;
     };
 
     // Lepingu salvestamine
     const handleSave = async () => {
-        // Reset any validation errors
-        setValidationError('');
+        // Validate all fields
+        const isValid = validateForm();
 
-        // Check if a user is selected
-        if (!selectedUser) {
-            setValidationError('Please select a user!');
-            return;
-        }
-
-        // Check if start date and payment day are set
-        if (!startDate) {
-            setValidationError('Please set a contract start date!');
-            return;
-        }
-
-        if (!paymentDay) {
-            setValidationError('Please set a payment day!');
-            return;
-        }
-
-        // Check if first payment amount is calculated
-        if (!firstPaymentAmount && paymentAmount) {
-            calculateFirstPayment(); // Calculate one more time just to be sure
-            if (!calculationComplete) {
-                setValidationError('First payment amount could not be calculated. Please check your inputs.');
-                return;
-            }
+        if (!isValid) {
+            return; // Stop if validation failed
         }
 
         try {
@@ -410,6 +550,16 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
         calculateFirstPayment();
     };
 
+    // Handle training types change with error clearing
+    const handleTrainingTypesChange = (event, newValue) => {
+        setTrainingTypes(newValue);
+
+        // Clear error if at least one type is selected
+        if (newValue.length > 0 && errors.trainingTypes) {
+            setErrors(prev => ({ ...prev, trainingTypes: false }));
+        }
+    };
+
     // Improved helper component tooltip (compact version)
     const InfoTooltip = ({ title }) => {
         const [isOpen, setIsOpen] = useState(false);
@@ -457,15 +607,15 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             <DialogContent dividers>
                 <Typography variant="body2" sx={{ mb: 2 }}>
                     {contractToEdit
-                        ? 'Edit the contract details below.'
-                        : 'Fill the fields to create a new contract.'}
+                        ? 'Edit the contract details below. All fields are required.'
+                        : 'Fill the fields to create a new contract. All fields are required.'}
                 </Typography>
 
                 {/* Display validation error if any */}
                 {validationError && (
-                    <Box sx={{ color: 'error.main', mb: 2, mt: 1, p: 1, bgcolor: '#ffebee', borderRadius: 1 }}>
+                    <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
                         {validationError}
-                    </Box>
+                    </Alert>
                 )}
 
                 {/* Kasutaja otsing (Autocomplete) */}
@@ -476,7 +626,13 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         options={userOptions}
                         getOptionLabel={(option) => option.fullName || ''}
                         value={selectedUser}
-                        onChange={(event, newValue) => setSelectedUser(newValue)}
+                        onChange={(event, newValue) => {
+                            setSelectedUser(newValue);
+                            // Clear error when a user is selected
+                            if (newValue && errors.selectedUser) {
+                                setErrors(prev => ({ ...prev, selectedUser: false }));
+                            }
+                        }}
                         onInputChange={(event, newInputValue) => {
                             setUserQuery(newInputValue);
                         }}
@@ -484,7 +640,9 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         renderInput={(params) => (
                             <TextField
                                 {...params}
-                                label="Search User by fullName"
+                                label="Search User by fullName *"
+                                error={errors.selectedUser}
+                                helperText={errors.selectedUser ? "User selection is required" : ""}
                                 InputProps={{
                                     ...params.InputProps,
                                     endAdornment: (
@@ -509,7 +667,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         fullWidth
                         options={trainingTypeOptions}
                         value={trainingTypes}
-                        onChange={(event, newValue) => setTrainingTypes(newValue)}
+                        onChange={handleTrainingTypesChange}
                         renderTags={(value, getTagProps) =>
                             value.map((option, index) => (
                                 <Chip
@@ -522,8 +680,10 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                         renderInput={(params) => (
                             <TextField
                                 {...params}
-                                label="Training Types"
+                                label="Training Types *"
                                 placeholder="Select training types"
+                                error={errors.trainingTypes}
+                                helperText={errors.trainingTypes ? "At least one training type is required" : ""}
                             />
                         )}
                     />
@@ -533,10 +693,25 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Contract name" />
                     <TextField
-                        label="Contract Name"
+                        label="Contract Name *"
                         value={contractType}
-                        onChange={(e) => setContractType(e.target.value)}
+                        onChange={(e) => handleChange('contractType', e.target.value)}
                         fullWidth
+                        error={errors.contractType}
+                        helperText={errors.contractType ? "Contract name is required" : ""}
+                    />
+                </Box>
+
+                {/* Payment Type */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <InfoTooltip title="Type of payment" />
+                    <TextField
+                        label="Payment Type *"
+                        value={paymentType}
+                        onChange={(e) => handleChange('paymentType', e.target.value)}
+                        fullWidth
+                        error={errors.paymentType}
+                        helperText={errors.paymentType ? "Payment type is required" : ""}
                     />
                 </Box>
 
@@ -544,28 +719,32 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Regular monthly payment amount. If you want to receive transactions outside this application, then put it 0." />
                     <TextField
-                        label="Monthly Payment Amount"
+                        label="Monthly Payment Amount *"
                         type="number"
                         value={paymentAmount}
                         onChange={handlePaymentAmountChange}
                         fullWidth
-                        required
+                        error={errors.paymentAmount}
+                        helperText={errors.paymentAmount ? "Payment amount is required" : ""}
                     />
                 </Box>
 
                 {/* Payment Interval (Select) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Frequency of payments" />
-                    <FormControl fullWidth>
-                        <InputLabel id="payment-interval-label">Payment Interval</InputLabel>
+                    <FormControl fullWidth error={errors.paymentInterval}>
+                        <InputLabel id="payment-interval-label">Payment Interval *</InputLabel>
                         <Select
                             labelId="payment-interval-label"
-                            label="Payment Interval"
+                            label="Payment Interval *"
                             value={paymentInterval}
-                            onChange={(e) => setPaymentInterval(e.target.value)}
+                            onChange={(e) => handleChange('paymentInterval', e.target.value)}
                         >
                             <MenuItem value="month">Month</MenuItem>
                         </Select>
+                        {errors.paymentInterval && (
+                            <FormHelperText error>Payment interval is required</FormHelperText>
+                        )}
                     </FormControl>
                 </Box>
 
@@ -573,13 +752,14 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Day of payment (1-28)" />
                     <TextField
-                        label="Payment Day"
+                        label="Payment Day *"
                         type="number"
                         inputProps={{ min: 1, max: 28 }}
                         value={paymentDay}
                         onChange={handlePaymentDayChange}
                         fullWidth
-                        required
+                        error={errors.paymentDay}
+                        helperText={errors.paymentDay ? "Payment day is required" : ""}
                     />
                 </Box>
 
@@ -587,12 +767,13 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Contract start date" />
                     <TextField
-                        label="Start Date"
+                        label="Start Date *"
                         type="date"
                         value={startDate}
                         onChange={handleStartDateChange}
                         fullWidth
-                        required
+                        error={errors.startDate}
+                        helperText={errors.startDate ? "Start date is required" : ""}
                         InputLabelProps={{
                             shrink: true,
                         }}
@@ -603,11 +784,13 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="First payment amount (auto-calculated based on start date and payment day)" />
                     <TextField
-                        label="First Payment Amount"
+                        label="First Payment Amount *"
                         type="number"
                         value={firstPaymentAmount}
-                        onChange={(e) => setFirstPaymentAmount(e.target.value)}
+                        onChange={(e) => handleChange('firstPaymentAmount', e.target.value)}
                         fullWidth
+                        error={errors.firstPaymentAmount}
+                        helperText={errors.firstPaymentAmount ? "First payment amount is required" : ""}
                         InputProps={{
                             endAdornment: (
                                 <Tooltip title="Recalculate first payment amount">
@@ -624,9 +807,6 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                                 </Tooltip>
                             ),
                         }}
-                        error={paymentAmount && startDate && paymentDay && !calculationComplete}
-                        helperText={paymentAmount && startDate && paymentDay && !calculationComplete ?
-                            "Please calculate the first payment amount" : ""}
                     />
                 </Box>
 
@@ -655,11 +835,13 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <InfoTooltip title="Expiration date" />
                     <TextField
-                        label="Valid Until"
+                        label="Valid Until *"
                         type="date"
                         value={validUntil}
-                        onChange={(e) => setValidUntil(e.target.value)}
+                        onChange={(e) => handleChange('validUntil', e.target.value)}
                         fullWidth
+                        error={errors.validUntil}
+                        helperText={errors.validUntil ? "End date is required" : ""}
                         InputLabelProps={{
                             shrink: true,
                         }}
@@ -669,22 +851,26 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                 {/* Lepingu sisu (textarea) */}
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <InfoTooltip title="Contract text content" />
-                    <FormControl fullWidth>
+                    <FormControl fullWidth error={errors.content}>
+                        <Typography variant="subtitle2" sx={{ mb: 1 }}>Contract Content *</Typography>
                         <TextareaAutosize
                             minRows={10}
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            onChange={(e) => handleChange('content', e.target.value)}
                             style={{
                                 width: '100%',
                                 padding: '10px',
                                 borderRadius: '4px',
-                                borderColor: '#AAAAAA',
+                                borderColor: errors.content ? '#d32f2f' : '#AAAAAA',
                                 fontSize: '14px',
                                 lineHeight: '1.5',
                                 resize: 'vertical',
                                 fontFamily: 'inherit'
                             }}
                         />
+                        {errors.content && (
+                            <FormHelperText error>Contract content is required</FormHelperText>
+                        )}
                     </FormControl>
                 </Box>
             </DialogContent>
@@ -697,7 +883,6 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
                     onClick={handleSave}
                     variant="contained"
                     color="primary"
-                    disabled={!calculationComplete && paymentAmount && startDate && paymentDay}
                 >
                     {contractToEdit ? 'Update Contract' : 'Save Contract'}
                 </Button>

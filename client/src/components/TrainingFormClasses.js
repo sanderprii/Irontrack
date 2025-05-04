@@ -3,7 +3,8 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, MenuItem, FormControl, FormLabel,
     RadioGroup, FormControlLabel, Radio, TextareaAutosize,
-    Box, Typography, IconButton, Tooltip, Divider, Select, InputLabel
+    Box, Typography, IconButton, Tooltip, Divider, Select, InputLabel,
+    FormHelperText
 } from "@mui/material";
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
@@ -25,6 +26,15 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
         description: "",
         canRegister: true,
         freeClass: false,
+    });
+
+    // Add errors state to track validation errors
+    const [errors, setErrors] = useState({
+        trainingType: false,
+        trainingName: false,
+        time: false,
+        duration: false,
+        memberCapacity: false
     });
 
     // State for text formatting
@@ -58,6 +68,14 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                 canRegister: selectedClass.canRegister || true,
                 freeClass: selectedClass.freeClass || false,
                 applyToAllFutureTrainings: selectedClass.applyToAllFutureTrainings || false,
+            });
+            // Reset errors when loading existing class
+            setErrors({
+                trainingType: false,
+                trainingName: false,
+                time: false,
+                duration: false,
+                memberCapacity: false
             });
         } else {
             setTrainingData({
@@ -97,20 +115,48 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
     };
 
     const handleChange = (e) => {
-        setTrainingData({ ...trainingData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setTrainingData({ ...trainingData, [name]: value });
+
+        // Clear error for this field when user types something
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: false });
+        }
     };
 
     const handleRadioChange = (e) => {
         setTrainingData({ ...trainingData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = () => {
-        if (!trainingData || typeof trainingData !== "object") {
-            console.error("❌ Invalid training data before submission:", trainingData);
-            return;
-        }
+    // Function to validate the form
+    const validateForm = () => {
+        const newErrors = {
+            trainingType: !trainingData.trainingType,
+            trainingName: !trainingData.trainingName,
+            time: !trainingData.time,
+            duration: !trainingData.duration,
+            memberCapacity: !trainingData.memberCapacity
+        };
 
-        onSave(trainingData);
+        setErrors(newErrors);
+
+        // Form is valid if no errors (all required fields are filled)
+        return !Object.values(newErrors).some(error => error);
+    };
+
+    const handleSubmit = () => {
+        // Validate the form before submission
+        const isValid = validateForm();
+
+        if (isValid) {
+            if (!trainingData || typeof trainingData !== "object") {
+                console.error("❌ Invalid training data before submission:", trainingData);
+                return;
+            }
+
+            onSave(trainingData);
+        }
+        // If not valid, the errors will be displayed and form won't submit
     };
 
     // Function to apply formatting to selected text
@@ -183,12 +229,14 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                 <TextField
                     select
                     fullWidth
-                    label="Training Type"
+                    label="Training Type*"
                     name="trainingType"
                     value={trainingData.trainingType}
                     onChange={handleChange}
                     margin="dense"
                     sx={{ mt: 2 }}
+                    error={errors.trainingType}
+                    helperText={errors.trainingType ? "Training type is required" : ""}
                 >
                     {trainingTypes.map((type) => (
                         <MenuItem key={type} value={type}>
@@ -199,31 +247,38 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
                 <TextField
                     fullWidth
-                    label="Training Name"
+                    label="Training Name*"
                     name="trainingName"
                     value={trainingData.trainingName}
                     onChange={handleChange}
                     margin="dense"
+                    error={errors.trainingName}
+                    helperText={errors.trainingName ? "Training name is required" : ""}
                 />
 
                 <TextField
                     fullWidth
-
+                    label="Training Time*"
                     type="datetime-local"
                     name="time"
                     value={formatDateForInput(trainingData.time)}
                     onChange={handleChange}
                     margin="dense"
+                    error={errors.time}
+                    helperText={errors.time ? "Training time is required" : ""}
+                    InputLabelProps={{ shrink: true }}
                 />
 
                 <TextField
                     fullWidth
-                    label="Duration (minutes)"
+                    label="Duration* (minutes)"
                     type="number"
                     name="duration"
                     value={trainingData.duration}
                     onChange={handleChange}
                     margin="dense"
+                    error={errors.duration}
+                    helperText={errors.duration ? "Duration is required" : ""}
                 />
 
                 {/* Trainer dropdown instead of text field */}
@@ -259,14 +314,15 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
                 <TextField
                     fullWidth
-                    label="Member Capacity"
+                    label="Member Capacity*"
                     name="memberCapacity"
+                    type="number"
                     value={trainingData.memberCapacity}
                     onChange={handleChange}
                     margin="dense"
+                    error={errors.memberCapacity}
+                    helperText={errors.memberCapacity ? "Member capacity is required" : ""}
                 />
-
-
 
                 {/* Repeat Weekly Radio Buttons */}
                 <FormControl component="fieldset" margin="dense" fullWidth>

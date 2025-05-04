@@ -10,11 +10,12 @@ const { body, validationResult } = require('express-validator');
  * - Terms acceptance
  */
 const validateRegistration = [
-    // Full name validation - allows only letters and spaces
+    // Full name validation - updated to allow Baltic and Finnish characters
     body('fullName')
         .trim()
         .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2-100 characters long')
-        .matches(/^[A-Za-zÀ-ÖØ-öø-ÿ\s\-]+$/).withMessage('Name can only contain letters, spaces, and hyphens'),
+        .matches(/^[A-Za-zÀ-ÖØ-öø-ÿĀ-ŽāčēģīķļņšūžĄąČčĘęĖėĮįŠšŲųŪūŽžÅå\s\-]+$/)
+        .withMessage('Name can only contain letters, spaces, and hyphens (including Baltic and Finnish characters)'),
 
     // Email validation
     body('email')
@@ -29,9 +30,8 @@ const validateRegistration = [
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/)
         .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
 
-    // Phone validation (optional)
+    // Phone validation (required, not optional)
     body('phone')
-        .optional()
         .trim()
         .isLength({ min: 6, max: 20 }).withMessage('Phone number must be between 6-20 characters long')
         .matches(/^[+]?[\d\s()-]{6,20}$/).withMessage('Please enter a valid phone number'),

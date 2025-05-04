@@ -19,7 +19,7 @@ import Info from '../components/Info';
 import InfoMobile from '../components/InfoMobile';
 import PaymentForm from '../components/PaymentForm';
 import Review from '../components/Review';
-import SitemarkIcon from '../components/SitemarkIcon';
+
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
 
@@ -38,6 +38,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     appliedCredit={appliedCredit}
                     setAppliedCredit={setAppliedCredit}
                     planPrice={contract?.isFirstPayment && contract?.firstPaymentAmount ? contract.firstPaymentAmount : (planData?.price || 0)}
+                    affiliateInfo={affiliateInfo}
                 />
             );
         case 1:
@@ -48,6 +49,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     appliedCredit={appliedCredit}
                     contract={contract}
                     isContractPayment={isContractPayment}
+                    affiliateInfo={affiliateInfo}
                 />
             );
         default:
@@ -241,14 +243,14 @@ export default function Checkout(props) {
                         // Suuna kasutaja registreerima
                         navigate('/after-checkout');
                     } else {
-                        console.error("Makse ebaõnnestus:", response);
-                        setPaymentError('Makse ebaõnnestus või tühistati');
+                        console.error("Payment failed:", response);
+                        setPaymentError('Payment failed or was cancelled');
                         setLoading(false);
                     }
                 })
                 .catch(error => {
-                    console.error("Viga makse staatuse kontrollimisel:", error);
-                    setPaymentError('Viga makse staatuse kontrollimisel');
+                    console.error("Error in payment status control:", error);
+                    setPaymentError('Error in payment status');
                     setLoading(false);
                 });
         }
@@ -344,8 +346,8 @@ export default function Checkout(props) {
                             // Suuname registreerimislehele
                             navigate("/after-checkout");
                         } catch (contractError) {
-                            console.error("Viga lepingu kinnitamisel:", contractError);
-                            setPaymentError('Lepingu kinnitamine ebaõnnestus');
+                            console.error("Error accepting contract:", contractError);
+                            setPaymentError('Error accepting contract');
                             setLoading(false);
                         }
                     } else {
@@ -381,8 +383,8 @@ export default function Checkout(props) {
                         navigate("/after-checkout");
                     }
                 } catch (error) {
-                    console.error("Viga krediidiga maksmisel:", error);
-                    setPaymentError('Krediidiga maksmine ebaõnnestus');
+                    console.error("Error with credit payment:", error);
+                    setPaymentError('Payment with credit failed');
                     setLoading(false);
                 }
             } else {
@@ -423,15 +425,15 @@ export default function Checkout(props) {
                     // Suuna kasutaja maksele
                     window.location.href = paymentResponse.payment_url;
 
-
-
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    navigate('/after-checkout');
                 } else {
-                    throw new Error('Vigane makse vastus');
+                    throw new Error('Error payment response');
                 }
             }
         } catch (error) {
             console.error(error);
-            setPaymentError('Makse töötlemine ebaõnnestus');
+            setPaymentError('Payment failed');
             setLoading(false);
         }
     };
@@ -494,7 +496,7 @@ export default function Checkout(props) {
     return (
         <AppTheme {...props}>
             <CssBaseline enableColorScheme/>
-            <Box sx={{position: 'fixed', top: '1rem', right: '1rem'}}>
+            <Box sx={{position: 'fixed', top: '0rem', right: '1rem'}}>
                 <ColorModeIconDropdown/>
             </Box>
 
@@ -506,7 +508,7 @@ export default function Checkout(props) {
                         sm: 'calc(100dvh - var(--template-frame-height, 0px))',
                     },
                     mt: {
-                        xs: 4,
+                        xs: 0,
                         sm: 0,
                     },
                 }}
@@ -528,7 +530,7 @@ export default function Checkout(props) {
                         gap: 4,
                     }}
                 >
-                    <SitemarkIcon/>
+
                     <Box
                         sx={{
                             display: 'flex',
@@ -594,33 +596,7 @@ export default function Checkout(props) {
                         </Box>
                     </Box>
 
-                    {/* Mobiilne kaart, mis näitab hinda ja InfoMobile komponendi */}
-                    <Card sx={{display: {xs: 'flex', md: 'none'}, width: '100%'}}>
-                        <CardContent
-                            sx={{
-                                display: 'flex',
-                                width: '100%',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                            }}
-                        >
-                            <div>
-                                <Typography variant="subtitle2" gutterBottom>
-                                    Selected products
-                                </Typography>
-                                <Typography variant="body1">
-                                    {planData?.price}€
-                                </Typography>
-                            </div>
-                            <InfoMobile
-                                planName={planData?.name || ''}
-                                planPrice={planData?.price || 0}
-                                appliedCredit={appliedCredit}
-                                firstPaymentPrice={contract?.firstPaymentAmount ? `${contract.firstPaymentAmount}€` : undefined}
-                                isFirstPayment={!!contract?.isFirstPayment}
-                            />
-                        </CardContent>
-                    </Card>
+
 
                     {/* Peamine sisu (stepper, vormid, nupud) */}
                     <Box
@@ -631,7 +607,7 @@ export default function Checkout(props) {
                             width: '100%',
                             maxWidth: {sm: '100%', md: 600},
                             maxHeight: '720px',
-                            gap: {xs: 5, md: 'none'},
+                            gap: {xs: 1, md: 'none'},
                         }}
                     >
                         <Stepper activeStep={activeStep} alternativeLabel sx={{display: {sm: 'flex', md: 'none'}}}>

@@ -178,7 +178,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>Add New Training</DialogTitle>
-            <DialogContent>
+            <DialogContent sx={{pt: 1, mt: 1}}>
                 {/* Training Type Dropdown */}
                 <TextField
                     select
@@ -188,6 +188,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
                     value={trainingData.trainingType}
                     onChange={handleChange}
                     margin="dense"
+                    sx={{ mt: 2 }}
                 >
                     {trainingTypes.map((type) => (
                         <MenuItem key={type} value={type}>
@@ -207,7 +208,7 @@ export default function TrainingModal({ open, onClose, onSave, selectedClass, tr
 
                 <TextField
                     fullWidth
-                    label="Time"
+
                     type="datetime-local"
                     name="time"
                     value={formatDateForInput(trainingData.time)}

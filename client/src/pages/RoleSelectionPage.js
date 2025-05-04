@@ -10,16 +10,13 @@ const RoleSelectionPage = () => {
     const [isTrainer, setIsTrainer] = useState(false);
     const [error, setError] = useState('');
     const API_URL = process.env.REACT_APP_API_URL
+
     useEffect(() => {
         // Laeme /api/auth/me
-
-
-
         fetch(`${API_URL}/auth/me`, {
             method: 'GET',
             credentials: 'include',
             headers: {
-
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
@@ -32,16 +29,20 @@ const RoleSelectionPage = () => {
                     setAffiliateOwner(data.affiliateOwner);
                     setIsTrainer(!!data.isTrainer);
 
+                    // Auto-select "regular" role and redirect if both affiliateOwner and isTrainer are false
+                    if (!data.affiliateOwner && !data.isTrainer) {
+                        setRole('regular');
+                        navigate('/training-diary');
+                    }
                 }
             })
             .catch((err) => {
                 console.error(err);
                 setError('Failed to load user info');
             });
-    }, [navigate, token]);
+    }, [navigate, token, setRole]);
 
     const handleRoleSelect = (role) => {
-
         setRole(role);
 
         if (role === 'regular') {

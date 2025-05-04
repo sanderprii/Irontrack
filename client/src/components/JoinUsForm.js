@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { styled, useTheme } from '@mui/material/styles';
+import React, {useState, useEffect} from 'react';
+import {useNavigate, Link} from 'react-router-dom';
+import {styled, useTheme} from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     Box,
@@ -43,7 +43,7 @@ import ColorModeSelect from '../shared-theme/ColorModeSelect';
 
 import ContractTermsModal from './ContractTermsModal';
 
-const Card = styled(Paper)(({ theme }) => ({
+const Card = styled(Paper)(({theme}) => ({
     display: 'flex',
     flexDirection: 'column',
     alignSelf: 'center',
@@ -66,7 +66,7 @@ const Card = styled(Paper)(({ theme }) => ({
     },
 }));
 
-const SignUpContainer = styled(Stack)(({ theme }) => ({
+const SignUpContainer = styled(Stack)(({theme}) => ({
     minHeight: '100vh',
     background: theme.palette.mode === 'dark'
         ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
@@ -77,34 +77,43 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     },
 }));
 
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
+const StyledFormControl = styled(FormControl)(({theme}) => ({
     marginBottom: theme.spacing(2),
 }));
 
-const StyledButton = styled(Button)(({ theme }) => ({
+const StyledButton = styled(Button)(({theme}) => ({
     padding: '12px 0',
-    borderRadius: '8px',
+    borderRadius: '25px', // More rounded corners like in the image
     fontWeight: 600,
     textTransform: 'none',
     fontSize: '1rem',
+    backgroundColor: props => props.disabled ? '#c0c0c0' : '#FFD700',
+    color: props => props.disabled ? '#777777' : '#777777',
     transition: 'all 0.2s ease-in-out',
     boxShadow: 'none',
     '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        backgroundColor: props => props.disabled ? '#c0c0c0' : '#FFD700',
+        opacity: props => props.disabled ? 1 : 0.9,
+        transform: props => props.disabled ? 'none' : 'translateY(-2px)',
+        boxShadow: props => props.disabled ? 'none' : '0 4px 8px rgba(0, 0, 0, 0.1)',
     },
 }));
 
-const VerifyButton = styled(Button)(({ theme }) => ({
-    borderRadius: '8px',
+const VerifyButton = styled(Button)(({theme}) => ({
+    backgroundColor: props => props.disabled ? '#c0c0c0' : '#FFD700',
+    color: props => props.disabled ? '#777777' : '#777777',
     fontWeight: 600,
     textTransform: 'none',
     minWidth: '100px',
-    marginLeft: theme.spacing(1),
-    height: '56px', // Match height with TextField
+    height: '40px',
+    borderRadius: '25px', // More rounded corners like in the image
+    '&:hover': {
+        backgroundColor: props => props.disabled ? '#c0c0c0' : '#FFD700',
+        opacity: props => props.disabled ? 1 : 0.9,
+    },
 }));
 
-const ValidationResultChip = styled(Chip)(({ theme, category }) => ({
+const ValidationResultChip = styled(Chip)(({theme, category}) => ({
     marginTop: theme.spacing(1),
     fontWeight: 500,
     backgroundColor: category === 'valid' || category === 'basic_valid'
@@ -167,6 +176,9 @@ export default function JoinUsForm() {
     const [fullNameError, setFullNameError] = useState(false);
     const [fullNameErrorMessage, setFullNameErrorMessage] = useState('');
 
+    const [phoneError, setPhoneError] = useState(false);
+    const [phoneErrorMessage, setPhoneErrorMessage] = useState('');
+
     // API URL
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -174,6 +186,65 @@ export default function JoinUsForm() {
     const validateBasicEmailFormat = (emailToValidate) => {
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(emailToValidate);
+    };
+
+    const validatePassword = (passwordToValidate) => {
+        if (!passwordToValidate || passwordToValidate.length < 8) {
+            return {
+                valid: false,
+                message: 'Password must be at least 8 characters long.'
+            };
+        }
+
+        const hasUpperCase = /[A-Z]/.test(passwordToValidate);
+        const hasLowerCase = /[a-z]/.test(passwordToValidate);
+        const hasNumber = /[0-9]/.test(passwordToValidate);
+
+        if (!(hasUpperCase && hasLowerCase && hasNumber)) {
+            return {
+                valid: false,
+                message: 'Password must contain at least one lowercase letter, one uppercase letter, and one number.'
+            };
+        }
+
+        return {
+            valid: true,
+            message: ''
+        };
+    };
+
+// Phone validation - checks for length and valid format
+    const validatePhoneNumber = (phoneToValidate) => {
+        // Check if empty
+        if (!phoneToValidate) {
+            return {
+                valid: false,
+                message: 'Phone number is required.'
+            };
+        }
+
+        // Check length (6-20 characters)
+        if (phoneToValidate.length < 6 || phoneToValidate.length > 20) {
+            return {
+                valid: false,
+                message: 'Phone number must be between 6-20 characters long.'
+            };
+        }
+
+        // Basic phone format validation - allows for various international formats
+        // This regex allows +, spaces, dashes, parentheses, and numbers
+        const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,3}[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,4}$/;
+        if (!phoneRegex.test(phoneToValidate)) {
+            return {
+                valid: false,
+                message: 'Please enter a valid phone number.'
+            };
+        }
+
+        return {
+            valid: true,
+            message: ''
+        };
     };
 
     // Email validation function
@@ -195,7 +266,7 @@ export default function JoinUsForm() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: email }),
+                body: JSON.stringify({email: email}),
             });
 
             // Handle API errors like quota limits
@@ -295,10 +366,11 @@ export default function JoinUsForm() {
     const validateInputs = () => {
         let isValid = true;
 
-        // Full Name validation
-        if (!fullName.trim()) {
+        // Full Name validation (updated)
+        const nameValidation = validateFullName(fullName);
+        if (!nameValidation.valid) {
             setFullNameError(true);
-            setFullNameErrorMessage('Full name is required.');
+            setFullNameErrorMessage(nameValidation.message);
             isValid = false;
         } else {
             setFullNameError(false);
@@ -316,6 +388,9 @@ export default function JoinUsForm() {
                 setEmailError(true);
                 setEmailErrorMessage(`Invalid email: ${emailValidationResult.details}`);
                 isValid = false;
+            } else {
+                setEmailError(false);
+                setEmailErrorMessage('');
             }
         }
 
@@ -329,10 +404,11 @@ export default function JoinUsForm() {
             setConfirmEmailErrorMessage('');
         }
 
-        // Password validation (min 6 characters)
-        if (!password || password.length < 6) {
+        // Password validation (enhanced)
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
             setPasswordError(true);
-            setPasswordErrorMessage('Password must be at least 6 characters long.');
+            setPasswordErrorMessage(passwordValidation.message);
             isValid = false;
         } else {
             setPasswordError(false);
@@ -349,12 +425,32 @@ export default function JoinUsForm() {
             setConfirmPasswordErrorMessage('');
         }
 
+        // Phone validation
+        const phoneValidation = validatePhoneNumber(phone);
+        if (!phoneValidation.valid) {
+            setPhoneError(true);
+            setPhoneErrorMessage(phoneValidation.message);
+            isValid = false;
+        } else {
+            setPhoneError(false);
+            setPhoneErrorMessage('');
+        }
+
         // Terms acceptance validation
         if (!acceptedTerms) {
             setError('You must accept the terms and conditions');
             isValid = false;
         } else {
             setError('');
+        }
+
+        // Email validation check
+        if (!emailValidationResult || !showValidationResult) {
+            setError('Please verify your email address before submitting.');
+            isValid = false;
+        } else if (emailValidationResult.category === 'invalid') {
+            setError(`This email cannot be used: ${emailValidationResult.details}`);
+            isValid = false;
         }
 
         return isValid;
@@ -451,16 +547,48 @@ export default function JoinUsForm() {
         return 'primary';
     };
 
+    const isCreateAccountButtonDisabled = () => {
+        // Check if verification is in progress
+        if (isValidatingEmail) return true;
+
+        // Check if terms are accepted
+        if (!acceptedTerms) return true;
+
+        // Check if form is submitting
+        if (isSubmitting) return true;
+
+        // Email validation check - enable button if email is verified as valid or unknown category
+        const isEmailValidated = emailValidationResult &&
+            (emailValidationResult.category === 'valid' ||
+                emailValidationResult.category === 'basic_valid' ||
+                emailValidationResult.category === 'unknown');
+
+        // If we have a validation result, it must be valid to proceed
+        if (emailValidationResult && !isEmailValidated) return true;
+
+        // If no validation result yet, disable the button
+        if (!showValidationResult || !emailValidationResult) return true;
+
+        // Check if all required fields are filled
+        if (!fullName || !email || !confirmEmail || !password || !confirmPassword || !phone) return true;
+
+        // Check if emails and passwords match
+        if (email !== confirmEmail || password !== confirmPassword) return true;
+
+        // All checks passed
+        return false;
+    };
+
     // Get validation icon based on result
     const getValidationIcon = () => {
         if (!emailValidationResult || !showValidationResult) return null;
 
         if (emailValidationResult.category === 'valid' || emailValidationResult.category === 'basic_valid') {
-            return <CheckCircle />;
+            return <CheckCircle/>;
         } else if (emailValidationResult.category === 'risky') {
-            return <Warning />;
+            return <Warning/>;
         } else if (emailValidationResult.category === 'invalid') {
-            return <Error />;
+            return <Error/>;
         }
 
         return null;
@@ -483,30 +611,68 @@ export default function JoinUsForm() {
         return '';
     };
 
+    const validateFullName = (nameToValidate) => {
+        if (!nameToValidate || nameToValidate.trim().length < 2) {
+            return {
+                valid: false,
+                message: 'Name must be at least 2 characters long.'
+            };
+        }
+
+        if (nameToValidate.length > 100) {
+            return {
+                valid: false,
+                message: 'Name must be less than 100 characters long.'
+            };
+        }
+
+        // Enhanced regex to support Estonian, Latvian, Lithuanian, and Finnish characters
+        // This covers: ä, ö, ü, õ, š, ž, ā, č, ē, ģ, ī, ķ, ļ, ņ, ū, ą, ę, ė, į, ų, å (and uppercase versions)
+        const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿĀ-ŽāčēģīķļņšūžĄąČčĘęĖėĮįŠšŲųŪūŽžÅå\s\-]+$/;
+
+        if (!nameRegex.test(nameToValidate)) {
+            return {
+                valid: false,
+                message: 'Name can only contain letters, spaces, and hyphens (including Baltic and Finnish characters).'
+            };
+        }
+
+        return {
+            valid: true,
+            message: ''
+        };
+    };
+
     // Get tooltip message for verify button
     const getVerifyTooltipMessage = () => {
         if (!email) {
             return "Please enter an email address first";
+        } else if (!validateBasicEmailFormat(email)) {
+            return "Please enter a valid email format";
         } else if (confirmEmail && !emailsMatch) {
             return "Emails must match before verification";
         } else if (isValidatingEmail) {
             return "Verifying email...";
         }
-        return "";
+        return "Verify this email address";
     };
 
     // Should the verify button be disabled?
     const isVerifyButtonDisabled = () => {
-        return isValidatingEmail || !email || !confirmEmail || !emailsMatch;
+        return isValidatingEmail ||
+            !email ||
+            !validateBasicEmailFormat(email) ||
+            !confirmEmail ||
+            email !== confirmEmail;
     };
 
     return (
         <AppTheme>
-            <CssBaseline enableColorScheme />
-            <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 1100 }} />
+            <CssBaseline enableColorScheme/>
+            <ColorModeSelect sx={{position: 'fixed', top: '1rem', right: '1rem', zIndex: 1100}}/>
             <SignUpContainer direction="column" justifyContent="space-between">
                 <Card elevation={6}>
-                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <Box sx={{textAlign: 'center', mb: 3}}>
                         <Typography
                             component="h1"
                             variant="h4"
@@ -517,7 +683,7 @@ export default function JoinUsForm() {
                         >
                             Join Us
                         </Typography>
-                        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                        <Typography variant="body1" color="text.secondary" sx={{mt: 1}}>
                             Create an account to get started with IronTrack
                         </Typography>
                     </Box>
@@ -561,7 +727,7 @@ export default function JoinUsForm() {
                             <Grid item xs={12} md={6}>
                                 {/* Full Name */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="fullName" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="fullName" sx={{mb: 1, fontWeight: 500}}>
                                         Full Name (required)
                                     </FormLabel>
                                     <TextField
@@ -580,7 +746,7 @@ export default function JoinUsForm() {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Person />
+                                                    <Person/>
                                                 </InputAdornment>
                                             ),
                                         }}
@@ -594,10 +760,14 @@ export default function JoinUsForm() {
 
                                 {/* Email with Verify Button */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="email" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="email" sx={{mb: 1, fontWeight: 500}}>
                                         Email
                                     </FormLabel>
-                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        flexDirection: isMobile ? 'column' : 'row'
+                                    }}>
                                         <TextField
                                             error={emailError}
                                             helperText={emailErrorMessage}
@@ -615,7 +785,7 @@ export default function JoinUsForm() {
                                             InputProps={{
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <Email />
+                                                        <Email/>
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -625,39 +795,12 @@ export default function JoinUsForm() {
                                                 }
                                             }}
                                         />
-                                        <Tooltip
-                                            title={getVerifyTooltipMessage()}
-                                            arrow
-                                            placement="top"
-                                            disableHoverListener={!isVerifyButtonDisabled()}
-                                        >
-                                            <span> {/* Wrapper span is needed for disabled buttons in tooltips */}
-                                                <VerifyButton
-                                                    variant="contained"
-                                                    color="primary"
-                                                    onClick={handleVerifyEmail}
-                                                    disabled={isVerifyButtonDisabled()}
-                                                    sx={{
-                                                        mt: isMobile ? 1 : 0,
-                                                        width: isMobile ? '100%' : 'auto',
-                                                    }}
-                                                >
-                                                    {isValidatingEmail ? (
-                                                        <CircularProgress size={24} color="inherit" />
-                                                    ) : (
-                                                        <>
-                                                            <Verified sx={{ mr: 1 }} />
-                                                            Verify
-                                                        </>
-                                                    )}
-                                                </VerifyButton>
-                                            </span>
-                                        </Tooltip>
+
                                     </Box>
 
                                     {/* Validation Result Chip */}
                                     <Fade in={showValidationResult && !!emailValidationResult}>
-                                        <Box sx={{ mt: 1 }}>
+                                        <Box sx={{mt: 1}}>
                                             {emailValidationResult && showValidationResult && (
                                                 <ValidationResultChip
                                                     icon={getValidationIcon()}
@@ -672,7 +815,7 @@ export default function JoinUsForm() {
 
                                 {/* Confirm Email */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="confirmEmail" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="confirmEmail" sx={{mb: 1, fontWeight: 500}}>
                                         Confirm Email
                                     </FormLabel>
                                     <TextField
@@ -692,13 +835,13 @@ export default function JoinUsForm() {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Email />
+                                                    <Email/>
                                                 </InputAdornment>
                                             ),
                                             endAdornment: confirmEmail && (
                                                 <InputAdornment position="end">
                                                     {!confirmEmailError && confirmEmail ?
-                                                        <VerifiedUser color="success" /> : null}
+                                                        <VerifiedUser color="success"/> : null}
                                                 </InputAdornment>
                                             ),
                                         }}
@@ -708,11 +851,39 @@ export default function JoinUsForm() {
                                             }
                                         }}
                                     />
-                                </StyledFormControl>
 
-                                {/* Phone (optional) */}
+                                </StyledFormControl>
+                                <Tooltip
+                                    title={getVerifyTooltipMessage()}
+                                    arrow
+                                    placement="top"
+                                    disableHoverListener={!isVerifyButtonDisabled()}
+                                >
+
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleVerifyEmail}
+                                        disabled={isVerifyButtonDisabled()}
+                                        fullWidth
+                                        startIcon={isValidatingEmail ? null : <Verified/>}
+                                        sx={{
+                                            mt: 0,
+                                            height: '40px',
+                                            borderRadius: '8px',
+                                            fontWeight: 600,
+                                            textTransform: 'none',
+                                            mb: 1,
+                                        }}
+                                    >
+                                        {isValidatingEmail ? (
+                                            <CircularProgress size={24} color="inherit"/>
+                                        ) : "Verify Email to Continue"}
+                                    </Button>
+
+                                </Tooltip>
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="phone" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="phone" sx={{mb: 1, fontWeight: 500}}>
                                         Phone (required)
                                     </FormLabel>
                                     <TextField
@@ -720,15 +891,18 @@ export default function JoinUsForm() {
                                         name="phone"
                                         placeholder="+123456789"
                                         autoComplete="tel"
+                                        required
                                         fullWidth
                                         variant="outlined"
-                                        color="primary"
+                                        error={phoneError}
+                                        helperText={phoneErrorMessage}
+                                        color={phoneError ? 'error' : 'primary'}
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Phone />
+                                                    <Phone/>
                                                 </InputAdornment>
                                             ),
                                         }}
@@ -745,14 +919,14 @@ export default function JoinUsForm() {
                             <Grid item xs={12} md={6}>
                                 {/* Password */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="password" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="password" sx={{mb: 1, fontWeight: 500}}>
                                         Password
                                     </FormLabel>
                                     <TextField
                                         error={passwordError}
                                         helperText={passwordErrorMessage}
                                         name="password"
-                                        placeholder="••••••"
+                                        placeholder="••••••••"
                                         type={showPassword ? 'text' : 'password'}
                                         id="password"
                                         autoComplete="new-password"
@@ -765,7 +939,7 @@ export default function JoinUsForm() {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Key />
+                                                    <Key/>
                                                 </InputAdornment>
                                             ),
                                             endAdornment: (
@@ -775,7 +949,7 @@ export default function JoinUsForm() {
                                                         onClick={() => setShowPassword(!showPassword)}
                                                         edge="end"
                                                     >
-                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                        {showPassword ? <VisibilityOff/> : <Visibility/>}
                                                     </IconButton>
                                                 </InputAdornment>
                                             ),
@@ -790,14 +964,14 @@ export default function JoinUsForm() {
 
                                 {/* Confirm Password */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="confirmPassword" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="confirmPassword" sx={{mb: 1, fontWeight: 500}}>
                                         Confirm Password
                                     </FormLabel>
                                     <TextField
                                         error={confirmPasswordError}
                                         helperText={confirmPasswordErrorMessage}
                                         name="confirmPassword"
-                                        placeholder="••••••"
+                                        placeholder="••••••••"
                                         type={showConfirmPassword ? 'text' : 'password'}
                                         id="confirmPassword"
                                         required
@@ -809,7 +983,7 @@ export default function JoinUsForm() {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Key />
+                                                    <Key/>
                                                 </InputAdornment>
                                             ),
                                             endAdornment: (
@@ -819,7 +993,7 @@ export default function JoinUsForm() {
                                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                         edge="end"
                                                     >
-                                                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                                        {showConfirmPassword ? <VisibilityOff/> : <Visibility/>}
                                                     </IconButton>
                                                 </InputAdornment>
                                             ),
@@ -834,7 +1008,7 @@ export default function JoinUsForm() {
 
                                 {/* Address (optional) */}
                                 <StyledFormControl fullWidth>
-                                    <FormLabel htmlFor="address" sx={{ mb: 1, fontWeight: 500 }}>
+                                    <FormLabel htmlFor="address" sx={{mb: 1, fontWeight: 500}}>
                                         Address (optional)
                                     </FormLabel>
                                     <TextField
@@ -849,7 +1023,7 @@ export default function JoinUsForm() {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Home />
+                                                    <Home/>
                                                 </InputAdornment>
                                             ),
                                         }}
@@ -864,7 +1038,7 @@ export default function JoinUsForm() {
                         </Grid>
 
                         {/* Full width elements */}
-                        <Box sx={{ mt: 2 }}>
+                        <Box sx={{mt: 2, ml: 0}}>
                             {/* Affiliate Owner Checkbox */}
                             <FormControlLabel
                                 control={
@@ -875,7 +1049,7 @@ export default function JoinUsForm() {
                                     />
                                 }
                                 label="Are you an Affiliate Owner?"
-                                sx={{ mb: 1 }}
+                                sx={{mb: 1, ml: 0}}
                             />
 
                             {/* Terms and Conditions */}
@@ -885,15 +1059,15 @@ export default function JoinUsForm() {
                                 gap={1}
                                 sx={{
                                     mb: 3,
-                                    flexDirection: { xs: 'column', sm: 'row' },
-                                    alignItems: { xs: 'flex-start', sm: 'center' }
+                                    flexDirection: {xs: 'column', sm: 'row'},
+                                    alignItems: {xs: 'flex-start', sm: 'center'}
                                 }}
                             >
                                 <Box display="flex" alignItems="center">
                                     <Checkbox
                                         checked={acceptedTerms}
                                         onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                        sx={{ mr: 1 }}
+                                        sx={{mr: 1}}
                                     />
                                     <Typography>
                                         I have read and understand Terms and Conditions
@@ -907,8 +1081,8 @@ export default function JoinUsForm() {
                                     }}
                                     size="small"
                                     sx={{
-                                        ml: { xs: 0, sm: 2 },
-                                        mt: { xs: 1, sm: 0 },
+                                        ml: {xs: 0, sm: 0},
+                                        mt: {xs: 1, sm: 0},
                                         borderRadius: '8px',
                                         textTransform: 'none'
                                     }}
@@ -921,19 +1095,23 @@ export default function JoinUsForm() {
                                 type="submit"
                                 fullWidth
                                 variant="contained"
-                                disabled={isSubmitting || !acceptedTerms || isValidatingEmail}
-                                sx={{ mb: 3 }}
+
+                                sx={{mb: 3}}
                             >
-                                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                                Create Account
                             </StyledButton>
                         </Box>
 
-                        <Divider sx={{ mb: 3 }}>or</Divider>
+                        <Divider sx={{mb: 3}}>or</Divider>
 
-                        <Box sx={{ textAlign: 'center' }}>
+                        <Box sx={{textAlign: 'center'}}>
                             <Typography>
                                 Already have an account?{' '}
-                                <Link to="/login" style={{ color: theme.palette.primary.main, fontWeight: 600, textDecoration: 'none' }}>
+                                <Link to="/login" style={{
+                                    color: theme.palette.primary.main,
+                                    fontWeight: 600,
+                                    textDecoration: 'none'
+                                }}>
                                     Sign in
                                 </Link>
                             </Typography>

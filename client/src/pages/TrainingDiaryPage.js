@@ -20,6 +20,8 @@ const TrainingDiaryPage = () => {
                     const affiliateData = await fetchAffiliateInfo(userHomeAffiliate);
 
                     navigate("/classes", { state: { affiliate: affiliateData.affiliate } });
+                } else {
+                    navigate("/register-training");
                 }
             } catch (error) {
                 console.error("❌ Error fetching user home gym:", error);
@@ -31,13 +33,7 @@ const TrainingDiaryPage = () => {
 
     return (
         <Container maxWidth={false} sx={{ mt: 4 }}>
-            <Typography variant="h4" gutterBottom>
-                Training Diary
-            </Typography>
-            <Typography variant="body1">
-                Here you can log your workouts, track progress, and view training history.
-            </Typography>
-            {/* Add your training diary functionality here */}
+
         </Container>
     );
 };

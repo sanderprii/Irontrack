@@ -55,6 +55,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import AppTheme from "../shared-theme/AppTheme";
 import DOMPurify from "dompurify";
 
+import WeightliftingPercentageCalculator from "../components/WeightliftingPercentageCalculator";
 // Styled components
 const StyledContainer = styled(Container)(({ theme }) => ({
     paddingTop: theme.spacing(4),
@@ -783,7 +784,13 @@ export default function TrainingsPage() {
                                                     minRows={5}
                                                     maxRows={20}
                                                     value={wodDescription}
-                                                    onChange={(e) => setWodDescription(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const text = e.target.value;
+                                                        // Set a 2000 character limit (adjust as needed)
+                                                        if (text.length <= 2000) {
+                                                            setWodDescription(text);
+                                                        }
+                                                    }}
                                                     placeholder="Enter exercises and reps"
                                                     style={{
                                                         width: '100%',
@@ -796,6 +803,17 @@ export default function TrainingsPage() {
                                                         fontFamily: 'inherit'
                                                     }}
                                                 />
+                                                {wodDescription.length >= 1500 && (
+                                                    <Typography
+                                                        variant="caption"
+                                                        color={wodDescription.length >= 2000 ? "error" : "warning"}
+                                                        sx={{ mt: 1 }}
+                                                    >
+                                                        {wodDescription.length >= 5000
+                                                            ? "Maximum 2000 characters allowed. You've reached the limit."
+                                                            : `${2000 - wodDescription.length} characters remaining.`}
+                                                    </Typography>
+                                                )}
                                             </FormControl>
                                         </Grid>
 
@@ -824,7 +842,13 @@ export default function TrainingsPage() {
                                             minRows={5}
                                             maxRows={20}
                                             value={exercises}
-                                            onChange={(e) => setExercises(e.target.value)}
+                                            onChange={(e) => {
+                                                const text = e.target.value;
+                                                // Set a 2000 character limit
+                                                if (text.length <= 2000) {
+                                                    setExercises(text);
+                                                }
+                                            }}
                                             placeholder="Enter your exercises, sets, reps and weights"
                                             style={{
                                                 width: '100%',
@@ -837,6 +861,18 @@ export default function TrainingsPage() {
                                                 fontFamily: 'inherit'
                                             }}
                                         />
+                                        {/* Character counter and warning message */}
+                                        {exercises.length >= 1800 && (
+                                            <Typography
+                                                variant="caption"
+                                                color={exercises.length >= 2000 ? "error" : "warning"}
+                                                sx={{ mt: 1 }}
+                                            >
+                                                {exercises.length >= 2000
+                                                    ? "Maximum 2000 characters allowed. You've reached the limit."
+                                                    : `${2000 - exercises.length} characters remaining.`}
+                                            </Typography>
+                                        )}
                                     </FormControl>
                                 </Box>
                             )}
@@ -1031,7 +1067,13 @@ export default function TrainingsPage() {
                                                         Array.isArray(modalTraining.exercises) ?
                                                             modalTraining.exercises.map(ex => ex.exerciseData || '').join('\n') :
                                                             ''}
-                                                    onChange={(e) => updateModalField('exercises', e.target.value)}
+                                                    onChange={(e) => {
+                                                        const text = e.target.value;
+                                                        // Set a 2000 character limit
+                                                        if (text.length <= 2000) {
+                                                            updateModalField('exercises', text);
+                                                        }
+                                                    }}
                                                     style={{
                                                         width: '100%',
                                                         padding: '10px',
@@ -1044,6 +1086,18 @@ export default function TrainingsPage() {
                                                         whiteSpace: 'pre-wrap'
                                                     }}
                                                 />
+                                                {/* Character counter and warning message */}
+                                                {(typeof modalTraining.exercises === 'string' && modalTraining.exercises.length >= 1800) && (
+                                                    <Typography
+                                                        variant="caption"
+                                                        color={modalTraining.exercises.length >= 2000 ? "error" : "warning"}
+                                                        sx={{ mt: 1 }}
+                                                    >
+                                                        {modalTraining.exercises.length >= 2000
+                                                            ? "Maximum 2000 characters allowed. You've reached the limit."
+                                                            : `${2000 - modalTraining.exercises.length} characters remaining.`}
+                                                    </Typography>
+                                                )}
                                             </FormControl>
                                         ) : (
                                             <Paper
@@ -1094,6 +1148,11 @@ export default function TrainingsPage() {
                     </DialogContent>
 
                     <DialogActions sx={{ p: 2 }}>
+                        {modalTraining?.type === 'Weightlifting' && !isEditing && (
+                            <Box sx={{ flexGrow: 1 }}>
+                                <WeightliftingPercentageCalculator />
+                            </Box>
+                        )}
                         {modalTraining?.type === 'WOD' && modalTraining?.wodName && !isEditing && (
                             <Button
                                 onClick={handleAddToRecords}

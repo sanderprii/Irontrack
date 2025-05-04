@@ -17,6 +17,7 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
     const [loading, setLoading] = useState(false);
     const [dialogTitle, setDialogTitle] = useState('Contract Terms');
     const [termsType, setTermsType] = useState('register');
+    const [isEstonian, setIsEstonian] = useState(false);
 
     // Get user role once for consistent use throughout component
     const userRole = localStorage.getItem('role');
@@ -32,6 +33,8 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
             // Use the provided termsId when role exists
             setTermsType(termsId);
         }
+        // Start with English (UK flag showing)
+        setIsEstonian(false);
     }, [open, termsId, userRole]);
 
     useEffect(() => {
@@ -57,15 +60,23 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
     };
 
     const handleLanguageChange = () => {
-        // Choose the Estonian terms type based on whether user has a role
-        if (userRole) {
-            // If user has a role, use contractEST type
-
-            setTermsType('contractEST');
+        // Toggle between Estonian and English
+        if (!isEstonian) {
+            // Switch to Estonian
+            if (userRole) {
+                setTermsType('contractEST');
+            } else {
+                setTermsType('registerEST');
+            }
+            setIsEstonian(true);
         } else {
-            // If user has no role, use registerEST type
-
-            setTermsType('registerEST');
+            // Switch to English
+            if (userRole) {
+                setTermsType(termsId); // Use the provided termsId for English
+            } else {
+                setTermsType('register'); // Default English type
+            }
+            setIsEstonian(false);
         }
     };
 
@@ -173,41 +184,118 @@ export default function ContractTermsModal({ open, onClose, termsId }) {
         );
     };
 
-    // Estonian flag component
-    const EstonianFlag = () => {
-        return (
-            <IconButton
-                onClick={handleLanguageChange}
-                sx={{
-                    position: 'absolute',
-                    right: 16,
-                    top: 8,
-                    width: 36,
-                    height: 24,
-                    p: 0,
-                    overflow: 'hidden',
-                    border: '1px solid #ccc'
-                }}
-            >
-                <Box sx={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
-                    <Box sx={{ flex: 1, bgcolor: '#0072CE', width: '100%' }} />
-                    <Box sx={{ flex: 1, bgcolor: '#000000', width: '100%' }} />
-                    <Box sx={{ flex: 1, bgcolor: '#FFFFFF', width: '100%' }} />
-                </Box>
-            </IconButton>
-        );
+    // Flag Component - either Estonian or UK flag based on state
+    const LanguageFlag = () => {
+        // UK flag component
+        if (!isEstonian) {
+            return (
+                <IconButton
+                    onClick={handleLanguageChange}
+                    sx={{
+                        position: 'absolute',
+                        right: 16,
+                        top: 8,
+                        width: 36,
+                        height: 24,
+                        p: 0,
+                        overflow: 'hidden',
+                        border: '1px solid #ccc'
+                    }}
+                >
+                    {/* Union Jack design - simplified version */}
+                    <Box sx={{
+                        width: '100%',
+                        height: '100%',
+                        bgcolor: '#00247D',
+                        position: 'relative'
+                    }}>
+                        {/* White diagonal crosses */}
+                        <Box sx={{
+                            position: 'absolute',
+                            width: '100%',
+                            height: '100%',
+                            left: 0,
+                            top: 0,
+                        }}>
+                            {/* White X cross */}
+                            <Box sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: 'linear-gradient(to bottom right, transparent calc(50% - 2px), white calc(50% - 1px), white calc(50% + 1px), transparent calc(50% + 2px)), linear-gradient(to bottom left, transparent calc(50% - 2px), white calc(50% - 1px), white calc(50% + 1px), transparent calc(50% + 2px))'
+                            }} />
+
+                            {/* Red X cross */}
+                            <Box sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: 'linear-gradient(to bottom right, transparent calc(50% - 1px), #CF142B calc(50% - 0.5px), #CF142B calc(50% + 0.5px), transparent calc(50% + 1px)), linear-gradient(to bottom left, transparent calc(50% - 1px), #CF142B calc(50% - 0.5px), #CF142B calc(50% + 0.5px), transparent calc(50% + 1px))'
+                            }} />
+
+                            {/* White + cross */}
+                            <Box sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: 'linear-gradient(to bottom, transparent calc(50% - 3px), white calc(50% - 3px), white calc(50% + 3px), transparent calc(50% + 3px)), linear-gradient(to right, transparent calc(50% - 3px), white calc(50% - 3px), white calc(50% + 3px), transparent calc(50% + 3px))'
+                            }} />
+
+                            {/* Red + cross */}
+                            <Box sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: 'linear-gradient(to bottom, transparent calc(50% - 2px), #CF142B calc(50% - 2px), #CF142B calc(50% + 2px), transparent calc(50% + 2px)), linear-gradient(to right, transparent calc(50% - 2px), #CF142B calc(50% - 2px), #CF142B calc(50% + 2px), transparent calc(50% + 2px))'
+                            }} />
+                        </Box>
+                    </Box>
+                </IconButton>
+            );
+        } else {
+            // Estonian flag
+            return (
+                <IconButton
+                    onClick={handleLanguageChange}
+                    sx={{
+                        position: 'absolute',
+                        right: 16,
+                        top: 8,
+                        width: 36,
+                        height: 24,
+                        p: 0,
+                        overflow: 'hidden',
+                        border: '1px solid #ccc'
+                    }}
+                >
+                    <Box sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <Box sx={{ flex: 1, bgcolor: '#0072CE', width: '100%' }} />
+                        <Box sx={{ flex: 1, bgcolor: '#000000', width: '100%' }} />
+                        <Box sx={{ flex: 1, bgcolor: '#FFFFFF', width: '100%' }} />
+                    </Box>
+                </IconButton>
+            );
+        }
     };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle sx={{ position: 'relative' }}>
                 {dialogTitle}
-                <EstonianFlag />
+                <LanguageFlag />
             </DialogTitle>
             <DialogContent dividers>
                 {loading ? (

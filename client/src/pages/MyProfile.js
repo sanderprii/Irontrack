@@ -32,19 +32,18 @@ import { getUserProfile, updateUserProfile, changeUserPassword } from '../api/pr
 import { uploadProfilePicture } from '../api/logoApi';
 import { getUserContracts } from '../api/contractApi';
 
+// Removed 'edit-profile' and 'change-password' from menu items
 const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
     { id: 'family-members', label: 'Children', component: FamilyMembers },
     { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
-    { id: 'edit-profile', label: 'Edit Profile', component: ProfileEdit },
-    { id: 'change-password', label: 'Change Password', component: ChangePassword },
-    { id: 'statistics', label: 'Statistics', component: Statistics },
     { id: 'purchase-history', label: 'Purchase History', component: PurchaseHistory },
     { id: 'visit-history', label: 'Visit History', component: VisitHistory },
     { id: 'active-plans', label: 'Active Plans', component: ActivePlans },
     { id: 'credit', label: 'Credit', component: CreditView },
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
     { id: 'transactions', label: 'Transactions', component: Transactions },
+    { id: 'statistics', label: 'Statistics', component: Statistics },
 ];
 
 export default function MyProfile() {
@@ -93,6 +92,15 @@ export default function MyProfile() {
         setDrawerOpen(false);
     };
 
+    // New handler functions for Edit Profile and Change Password
+    const handleEditProfile = () => {
+        setActiveComponent('edit-profile-temp');
+    };
+
+    const handleChangePassword = () => {
+        setActiveComponent('change-password-temp');
+    };
+
     const handleUploadProfilePicture = async (file) => {
         try {
             const updatedUser = await uploadProfilePicture(file, user.id);
@@ -112,7 +120,7 @@ export default function MyProfile() {
         }
     };
 
-    const handleChangePassword = async (passwordData) => {
+    const handleChangePasswordSubmit = async (passwordData) => {
         const success = await changeUserPassword(passwordData);
         if (success) {
             alert('Password changed successfully!');
@@ -121,10 +129,6 @@ export default function MyProfile() {
             alert('Failed to change password.');
         }
     };
-
-    // Leiame aktiivse komponendi menüüelementide seast
-    const ActiveComponent =
-        menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
 
     const renderActiveComponent = () => {
         if (isLoading) {
@@ -135,7 +139,8 @@ export default function MyProfile() {
             );
         }
 
-        if (activeComponent === 'edit-profile') {
+        // Special cases for edit-profile and change-password components
+        if (activeComponent === 'edit-profile-temp') {
             return (
                 <ProfileEdit
                     user={user}
@@ -145,10 +150,10 @@ export default function MyProfile() {
             );
         }
 
-        if (activeComponent === 'change-password') {
+        if (activeComponent === 'change-password-temp') {
             return (
                 <ChangePassword
-                    onChangePassword={handleChangePassword}
+                    onChangePassword={handleChangePasswordSubmit}
                     onCancel={() => setActiveComponent('my-profile')}
                 />
             );
@@ -166,7 +171,9 @@ export default function MyProfile() {
             );
         }
 
-        // For all other components
+        // For all other components including my-profile
+        const ActiveComponent = menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
+
         return (
             <ActiveComponent
                 user={user}
@@ -176,6 +183,8 @@ export default function MyProfile() {
                 userFullName={user?.fullName}
                 affiliateId={user?.homeAffiliate}
                 onUploadProfilePicture={handleUploadProfilePicture}
+                onEditProfile={handleEditProfile}
+                onChangePassword={handleChangePassword}
             />
         );
     };
@@ -206,7 +215,7 @@ export default function MyProfile() {
             {/* Horisontaalne mobiilimenüü */}
             <Paper
                 sx={{
-position: 'absolute',
+                    position: 'absolute',
                     top: 0,
                     left: 0,
                     right: 0,
@@ -239,7 +248,8 @@ position: 'absolute',
                     }}
                 >
                     <Tabs
-                        value={activeComponent}
+                        value={activeComponent === 'edit-profile-temp' || activeComponent === 'change-password-temp'
+                            ? 'my-profile' : activeComponent}
                         onChange={(event, newValue) => setActiveComponent(newValue)}
                         variant="scrollable"
                         scrollButtons={false}
@@ -269,9 +279,16 @@ position: 'absolute',
                                 sx={{
                                     whiteSpace: 'nowrap',
                                     minWidth: 'auto',
-                                    fontWeight: activeComponent === item.id ? 'bold' : 'normal',
+                                    fontWeight: (activeComponent === item.id ||
+                                        (activeComponent === 'edit-profile-temp' && item.id === 'my-profile') ||
+                                        (activeComponent === 'change-password-temp' && item.id === 'my-profile'))
+                                        ? 'bold' : 'normal',
                                     fontSize: '0.85rem', // Väiksem font, et sobituks madalama kõrgusega
                                     px: 1, // Vähendatud külgmine padding
+                                    backgroundColor: (activeComponent === item.id ||
+                                        (activeComponent === 'edit-profile-temp' && item.id === 'my-profile') ||
+                                        (activeComponent === 'change-password-temp' && item.id === 'my-profile'))
+                                        ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
                                 }}
                             />
                         ))}
@@ -291,6 +308,8 @@ position: 'absolute',
                 PaperProps={{
                     sx: {
                         position: 'relative',
+
+                        borderRight: '1px solid #e0e0e0'
                     },
                 }}
             >
@@ -301,7 +320,40 @@ position: 'absolute',
                                 button
                                 key={item.id}
                                 onClick={() => handleMenuClick(item.id)}
-                                selected={activeComponent === item.id}
+                                selected={activeComponent === item.id ||
+                                    (activeComponent === 'edit-profile-temp' && item.id === 'my-profile') ||
+                                    (activeComponent === 'change-password-temp' && item.id === 'my-profile')}
+                                sx={{
+                                    borderRadius: '4px',
+                                    mb: 0.5,
+                                    pl: 2,  // Padding for left indent
+                                    cursor: 'pointer',
+                                    position: 'relative',  // For absolute positioning of the indicator
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                                    },
+                                    '&.Mui-selected': {
+                                        backgroundColor: 'rgba(33, 150, 243, 0.15)',
+                                        borderLeft: '5px solid #2196f3',  // Thicker, more visible border
+                                        pl: 1.5,  // Adjust padding to account for border
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(33, 150, 243, 0.25)',
+                                        },
+                                        '&::before': {  // Triangle indicator on the right
+                                            content: '""',
+                                            position: 'absolute',
+                                            right: 0,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            width: 0,
+                                            height: 0,
+                                            borderTop: '8px solid transparent',
+                                            borderBottom: '8px solid transparent',
+                                            borderRight: '8px solid #fff',  // Triangle pointing to content
+                                        }
+                                    }
+                                }}
                             >
                                 <ListItemText
                                     primary={
@@ -309,6 +361,17 @@ position: 'absolute',
                                             ? `${item.label} (${sentCount})`
                                             : item.label
                                     }
+                                    primaryTypographyProps={{
+                                        fontWeight: (activeComponent === item.id ||
+                                            (activeComponent === 'edit-profile-temp' && item.id === 'my-profile') ||
+                                            (activeComponent === 'change-password-temp' && item.id === 'my-profile'))
+                                            ? '600' : 'normal',  // Bolder text for selected
+                                        fontSize: '0.95rem',  // Slightly larger text
+                                        color: (activeComponent === item.id ||
+                                            (activeComponent === 'edit-profile-temp' && item.id === 'my-profile') ||
+                                            (activeComponent === 'change-password-temp' && item.id === 'my-profile'))
+                                            ? '#1976d2' : 'rgba(0, 0, 0, 0.7)'  // Color change for selected text
+                                    }}
                                     sx={{
                                         color:
                                             item.id === 'user-contracts' && sentCount > 0
@@ -328,7 +391,7 @@ position: 'absolute',
                     flexGrow: 1,
                     p: { xs: 0, sm: 0, md: 3 },
                     backgroundColor: 'background.default',
-
+                    mt: { xs: 5, md: 0 }, // Add margin-top on mobile for fixed menu
                 }}
             >
                 <Card sx={{ backgroundColor: 'background.paper', p: 0, pt: 2, pb: 2 }}>

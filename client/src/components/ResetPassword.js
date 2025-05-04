@@ -19,7 +19,7 @@ import {
 import { Visibility, VisibilityOff, LockReset } from '@mui/icons-material';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { SitemarkIcon } from './components/CustomIcons';
+
 
 const Card = styled(Paper)(({ theme }) => ({
     display: 'flex',
@@ -231,7 +231,7 @@ const ResetPassword = () => {
             <ResetContainer direction="column" justifyContent="space-between">
                 <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
                 <Card elevation={6}>
-                    <SitemarkIcon sx={{ fontSize: 48, alignSelf: 'center', mb: 2 }} />
+
                     <Typography
                         component="h1"
                         variant="h4"

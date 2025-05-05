@@ -426,10 +426,9 @@ export default function Checkout(props) {
                     // Viivitus, et andmed jõuaksid salvestuda
                     await new Promise(resolve => setTimeout(resolve, 500));
                     // Suuna kasutaja maksele
-                    const paymentWindow = window.open(paymentResponse.payment_url, '_blank');
-                    // ootab 2 sekundit enne kui navigate teeb
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    window.location.href = paymentResponse.payment_url;
 
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     navigate('/after-checkout');
                 } else {
                     throw new Error('Error payment response');
@@ -445,14 +444,6 @@ export default function Checkout(props) {
     const handleNext = () => {
         if (activeStep === steps.length - 1) {
             handlePlaceOrder();
-
-            // ootab 2 sekundit enne kui navigate teeb
-            setTimeout(() => {
-                navigate('/after-checkout');
-            }
-            , 10000);
-
-
         } else {
             setActiveStep(activeStep + 1);
         }

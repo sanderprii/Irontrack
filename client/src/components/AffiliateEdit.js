@@ -69,9 +69,18 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
         const isValid = validateForm();
 
         if (isValid) {
+
+            let websiteValue = form.website || '';
+
+            // Kui väli pole tühi ja ei alga http:// või https:// eesliitega
+            if (websiteValue && !websiteValue.match(/^https?:\/\//)) {
+                websiteValue = 'https://' + websiteValue;
+            }
+
             const updatedForm = {
                 ...form,
                 id: form.id || affiliate.id, // Kasuta ID-d, mis saadi `MyAffiliate.js` kaudu
+                website: websiteValue,
                 trainers: selectedTrainers.map(trainer => ({
                     trainerId: trainer.trainerId,
                     fullName: trainer.fullName,

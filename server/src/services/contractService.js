@@ -212,21 +212,21 @@ async function processContractPayments() {
     try {
         const today = new Date();
 
-        // 1. Esmalt märgime lõppenud lepingud "ended" staatusesse
+        // 1. Mark expired contracts as "ended" (unchanged)
         const expiredContracts = await prisma.contract.findMany({
             where: {
                 active: true,
                 validUntil: {
-                    lt: today // Lõpptähtaeg on möödas
+                    lt: today
                 },
                 status: {
-                    not: 'ended' // Pole veel lõppenuks märgitud
+                    not: 'ended'
                 }
             }
         });
 
         if (expiredContracts.length > 0) {
-            // Märgi lepingud lõppenuks
+            // Logic for marking contracts as ended (unchanged)
             await prisma.contract.updateMany({
                 where: {
                     id: {
@@ -239,7 +239,6 @@ async function processContractPayments() {
                 }
             });
 
-            // Salvesta logi andmebaasi
             await prisma.contractLogs.createMany({
                 data: expiredContracts.map(contract => ({
                     contractId: contract.id,
@@ -248,29 +247,24 @@ async function processContractPayments() {
                     action: 'contract ended - Contract period expired',
                 }))
             });
-
-
         }
 
-        // 2. Kontrolli ja saada meeldetuletused tasumata maksetele
+        // 2. & 3. Pending payments and weekly reminders (unchanged)
         const pendingPaymentsResult = await checkAndNotifyPendingPayments();
 
-
-        // 3. Kontrolli, kas täna on esmaspäev ja saada iganädalased meeldetuletused kõigile pending tehingutele
         let weeklyRemindersResult = { notifiedCount: 0 };
-        if (today.getDay() === 1) { // 1 = esmaspäev
+        if (today.getDay() === 1) {
             weeklyRemindersResult = await sendWeeklyPaymentReminders();
-
         }
 
-        // 4. Jätkame tavapärase maksetöötlusega
+        // 4. Process new payments
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + 10);
         const targetPaymentDay = futureDate.getDate();
 
         const currentMonth = futureDate.toLocaleString('en-US', {month: 'long'});
 
-        // Otsi lepingud, millel on maksepäev täna ja lõpptähtaeg tulevikus
+        // Find active contracts with payment day today
         let activeContracts = await prisma.contract.findMany({
             where: {
                 active: true,
@@ -293,9 +287,13 @@ async function processContractPayments() {
             }
         });
 
-        // Käi läbi kõik aktiivsed lepingud ja saada makselingid
+        // Process each active contract
         for (const contract of activeContracts) {
-            await createAndSendPaymentLink(contract, currentMonth, true);
+            // Check if contract is near its end date (less than a month left)
+            const isNearEnd = isContractNearEnd(contract, targetPaymentDay);
+
+            // Create and send payment link, passing the isNearEnd flag
+            await createAndSendPaymentLink(contract, currentMonth, true, isNearEnd);
         }
 
         return {
@@ -309,6 +307,23 @@ async function processContractPayments() {
         console.error('Error processing contract payments:', error);
         throw error;
     }
+}
+
+function isContractNearEnd(contract, paymentDay) {
+    if (!contract.validUntil) return false;
+
+    // Create date for this payment
+    const paymentDate = new Date();
+    paymentDate.setDate(paymentDay);
+
+    // If payment date would be after validUntil, contract is already expired
+    if (paymentDate > contract.validUntil) return false;
+
+    // Calculate days between payment and contract end
+    const daysRemaining = Math.ceil((contract.validUntil - paymentDate) / (1000 * 60 * 60 * 24));
+
+    // Return true if less than 30 days remaining
+    return daysRemaining < 30;
 }
 
 // Kasutaja krediidi kontrollimiseks ja rakendamiseks
@@ -384,11 +399,9 @@ async function checkAndApplyUserCredit(userId, affiliateId, paymentAmount) {
 }
 
 // Update UserPlan lõppkuupäeva funktsioon
-async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
+async function updateUserPlanDueDate(contractId, isPaymentHoliday, proratedDays = null) {
     try {
         if (isPaymentHoliday) {
-
-
             const userPlan = await prisma.userPlan.findFirst({
                 where: {contractId: parseInt(contractId)}
             });
@@ -401,15 +414,9 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
                 where: {id: userPlan.id},
                 data: {paymentHoliday: true}
             });
-
-
-
-
         } else {
-
             const userPlan = await prisma.userPlan.findFirst({
                 where: {contractId: parseInt(contractId)},
-
             });
 
             if (!userPlan) {
@@ -420,8 +427,6 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
                 where: {id: userPlan.id},
                 data: {paymentHoliday: false}
             });
-
-
         }
 
         const userPlan = await prisma.userPlan.findFirst({
@@ -429,20 +434,25 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
         });
 
         if (!userPlan) {
-
             return false;
         }
 
-        // Arvuta uus lõppkuupäev (lisa üks kuu)
+        // Calculate new end date based on prorated days or full month
         let newEndDate = new Date(userPlan.endDate);
-        newEndDate.setMonth(newEndDate.getMonth() + 1);
 
-        // Uuenda kasutaja plaani kehtivust
+        if (proratedDays !== null) {
+            // For prorated payments, only extend by the number of days paid for
+            newEndDate.setDate(newEndDate.getDate() + proratedDays);
+        } else {
+            // For normal payments, extend by one month
+            newEndDate.setMonth(newEndDate.getMonth() + 1);
+        }
+
+        // Update user plan validity
         await prisma.userPlan.update({
             where: {id: userPlan.id},
             data: {endDate: newEndDate}
         });
-
 
         return true;
     } catch (error) {
@@ -451,9 +461,10 @@ async function updateUserPlanDueDate(contractId, isPaymentHoliday) {
     }
 }
 
-async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotification = false) {
+
+async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotification = false, isNearEnd = false) {
     try {
-        // Otsi affiliate API võtmed
+        // Existing code for API keys
         const apiKeys = await prisma.affiliateApiKeys.findFirst({
             where: {
                 affiliateId: contract.affiliateId
@@ -465,7 +476,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             return false;
         }
 
-        // Kontrolli, kas lepingul on payment holiday sellel kuul
+        // Check for payment holiday (unchanged)
         const paymentHoliday = await prisma.paymentHoliday.findFirst({
             where: {
                 contractId: contract.id,
@@ -476,48 +487,62 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             }
         });
 
-        // Määra makse summa vastavalt payment holiday olemasolule
+        // Determine original payment amount
         let originalPaymentAmount;
         let isPaymentHoliday = false;
 
         if (paymentHoliday) {
-
-            // Kasuta payment holiday fee summat, kui see on olemas
             originalPaymentAmount = contract.affiliate.paymentHolidayFee || 0;
             isPaymentHoliday = true;
         } else {
-            // Kasuta tavapärast makse summat
             originalPaymentAmount = parseFloat(contract.paymentAmount);
         }
 
-        // Kontrolli ja rakenda kasutaja krediiti
+        // If contract is near end, prorate the payment amount
+        let proratedDays = 0;
+        if (isNearEnd && !isPaymentHoliday) {
+            // Calculate days between payment date and contract end
+            const paymentDate = new Date();
+            paymentDate.setDate(contract.paymentDay);
+console.log(`Payment date: ${paymentDate}`);
+            proratedDays = Math.ceil((contract.validUntil - paymentDate) / (1000 * 60 * 60 * 24));
+
+            // Prorate the payment amount based on days remaining
+            originalPaymentAmount = (originalPaymentAmount * proratedDays / 30).toFixed(2);
+            originalPaymentAmount = parseFloat(originalPaymentAmount);
+        }
+console.log(`Prorated days: ${proratedDays}`);
+        // Check and apply user credit (unchanged)
         const {appliedCredit, remainingAmount} = await checkAndApplyUserCredit(
             contract.userId,
             contract.affiliateId,
             originalPaymentAmount
         );
 
-        // Loo kirjeldus
+        // Create description with prorated info if needed
         const baseDescription = isPaymentHoliday
             ? `Payment holiday fee for ${contract.affiliate.name} (${currentMonth})`
             : `Monthly payment for ${contract.affiliate.name}`;
 
-        // Lisa info rakendatud krediidi kohta
+        // Add prorated days info if applicable
+        const proratedInfo = (isNearEnd && proratedDays > 0 && !isPaymentHoliday)
+            ? ` (prorated for ${proratedDays} days)`
+            : '';
+console.log(`Prorated info: ${proratedInfo}`);
+        // Add credit info
         const creditInfo = appliedCredit > 0
             ? `, applied credit: ${appliedCredit}€`
             : '';
 
-        const description = `${baseDescription}${creditInfo}`;
+        const description = `${baseDescription}${proratedInfo}${creditInfo}`;
 
-        // Unikaalne arvenumber
+        // Unique invoice number
         const invoiceNumber = `contract-${contract.id}-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)}`;
 
-        // STSENAARIUM 1: Täielikult krediidiga tasumine
+        // SCENARIO 1: Fully paid with credit
         if (remainingAmount <= 0) {
-
-
             try {
-                // Registreeri edukas makse
+                // Register successful payment
                 const transaction = await prisma.transactions.create({
                     data: {
                         amount: originalPaymentAmount,
@@ -531,13 +556,19 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
                     }
                 });
 
+                // Update UserPlan end date, passing prorated days
+                await updateUserPlanDueDate(contract.id, isPaymentHoliday, isNearEnd ? proratedDays : null);
 
-
-                // Uuenda UserPlan lõppkuupäeva
-                await updateUserPlanDueDate(contract.id, isPaymentHoliday);
-
-                // Saada email, et makse on krediidiga kaetud
-                await sendCreditPaymentEmail(contract, originalPaymentAmount, appliedCredit, isPaymentHoliday, currentMonth, isEarlyNotification);
+                // Send email
+                await sendCreditPaymentEmail(
+                    contract,
+                    originalPaymentAmount,
+                    appliedCredit,
+                    isPaymentHoliday,
+                    currentMonth,
+                    isEarlyNotification,
+                    isNearEnd && proratedDays > 0 ? proratedDays : null
+                );
 
                 return true;
             } catch (error) {
@@ -546,9 +577,7 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             }
         }
 
-        // STSENAARIUM 2 & 3: Osaline krediiditasu või täielik maksemeetod
-
-        // Makselingi loomiseks vajalikud andmed
+        // SCENARIO 2 & 3: Partial credit or full payment method (nearly unchanged)
         const paymentData = {
             accessKey: apiKeys.accessKey,
             merchantReference: invoiceNumber,
@@ -561,19 +590,17 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             askAdditionalInfo: false
         };
 
-        // Genereeri JWT token
         const token = jwt.sign(
             paymentData,
             apiKeys.secretKey,
             {algorithm: 'HS256', expiresIn: '1h'}
         );
 
-        // Saada päring Montonio API-le
         const response = await axios.post(`${MONTONIO_API_URL}/payment-links`, {
             data: token
         });
 
-        // Registreeri makse andmebaasi kui ootel
+        // Record payment with prorated info
         const transaction = await recordPendingPayment(
             contract,
             response.data.uuid,
@@ -581,10 +608,11 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             originalPaymentAmount,
             appliedCredit,
             remainingAmount,
-            response.data.url
+            response.data.url,
+            isNearEnd && proratedDays > 0 ? proratedDays : null
         );
 
-        // Saada makselink emailile
+        // Send payment email with prorated info
         await sendPaymentEmail(
             contract,
             response.data.url,
@@ -593,7 +621,8 @@ async function createAndSendPaymentLink(contract, currentMonth, isEarlyNotificat
             remainingAmount,
             isPaymentHoliday,
             currentMonth,
-            isEarlyNotification
+            isEarlyNotification,
+            isNearEnd && proratedDays > 0 ? proratedDays : null
         );
 
         return true;
@@ -613,35 +642,40 @@ async function recordPendingPayment(
     originalAmount,
     appliedCredit = 0,
     remainingAmount,
-    paymentUrl
+    paymentUrl,
+    proratedDays = null
 ) {
     try {
-        // Määra tüüp vastavalt krediidi kasutusele
+        // Payment type based on credit usage
         const paymentType = appliedCredit > 0 ? "mixed" : "montonio";
 
-        // Krediidi info kirjelduses
+        // Credit info
         const creditInfo = appliedCredit > 0
             ? `, applied credit: ${appliedCredit}€`
             : '';
 
-        // Create a new transaction record
+        // Prorated info
+        const proratedInfo = proratedDays !== null
+            ? ` (prorated for ${proratedDays} days)`
+            : '';
+
+        // Create transaction record
         const transaction = await prisma.transactions.create({
             data: {
                 amount: remainingAmount,
                 invoiceNumber: `contract-${contract.id}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 10000)}`,
                 description: isPaymentHoliday
                     ? `Payment holiday fee for contract #${contract.id}${creditInfo}`
-                    : `Monthly payment for contract #${contract.id}${creditInfo}`,
+                    : `Monthly payment for contract #${contract.id}${proratedInfo}${creditInfo}`,
                 type: paymentType,
                 status: "pending",
                 contractId: contract.id,
                 userId: contract.userId,
                 affiliateId: contract.affiliateId,
-
             }
         });
 
-        // Record payment metadata
+        // Record payment metadata with proratedDays
         await prisma.paymentMetadata.create({
             data: {
                 transactionId: transaction.id,
@@ -651,9 +685,9 @@ async function recordPendingPayment(
                 isPaymentHoliday: isPaymentHoliday,
                 createdAt: new Date(),
                 paymentUrl: paymentUrl,
+                proratedDays: proratedDays,
             }
         });
-
 
         return transaction;
     } catch (error) {
@@ -664,21 +698,37 @@ async function recordPendingPayment(
 
 // Täielikult krediidiga tasutud makse e-maili saatmiseks
 // Täielikult krediidiga tasutud makse e-maili saatmiseks
-async function sendCreditPaymentEmail(contract, paymentAmount, appliedCredit, isPaymentHoliday, currentMonth, isEarlyNotification = false) {
+async function sendCreditPaymentEmail(
+    contract,
+    paymentAmount,
+    appliedCredit,
+    isPaymentHoliday,
+    currentMonth,
+    isEarlyNotification = false,
+    proratedDays = null
+) {
     try {
         const dueDate = new Date();
         dueDate.setDate(contract.paymentDay);
         const formattedDueDate = dueDate.toLocaleDateString();
-        const invoiceNumber = `CREDIT-${contract.id}-${new Date().getTime()}`;
+        const invoiceNumber = `CONTRACT-${contract.id}-${new Date().getTime()}`;
+
+        // Add prorated info to subject if applicable
+        const proratedSubject = proratedDays !== null ? ` (Prorated)` : '';
 
         // Add "Early Payment Notification" to subject if applicable
         const emailSubject = `${isEarlyNotification ? "Early Payment Notification: " : ""}${
             isPaymentHoliday
                 ? `Payment Holiday Fee for ${contract.affiliate.name} - ${currentMonth}`
-                : `Monthly payment for ${contract.affiliate.name}`
+                : `Monthly payment for ${contract.affiliate.name}${proratedSubject}`
         }`;
 
-        // Create content for the email body - WITHOUT the HTML structure
+        // Add prorated info to email body if applicable
+        const proratedInfo = proratedDays !== null
+            ? `<p><strong>Note:</strong> This is a prorated payment for ${proratedDays} days until your contract end date.</p>`
+            : '';
+
+        // Create email body
         const emailBody = `
 <div class="invoice-details">
   <p><strong>Invoice #:</strong> ${invoiceNumber}</p>
@@ -692,6 +742,8 @@ ${isEarlyNotification ? `
   <p><strong>Early Payment Notice:</strong> This is an advance notification for your payment due on ${formattedDueDate}.</p>
 </div>
 ` : ''}
+
+${proratedInfo}
 
 <p>Dear ${contract.user.fullName},</p>
 
@@ -711,7 +763,7 @@ ${isEarlyNotification ? `
     <tr>
       <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">${isPaymentHoliday ?
             `Payment Holiday Fee for ${currentMonth}` :
-            `Monthly Payment for ${contract.contractType || 'Membership'}`
+            `${proratedDays !== null ? `Prorated Payment (${proratedDays} days)` : 'Monthly Payment'} for ${contract.contractType || 'Membership'}`
         }</td>
       <td style="padding: 10px; text-align: left; border-bottom: 1px solid #eee;">€${paymentAmount.toFixed(2)}</td>
     </tr>
@@ -730,15 +782,21 @@ ${isEarlyNotification ? `
 
 <p>Thank you for being a valued member!</p>`;
 
-        // Create plain text version as fallback
+        // Create plain text fallback with prorated info
+        const proratedTextInfo = proratedDays !== null
+            ? `NOTE: This is a prorated payment for ${proratedDays} days until your contract end date.\n\n`
+            : '';
+
         const textContent = `
 Dear ${contract.user.fullName},
 
 ${isEarlyNotification ? `EARLY PAYMENT NOTICE: This is an advance notification for your payment due on ${formattedDueDate}.\n\n` : ''}
 
+${proratedTextInfo}
+
 ${isPaymentHoliday ?
             `This is a payment holiday month for your subscription with ${contract.affiliate.name}.\nA reduced fee of €${paymentAmount.toFixed(2)} was due for ${currentMonth}.` :
-            `Your monthly payment of €${paymentAmount.toFixed(2)} for ${contract.affiliate.name} was due.`
+            `Your ${proratedDays !== null ? `prorated (${proratedDays} days)` : 'monthly'} payment of €${paymentAmount.toFixed(2)} for ${contract.affiliate.name} was due.`
         }
 
 Good news! This payment has been fully covered by your available credit (€${appliedCredit.toFixed(2)} used). No further action is required.
@@ -778,20 +836,24 @@ async function sendPaymentEmail(
     remainingAmount,
     isPaymentHoliday,
     currentMonth,
-    isEarlyNotification = false
+    isEarlyNotification = false,
+    proratedDays = null
 ) {
     const dueDate = new Date();
     dueDate.setDate(contract.paymentDay);
     const formattedDueDate = dueDate.toLocaleDateString();
 
+    // Add prorated info to subject if applicable
+    const proratedSubject = proratedDays !== null ? ` (Prorated)` : '';
+
     // Add "Early Payment Notification" to subject if applicable
     const emailSubject = `${isEarlyNotification ? "Early Payment Notification: " : ""}${
         isPaymentHoliday
             ? `Payment Holiday Fee for ${contract.affiliate.name} - ${currentMonth}`
-            : `Monthly payment for ${contract.affiliate.name}`
+            : `Monthly payment for ${contract.affiliate.name}${proratedSubject}`
     }`;
 
-    // Add early payment information to the email body
+    // Add early payment info
     const earlyNotificationHtml = isEarlyNotification
         ? `<p>This is an early payment notification. Your payment is due on ${formattedDueDate}.</p>`
         : '';
@@ -800,7 +862,16 @@ async function sendPaymentEmail(
         ? `This is an early payment notification. Your payment is due on ${formattedDueDate}.\n\n`
         : '';
 
-    // Add credit application information
+    // Add prorated info
+    const proratedInfo = proratedDays !== null
+        ? `<p><strong>Note:</strong> This is a prorated payment for ${proratedDays} days until your contract end date.</p>`
+        : '';
+
+    const proratedTextInfo = proratedDays !== null
+        ? `NOTE: This is a prorated payment for ${proratedDays} days until your contract end date.\n\n`
+        : '';
+
+    // Add credit application info
     const creditHtml = appliedCredit > 0
         ? `
         <p>Your available credit of €${appliedCredit} has been applied to this payment, reducing the amount due.</p>
@@ -834,7 +905,7 @@ async function sendPaymentEmail(
     <a href="${paymentUrl}" style="color: #d4af37; word-break: break-all;">${paymentUrl}</a></p>
     `;
 
-    // HTML email body
+    // HTML email body with prorated info
     const emailHtmlBody = isPaymentHoliday
         ? `
         <p>Dear ${contract.user.fullName},</p>
@@ -855,7 +926,8 @@ async function sendPaymentEmail(
         <p>Dear ${contract.user.fullName},</p>
         
         ${earlyNotificationHtml}
-        <p>Your monthly payment of €${originalAmount} for ${contract.affiliate.name} is due.</p>
+        ${proratedInfo}
+        <p>Your ${proratedDays !== null ? `prorated` : 'monthly'} payment of €${originalAmount} for ${contract.affiliate.name} is due.</p>
         ${creditHtml}
         
         <p>Please use the following link to complete your payment:</p>
@@ -865,7 +937,7 @@ async function sendPaymentEmail(
         IronTrack Team</p>
         `;
 
-    // Plain text email body (fallback)
+    // Plain text email with prorated info
     const emailTextBody = isPaymentHoliday
         ? `
     Dear ${contract.user.fullName},
@@ -877,19 +949,16 @@ async function sendPaymentEmail(
     Please use the following link to complete your payment:
     ${paymentUrl}
     
-    The payment link is valid for 36 days.
-    
     Thank you!
     IronTrack Team
     `
         : `
     Dear ${contract.user.fullName},
     
-    ${earlyNotificationText}Your monthly payment of €${originalAmount} for ${contract.affiliate.name} is due.${creditText}
+    ${earlyNotificationText}${proratedTextInfo}Your ${proratedDays !== null ? `prorated (${proratedDays} days)` : 'monthly'} payment of €${originalAmount} for ${contract.affiliate.name} is due.${creditText}
     
     Please use the following link to complete your payment:
     ${paymentUrl}
-    
     
     Thank you!
     IronTrack Team
@@ -900,7 +969,8 @@ async function sendPaymentEmail(
         senderId: contract.affiliateId,
         recipientId: contract.userId,
         subject: emailSubject,
-        body: emailHtmlBody, // Using HTML version for body
+        body: emailHtmlBody,
+        text: emailTextBody,
         affiliateEmail: contract.affiliate.email
     });
 }

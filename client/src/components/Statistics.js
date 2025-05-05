@@ -104,6 +104,16 @@ export default function Statistics({ userId, affiliateId }) {
         maintainAspectRatio: false,
         plugins: {
             legend: { position: 'bottom' },
+            datalabels: {
+                color: '#ffffff',
+                font: {
+                    weight: 'bold',
+                    size: 14
+                },
+                formatter: (value) => {
+                    return value; // Kuvab arvud
+                }
+            }
         },
     };
 

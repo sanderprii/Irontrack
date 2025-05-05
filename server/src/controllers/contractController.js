@@ -355,10 +355,12 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
             }
         });
 
+
+
         if (!contract) {
             throw new Error("Contract not found");
         }
-
+const isFirstContractPayment = contract.isFirstPayment
         // Update contract status
         const updatedContract = await prisma.contract.update({
             where: { id: parseInt(contractId) },
@@ -436,10 +438,11 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
                         affiliateId: parseInt(affiliateId),
                         planName: contract.contractType || "Membership Contract",
                         trainingType: contract.trainingType,
-                        validityDays: 30, // Default
+                        validityDays: 31, // Default
                         price: contract.paymentAmount || 0,
                         sessionsLeft: 9999, // Unlimited for contract
-                        purchasedAt: new Date(),
+
+                        purchasedAt: contract.startDate,
                         endDate,
                         paymentHoliday: false,
                         planId: 0,
@@ -481,12 +484,38 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
                     price: paymentAmount
                 };
 
+                let finalOrderAmount = 0
+
+                if (isFirstContractPayment) {
+                    finalOrderAmount = contract.firstPaymentAmount
+                } else {
+                    finalOrderAmount = contract.paymentAmount
+                }
+console.log("isFirstContractPayment", isFirstContractPayment);
                 const orderDetails = {
                     invoiceNumber: invoiceNumber,
-                    amount: paymentAmount,
-                    appliedCredit: 0,
+                    amount: finalOrderAmount,
+                    appliedCredit: appliedCredit,
                     isContractPayment: true
                 };
+console.log(orderDetails);
+console.log(affiliateData)
+
+                if (finalOrderAmount === appliedCredit) {
+                    await prisma.transactions.create({
+                        data: {
+                            userId,
+                            affiliateId: parseInt(affiliateId),
+                            amount: finalOrderAmount,
+                            status: "success",
+                            contractId: parseInt(contractId),
+                            invoiceNumber,
+                            type: "credit",
+                            creditAmount: appliedCredit,
+                            description: contract.contractType || "Membership Contract",
+                        }
+                    })
+                }
 
                 // Send the confirmation email
                 await sendOrderConfirmation(

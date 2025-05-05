@@ -454,6 +454,7 @@ model paymentMetadata {
   affiliateId      Int
   paymentUrl       String?
   isPaymentHoliday Boolean  @default(false)
+  proratedDays     Int?
   createdAt        DateTime @default(now())
 
   @@unique([montonioUuid, contractId])

@@ -4,6 +4,7 @@ const axios = require('axios');
 require('dotenv').config();
 const {PrismaClient} = require('@prisma/client');
 const {sendOrderConfirmation} = require("../utils/emailService");
+
 const prisma = new PrismaClient();
 
 const contractController = require('./contractController');
@@ -351,7 +352,7 @@ const handleMontonioWebhook = async (req, res) => {
             }
 
             // Kui leidsime metadata, töötleme lepingumakse
-            const {transactionId, contractId, affiliateId, isPaymentHoliday} = paymentMetadata;
+            const {transactionId, contractId, affiliateId, isPaymentHoliday, proratedDays} = paymentMetadata;
 
             // Leia API võtmed affiliateId järgi
             const apiKeys = await prisma.affiliateApiKeys.findFirst({
@@ -471,8 +472,14 @@ const handleMontonioWebhook = async (req, res) => {
                     if (userPlan) {
                         // Arvuta uus lõppkuupäev (lisa üks kuu)
                         let newEndDate = new Date(userPlan.endDate);
-                        newEndDate.setMonth(newEndDate.getMonth() + 1);
 
+                        if (proratedDays) {
+                            // If prorated, only add the specified number of days
+                            newEndDate.setDate(newEndDate.getDate() + proratedDays);
+                        } else {
+                            // For normal payments, add one month
+                            newEndDate.setMonth(newEndDate.getMonth() + 1);
+                        }
                         // Uuenda kasutaja plaani kehtivust
                         await prisma.userPlan.update({
                             where: {id: userPlan.id},
@@ -524,11 +531,12 @@ const handleMontonioWebhook = async (req, res) => {
                                 user,
                                 {
                                     invoiceNumber: transactionData.invoiceNumber,
-                                    amount: contract.paymentAmount || grandTotal,
+                                    amount: transactionData.amount || grandTotal,
                                     appliedCredit: 0,
                                     isContractPayment: true,
                                     description: paymentDescription,
-                                    affiliateName: affiliate.name
+                                    affiliateName: affiliate.name,
+                                    proratedDays: paymentMetadata.proratedDays,
                                 },
                                 planDetails,
                                 affiliate
@@ -692,7 +700,7 @@ const checkPaymentStatus = async (req, res) => {
                         id: contract.id
                     },
                     data: {
-                        isFirstPayment: false,
+
                         status: 'accepted',
                         acceptedAt: new Date(),
                     }
@@ -703,6 +711,7 @@ const checkPaymentStatus = async (req, res) => {
                 const userId = parseInt(transaction.userId);
                 const affiliateId = transaction.affiliateId;
                 const contractTermsId = 1;
+                const appliedCredit = transaction.creditAmount || 0;
 
                 try {
                     contractController.acceptContractInternal(
@@ -710,7 +719,8 @@ const checkPaymentStatus = async (req, res) => {
                         userId,
                         affiliateId,
                         contractTermsId,
-                        acceptType
+                        acceptType,
+                        appliedCredit
                     );
                     console.log("Contract accepted successfully", userId);
                 } catch (error) {

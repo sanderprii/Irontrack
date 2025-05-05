@@ -257,12 +257,12 @@ export default function Classes() {
     };
 
     // Fetch leaderboard data for all WOD classes on the selected day
-    const fetchDayLeaderboard = async () => {
+    const fetchDayLeaderboard = async (dayIndex) => {
         try {
             setLoadingLeaderboard(true);
 
             // Get all WOD classes for the selected day
-            const dayClasses = getClassesForSelectedDay(selectedDayIndex);
+            const dayClasses = getClassesForSelectedDay(dayIndex);
             const wodClasses = dayClasses.filter(cls => cls.trainingType === "WOD");
 
             if (wodClasses.length === 0) {
@@ -313,7 +313,7 @@ export default function Classes() {
 
     // Open day leaderboard
     const handleOpenDayLeaderboard = () => {
-        fetchDayLeaderboard();
+        fetchDayLeaderboard(selectedDayIndex);
     };
 
     // Handle leaderboard filter change
@@ -561,7 +561,7 @@ export default function Classes() {
                     <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
                 <Typography variant="h5" color="primary">Class Schedule
                     {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
-                    {hasWodClasses && (
+                    {hasWodClasses && !showWeekly && (
                         <IconButton
                             color="primary"
                             onClick={handleOpenDayLeaderboard}
@@ -702,8 +702,9 @@ export default function Classes() {
                                                     <IconButton
                                                         color="primary"
                                                         onClick={() => {
-                                                            setSelectedDayIndex(index);
-                                                            handleOpenDayLeaderboard();
+                                                            const newIndex = index;
+                                                            setSelectedDayIndex(newIndex);
+                                                            fetchDayLeaderboard(newIndex);
                                                         }}
                                                         size="small"
                                                         sx={{

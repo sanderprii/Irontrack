@@ -16,9 +16,10 @@ import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import Info from '../components/Info';
-import InfoMobile from '../components/InfoMobile';
+
 import PaymentForm from '../components/PaymentForm';
 import Review from '../components/Review';
+
 
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
@@ -52,6 +53,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     affiliateInfo={affiliateInfo}
                 />
             );
+
         default:
             throw new Error('Unknown step');
     }
@@ -444,6 +446,7 @@ export default function Checkout(props) {
     const handleNext = () => {
         if (activeStep === steps.length - 1) {
             handlePlaceOrder();
+
         } else {
             setActiveStep(activeStep + 1);
         }

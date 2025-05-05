@@ -353,14 +353,23 @@ export default function ClassModal({
             // Filter for expiration first
             const timeValidPlans = plans.filter(plan => {
                 const planEndDate = new Date(plan.endDate).getTime();
+                const classTime = new Date(cls.time).getTime();
+                const purchaseTime = new Date(plan.purchasedAt).getTime();
+
+                // Check if class time is after purchase time
+                if (classTime < purchaseTime) {
+                    return false; // Class is before the plan was purchased
+                }
+
                 let expiryTime = 0;
-                if (plan.contractId !== null) {
-                    const fiveDaysInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-                    expiryTime = planEndDate + fiveDaysInMs;
+                if (plan.contractId !== null && plan.contractId > 0) { // Check that contractId > 0
+                    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+                    expiryTime = planEndDate + sevenDaysInMs;
                 } else {
                     expiryTime = planEndDate;
                 }
-                return new Date(cls.time).getTime() < expiryTime;
+
+                return classTime < expiryTime;
             });
 
             // Filter out:
@@ -377,6 +386,7 @@ export default function ClassModal({
                 return true;
             });
 
+            // [ülejäänud kood jääb samaks]
             // Now filter for training type compatibility
             const trainingTypeCompatiblePlans = activePlans.filter(plan => {
                 // Special case: If class has training type "Other", all plans are compatible

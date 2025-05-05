@@ -225,8 +225,8 @@ export default function ProfileView({
                     <Typography variant="h5" fontWeight="bold">
                         {user.fullName}
                     </Typography>
+                    { role === "regular" && (
 
-                    {/* Upload profile picture button */}
                     <Box sx={{ mt: 2, mb: 2 }}>
                         <input
                             type="file"
@@ -256,6 +256,7 @@ export default function ProfileView({
                             </Button>
                         </label>
                     </Box>
+                    )}
 
                     {role !== "regular" && user.isAcceptedTerms !== undefined && (
                         <Chip

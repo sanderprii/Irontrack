@@ -353,6 +353,14 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
 
 const sendOrderConfirmation = async (userData, orderDetails, planDetails, affiliateDetails) => {
     try {
+console.log("affiliateDetails", affiliateDetails);
+        const proratedDays = orderDetails.proratedDays;
+
+        const planDescription = proratedDays
+            ? `${planDetails.name} (Prorated for ${proratedDays} days)`
+            : planDetails.name;
+
+
         // Safety checks
         if (!userData) {
             console.error("Missing user data for email");
@@ -477,7 +485,7 @@ const sendOrderConfirmation = async (userData, orderDetails, planDetails, affili
     
     <div class="content">
       <div class="invoice-details">
-      <p><strong>From:</strong> ${orderDetails.affiliateName}</p>
+      <p><strong>From:</strong> ${affiliateDetails.name}</p>
         <p><strong>Invoice #:</strong> ${orderDetails.invoiceNumber}</p>
         <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
         <p><strong>Customer:</strong> ${userData.fullName}</p>
@@ -495,7 +503,7 @@ const sendOrderConfirmation = async (userData, orderDetails, planDetails, affili
         </thead>
         <tbody>
           <tr>
-            <td>${planDetails.name}</td>
+            <td>${planDescription}</td>
             <td>1</td>
             <td>€${formattedPrice}</td>
             <td>€${formattedPrice}</td>

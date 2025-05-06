@@ -967,6 +967,26 @@ const cancelRegistration = async (req, res) => {
     const userId = req.user.id;
 
     try {
+
+        const classData = await prisma.classSchedule.findFirst(
+            {
+                where: { id: parseInt(classId) },
+            }
+        )
+
+        let isClassOver = false;
+
+        if (classData) {
+            const classTime = new Date(classData.time);
+            const currentTime = new Date();
+            isClassOver = classTime < currentTime;
+        }
+
+        if (isClassOver) {
+            return res.status(400).json({error: "Cannot cancel registration for a class that has already started."});
+        }
+
+
         // First, find the registration outside of the transaction
         const registration = await prisma.classAttendee.findFirst({
             where: {userId: parseInt(userId), classId: parseInt(classId)},

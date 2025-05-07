@@ -330,6 +330,8 @@ const userId = req.user?.id;
             where: {affiliateId: parseInt(affiliateId) }
         });
 
+
+
         if (!terms) {
             return res.status(404).json({ error: "Terms not found" });
         }

@@ -53,6 +53,14 @@ const affiliateId = parseInt(req.query.affiliateId, 10);
         const isMember = await prisma.members.findFirst({
             where: { userId, affiliateId },
         });
+        let isAcceptedAffiliateTerms = false;
+        const acceptedTerms = await prisma.affiliateTermsAccepted.findFirst({
+            where: { userId, affiliateId },
+        });
+
+        if (acceptedTerms) {
+            isAcceptedAffiliateTerms = true;
+        }
 
 
         res.json({
@@ -68,6 +76,7 @@ const affiliateId = parseInt(req.query.affiliateId, 10);
             isMember: !!isMember,
             userNotes: user.userNotes,
             isAcceptedTerms: user.isAcceptedTerms,
+            isAcceptedAffiliateTerms: isAcceptedAffiliateTerms,
             plans: userPlans.map((plan) => ({
                 planName: plan.planName,
                 endDate: plan.endDate,

@@ -258,10 +258,10 @@ export default function ProfileView({
                     </Box>
                     )}
 
-                    {role !== "regular" && user.isAcceptedTerms !== undefined && (
+                    {role !== "regular" && user.isAcceptedAffiliateTerms !== undefined && (
                         <Chip
-                            label={user.isAcceptedTerms ? "Terms Accepted" : "Terms Not Accepted"}
-                            color={user.isAcceptedTerms ? "success" : "error"}
+                            label={user.isAcceptedAffiliateTerms ? "Affiliate Terms Accepted" : "Affiliate Terms Not Accepted"}
+                            color={user.isAcceptedAffiliateTerms ? "success" : "error"}
                             size="small"
                             sx={{ mt: 1 }}
                         />

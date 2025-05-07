@@ -9,23 +9,24 @@ generator client {
 }
 
 model User {
-  id                     Int                      @id @default(autoincrement())
-  email                  String                   @unique
-  password               String
-  fullName               String?
-  dateOfBirth            DateTime?
-  emailConfirmed         Boolean                  @default(false)
-  verificationToken      String?
-  verificationExpires    DateTime?
-  resetToken             String?
-  resetTokenExpires      DateTime?
-  affiliateOwner         Boolean                  @default(false)
-  pricingPlan            String?                  @default("premium")
-  createdAt              DateTime                 @default(now())
-  records                Record[]
-  trainings              Training[]
-  monthlyGoal            Int?
-  isAcceptedTerms        Boolean                  @default(false)
+  id                  Int        @id @default(autoincrement())
+  email               String     @unique
+  password            String
+  fullName            String?
+  dateOfBirth         DateTime?
+  emailConfirmed      Boolean    @default(false)
+  verificationToken   String?
+  verificationExpires DateTime?
+  resetToken          String?
+  resetTokenExpires   DateTime?
+  affiliateOwner      Boolean    @default(false)
+  pricingPlan         String?    @default("premium")
+  createdAt           DateTime   @default(now())
+  records             Record[]
+  trainings           Training[]
+  monthlyGoal         Int?
+  isAcceptedTerms     Boolean    @default(false)
+
   phone                  String?
   address                String?
   logo                   String?

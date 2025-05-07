@@ -159,6 +159,7 @@ export default function PaymentForm({ affiliateCredit, appliedCredit, setApplied
                     affiliateId: affiliateInfo.id
                 });
 
+
             } catch (error) {
                 console.error("Failed to accept terms:", error);
                 // Even if API fails, we'll keep the checkbox checked

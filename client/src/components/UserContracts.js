@@ -224,7 +224,8 @@ console.log("contract", contract);
             const getAffiliateData = await getAffiliateById(phContract.affiliateId);
 
             const subject = 'Payment Holiday Request';
-            const body = `You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}.`;
+            const body = `You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}. 
+Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.fullName}</strong> contract.`;
             const senderEmail = user.email;
 
             const affiliateEmail = getAffiliateData.email;

@@ -97,42 +97,42 @@ const StyledListContainer = styled(Paper)(({ theme }) => ({
     borderRadius: theme.shape.borderRadius,
 }));
 
+// Updated TypeChip component with stronger style overrides
 const TypeChip = styled(Chip)(({ theme, trainingtype }) => {
     let chipColor, textColor;
 
     switch(trainingtype) {
         case 'WOD':
-            chipColor = 'rgba(25, 118, 210, 0.85)'; // Lighter blue
+            chipColor = '#0D47A1'; // Dark blue
             textColor = '#FFFFFF';
             break;
         case 'Weightlifting':
-            chipColor = 'rgba(76, 175, 80, 0.85)'; // Lighter green
+            chipColor = '#1B5E20'; // Dark green
             textColor = '#FFFFFF';
             break;
         case 'Cardio':
-            chipColor = 'rgba(255, 152, 0, 0.85)'; // Lighter orange
-            textColor = '#000000'; // Black text for better contrast with orange
+            chipColor = '#E65100'; // Orange
+            textColor = '#FFFFFF';
             break;
         case 'Rowing':
-            chipColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+            chipColor = '#4A148C'; // Dark purple
             textColor = '#FFFFFF';
             break;
         case 'Gymnastics':
-            chipColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+            chipColor = '#880E4F'; // Dark pink
             textColor = '#FFFFFF';
             break;
         default:
-            chipColor = 'rgba(211, 211, 211, 0.8)'; // white
+            chipColor = '#424242'; // Dark gray
             textColor = '#FFFFFF';
     }
 
     return {
         backgroundColor: chipColor,
-        color: textColor,
-        fontWeight: 'bold',
-        padding: '4px 8px',
         '& .MuiChip-label': {
-            padding: '0 8px'
+            padding: '0 8px',
+            fontWeight: 700,
+            fontSize: '1rem'
         }
     };
 });
@@ -182,7 +182,7 @@ export default function TrainingsPage() {
     const [isEditing, setIsEditing] = useState(false);
 
     // Form section visibility
-    const [formExpanded, setFormExpanded] = useState(true);
+    const [formExpanded, setFormExpanded] = useState(false);
 
     // Dialog states
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -380,26 +380,25 @@ export default function TrainingsPage() {
     // Convert trainings -> FullCalendar events
     function getCalendarEvents() {
         return trainings.map((t) => {
-            // Using more vibrant, slightly transparent colors
             let bgColor;
             switch(t.type) {
                 case 'WOD':
-                    bgColor = 'rgba(25, 118, 210, 0.85)'; // Blue
+                    bgColor = '#0D47A1'; // Dark blue (matches chip)
                     break;
                 case 'Weightlifting':
-                    bgColor = 'rgba(76, 175, 80, 0.85)'; // Green
+                    bgColor = '#1B5E20'; // Dark green (matches chip)
                     break;
                 case 'Cardio':
-                    bgColor = 'rgba(255, 152, 0, 0.85)'; // Orange
+                    bgColor = '#E65100'; // Orange (matches chip)
                     break;
                 case 'Rowing':
-                    bgColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+                    bgColor = '#4A148C'; // Dark purple (matches chip)
                     break;
                 case 'Gymnastics':
-                    bgColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+                    bgColor = '#880E4F'; // Dark pink (matches chip)
                     break;
                 default:
-                    bgColor = 'rgba(211, 211, 211, 0.8)'; // Info blue
+                    bgColor = '#424242'; // Dark gray (matches chip)
             }
 
             return {
@@ -421,27 +420,25 @@ export default function TrainingsPage() {
 
     // eventContent, to replicate the "colored bar"
     function renderEventContent(arg) {
-        // Use more vibrant, slightly transparent colors for better visibility
         let backgroundColor;
         switch(arg.event.title) {
             case 'WOD':
-                backgroundColor = 'rgba(25, 118, 210, 0.85)'; // Blue
+                backgroundColor = '#0D47A1'; // Dark blue (matches chip)
                 break;
             case 'Weightlifting':
-                backgroundColor = 'rgba(76, 175, 80, 0.85)'; // Green
+                backgroundColor = '#1B5E20'; // Dark green (matches chip)
                 break;
             case 'Cardio':
-                backgroundColor = 'rgba(255, 152, 0, 0.85)'; // Orange
+                backgroundColor = '#E65100'; // Orange (matches chip)
                 break;
             case 'Rowing':
-                backgroundColor = 'rgba(156, 39, 176, 0.85)'; // Purple
+                backgroundColor = '#4A148C'; // Dark purple (matches chip)
                 break;
             case 'Gymnastics':
-                backgroundColor = 'rgba(233, 30, 99, 0.85)'; // Pink
+                backgroundColor = '#880E4F'; // Dark pink (matches chip)
                 break;
             default:
-                backgroundColor = 'rgba(211, 211, 211, 0.8)';
-
+                backgroundColor = '#424242'; // Dark gray (matches chip)
         }
 
         return {
@@ -906,39 +903,63 @@ export default function TrainingsPage() {
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
                         <TypeChip
                             label="WOD"
-                            icon={<TimerIcon sx={{ color: 'inherit' }} />}
+                            icon={<TimerIcon />}
                             trainingtype="WOD"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                         <TypeChip
                             label="Weightlifting"
-                            icon={<FitnessCenterIcon sx={{ color: 'inherit' }} />}
+                            icon={<FitnessCenterIcon />}
                             trainingtype="Weightlifting"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                         <TypeChip
                             label="Cardio"
                             icon={<DirectionsRunIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Cardio"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                         <TypeChip
                             label="Rowing"
                             icon={<RowingIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Rowing"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                         <TypeChip
                             label="Gymnastics"
                             icon={<SportsGymnasticsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Gymnastics"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                         <TypeChip
                             label="Other"
                             icon={<SportsMartialArtsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Other"
                             size="medium"
+                            sx={{
+                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                            }}
                         />
                     </Box>
 
@@ -991,7 +1012,11 @@ export default function TrainingsPage() {
                                             label={modalTraining.type}
                                             trainingtype={modalTraining.type}
                                             size="small"
-                                            sx={{ ml: 2 }}
+                                            sx={{
+                                                '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
+                                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                                ml: 2
+                                            }}
                                         />
                                     </>
                                 )}

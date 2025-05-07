@@ -1,323 +1,615 @@
 import * as React from 'react';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import MuiCard from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import CardContent from '@mui/material/CardContent';
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Typography,
+  TextField,
+  Slider,
+  Button,
+  Paper,
+  Divider,
+  Avatar,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
+  Grid,
+  useMediaQuery,
+  useTheme,
+  CircularProgress
+} from '@mui/material';
+import PropTypes from 'prop-types';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import RadioGroup from '@mui/material/RadioGroup';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
-import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
-import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
-import SimCardRoundedIcon from '@mui/icons-material/SimCardRounded';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-const Card = styled(MuiCard)<{ selected?: boolean }>(({ theme }) => ({
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.divider,
-  width: '100%',
-  '&:hover': {
-    background:
-      'linear-gradient(to bottom right, hsla(210, 100%, 97%, 0.5) 25%, hsla(210, 100%, 90%, 0.3) 100%)',
-    borderColor: 'primary.light',
-    boxShadow: '0px 2px 8px hsla(0, 0%, 0%, 0.1)',
-    ...theme.applyStyles('dark', {
-      background:
-        'linear-gradient(to right bottom, hsla(210, 100%, 12%, 0.2) 25%, hsla(210, 100%, 16%, 0.2) 100%)',
-      borderColor: 'primary.dark',
-      boxShadow: '0px 1px 8px hsla(210, 100%, 25%, 0.5) ',
-    }),
-  },
-  [theme.breakpoints.up('md')]: {
-    flexGrow: 1,
-    maxWidth: `calc(50% - ${theme.spacing(1)})`,
-  },
-  variants: [
-    {
-      props: ({ selected }) => selected,
-      style: {
-        borderColor: (theme.vars || theme).palette.primary.light,
-        ...theme.applyStyles('dark', {
-          borderColor: (theme.vars || theme).palette.primary.dark,
-        }),
-      },
-    },
-  ],
-}));
+import Link from '@mui/material/Link';
+import AffiliateTermsModal from './affiliateTermsModal';
+import { acceptAffiliateTerms, isUserAcceptedAffiliateTerms } from '../api/affiliateApi';
 
-const PaymentContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  width: '100%',
-  height: 375,
-  padding: theme.spacing(3),
-  borderRadius: `calc(${theme.shape.borderRadius}px + 4px)`,
-  border: '1px solid ',
-  borderColor: (theme.vars || theme).palette.divider,
-  background:
-    'linear-gradient(to bottom right, hsla(220, 35%, 97%, 0.3) 25%, hsla(220, 20%, 88%, 0.3) 100%)',
-  boxShadow: '0px 4px 8px hsla(210, 0%, 0%, 0.05)',
-  [theme.breakpoints.up('xs')]: {
-    height: 300,
-  },
-  [theme.breakpoints.up('sm')]: {
-    height: 350,
-  },
-  ...theme.applyStyles('dark', {
-    background:
-      'linear-gradient(to right bottom, hsla(220, 30%, 6%, 0.2) 25%, hsla(220, 20%, 25%, 0.2) 100%)',
-    boxShadow: '0px 4px 8px hsl(220, 35%, 0%)',
-  }),
-}));
+export default function PaymentForm({ affiliateCredit, appliedCredit, setAppliedCredit, planPrice, affiliateInfo, onTermsAcceptedChange }) {
+  const [paymentMethod, setPaymentMethod] = useState(affiliateCredit > 0 ? 'credit' : 'montonio');
+  const [creditInput, setCreditInput] = useState('0');
+  const [errorMessage, setErrorMessage] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
+  const [termsChecking, setTermsChecking] = useState(true); // Loading state for initial terms check
 
-const FormGrid = styled('div')(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-}));
+  // Calculate maximum applicable credit
+  const maxApplicableCredit = Math.min(affiliateCredit, planPrice);
 
-export default function PaymentForm() {
-  const [paymentType, setPaymentType] = React.useState('creditCard');
-  const [cardNumber, setCardNumber] = React.useState('');
-  const [cvv, setCvv] = React.useState('');
-  const [expirationDate, setExpirationDate] = React.useState('');
+  // Check if user has already accepted the terms when component loads
+  useEffect(() => {
+    if (affiliateInfo?.id) {
+      checkTermsAcceptance();
+    }
+  }, [affiliateInfo?.id]);
 
-  const handlePaymentTypeChange = (event: {
-    target: { value: React.SetStateAction<string> };
-  }) => {
-    setPaymentType(event.target.value);
-  };
+  useEffect(() => {
+    if (typeof onTermsAcceptedChange === 'function') {
+      onTermsAcceptedChange(termsAccepted);
+    }
+  }, [termsAccepted, onTermsAcceptedChange]);
 
-  const handleCardNumberChange = (event: { target: { value: string } }) => {
-    const value = event.target.value.replace(/\D/g, '');
-    const formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    if (value.length <= 16) {
-      setCardNumber(formattedValue);
+  // Check if user has already accepted terms
+  const checkTermsAcceptance = async () => {
+    try {
+      setTermsChecking(true);
+      const accepted = await isUserAcceptedAffiliateTerms(affiliateInfo.id);
+      setTermsAccepted(accepted);
+    } catch (error) {
+      console.error("Error checking terms acceptance:", error);
+      setTermsAccepted(false);
+    } finally {
+      setTermsChecking(false);
     }
   };
 
-  const handleCvvChange = (event: { target: { value: string } }) => {
-    const value = event.target.value.replace(/\D/g, '');
-    if (value.length <= 3) {
-      setCvv(value);
+  // Update input field when appliedCredit changes
+  useEffect(() => {
+    setCreditInput(appliedCredit.toString());
+  }, [appliedCredit]);
+
+  const handlePaymentMethodChange = (event) => {
+    const method = event.target.value;
+    setPaymentMethod(method);
+
+    if (method === 'credit') {
+      // When credit payment is selected, apply maximum credit
+      setAppliedCredit(maxApplicableCredit);
+      setCreditInput(maxApplicableCredit.toString());
     }
   };
 
-  const handleExpirationDateChange = (event: { target: { value: string } }) => {
-    const value = event.target.value.replace(/\D/g, '');
-    const formattedValue = value.replace(/(\d{2})(?=\d{2})/, '$1/');
-    if (value.length <= 4) {
-      setExpirationDate(formattedValue);
+  const handleCreditSliderChange = (event, newValue) => {
+    setAppliedCredit(newValue);
+    setCreditInput(newValue.toString());
+  };
+
+  const handleCreditInputChange = (event) => {
+    const value = event.target.value;
+    setCreditInput(value);
+
+    // Validate input
+    if (value === '') {
+      setErrorMessage('');
+      return;
+    }
+
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      setErrorMessage('Please enter a number');
+    } else if (numValue < 0) {
+      setErrorMessage('Credit cannot be negative');
+    } else if (numValue > affiliateCredit) {
+      setErrorMessage(`Maximum available credit is ${affiliateCredit}€`);
+    } else if (numValue > planPrice) {
+      setErrorMessage(`Maximum credit can be ${planPrice}€`);
+    } else {
+      setErrorMessage('');
     }
   };
 
+  // Apply entered credit immediately
+  const applyCredit = () => {
+    if (creditInput === '' || errorMessage) return;
+
+    const numValue = Number(creditInput);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= maxApplicableCredit) {
+      // Use exact value
+      setAppliedCredit(numValue);
+    }
+  };
+
+  // Button to apply maximum credit
+  const applyMax = () => {
+    const maxValue = Math.min(affiliateCredit, planPrice);
+    setCreditInput(maxValue.toString());
+    setAppliedCredit(maxValue);
+    setErrorMessage('');
+  };
+
+  const handleOpenTerms = () => {
+    setTermsModalOpen(true);
+  };
+
+  const handleCloseTerms = () => {
+    setTermsModalOpen(false);
+  };
+
+  // Handle terms acceptance checkbox
+  const handleTermsAcceptance = async (event) => {
+    const checked = event.target.checked;
+
+    if (checked) {
+      // Immediately update the UI
+      setTermsAccepted(true);
+      setIsAcceptingTerms(true);
+
+      try {
+        // Make the API call to accept terms
+        await acceptAffiliateTerms({
+          affiliateId: affiliateInfo.id
+        });
+
+
+      } catch (error) {
+        console.error("Failed to accept terms:", error);
+        // Even if API fails, we'll keep the checkbox checked
+        // since the user's intent was to accept, and we'll retry on Next
+      } finally {
+        setIsAcceptingTerms(false);
+      }
+    } else {
+      // Don't allow unchecking once terms are accepted
+      // This matches the requirement that the checkbox becomes inactive once checked
+      event.preventDefault();
+    }
+  };
   return (
-    <Stack spacing={{ xs: 3, sm: 6 }} useFlexGap>
-      <FormControl component="fieldset" fullWidth>
-        <RadioGroup
-          aria-label="Payment options"
-          name="paymentType"
-          value={paymentType}
-          onChange={handlePaymentTypeChange}
+      <Card
+          elevation={0}
           sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
+            borderRadius: 2,
+            maxHeight: 'none',
+            overflow: 'visible'
           }}
+      >
+        <CardContent
+            sx={{
+              p: { xs: 2, sm: 3 },
+              pt: 0,
+              overflow: 'visible'
+            }}
         >
-          <Card selected={paymentType === 'creditCard'}>
-            <CardActionArea
-              onClick={() => setPaymentType('creditCard')}
-              sx={{
-                '.MuiCardActionArea-focusHighlight': {
-                  backgroundColor: 'transparent',
-                },
-                '&:focus-visible': {
-                  backgroundColor: 'action.hover',
-                },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CreditCardRoundedIcon
-                  fontSize="small"
-                  sx={[
-                    (theme) => ({
-                      color: 'grey.400',
-                      ...theme.applyStyles('dark', {
-                        color: 'grey.600',
-                      }),
-                    }),
-                    paymentType === 'creditCard' && {
-                      color: 'primary.main',
-                    },
-                  ]}
-                />
-                <Typography sx={{ fontWeight: 'medium' }}>Card</Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-          <Card selected={paymentType === 'bankTransfer'}>
-            <CardActionArea
-              onClick={() => setPaymentType('bankTransfer')}
-              sx={{
-                '.MuiCardActionArea-focusHighlight': {
-                  backgroundColor: 'transparent',
-                },
-                '&:focus-visible': {
-                  backgroundColor: 'action.hover',
-                },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccountBalanceRoundedIcon
-                  fontSize="small"
-                  sx={[
-                    (theme) => ({
-                      color: 'grey.400',
-                      ...theme.applyStyles('dark', {
-                        color: 'grey.600',
-                      }),
-                    }),
-                    paymentType === 'bankTransfer' && {
-                      color: 'primary.main',
-                    },
-                  ]}
-                />
-                <Typography sx={{ fontWeight: 'medium' }}>Bank account</Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        </RadioGroup>
-      </FormControl>
-      {paymentType === 'creditCard' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <PaymentContainer>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle2">Credit card</Typography>
-              <CreditCardRoundedIcon sx={{ color: 'text.secondary' }} />
-            </Box>
-            <SimCardRoundedIcon
-              sx={{
-                fontSize: { xs: 48, sm: 56 },
-                transform: 'rotate(90deg)',
-                color: 'text.secondary',
-              }}
-            />
-            <Box
+          {/* Header with affiliate name and logo */}
+          <Box
               sx={{
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                width: '100%',
-                gap: 2,
+                mb: 3,
+                flexWrap: 'wrap',
+                gap: 2
               }}
-            >
-              <FormGrid sx={{ flexGrow: 1 }}>
-                <FormLabel htmlFor="card-number" required>
-                  Card number
-                </FormLabel>
-                <OutlinedInput
-                  id="card-number"
-                  autoComplete="card-number"
-                  placeholder="0000 0000 0000 0000"
-                  required
-                  size="small"
-                  value={cardNumber}
-                  onChange={handleCardNumberChange}
+          >
+            <Typography variant="h5" fontWeight="600">
+              {affiliateInfo.name}
+            </Typography>
+            <Avatar
+                src={affiliateInfo.logo}
+                sx={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: 'transparent',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                }}
+                variant="rounded"
+            />
+          </Box>
+
+          <Divider sx={{ mb: 3 }} />
+
+          {/* Payment summary */}
+          <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: 'rgba(0, 0, 0, 0.02)',
+                borderColor: 'divider',
+                overflow: 'visible'
+              }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Order Summary
+                </Typography>
+              </Grid>
+              <Grid item xs={8}>
+                <Typography variant="body2">
+                  Regular monthly payment
+                </Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                <Typography variant="body2" fontWeight="500">
+                  {planPrice}€
+                </Typography>
+              </Grid>
+
+              {appliedCredit > 0 && (
+                  <>
+                    <Grid item xs={8}>
+                      <Typography variant="body2" color="success.main">
+                        Credit applied
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight="500" color="success.main">
+                        -{appliedCredit}€
+                      </Typography>
+                    </Grid>
+                  </>
+              )}
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+
+              <Grid item xs={8}>
+                <Typography variant="subtitle1" fontWeight="600">
+                  Total
+                </Typography>
+              </Grid>
+              <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                <Typography variant="subtitle1" fontWeight="600">
+                  {(planPrice - appliedCredit).toFixed(2)}€
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: '500' }}>
+            Payment method
+          </Typography>
+
+          {affiliateCredit > 0 && (
+              <Box sx={{ mb: 3, overflow: 'visible' }}>
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 2,
+                  p: 1.5,
+                  borderRadius: 1,
+                  bgcolor: 'primary.lighter',
+                  color: 'primary.dark'
+                }}>
+                  <CheckCircleOutlineIcon sx={{ mr: 1, fontSize: 20 }} />
+                  <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                    Your available credit: <Box component="span" sx={{ fontWeight: '600' }}>{affiliateCredit}€</Box>
+                  </Typography>
+                </Box>
+
+                <RadioGroup
+                    value={paymentMethod}
+                    onChange={handlePaymentMethodChange}
+                    sx={{ overflow: 'visible' }}
+                >
+                  {/* Credit payment option */}
+                  <Paper
+                      variant="outlined"
+                      sx={{
+                        mb: 2,
+                        borderRadius: 2,
+                        p: 2,
+                        borderColor: paymentMethod === 'credit' ? 'primary.main' : 'divider',
+                        borderWidth: paymentMethod === 'credit' ? 2 : 1,
+                        bgcolor: paymentMethod === 'credit' ? 'primary.lighter' : 'transparent',
+                        transition: 'all 0.2s',
+                        cursor: 'pointer',
+                        overflow: 'visible',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                      onClick={() => setPaymentMethod('credit')}
+                  >
+                    <FormControlLabel
+                        value="credit"
+                        control={
+                          <Radio
+                              sx={{
+                                '&.Mui-checked': {
+                                  color: 'primary.main',
+                                },
+                              }}
+                          />
+                        }
+                        label={
+                          <Stack
+                              direction={isMobile ? "column" : "row"}
+                              spacing={1}
+                              alignItems={isMobile ? "flex-start" : "center"}
+                          >
+                            <CreditCardIcon sx={{ color: paymentMethod === 'credit' ? 'primary.main' : 'action.active' }} />
+                            <Typography sx={{ fontWeight: '500' }}>
+                              {maxApplicableCredit >= planPrice ? "Pay fully with credit" : "Use credit partially"}
+                            </Typography>
+                            <Chip
+                                size="small"
+                                label="Best value"
+                                color="primary"
+                                variant="outlined"
+                                sx={{ height: 24 }}
+                            />
+                          </Stack>
+                        }
+                        sx={{ m: 0, width: '100%' }}
+                    />
+
+                    {maxApplicableCredit < planPrice && paymentMethod === 'credit' && (
+                        <Box sx={{ ml: 4, mt: 2, width: '90%', overflow: 'visible' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="body2">
+                              Apply credit:
+                            </Typography>
+                            <Typography variant="body2" fontWeight="500">
+                              {appliedCredit}€
+                            </Typography>
+                          </Box>
+                          <Slider
+                              value={appliedCredit}
+                              onChange={handleCreditSliderChange}
+                              aria-labelledby="credit-slider"
+                              valueLabelDisplay="auto"
+                              step={1}
+                              min={0}
+                              max={maxApplicableCredit}
+                              disabled={paymentMethod !== 'credit'}
+                              sx={{
+                                '& .MuiSlider-thumb': {
+                                  width: 20,
+                                  height: 20,
+                                },
+                              }}
+                          />
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Remaining to pay: {(planPrice - appliedCredit).toFixed(2)}€
+                          </Typography>
+                        </Box>
+                    )}
+                  </Paper>
+
+                  {/* Bank payment option */}
+                  <Paper
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 2,
+                        p: 2,
+                        borderColor: paymentMethod === 'montonio' ? 'primary.main' : 'divider',
+                        borderWidth: paymentMethod === 'montonio' ? 2 : 1,
+                        bgcolor: paymentMethod === 'montonio' ? 'primary.lighter' : 'transparent',
+                        transition: 'all 0.2s',
+                        cursor: 'pointer',
+                        overflow: 'visible',
+                        position: 'relative',
+                        zIndex: 0
+                      }}
+                      onClick={() => setPaymentMethod('montonio')}
+                  >
+                    <FormControlLabel
+                        value="montonio"
+                        control={
+                          <Radio
+                              sx={{
+                                '&.Mui-checked': {
+                                  color: 'primary.main',
+                                },
+                              }}
+                          />
+                        }
+                        label={
+                          <Stack
+                              direction={isMobile ? "column" : "row"}
+                              spacing={1}
+                              alignItems={isMobile ? "flex-start" : "center"}
+                          >
+                            <AccountBalanceIcon sx={{ color: paymentMethod === 'montonio' ? 'primary.main' : 'action.active' }} />
+                            <Typography sx={{ fontWeight: '500' }}>
+                              Montonio Bank payment
+                            </Typography>
+                          </Stack>
+                        }
+                        sx={{ m: 0, width: '100%' }}
+                    />
+
+                    {affiliateCredit > 0 && paymentMethod === 'montonio' && (
+                        <Box sx={{
+                          ml: 4,
+                          mt: 2,
+                          mb: 1,
+                          overflow: 'visible'
+                        }}>
+                          <Box sx={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            alignItems: isMobile ? 'stretch' : 'flex-end',
+                            gap: 2,
+                            mb: 1
+                          }}>
+                            <TextField
+                                label="Apply credit"
+                                value={creditInput}
+                                onChange={handleCreditInputChange}
+                                error={!!errorMessage}
+                                helperText={errorMessage || `Available: ${affiliateCredit}€`}
+                                size="small"
+                                type="number"
+                                inputProps={{
+                                  min: 0,
+                                  max: maxApplicableCredit,
+                                  step: "any"
+                                }}
+                                sx={{ width: isMobile ? '100%' : '150px' }}
+                            />
+                            <Box sx={{
+                              display: 'flex',
+                              gap: 1,
+                              width: isMobile ? '100%' : 'auto'
+                            }}>
+                              <Button
+                                  variant="contained"
+                                  onClick={applyCredit}
+                                  disabled={!!errorMessage || creditInput === '' || Number(creditInput) === appliedCredit}
+                                  size="small"
+                                  sx={{
+                                    fontWeight: '500',
+                                    flex: isMobile ? 1 : 'none'
+                                  }}
+                              >
+                                Apply
+                              </Button>
+                              <Button
+                                  variant="outlined"
+                                  onClick={applyMax}
+                                  size="small"
+                                  sx={{
+                                    fontWeight: '500',
+                                    flex: isMobile ? 1 : 'none'
+                                  }}
+                              >
+                                Max
+                              </Button>
+                            </Box>
+                          </Box>
+
+                          {appliedCredit > 0 && (
+                              <Box sx={{
+                                p: 1.5,
+                                bgcolor: 'success.lighter',
+                                color: 'success.dark',
+                                borderRadius: 1,
+                                mt: 2
+                              }}>
+                                <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                                  Credit applied: {appliedCredit}€ (Remaining to pay: {(planPrice - appliedCredit).toFixed(2)}€)
+                                </Typography>
+                              </Box>
+                          )}
+                        </Box>
+                    )}
+                  </Paper>
+                </RadioGroup>
+              </Box>
+          )}
+
+          {!affiliateCredit && (
+              <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    mb: 2,
+                    overflow: 'visible'
+                  }}
+              >
+                <AccountBalanceIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                <Typography>
+                  You'll be redirected to Montonio to complete your payment.
+                </Typography>
+              </Paper>
+          )}
+          {termsChecking ? (
+              <Box sx={{ mt: 4, mb: 2, display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress size={24} />
+              </Box>
+          ) : !termsAccepted ? (
+              <Box sx={{ mt: 4, mb: 2 }}>
+                <Divider sx={{ mb: 3 }} />
+
+                <FormControlLabel
+                    control={
+                      <Checkbox
+                          checked={termsAccepted}
+                          onChange={handleTermsAcceptance}
+                          disabled={isAcceptingTerms || termsAccepted}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2">
+                        I have read and agree to the{' '}
+                        <Link
+                            component="button"
+                            variant="body2"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenTerms();
+                            }}
+                        >
+                          Terms and Conditions
+                        </Link>
+                      </Typography>
+                    }
                 />
-              </FormGrid>
-              <FormGrid sx={{ maxWidth: '20%' }}>
-                <FormLabel htmlFor="cvv" required>
-                  CVV
-                </FormLabel>
-                <OutlinedInput
-                  id="cvv"
-                  autoComplete="CVV"
-                  placeholder="123"
-                  required
-                  size="small"
-                  value={cvv}
-                  onChange={handleCvvChange}
-                />
-              </FormGrid>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <FormGrid sx={{ flexGrow: 1 }}>
-                <FormLabel htmlFor="card-name" required>
-                  Name
-                </FormLabel>
-                <OutlinedInput
-                  id="card-name"
-                  autoComplete="card-name"
-                  placeholder="John Smith"
-                  required
-                  size="small"
-                />
-              </FormGrid>
-              <FormGrid sx={{ flexGrow: 1 }}>
-                <FormLabel htmlFor="card-expiration" required>
-                  Expiration date
-                </FormLabel>
-                <OutlinedInput
-                  id="card-expiration"
-                  autoComplete="card-expiration"
-                  placeholder="MM/YY"
-                  required
-                  size="small"
-                  value={expirationDate}
-                  onChange={handleExpirationDateChange}
-                />
-              </FormGrid>
-            </Box>
-          </PaymentContainer>
-          <FormControlLabel
-            control={<Checkbox name="saveCard" />}
-            label="Remember credit card details for next time"
+
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 4 }}>
+                  You must accept the {affiliateInfo.name} terms and conditions to proceed with your purchase.
+                </Typography>
+              </Box>
+          ) : (
+              <Box sx={{ mt: 4, mb: 2 }}>
+                <Divider sx={{ mb: 3 }} />
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  p: 1.5,
+                  borderRadius: 1,
+                  bgcolor: 'success.lighter',
+                  color: 'success.dark'
+                }}>
+                  <CheckCircleOutlineIcon sx={{ mr: 1, fontSize: 20 }} />
+                  <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                    You have accepted the {affiliateInfo.name} terms and conditions
+                  </Typography>
+                </Box>
+              </Box>
+          )}
+
+          {/* Terms Modal */}
+          <AffiliateTermsModal
+              open={termsModalOpen}
+              onClose={handleCloseTerms}
+              affiliateId={affiliateInfo.id}
           />
-        </Box>
-      )}
-      {paymentType === 'bankTransfer' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Alert severity="warning" icon={<WarningRoundedIcon />}>
-            Your order will be processed once we receive the funds.
-          </Alert>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-            Bank account
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Please transfer the payment to the bank account details shown below.
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              Bank:
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-              Mastercredit
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              Account number:
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-              123456789
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              Routing number:
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-              987654321
-            </Typography>
-          </Box>
-        </Box>
-      )}
-    </Stack>
+        </CardContent>
+      </Card>
   );
 }
+
+PaymentForm.propTypes = {
+  affiliateCredit: PropTypes.number,
+  appliedCredit: PropTypes.number,
+  setAppliedCredit: PropTypes.func.isRequired,
+  planPrice: PropTypes.number.isRequired,
+  affiliateInfo: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    logo: PropTypes.string.isRequired
+  }).isRequired,
+  onTermsAcceptedChange: PropTypes.func
+};
+
+PaymentForm.defaultProps = {
+  affiliateCredit: 0,
+  appliedCredit: 0,
+
+};

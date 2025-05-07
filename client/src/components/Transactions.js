@@ -191,14 +191,7 @@ const Transactions = ({ user, affiliateId }) => {
                                                                             </Typography>
                                                                         </Box>
 
-                                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                Paid by Bank:
-                                                                            </Typography>
-                                                                            <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.decrease ? '#e74c3c' : '#2ecc71' }}>
-                                                                                {displayAmount} €
-                                                                            </Typography>
-                                                                        </Box>
+
 
 
                                                                         {tx.creditAmount > 0 && (

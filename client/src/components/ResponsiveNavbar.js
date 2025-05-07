@@ -120,7 +120,7 @@ export default function AppAppBar() {
         if (role === 'regular') {
             // Regulaarne kasutaja
             leftLinks = [
-                { name: 'Trainings', to: '/trainings' },
+                { name: 'Training log', to: '/trainings' },
                 { name: 'Records', to: '/records' },
                 { name: 'Register for Training', to: '/register-training' },
             ];
@@ -159,7 +159,7 @@ export default function AppAppBar() {
     let bottomNavItems = [];
     if (isLoggedIn && role === 'regular') {
         bottomNavItems = [
-            { value: '/trainings', label: 'Trainings', icon: <FitnessCenterIcon /> },
+            { value: '/trainings', label: 'Training log', icon: <FitnessCenterIcon /> },
             { value: '/records', label: 'Records', icon: <AssignmentIcon /> },
             { value: '/register-training', label: 'Register', icon: <AddBoxIcon /> },
             { value: '/my-profile', label: 'Profile', icon: <PersonIcon /> },

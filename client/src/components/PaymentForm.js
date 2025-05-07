@@ -547,7 +547,7 @@ export default function PaymentForm({ affiliateCredit, appliedCredit, setApplied
                             }
                             label={
                                 <Typography variant="body2">
-                                    I have read and agree to the{' '}
+                                    I have read and agree to the {affiliateInfo.name}{' '}
                                     <Link
                                         component="button"
                                         variant="body2"

@@ -19,4 +19,12 @@ router.get("/search-users", ensureAuthenticated, affiliateController.searchUsers
 router.put("/affiliate", ensureAuthenticated, affiliateController.createOrUpdateAffiliate);
 router.get("/affiliateById", ensureAuthenticated, affiliateController.getAffiliateById);
 
+// Add these routes to your existing router configuration
+router.post("/affiliate-terms", ensureAuthenticated, affiliateController.createAffiliateTerms);
+router.put("/affiliate-terms", ensureAuthenticated, affiliateController.updateAffiliateTerms);
+router.get("/affiliate-terms", ensureAuthenticated, affiliateController.getAffiliateTerms);
+
+router.get("/affiliate-terms/accepted", ensureAuthenticated, affiliateController.isUserAcceptedAffiliateTerms)
+router.post("/affiliate-terms/accept", ensureAuthenticated, affiliateController.acceptAffiliateTerms);
+
 module.exports = router;

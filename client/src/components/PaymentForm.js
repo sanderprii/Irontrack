@@ -18,22 +18,59 @@ import {
     Chip,
     Grid,
     useMediaQuery,
-    useTheme
+    useTheme,
+    CircularProgress
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import Checkbox from '@mui/material/Checkbox';
 
-export default function PaymentForm({ affiliateCredit, appliedCredit, setAppliedCredit, planPrice, affiliateInfo }) {
+import Link from '@mui/material/Link';
+import AffiliateTermsModal from './affiliateTermsModal';
+import { acceptAffiliateTerms, isUserAcceptedAffiliateTerms } from '../api/affiliateApi';
+
+export default function PaymentForm({ affiliateCredit, appliedCredit, setAppliedCredit, planPrice, affiliateInfo, onTermsAcceptedChange }) {
     const [paymentMethod, setPaymentMethod] = useState(affiliateCredit > 0 ? 'credit' : 'montonio');
     const [creditInput, setCreditInput] = useState('0');
     const [errorMessage, setErrorMessage] = useState('');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [termsModalOpen, setTermsModalOpen] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
+    const [termsChecking, setTermsChecking] = useState(true); // Loading state for initial terms check
 
     // Calculate maximum applicable credit
     const maxApplicableCredit = Math.min(affiliateCredit, planPrice);
+
+    // Check if user has already accepted the terms when component loads
+    useEffect(() => {
+        if (affiliateInfo?.id) {
+            checkTermsAcceptance();
+        }
+    }, [affiliateInfo?.id]);
+
+    useEffect(() => {
+        if (typeof onTermsAcceptedChange === 'function') {
+            onTermsAcceptedChange(termsAccepted);
+        }
+    }, [termsAccepted, onTermsAcceptedChange]);
+
+    // Check if user has already accepted terms
+    const checkTermsAcceptance = async () => {
+        try {
+            setTermsChecking(true);
+            const accepted = await isUserAcceptedAffiliateTerms(affiliateInfo.id);
+            setTermsAccepted(accepted);
+        } catch (error) {
+            console.error("Error checking terms acceptance:", error);
+            setTermsAccepted(false);
+        } finally {
+            setTermsChecking(false);
+        }
+    };
 
     // Update input field when appliedCredit changes
     useEffect(() => {
@@ -99,6 +136,42 @@ export default function PaymentForm({ affiliateCredit, appliedCredit, setApplied
         setErrorMessage('');
     };
 
+    const handleOpenTerms = () => {
+        setTermsModalOpen(true);
+    };
+
+    const handleCloseTerms = () => {
+        setTermsModalOpen(false);
+    };
+
+    // Handle terms acceptance checkbox
+    const handleTermsAcceptance = async (event) => {
+        const checked = event.target.checked;
+
+        if (checked) {
+            // Immediately update the UI
+            setTermsAccepted(true);
+            setIsAcceptingTerms(true);
+
+            try {
+                // Make the API call to accept terms
+                await acceptAffiliateTerms({
+                    affiliateId: affiliateInfo.id
+                });
+
+            } catch (error) {
+                console.error("Failed to accept terms:", error);
+                // Even if API fails, we'll keep the checkbox checked
+                // since the user's intent was to accept, and we'll retry on Next
+            } finally {
+                setIsAcceptingTerms(false);
+            }
+        } else {
+            // Don't allow unchecking once terms are accepted
+            // This matches the requirement that the checkbox becomes inactive once checked
+            event.preventDefault();
+        }
+    };
     return (
         <Card
             elevation={0}
@@ -455,6 +528,68 @@ export default function PaymentForm({ affiliateCredit, appliedCredit, setApplied
                         </Typography>
                     </Paper>
                 )}
+                {termsChecking ? (
+                    <Box sx={{ mt: 4, mb: 2, display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress size={24} />
+                    </Box>
+                ) : !termsAccepted ? (
+                    <Box sx={{ mt: 4, mb: 2 }}>
+                        <Divider sx={{ mb: 3 }} />
+
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={termsAccepted}
+                                    onChange={handleTermsAcceptance}
+                                    disabled={isAcceptingTerms || termsAccepted}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2">
+                                    I have read and agree to the{' '}
+                                    <Link
+                                        component="button"
+                                        variant="body2"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleOpenTerms();
+                                        }}
+                                    >
+                                        Terms and Conditions
+                                    </Link>
+                                </Typography>
+                            }
+                        />
+
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 4 }}>
+                            You must accept the {affiliateInfo.name} terms and conditions to proceed with your purchase.
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Box sx={{ mt: 4, mb: 2 }}>
+                        <Divider sx={{ mb: 3 }} />
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: 'success.lighter',
+                            color: 'success.dark'
+                        }}>
+                            <CheckCircleOutlineIcon sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                                You have accepted the {affiliateInfo.name} terms and conditions
+                            </Typography>
+                        </Box>
+                    </Box>
+                )}
+
+                {/* Terms Modal */}
+                <AffiliateTermsModal
+                    open={termsModalOpen}
+                    onClose={handleCloseTerms}
+                    affiliateId={affiliateInfo.id}
+                />
             </CardContent>
         </Card>
     );
@@ -468,10 +603,12 @@ PaymentForm.propTypes = {
     affiliateInfo: PropTypes.shape({
         name: PropTypes.string.isRequired,
         logo: PropTypes.string.isRequired
-    }).isRequired
+    }).isRequired,
+    onTermsAcceptedChange: PropTypes.func
 };
 
 PaymentForm.defaultProps = {
     affiliateCredit: 0,
     appliedCredit: 0,
+
 };

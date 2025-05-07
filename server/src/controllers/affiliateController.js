@@ -230,5 +230,149 @@ const getAffiliateById = async (req, res) => {
     }
 };
 
+const createAffiliateTerms = async (req, res) => {
+    try {
+        const { terms, affiliateId } = req.body;
+
+        if (!terms) {
+            return res.status(400).json({ error: "Terms are required" });
+        }
+
+        const newTerms = await prisma.affiliateTerms.create({
+            data: { terms, affiliateId: parseInt(affiliateId) },
+        });
+
+        res.status(201).json(newTerms);
+    } catch (error) {
+        console.error("❌ Error creating affiliate terms:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+const updateAffiliateTerms = async (req, res) => {
+    try {
+        const { terms, affiliateId } = req.body;
+
+        if (!terms) {
+            return res.status(400).json({ error: "Terms are required" });
+        }
+
+        // First, check if terms already exist for this affiliate
+        const existingTerms = await prisma.affiliateTerms.findFirst({
+            where: { affiliateId: parseInt(affiliateId) }
+        });
+
+        let result;
+
+        if (existingTerms) {
+            // If terms exist, update using the id
+            result = await prisma.affiliateTerms.update({
+                where: { id: existingTerms.id }, // Use the primary key
+                data: { terms }
+            });
+        } else {
+            // If no terms exist, create new ones
+            result = await prisma.affiliateTerms.create({
+                data: {
+                    terms,
+                    affiliateId: parseInt(affiliateId)
+                }
+            });
+        }
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Error updating/creating affiliate terms:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+const getAffiliateTerms = async (req, res) => {
+    try {
+        const affiliateId = parseInt(req.query.id);
+
+        if (!affiliateId) {
+            return res.status(400).json({ error: "Affiliate ID is required" });
+        }
+
+        const terms = await prisma.affiliateTerms.findFirst({
+            where: { affiliateId },
+        });
+
+        if (!terms) {
+            return res.status(404).json({ error: "Terms not found" });
+        }
+
+        res.json(terms);
+    } catch (error) {
+        // If it's a 404 error, it means terms don't exist yet - this is normal
+        if (error.response && error.response.status === 404) {
+            // Return a standardized empty response instead of null
+            return { terms: '', exists: false };
+        }
+
+        // For any other error, log it as an actual error
+        console.error("❌ Error fetching affiliate terms:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+const acceptAffiliateTerms = async (req, res) => {
+    try {
+        const { affiliateId } = req.body;
+const userId = req.user?.id;
+        if (!affiliateId ) {
+            return res.status(400).json({ error: "Affiliate ID is required" });
+        }
+
+        // Check if terms exist
+        const terms = await prisma.affiliateTerms.findFirst({
+            where: {affiliateId: parseInt(affiliateId) }
+        });
+
+        if (!terms) {
+            return res.status(404).json({ error: "Terms not found" });
+        }
+
+        // Create acceptance record
+        await prisma.affiliateTermsAccepted.create({
+            data: {
+                terms: terms.terms,
+                userId: parseInt(userId),
+                affiliateId: parseInt(affiliateId)
+            }
+        });
+
+        res.status(200).json({ message: "Terms accepted successfully" });
+    } catch (error) {
+        console.error("❌ Error accepting affiliate terms:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+const isUserAcceptedAffiliateTerms = async (req, res) => {
+    try {
+        const { affiliateId } = req.query;
+        const userId = req.user?.id;
+
+        if (!affiliateId) {
+            return res.status(400).json({ error: "Affiliate ID is required" });
+        }
+
+        const accepted = await prisma.affiliateTermsAccepted.findFirst({
+            where: {
+                affiliateId: parseInt(affiliateId),
+                userId: parseInt(userId)
+            }
+        });
+
+        res.json({ accepted: !!accepted });
+    } catch (error) {
+        console.error("❌ Error checking if user accepted affiliate terms:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
 // ✅ Kasuta `module.exports`, mitte `exports`
-module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate, getAffiliateById};
+module.exports = { getMyAffiliate, searchUsers, createOrUpdateAffiliate, getAffiliateById, createAffiliateTerms,
+    updateAffiliateTerms, getAffiliateTerms, acceptAffiliateTerms, isUserAcceptedAffiliateTerms};

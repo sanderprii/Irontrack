@@ -20,6 +20,7 @@ import AffiliateContracts from '../components/AffiliateContracts';
 import UnpaidUsers from '../components/UnPaidUsers';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import { Paper } from '@mui/material';
+import AffiliateTerms from '../components/affiliateTerms';
 
 const pricingPlan = localStorage.getItem('pricingPlan');
 
@@ -30,6 +31,7 @@ const menuItems = [
     ...(pricingPlan === 'premium' ? [
         { id: 'contracts', label: 'Contracts', component: AffiliateContracts },
         { id: 'unpaid-users', label: 'Unpaid Users', component: UnpaidUsers },
+        { id: 'terms', label: 'Terms & Conditions', component: AffiliateTerms },
     ] : [])
 ];
 

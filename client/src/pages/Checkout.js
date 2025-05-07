@@ -30,7 +30,7 @@ import { acceptContract } from "../api/contractApi";
 const steps = ['Payment details', 'Review your order'];
 
 // Funktsioon, mis tagastab sammu sisu ja edastab lisaks krediidi andmed
-function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedCredit, setAppliedCredit, contract, isContractPayment) {
+function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedCredit, setAppliedCredit, contract, isContractPayment, setTermsAccepted) {
     switch (step) {
         case 0:
             return (
@@ -40,6 +40,7 @@ function getStepContent(step, planData, affiliateInfo, affiliateCredit, appliedC
                     setAppliedCredit={setAppliedCredit}
                     planPrice={contract?.isFirstPayment && contract?.firstPaymentAmount ? contract.firstPaymentAmount : (planData?.price || 0)}
                     affiliateInfo={affiliateInfo}
+                    onTermsAcceptedChange={setTermsAccepted} // Pass the callback
                 />
             );
         case 1:
@@ -81,6 +82,7 @@ export default function Checkout(props) {
     const [isContractPayment, setIsContractPayment] = useState(false);
     const [isFamilyMember, setIsFamilyMember] = useState(false);
     const [familyMemberId, setFamilyMemberId] = useState(null);
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     // Lae andmed localStorage'ist esimesel renderil
     useEffect(() => {
@@ -93,8 +95,7 @@ export default function Checkout(props) {
         const familyMember = location.state?.familyMember;
         const familyMemberId = location.state?.familyMemberId;
 
-        console.log("familyMemberId", familyMemberId);
-        console.log("isfamilyMember", familyMember);
+
 
         if (plan) {
             setPlanData(plan);
@@ -279,7 +280,7 @@ export default function Checkout(props) {
 
     // Lae affiliaadi krediidi info
     useEffect(() => {
-        console.log("Affiliate ID:", affiliateInfo?.id);
+
         if (affiliateInfo?.id) {
             getUserCredit(affiliateInfo.id)
                 .then((data) => {
@@ -659,7 +660,8 @@ export default function Checkout(props) {
                                     appliedCredit,
                                     setAppliedCredit,
                                     contract,
-                                    isContractPayment || planData?.id === 'contract-payment'
+                                    isContractPayment || planData?.id === 'contract-payment',
+                                    setTermsAccepted
                                 )}
                                 {/* Navigeerimisnupud */}
                                 <Box
@@ -705,7 +707,7 @@ export default function Checkout(props) {
                                         endIcon={<ChevronRightRoundedIcon/>}
                                         onClick={handleNext}
                                         sx={{width: {xs: '100%', sm: 'fit-content'}}}
-                                        disabled={loading}
+                                        disabled={loading || (activeStep === 0 && !termsAccepted)}
                                     >
                                         {activeStep === steps.length - 1 ? (
                                             totalPrice === 0 ? 'Pay with credit' : 'Pay with Bank'

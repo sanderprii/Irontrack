@@ -474,6 +474,7 @@ console.log("contract", contract);
                                                             </Grid>
 
                                                             {/* Payment Information Card */}
+                                                            {/* Payment Information Card */}
                                                             <Grid item xs={12} md={6}>
                                                                 <Card elevation={1} sx={{ height: '100%' }}>
                                                                     <CardContent>
@@ -501,16 +502,18 @@ console.log("contract", contract);
                                                                                     {contract.paymentAmount} €
                                                                                 </Typography>
                                                                             </Box>
-                                                                            { contract.isFirstPayment && (
-                                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
-                                                                                    First Payment Amount:
-                                                                                </Typography>
-                                                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                                                    {contract.firstPaymentAmount} €
-                                                                                </Typography>
-                                                                            </Box>
+
+                                                                            {contract.firstPaymentAmount && (
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        First Payment Amount:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                        {contract.firstPaymentAmount} €
+                                                                                    </Typography>
+                                                                                </Box>
                                                                             )}
+
                                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                                 <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
                                                                                     Payment Interval:
@@ -528,6 +531,54 @@ console.log("contract", contract);
                                                                                     {contract.paymentDay || 'N/A'}
                                                                                 </Typography>
                                                                             </Box>
+
+                                                                            {/* Add First Payment Amount again if it exists (as shown in the screenshot) */}
+                                                                            {contract.firstPaymentAmount && (
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 1, minWidth: 140 }}>
+                                                                                        First Payment Amount:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                                                        {contract.firstPaymentAmount} €
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            )}
+
+                                                                            {/* Prorated Payment Calculation Section - only show when there's a monthly fee + prorated amount */}
+                                                                            {contract.firstPaymentAmount && contract.paymentAmount && contract.paymentInterval === 'month' && (
+                                                                                <Box sx={{ mt: 2, border: '1px solid #e0e0e0', borderRadius: 1, p: 2, bgcolor: '#f9f9f9' }}>
+                                                                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                                                                        Prorated Payment Calculation:
+                                                                                    </Typography>
+
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body2" sx={{ mr: 1, minWidth: 160 }}>
+                                                                                            Regular Payment Amount:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body2">
+                                                                                            {contract.paymentAmount} €
+                                                                                        </Typography>
+                                                                                    </Box>
+
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                        <Typography variant="body2" sx={{ mr: 1, minWidth: 160 }}>
+                                                                                            First Payment Amount:
+                                                                                        </Typography>
+                                                                                        <Typography variant="body2">
+                                                                                            {contract.firstPaymentAmount} €
+                                                                                        </Typography>
+                                                                                    </Box>
+
+                                                                                    {/* Explanation in English */}
+                                                                                    <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #e3f2fd' }}>
+                                                                                        <Typography variant="body2" color="text.secondary">
+                                                                                            <strong>Explanation:</strong> The first payment is proportionally calculated because the contract starts in the middle of a billing period.
+                                                                                            Calculated from {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : ''} until the end of the period
+                                                                                            (remaining days of a 30-day period).
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                </Box>
+                                                                            )}
                                                                         </Box>
                                                                     </CardContent>
                                                                 </Card>

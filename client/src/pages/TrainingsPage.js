@@ -64,6 +64,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
     flexDirection: "column",
     alignItems: "center",
     gap: theme.spacing(3),
+
 }));
 
 const FormPaper = styled(Paper)(({ theme }) => ({
@@ -613,7 +614,7 @@ export default function TrainingsPage() {
 
     return (
         <AppTheme>
-            <StyledContainer maxWidth="lg" sx={{ width: '100%' }}>
+            <StyledContainer maxWidth="lg" sx={{ width: '100%', pl: 0, pr: 0 }}>
                 <Typography variant="h4" gutterBottom align="center" fontWeight="bold">
                     TRAININGS
                 </Typography>
@@ -621,7 +622,7 @@ export default function TrainingsPage() {
                 {error && (
                     <Alert
                         severity="error"
-                        sx={{ width: '100%', mb: 2 }}
+                        sx={{ width: '100%' }}
                         onClose={() => setError('')}
                     >
                         {error}
@@ -950,7 +951,7 @@ export default function TrainingsPage() {
 
                     {/* FULLCALENDAR to display trainings */}
                     {!loadingTrainings && (
-                        <Box sx={{ '.fc': { fontFamily: 'inherit' } }}>
+                        <Box sx={{ '.fc': { fontFamily: 'inherit' }, '.fc-toolbar-title': { fontSize: '1.2em' }}}>
                             <FullCalendar
                                 plugins={[dayGridPlugin]}
                                 initialView="dayGridMonth"
@@ -960,9 +961,9 @@ export default function TrainingsPage() {
                                 height="auto"
                                 firstDay={1}
                                 headerToolbar={{
-                                    left: 'prev,next today',
+                                    left: 'prev',
                                     center: 'title',
-                                    right: 'dayGridMonth'
+                                    right: 'today next'
                                 }}
                             />
                         </Box>

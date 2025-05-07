@@ -286,7 +286,7 @@ export default function AppAppBar() {
                         )}
 
                         {/* Paremal: Logout-nupp */}
-                        <HelpIcon color="primary" sx={{ mr: 1 }}
+                        <HelpIcon color="primary" sx={{ mr: 1, ml: 1 }}
                                   onClick={() => navigate('/help')} />
                         {isLoggedIn ? (
                             <IconButton color="primary" onClick={() => logout(navigate)} sx={{ mr: 1 }}>

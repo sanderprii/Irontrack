@@ -275,9 +275,7 @@ export default function RecordsPage() {
     // In a real app, this would come from your API
     const getProgressData = (record) => {
         // This is just for demonstration - you would replace this with real logic
-        if (record.name.includes('PRESS')) return 13;
-        if (record.name.includes('DEADLIFT')) return -6;
-        if (record.name.includes('OVERHEAD')) return -10;
+
         return null; // No progress data available
     };
 
@@ -294,7 +292,7 @@ export default function RecordsPage() {
 
     return (
         <AppTheme>
-            <StyledContainer maxWidth="md">
+            <StyledContainer maxWidth="md" sx={{pl: 0, pr: 0}}>
                 <Typography variant="h4" gutterBottom align="center" fontWeight="bold">
                     RECORDS
                 </Typography>

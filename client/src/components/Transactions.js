@@ -102,16 +102,23 @@ const Transactions = ({ user, affiliateId }) => {
 
                                     {/* Detail Row */}
                                     <TableRow>
-                                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
+                                        <TableCell
+                                            style={{ paddingBottom: 0, paddingTop: 0 }}
+                                            sx={{
+                                                pl: 0,
+                                                width: { xs: '100vw' }
+                                            }}
+                                            colSpan={5}
+                                        >
                                             <Collapse in={isOpen} timeout="auto" unmountOnExit>
                                                 <Box sx={{ margin: 2 }}>
                                                     <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>
                                                         Transaction Details
                                                     </Typography>
 
-                                                    <Grid container spacing={3}>
+                                                    <Grid container spacing={3} >
                                                         {/* Transaction Overview Card */}
-                                                        <Grid item xs={12} md={6}>
+                                                        <Grid item xs={12} md={6} >
                                                             <Card elevation={1} sx={{ height: '100%' }}>
                                                                 <CardContent>
                                                                     <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#2c3e50' }}>

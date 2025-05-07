@@ -279,6 +279,7 @@ export default function Checkout(props) {
 
     // Lae affiliaadi krediidi info
     useEffect(() => {
+        console.log("Affiliate ID:", affiliateInfo?.id);
         if (affiliateInfo?.id) {
             getUserCredit(affiliateInfo.id)
                 .then((data) => {

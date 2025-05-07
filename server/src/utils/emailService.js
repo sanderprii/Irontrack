@@ -353,7 +353,7 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
 
 const sendOrderConfirmation = async (userData, orderDetails, planDetails, affiliateDetails) => {
     try {
-console.log("affiliateDetails", affiliateDetails);
+
         const proratedDays = orderDetails.proratedDays;
 
         const planDescription = proratedDays

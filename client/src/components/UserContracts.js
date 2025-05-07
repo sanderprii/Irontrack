@@ -151,7 +151,7 @@ export default function UserContracts({ user, affiliateId }) {
         }
 
 
-
+console.log("contract", contract);
         // Suuname kasutaja checkout lehele lepingu andmetega
         navigate('/checkout', {
             state: {
@@ -161,13 +161,13 @@ export default function UserContracts({ user, affiliateId }) {
                     name: `${contract.paymentType || 'Monthly'} Contract Payment`,
                     price: contract.paymentAmount,
                     trainingType: contract.trainingType,
-                    affiliateId: parsedAffiliateId, // Kasuta parsitud ID-d
+                    affiliateId: contract.affiliateId, // Kasuta parsitud ID-d
                     validityDays: 31, // Standardne 30-päevane kehtivus esimesele maksele
                     sessions: 999, // Piisavalt suur arv, et kasutaja saaks käia nii palju kui tahab
 
                 },
                 affiliate: {
-                    id: parsedAffiliateId,
+                    id: contract.affiliateId,
                     name: contract.affiliate?.name || 'Affiliate'
                 },
                 userData: user,
@@ -316,7 +316,7 @@ export default function UserContracts({ user, affiliateId }) {
                     <Typography>No contracts found.</Typography>
                 </Paper>
             ) : (
-                <Card elevation={2} sx={{ overflow: 'hidden' }}>
+                <Card elevation={2} sx={{ overflow: 'hidden', pl: 0, width: {xs: '100vw' }}}>
                     <Table>
                         <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableRow>
@@ -373,7 +373,7 @@ export default function UserContracts({ user, affiliateId }) {
                                         </TableRow>
 
                                         <TableRow>
-                                            <TableCell colSpan={6} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                                            <TableCell colSpan={6} style={{ paddingBottom: 0, paddingTop: 0, pl: 0, width: {xs: '100vw' }}}>
                                                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                                                     <Box sx={{ margin: 2 }}>
                                                         <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', mb: 3 }}>

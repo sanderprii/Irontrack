@@ -115,7 +115,7 @@ model ContractLogs {
   action      String
   createdAt   DateTime  @default(now())
   contract    Contract  @relation(fields: [contractId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
@@ -183,7 +183,7 @@ model Credit {
   userId       Int
   credit       Float          @default(0.0)
   affiliateId  Int
-  affiliate    Affiliate      @relation(fields: [affiliateId], references: [id])
+  affiliate    Affiliate      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
   user         User           @relation(fields: [userId], references: [id])
   transactions transactions[]
 
@@ -219,7 +219,7 @@ model Record {
   time    String?
   comment String?
   userId  Int
-  user    User      @relation(fields: [userId], references: [id])
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model defaultWOD {
@@ -264,7 +264,7 @@ model Plan {
   additionalData String?
   sessions       Int
   affiliateId    Int
-  affiliate      Affiliate      @relation(fields: [affiliateId], references: [id])
+  affiliate      Affiliate      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
   active         Boolean        @default(true)
   ownerId        Int
   owner          User           @relation(fields: [ownerId], references: [id])
@@ -388,7 +388,7 @@ model Members {
   createdAt     DateTime       @default(now())
   isActive      Boolean        @default(true)
   user          User           @relation(fields: [userId], references: [id])
-  affiliate     Affiliate      @relation(fields: [affiliateId], references: [id])
+  affiliate     Affiliate      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
   transactions  transactions[]
 
   // iga liige võib kuuluda ainult ühte affiliate'i
@@ -403,6 +403,7 @@ model todayWOD {
   competitionInfo String?
   date            DateTime
   notes           String?
+  isApplied       Boolean   @default(false)
   affiliateId     Int
   affiliate       Affiliate @relation(fields: [affiliateId], references: [id])
 }
@@ -439,7 +440,7 @@ model PaymentHoliday {
   contractId  Int
   contract    Contract  @relation(fields: [contractId], references: [id])
   userId      Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   affiliateId Int
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 
@@ -478,7 +479,7 @@ model AffiliateTermsAccepted {
   affiliateId Int
   terms       String
   createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
@@ -546,7 +547,7 @@ model SectorComment {
 model ContactNote {
   id          Int       @id @default(autoincrement())
   userId      Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   affiliateId Int
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
   note        String

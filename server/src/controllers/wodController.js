@@ -73,7 +73,7 @@ const saveTodayWOD = async (req, res) => {
             // ✅ Uuenda, kui see päev on juba olemas
             await prisma.todayWOD.update({
                 where: { id: existingWOD.id },
-                data: { wodName, type: wodType, description, notes, competitionInfo }
+                data: { wodName, type: wodType, description, notes, competitionInfo, isApplied: false }
             });
             return res.json({ message: "WOD updated successfully." });
         } else {
@@ -87,6 +87,7 @@ const saveTodayWOD = async (req, res) => {
                     date: new Date(date),
                     notes,
                     competitionInfo,
+
                 }
             });
             return res.json({ message: "WOD added successfully." });
@@ -184,6 +185,11 @@ const applyWODToTrainings = async (req, res) => {
                 description: wod.description,
                 competitionInfo: wod.competitionInfo,
             }
+        });
+
+        await prisma.todayWOD.update ({
+            where: { id: wod.id },
+            data: { isApplied: true }
         });
 
         res.json({message: "WOD applied to all trainings for this date!"});

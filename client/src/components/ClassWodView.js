@@ -186,10 +186,10 @@ export default function ClassWodView({ affiliateId, onClose }) {
                                             <Button
                                                 size="small"
                                                 variant="contained"
-                                                color="secondary"
+                                                color={wod.isApplied ? "success" : "secondary"}
                                                 onClick={() => handleOpenConfirmDialog(dayDate)}
                                             >
-                                                Apply WOD
+                                                {wod.isApplied ? "Applied" : "Apply WOD"}
                                             </Button>
                                         )}
                                     </Box>

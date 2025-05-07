@@ -75,7 +75,7 @@ export default function MyAffiliate() {
         menuItems.find((item) => item.id === activeComponent)?.component || AffiliateView;
 
     return (
-        <Container maxWidth={false} sx={{ display: 'flex', flexDirection: 'column', p: 0 }}>
+        <Container maxWidth={false} sx={{ display: 'flex', flexDirection: 'column', pl: {xs: '0 !important'}, pr: {xs: '0 !important'} }}>
             {/* Horisontaalne mobiilimenüü */}
             <Paper
                 sx={{
@@ -185,8 +185,8 @@ export default function MyAffiliate() {
                 </Drawer>
 
                 {/* Main Content */}
-                <Box sx={{ flexGrow: 1, pt: 2 }}>
-                    <Card>
+                <Box sx={{ flexGrow: 1, pt: 2, pl: { xs: 0, md: 2 }, pr: { xs: 0, md: 2 } }}>
+                    <Card sx={{pl: {xs: 0}, pr: {xs: 0}, width:  {xs: '100vw', md: '70vw', lg: '75vw'}}}>
                         <CardContent>
                             {isLoading ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>

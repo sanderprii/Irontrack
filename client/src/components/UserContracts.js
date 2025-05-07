@@ -317,7 +317,7 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                     <Typography>No contracts found.</Typography>
                 </Paper>
             ) : (
-                <Card elevation={2} sx={{ overflow: 'hidden', pl: 0, width: {xs: '100vw' }}}>
+                <Card elevation={2} sx={{ overflow: 'hidden', pl: 0, pr: 0}}>
                     <Table>
                         <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableRow>
@@ -366,6 +366,7 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                                                             e.stopPropagation();
                                                             handleOpenDeactivateDialog(contract);
                                                         }}
+                                                        sx={{fontSize: '0.7rem !important' }}
                                                     >
                                                         End Date
                                                     </Button>

@@ -140,7 +140,7 @@ export default function FamilyMembers({ user }) {
     };
 
     return (
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ pt: 2, pb: 2, px: {xs: 0, md: 2, lg: 2} }}>
             <Typography variant="h5" sx={{ mb: 2 }}>Children</Typography>
             <Divider sx={{ my: 2 }} />
 

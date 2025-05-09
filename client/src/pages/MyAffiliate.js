@@ -185,8 +185,8 @@ export default function MyAffiliate() {
                 </Drawer>
 
                 {/* Main Content */}
-                <Box sx={{ flexGrow: 1, pt: 2, pl: { xs: 0, md: 2 }, pr: { xs: 0, md: 2 } }}>
-                    <Card sx={{pl: {xs: 0}, pr: {xs: 0}, width:  {xs: '100vw', md: '70vw', lg: '75vw'}}}>
+                <Box sx={{ flexGrow: 1, pt: 2, pl: { xs: 0, md: 2, lg: 2 }, pr: { xs: 0, md: 2, lg: 2 } }}>
+                    <Card sx={{pl: {xs: 0, md: 2, lg: 2}, pr: {xs: 0, md: 2, lg: 2}, width:  {xs: '100vw', md: '70vw', lg: '75vw'}}}>
                         <CardContent>
                             {isLoading ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>

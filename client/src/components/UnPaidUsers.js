@@ -55,13 +55,7 @@ const UnpaidUserRow = ({ row, fetchUnpaidUsers }) => {
                 <TableCell>{row.user?.fullName || 'N/A'}</TableCell>
                 <TableCell>{row.amount} €</TableCell>
                 <TableCell>{new Date(row.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
-                    <Chip
-                        label="Pending"
-                        color="warning"
-                        size="small"
-                    />
-                </TableCell>
+
                 <TableCell>
                     <Button
                         onClick={(e) => {
@@ -351,7 +345,7 @@ export default function UnpaidUsers({affiliate}) {
                                 <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+
                                 <TableCell></TableCell>
                             </TableRow>
                         </TableHead>

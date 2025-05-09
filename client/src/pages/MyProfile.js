@@ -204,7 +204,7 @@ export default function MyProfile() {
             maxWidth={false}
             sx={{
                 mt: 2,
-                px: { xs: 0, sm: 0, md: 4 },
+                px: { xs: 0, sm: 4, md: 4, lg: 4 },
                 display: 'flex',
                 backgroundColor: 'background.default',
                 pt: 2,
@@ -387,7 +387,7 @@ export default function MyProfile() {
             <Box
                 sx={{
                     flexGrow: 1,
-                    p: { xs: 0, sm: 0, md: 3 },
+                    p: { xs: 0, sm: 2, md: 3, lg: 4 },
                     backgroundColor: 'background.default',
                     mt: { xs: 5, md: 0 }, // Add margin-top on mobile for fixed menu
                 }}

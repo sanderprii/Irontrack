@@ -554,7 +554,7 @@ export default function Classes() {
     };
 
     return (
-        <Container maxWidth={false}>
+        <Container maxWidth={false} sx={{pl: {xs: 0, md: 2, lg: 2}, pr: {xs: 0, md: 2, lg: 2}}}>
             <Box textAlign="center" my={4}>
 
                 {selectedAffiliate?.name &&

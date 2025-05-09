@@ -150,7 +150,7 @@ const CreditView = ({ user, affiliateId }) => {
             )}
 
             {/* Credits-tabel */}
-            <Card elevation={2} sx={{ mb: 4, overflow: 'hidden' }}>
+            <Card elevation={2} sx={{ mb: 4, overflow: 'hidden', mx: { xs: 0, sm: 2, md: 2, lg: 2 } }}>
                 <CardContent sx={{ pb: 0 }}>
                     <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <AccountBalanceWalletIcon sx={{ mr: 1, color: 'primary.main' }} />

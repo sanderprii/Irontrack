@@ -86,6 +86,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
         boxShadow: theme.shadows[5],
         transform: "translateY(-4px)",
     },
+
 }));
 
 // Training type styles
@@ -720,7 +721,7 @@ const RegisterTrainingPage = () => {
 
                 {/* Improved Plans Section */}
                 {plans.length > 0 && viewingPlans && (
-                    <Box mt={4} sx={{ width: "100%", textAlign: "center" }}>
+                    <Box mt={4} sx={{ width: "100%", textAlign: "center"}}>
                         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 3 }}>
                             <Button
                                 variant="outlined"

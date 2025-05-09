@@ -386,6 +386,10 @@ const handleMontonioWebhook = async (req, res) => {
 
             // Uuenda vastavalt makse staatusele
             if (paymentStatus === 'PAID') {
+
+
+
+                console.log('Payment status was passed');
                 // 1. Uuenda tehingu olek
                 try {
                     await prisma.transactions.update({
@@ -635,109 +639,113 @@ const checkPaymentStatus = async (req, res) => {
     try {
         // Verify token with your secret key
         const decoded = jwt.verify(token, affiliateSecretKey);
+let sessionToken = null;
+        if (decoded.paymentStatus === 'PAID') {
 
-        // First update the database - using updateMany instead of update
-        await prisma.transactions.updateMany({
-            where: {
-                invoiceNumber: decoded.merchantReference
-            },
-            data: {
-                status: 'success'
-            }
-
-        });
-
-        const transaction = await prisma.transactions.findFirst({
-            where: {invoiceNumber: decoded.merchantReference},
-        });
-
-
-        if (transaction.planId > 0) {
-            const selectedPlan = await prisma.plan.findUnique({
+            // First update the database - using updateMany instead of update
+            await prisma.transactions.updateMany({
                 where: {
-                    id: transaction.planId
+                    invoiceNumber: decoded.merchantReference
+                },
+                data: {
+                    status: 'success'
                 }
+
             });
 
-            console.log("transaction", transaction)
-            const planData = selectedPlan
-            const userId = parseInt(transaction.userId)
-            const affiliateId = transaction.affiliateId;
-            const currentAppliedCredit = transaction.creditAmount;
-            const contract = null;
-
-            const isFamilyMember = transaction.isFamilyMember;
-            const familyMemberId = transaction.familyMemberId
-            let merchantReference = decoded.merchantReference;
-
-            try {
-                const result = await buyPlan(
-                    planData,
-                    currentAppliedCredit,
-                    affiliateId,
-                    userId,
-                    contract,
-                    isFamilyMember,
-                    familyMemberId,
-                    merchantReference
-                );
-                console.log("Plan purchase successful:", result);
-            } catch (error) {
-                console.error("Failed to buy plan:", error.message);
-            }
-
-
-        } else if (transaction.contractId > 0) {
-            const contract = await prisma.contract.findUnique({
-                where: {
-                    id: transaction.contractId
-                }
+            const transaction = await prisma.transactions.findFirst({
+                where: {invoiceNumber: decoded.merchantReference},
             });
 
-            if (contract) {
-                await prisma.contract.update({
+
+            if (transaction.planId > 0) {
+                const selectedPlan = await prisma.plan.findUnique({
                     where: {
-                        id: contract.id
-                    },
-                    data: {
-
-                        status: 'accepted',
-                        acceptedAt: new Date(),
+                        id: transaction.planId
                     }
                 });
 
-                const contractId = contract.id;
-                const acceptType = "checkbox";
-                const userId = parseInt(transaction.userId);
+                console.log("transaction", transaction)
+                const planData = selectedPlan
+                const userId = parseInt(transaction.userId)
                 const affiliateId = transaction.affiliateId;
-                const contractTermsId = 1;
-                const appliedCredit = transaction.creditAmount || 0;
+                const currentAppliedCredit = transaction.creditAmount;
+                const contract = null;
+
+                const isFamilyMember = transaction.isFamilyMember;
+                const familyMemberId = transaction.familyMemberId
+                let merchantReference = decoded.merchantReference;
 
                 try {
-                    contractController.acceptContractInternal(
-                        contractId,
-                        userId,
+                    const result = await buyPlan(
+                        planData,
+                        currentAppliedCredit,
                         affiliateId,
-                        contractTermsId,
-                        acceptType,
-                        appliedCredit
+                        userId,
+                        contract,
+                        isFamilyMember,
+                        familyMemberId,
+                        merchantReference
                     );
-                    console.log("Contract accepted successfully", userId);
+                    console.log("Plan purchase successful:", result);
                 } catch (error) {
-                    console.error("Failed to accept contract:", error.message);
+                    console.error("Failed to buy plan:", error.message);
                 }
 
+
+            } else if (transaction.contractId > 0) {
+                const contract = await prisma.contract.findUnique({
+                    where: {
+                        id: transaction.contractId
+                    }
+                });
+
+                if (contract) {
+                    await prisma.contract.update({
+                        where: {
+                            id: contract.id
+                        },
+                        data: {
+
+                            status: 'accepted',
+                            acceptedAt: new Date(),
+                        }
+                    });
+
+                    const contractId = contract.id;
+                    const acceptType = "checkbox";
+                    const userId = parseInt(transaction.userId);
+                    const affiliateId = transaction.affiliateId;
+                    const contractTermsId = 1;
+                    const appliedCredit = transaction.creditAmount || 0;
+
+                    try {
+                        contractController.acceptContractInternal(
+                            contractId,
+                            userId,
+                            affiliateId,
+                            contractTermsId,
+                            acceptType,
+                            appliedCredit
+                        );
+                        console.log("Contract accepted successfully", userId);
+                    } catch (error) {
+                        console.error("Failed to accept contract:", error.message);
+                    }
+
+                }
+
+
             }
-
-
+            sessionToken = await prisma.session.findFirst({
+                where: {
+                    userId: parseInt(transaction.userId)
+                }
+            });
+            console.log("sessionToken", sessionToken);
         }
 
-        const sessionToken = await prisma.session.findFirst({
-            where: {
-                userId: parseInt(transaction.userId)
-            }
-        });
-console.log("sessionToken", sessionToken);
+
         // Only send response after database operation completes
         res.json({
             success: true,

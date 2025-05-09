@@ -39,6 +39,11 @@ const AfterCheckout = () => {
                     <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 2 }}>
                         Your plan is now active and you can start using all available features.
                     </Typography>
+
+                    <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 2 }}>
+                        <strong>In case of any issues, please contact your affiliate manager.</strong>
+                    </Typography>
+
                 </Box>
 
                 <Divider sx={{ my: 3 }} />

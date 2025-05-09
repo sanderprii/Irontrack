@@ -841,7 +841,11 @@ async function sendPaymentEmail(
 ) {
     const dueDate = new Date();
     dueDate.setDate(contract.paymentDay);
-    const formattedDueDate = dueDate.toLocaleDateString();
+    const formattedDueDate = dueDate.toLocaleDateString('et-EE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
 
     // Add prorated info to subject if applicable
     const proratedSubject = proratedDays !== null ? ` (Prorated)` : '';

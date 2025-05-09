@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const {PrismaClient} = require('@prisma/client');
 const {parse} = require("dotenv");
 const prisma = new PrismaClient();
-const { sendOrderConfirmation } = require("../utils/emailService");
+const {sendOrderConfirmation} = require("../utils/emailService");
 
 /**
  * Lepingute toomine (otsing + sortimine)
@@ -11,14 +11,14 @@ const { sendOrderConfirmation } = require("../utils/emailService");
  */
 exports.getAllContracts = async (req, res) => {
     try {
-        const { search = '', sortBy = 'createdAt', sortOrder = 'desc', affiliateId } = req.query;
+        const {search = '', sortBy = 'createdAt', sortOrder = 'desc', affiliateId} = req.query;
 
         let orderBy = {};
 
         // Kui kasutaja soovib sorteerida täisnime järgi
         if (sortBy === 'fullName') {
             orderBy = {
-                user: { fullName: sortOrder }, // Kasutab Prisma nested orderBy
+                user: {fullName: sortOrder}, // Kasutab Prisma nested orderBy
             };
         } else {
             orderBy[sortBy] = sortOrder; // Vaikimisi sorteerimine
@@ -30,7 +30,7 @@ exports.getAllContracts = async (req, res) => {
                 affiliateId: parseInt(affiliateId),
             },
             include: {
-                user: { select: { fullName: true } },
+                user: {select: {fullName: true}},
                 paymentHolidays: true
             },
             orderBy: orderBy
@@ -47,8 +47,8 @@ exports.getAllContracts = async (req, res) => {
             // For each terminated contract, get the most recent log
             const logPromises = terminatedContractIds.map(contractId =>
                 prisma.contractLogs.findFirst({
-                    where: { contractId },
-                    orderBy: { createdAt: 'desc' }
+                    where: {contractId},
+                    orderBy: {createdAt: 'desc'}
                 })
             );
 
@@ -78,7 +78,7 @@ exports.getAllContracts = async (req, res) => {
         res.json(enhancedContracts);
     } catch (error) {
         console.error('Error fetching contracts:', error);
-        res.status(500).json({ error: 'Failed to fetch contracts' });
+        res.status(500).json({error: 'Failed to fetch contracts'});
     }
 };
 
@@ -131,7 +131,7 @@ exports.createContract = async (req, res) => {
         res.json(newContract);
     } catch (error) {
         console.error('Error creating contract:', error);
-        res.status(500).json({ error: 'Failed to create contract' });
+        res.status(500).json({error: 'Failed to create contract'});
     }
 };
 
@@ -140,18 +140,18 @@ exports.createContract = async (req, res) => {
  */
 exports.getContractById = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
         const contract = await prisma.contract.findUnique({
-            where: { id: parseInt(id) },
+            where: {id: parseInt(id)},
 
         });
         if (!contract) {
-            return res.status(404).json({ error: 'Contract not found' });
+            return res.status(404).json({error: 'Contract not found'});
         }
         res.json(contract);
     } catch (error) {
         console.error('Error fetching contract by id:', error);
-        res.status(500).json({ error: 'Failed to fetch contract' });
+        res.status(500).json({error: 'Failed to fetch contract'});
     }
 };
 
@@ -160,7 +160,7 @@ exports.getContractById = async (req, res) => {
  */
 exports.updateContract = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
         const {
             status,
             acceptedAt,
@@ -209,12 +209,12 @@ exports.updateContract = async (req, res) => {
 
         // Kui ühtegi välja pole määratud, tagasta veateade
         if (Object.keys(data).length === 0) {
-            return res.status(400).json({ error: 'No fields provided to update' });
+            return res.status(400).json({error: 'No fields provided to update'});
         }
 
         // Uuenda leping ainult olemasolevate väljadega
         const updatedContract = await prisma.contract.update({
-            where: { id: parseInt(id) },
+            where: {id: parseInt(id)},
             data,
         });
 
@@ -233,7 +233,7 @@ exports.updateContract = async (req, res) => {
         res.json(updatedContract);
     } catch (error) {
         console.error('Error updating contract:', error);
-        res.status(500).json({ error: 'Failed to update contract' });
+        res.status(500).json({error: 'Failed to update contract'});
     }
 };
 /**
@@ -241,12 +241,12 @@ exports.updateContract = async (req, res) => {
  */
 exports.deleteContract = async (req, res) => {
     try {
-        const { id } = req.params;
-        await prisma.contract.delete({ where: { id: parseInt(id) } });
-        res.json({ message: 'Contract deleted successfully' });
+        const {id} = req.params;
+        await prisma.contract.delete({where: {id: parseInt(id)}});
+        res.json({message: 'Contract deleted successfully'});
     } catch (error) {
         console.error('Error deleting contract:', error);
-        res.status(500).json({ error: 'Failed to delete contract' });
+        res.status(500).json({error: 'Failed to delete contract'});
     }
 };
 
@@ -256,7 +256,7 @@ exports.deleteContract = async (req, res) => {
 exports.createContractTemplate = async (req, res) => {
     try {
 
-        const { content, affiliateId } = req.body;
+        const {content, affiliateId} = req.body;
 
         const newTemplate = await prisma.contractTemplate.create({
             data: {
@@ -268,7 +268,7 @@ exports.createContractTemplate = async (req, res) => {
         res.json(newTemplate);
     } catch (error) {
         console.error('Error creating template:', error);
-        res.status(500).json({ error: 'Failed to create template' });
+        res.status(500).json({error: 'Failed to create template'});
     }
 };
 
@@ -277,16 +277,16 @@ exports.createContractTemplate = async (req, res) => {
  */
 exports.getLatestContractTemplate = async (req, res) => {
     try {
-        const { affiliateId } = req.query;
+        const {affiliateId} = req.query;
 
         const template = await prisma.contractTemplate.findFirst({
-            where: { affiliateId: parseInt(affiliateId) },
-            orderBy: { createdAt: 'desc' },
+            where: {affiliateId: parseInt(affiliateId)},
+            orderBy: {createdAt: 'desc'},
         });
         res.json(template || null);
     } catch (error) {
         console.error('Error fetching latest template:', error);
-        res.status(500).json({ error: 'Failed to fetch template' });
+        res.status(500).json({error: 'Failed to fetch template'});
     }
 };
 
@@ -296,21 +296,21 @@ exports.getUserContracts = async (req, res) => {
         const affiliateId = req.query.affiliateId || '';
 
         if (!userId) {
-            return res.status(400).json({ error: 'Invalid userId' });
+            return res.status(400).json({error: 'Invalid userId'});
         }
 
-        if(affiliateId > 0) {
+        if (affiliateId > 0) {
             const affiliateIds = parseInt(affiliateId, 10);
 
             const contracts = await prisma.contract.findMany({
-                where: { userId, affiliateId: affiliateIds },
+                where: {userId, affiliateId: affiliateIds},
                 include: {
                     logs: true,     // kui tahad logs'id
                     signed: true,   // kui tahad SignedContract ridu
                     affiliate: {select: {name: true, email: true}}, // kui tahad affiliate infot
                     paymentHolidays: true,
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: {createdAt: 'desc'},
             });
             res.json(contracts);
 
@@ -332,7 +332,7 @@ exports.getUserContracts = async (req, res) => {
 
     } catch (error) {
         console.error('Error getUserContracts:', error);
-        res.status(500).json({ error: 'Failed to fetch user contracts' });
+        res.status(500).json({error: 'Failed to fetch user contracts'});
     }
 };
 
@@ -349,21 +349,20 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
     try {
         // Find contract
         const contract = await prisma.contract.findUnique({
-            where: { id: parseInt(contractId) },
+            where: {id: parseInt(contractId)},
             include: {
                 userPlan: true
             }
         });
 
 
-
         if (!contract) {
             throw new Error("Contract not found");
         }
-const isFirstContractPayment = contract.isFirstPayment
+        const isFirstContractPayment = contract.isFirstPayment
         // Update contract status
         const updatedContract = await prisma.contract.update({
-            where: { id: parseInt(contractId) },
+            where: {id: parseInt(contractId)},
             data: {
                 status: 'accepted',
                 acceptedAt: new Date(),
@@ -420,14 +419,14 @@ const isFirstContractPayment = contract.isFirstPayment
 
             // Check if user plan already exists
             const existingUserPlan = await prisma.userPlan.findFirst({
-                where: { contractId: parseInt(contractId) },
+                where: {contractId: parseInt(contractId)},
             });
 
             if (existingUserPlan) {
                 // Update existing user plan
                 await prisma.userPlan.update({
-                    where: { id: existingUserPlan.id },
-                    data: { endDate }
+                    where: {id: existingUserPlan.id},
+                    data: {endDate}
                 });
             } else {
                 // Create new user plan
@@ -454,17 +453,16 @@ const isFirstContractPayment = contract.isFirstPayment
         const finalAmount = contract.paymentAmount - (parseInt(appliedCredit) || 0);
 
 
-
         // Handle email sending as in your original function...
         try {
             // Get user data
             const userData = await prisma.user.findUnique({
-                where: { id: userId }
+                where: {id: userId}
             });
 
             // Get affiliate data
             const affiliateData = await prisma.affiliate.findUnique({
-                where: { id: parseInt(affiliateId) }
+                where: {id: parseInt(affiliateId)}
             });
 
             if (!userData || !affiliateData) {
@@ -491,15 +489,15 @@ const isFirstContractPayment = contract.isFirstPayment
                 } else {
                     finalOrderAmount = contract.paymentAmount
                 }
-console.log("isFirstContractPayment", isFirstContractPayment);
+                console.log("isFirstContractPayment", isFirstContractPayment);
                 const orderDetails = {
                     invoiceNumber: invoiceNumber,
                     amount: finalOrderAmount,
                     appliedCredit: appliedCredit,
                     isContractPayment: true
                 };
-console.log(orderDetails);
-console.log(affiliateData)
+                console.log(orderDetails);
+                console.log(affiliateData)
 
                 if (finalOrderAmount === appliedCredit) {
                     await prisma.transactions.create({
@@ -540,8 +538,8 @@ console.log(affiliateData)
 
 exports.acceptContract = async (req, res) => {
     try {
-        const { userId, affiliateId, acceptType, contractTermsId, contractId, appliedCredit, invoiceNumber } = req.body;
-console.log("acceptContract", req.body);
+        const {userId, affiliateId, acceptType, contractTermsId, contractId, appliedCredit, invoiceNumber} = req.body;
+        console.log("acceptContract", req.body);
         const result = await acceptContractInternal(
             contractId,
             userId,
@@ -555,7 +553,7 @@ console.log("acceptContract", req.body);
         res.json(result);
     } catch (error) {
         console.error('Error acceptContract:', error);
-        res.status(500).json({ error: 'Failed to accept contract' });
+        res.status(500).json({error: 'Failed to accept contract'});
     }
 };
 /**
@@ -568,24 +566,24 @@ exports.getContractTermsById = async (req, res) => {
 
 
         const foundTerms = await prisma.contractTerms.findFirst({
-            where: { type: termsType.termsId },
+            where: {type: termsType.termsId},
 
         });
 
         if (!foundTerms) {
-            return res.status(404).json({ error: 'Contract terms not found' });
+            return res.status(404).json({error: 'Contract terms not found'});
         }
 
         res.json(foundTerms);
     } catch (error) {
         console.error('Error getContractTermsById:', error);
-        res.status(500).json({ error: 'Failed to fetch contract terms' });
+        res.status(500).json({error: 'Failed to fetch contract terms'});
     }
 };
 
 exports.createPaymentHoliday = async (req, res) => {
     try {
-        const { contractId } = req.params;
+        const {contractId} = req.params;
         const {
             userId,
             affiliateId,
@@ -600,14 +598,14 @@ exports.createPaymentHoliday = async (req, res) => {
 
         // Otsi leping andmebaasist, et saada affiliate info
         const contract = await prisma.contract.findUnique({
-            where: { id: contractInt },
+            where: {id: contractInt},
             include: {
                 affiliate: true, // et saada affiliate.email
             },
         });
 
         if (!contract) {
-            return res.status(404).json({ error: 'Contract not found' });
+            return res.status(404).json({error: 'Contract not found'});
         }
 
         // Loo PaymentHoliday kirje
@@ -624,40 +622,39 @@ exports.createPaymentHoliday = async (req, res) => {
         });
 
 
-
-        return res.json({ success: true, paymentHoliday: newPh });
+        return res.json({success: true, paymentHoliday: newPh});
     } catch (error) {
         console.error('Error creating payment holiday:', error);
-        return res.status(500).json({ error: 'Failed to create payment holiday' });
+        return res.status(500).json({error: 'Failed to create payment holiday'});
     }
 };
 
 exports.updatePaymentHoliday = async (req, res) => {
     try {
-        const { phId } = req.params;
-        const { accepted } = req.body;
+        const {phId} = req.params;
+        const {accepted} = req.body;
 
         const updatedPh = await prisma.paymentHoliday.update({
-            where: { id: parseInt(phId) },
+            where: {id: parseInt(phId)},
             data: {
                 accepted,
             },
         });
 
-        return res.json({ success: true, paymentHoliday: updatedPh });
+        return res.json({success: true, paymentHoliday: updatedPh});
     } catch (error) {
         console.error('Error updating payment holiday:', error);
-        return res.status(500).json({ error: 'Failed to update payment holiday' });
+        return res.status(500).json({error: 'Failed to update payment holiday'});
     }
 }
 
 exports.getUnpaidUsers = async (req, res) => {
     try {
-        const { affiliateId } = req.query;
+        const {affiliateId} = req.query;
 
         // Kontrolli, kas affiliateId on olemas
         if (!affiliateId) {
-            return res.status(400).json({ error: 'Affiliate ID is required' });
+            return res.status(400).json({error: 'Affiliate ID is required'});
         }
 
         // Teisenda affiliateId numbriks
@@ -688,7 +685,7 @@ exports.getUnpaidUsers = async (req, res) => {
         // Leia nende kasutajate aktiivsed lepingud
         const contracts = await prisma.contract.findMany({
             where: {
-                userId: { in: userIds },
+                userId: {in: userIds},
                 affiliateId: affiliateIdInt,
                 active: true
             }
@@ -721,27 +718,27 @@ exports.getUnpaidUsers = async (req, res) => {
         res.json(unpaidUsersData);
     } catch (error) {
         console.error('Error fetching unpaid users:', error);
-        res.status(500).json({ error: 'Failed to fetch unpaid users' });
+        res.status(500).json({error: 'Failed to fetch unpaid users'});
     }
 };
 
 exports.updateUnpaidUser = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
 
         // First fetch the transaction to get the contractId
         const transaction = await prisma.transactions.findUnique({
-            where: { id: parseInt(id) }
+            where: {id: parseInt(id)}
         });
 
         if (!transaction) {
-            return res.status(404).json({ error: 'Transaction not found' });
+            return res.status(404).json({error: 'Transaction not found'});
         }
 
         // Update transaction status
         const updatedTransaction = await prisma.transactions.update({
-            where: { id: parseInt(id) },
-            data: { status: "success" },
+            where: {id: parseInt(id)},
+            data: {status: "success"},
         });
 
         // If transaction has a contractId, update the corresponding UserPlan
@@ -761,8 +758,46 @@ exports.updateUnpaidUser = async (req, res) => {
 
                 // Update the UserPlan with the new endDate
                 await prisma.userPlan.update({
-                    where: { id: userPlan.id },
-                    data: { endDate: newEndDate }
+                    where: {id: userPlan.id},
+                    data: {endDate: newEndDate}
+                });
+            } else {
+                // Calculate the new endDate (add one month)
+
+
+                const contract = await prisma.contract.findUnique({
+                    where: {id: transaction.contractId}
+                });
+
+                await prisma.contract.update({
+                    where: {id: transaction.contractId},
+                    data: {
+                        status: 'accepted',
+                        acceptedAt: new Date(),
+                        isFirstPayment: false,
+                    }
+                })
+
+
+                const currentEndDate = new Date(contract.startDate);
+                const newEndDate = new Date(currentEndDate);
+                newEndDate.setMonth(newEndDate.getMonth() + 1);
+                // Create a new UserPlan with the new endDate
+                await prisma.userPlan.create({
+                    data: {
+                        userId: transaction.userId,
+                        contractId: transaction.contractId,
+                        affiliateId: transaction.affiliateId,
+                        planName: "Membership Contract",
+                        trainingType: contract.trainingType, // Set to null or appropriate value
+                        validityDays: 31, // Default
+                        price: contract.paymentAmount || 0,
+                        sessionsLeft: 9999, // Unlimited for contract
+                        purchasedAt: new Date(contract.startDate),
+                        endDate: newEndDate,
+                        paymentHoliday: false,
+                        planId: 0,
+                    }
                 });
             }
         }
@@ -770,7 +805,7 @@ exports.updateUnpaidUser = async (req, res) => {
         res.json(updatedTransaction);
     } catch (error) {
         console.error('Error updating unpaid user:', error);
-        res.status(500).json({ error: 'Failed to update unpaid user' });
+        res.status(500).json({error: 'Failed to update unpaid user'});
     }
 };
 

@@ -353,7 +353,12 @@ const ContactNotes = ({ user, affiliateId, userId }) => {
                                                     <IconButton
                                                         onClick={() => handleOpenDeleteConfirm(note.id)}
                                                         disabled={isLoading}
-                                                        color="error"
+                                                        sx={{
+                                                            color: 'white',
+                                                            bgcolor: '#d32f2f',
+                                                            '&:hover': { bgcolor: '#b71c1c',
+                                                            ml: 2}
+                                                        }}
                                                         size="small"
                                                     >
                                                         <DeleteIcon />

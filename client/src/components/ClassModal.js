@@ -1,5 +1,5 @@
-import React, {useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {useEffect, useState, useRef} from "react";
+import {useNavigate} from "react-router-dom";
 import {
     Dialog,
     DialogTitle,
@@ -43,6 +43,12 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 Trophy ic
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
+import Link from '@mui/material/Link';
+import Checkbox from '@mui/material/Checkbox';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AffiliateTermsModal from './affiliateTermsModal';
+import {acceptAffiliateTerms, isUserAcceptedAffiliateTerms} from '../api/affiliateApi';
+
 // Import API functions
 import {
     getClassAttendees,
@@ -65,8 +71,9 @@ import {getUserPlansByAffiliate, getUserProfile} from "../api/profileApi";
 import {getMemberInfo} from "../api/membersApi";
 import {getFamilyMembers} from "../api/familyApi";
 import * as PropTypes from "prop-types";
-import AddIcon from "@mui/icons-material/Add"; // Import the family API function
-
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import CircularProgress from "@mui/material/CircularProgress"; // Import the family API function
 
 
 export default function ClassModal({
@@ -130,6 +137,68 @@ export default function ClassModal({
     const [notificationMessage, setNotificationMessage] = useState("");
     const [notificationType, setNotificationType] = useState("success");
 
+    const profileFetchedRef = useRef(false);
+
+    const [termsModalOpen, setTermsModalOpen] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
+    const [termsCheck, setTermsCheck] = useState(false);
+
+    // Asenda mitu getUserProfile kutset ühe konsolideeritud useEffect-iga
+    useEffect(() => {
+        // Kui modal on avatud ja kasutaja on "regular"
+        if (open && userRole === "regular" && !profileFetchedRef.current) {
+            const fetchUserData = async () => {
+                try {
+                    // Märgi, et profiil on laaditud
+                    profileFetchedRef.current = true;
+
+                    // Lae profiil ainult üks kord
+                    const profile = await getUserProfile();
+                    setUserProfile(profile);
+
+                    // Tee kõik vajalikud toimingud profilega
+                    if (cls?.affiliateId) {
+                        // Lae pereliikmed
+                        const members = await getFamilyMembers();
+                        setFamilyMembers(members || []);
+
+                        // Lae kasutaja plaanid
+                        await loadUserPlans(cls.affiliateId);
+                    }
+
+                    // Kontrolli ootejärjekorra staatust
+                    if (cls?.id) {
+                        // Kasuta profiili andmeid ootejärjekorras
+                        const waitlist = await getWaitlist(cls.id);
+                        const userId = profile.id;
+
+                        if (waitlist && waitlist.length > 0) {
+                            const userInWaitlist = waitlist.some(item => {
+                                const itemUserId = typeof item.userId === 'string' ? parseInt(item.userId) : item.userId;
+                                return itemUserId === userId;
+                            });
+
+                            setIsInWaitlist(userInWaitlist);
+                        } else {
+                            setIsInWaitlist(false);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error loading user data:", error);
+                }
+            };
+
+            fetchUserData();
+        }
+
+        // Lähtesta ref kui modal suletakse
+        if (!open) {
+            profileFetchedRef.current = false;
+        }
+    }, [open, userRole, cls]);
+
+
     useEffect(() => {
         const role = localStorage.getItem("role");
         setUserRole(role);
@@ -140,15 +209,42 @@ export default function ClassModal({
         setWorkoutInfoFullScreen(!isWorkoutInfoFullScreen);
     };
 
+    const checkTermsAcceptance = async () => {
+        try {
+
+            const accepted = await isUserAcceptedAffiliateTerms(cls.affiliateId);
+            setTermsAccepted(accepted);
+        } catch (error) {
+            console.error("Error checking terms acceptance:", error);
+            setTermsAccepted(false);
+        } finally {
+
+        }
+    };
+
+    // Kontrolli tingimuste staatust kui modal avatakse ja kasutaja on 'regular'
+    useEffect(() => {
+        if (open && userRole === "regular") {
+            checkTermsAcceptance();
+        }
+    }, [open, userRole, userProfile]);
+
     // Kontrollime, kas klass on täis
     useEffect(() => {
 
 
-            if (cls && typeof cls.enrolledCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
-                setIsClassFull(cls.enrolledCount >= cls.memberCapacity);
-            }
+        if (cls && typeof cls.enrolledCount !== 'undefined' && typeof cls.memberCapacity !== 'undefined') {
+            setIsClassFull(cls.enrolledCount >= cls.memberCapacity);
+        }
 
     }, [cls, isInWaitlist]);
+
+    useEffect(() => {
+        // Kui modal suletakse (open muutub false'iks), lähtesta showScoreForm
+        if (!open) {
+            setShowScoreForm(false);
+        }
+    }, [open]);
 
     // Kui modal avatakse ja meil on olemas klassi ID, toome klassi osalejad
     // ja uurime, kas kasutaja on nende hulgas.
@@ -157,9 +253,7 @@ export default function ClassModal({
         if (role) {
             if (!cls || !cls.id) return;
             fetchAttendees();
-            if (userRole === "regular") {
-                checkWaitlistStatus();
-            }
+
             if (userRole === "affiliate" || userRole === "trainer") {
                 fetchWaitlistEntries();
             }
@@ -172,12 +266,6 @@ export default function ClassModal({
         }
     }, [cls, userRole, open]);
 
-    // Load user plans and family members when modal opens
-    useEffect(() => {
-        if (open && userRole === "regular" && cls?.affiliateId) {
-            loadUserData();
-        }
-    }, [open, userRole, cls]);
 
     // Update filtered plans when selectedBookFor changes
     useEffect(() => {
@@ -336,10 +424,12 @@ export default function ClassModal({
     };
 
     const handleBuyPlans = () => {
-        navigate("/register-training", { state: {
+        navigate("/register-training", {
+            state: {
                 affiliateId: cls.affiliateId,
                 openPlans: true
-            }});
+            }
+        });
     };
 
     // Filter plans based on expiration, training type and available sessions
@@ -429,7 +519,7 @@ export default function ClassModal({
     async function handleAddClassToMyTrainings() {
         try {
             if (!cls || !cls.id) return;
-            if ( showCompetitionInfo ) {
+            if (showCompetitionInfo) {
                 const addCompetition = true
 
                 await addClassToMyTrainings(cls.id, addCompetition);
@@ -474,7 +564,6 @@ export default function ClassModal({
         return currentTime > classTime;
     };
 
-    // Updated: Register with family member support
     const handleRegister = async () => {
         try {
             if (!cls.freeClass) {
@@ -487,6 +576,20 @@ export default function ClassModal({
                 const selectedPlan = filteredPlans.find(plan => plan.id === selectedPlanId);
                 if (!selectedPlan) {
                     showNotification("Please select a valid plan for this class type!", "info");
+                    return;
+                }
+            }
+
+            // Käsitle tingimuste aktsepteerimist registreerimisel
+            if (userProfile?.isFirstTraining && !termsAccepted) {
+                try {
+                    await acceptAffiliateTerms({
+                        affiliateId: cls.affiliateId
+                    });
+                    setTermsAccepted(true);
+                } catch (error) {
+                    console.error("Failed to accept terms:", error);
+                    showNotification("Failed to accept terms", "error");
                     return;
                 }
             }
@@ -519,7 +622,6 @@ export default function ClassModal({
         try {
             await cancelRegistration(cls.id, cls.freeClass);
             await fetchAttendees();
-
 
 
             if (userRole === "affiliate" || userRole === "trainer") {
@@ -626,6 +728,14 @@ export default function ClassModal({
         } catch (error) {
             console.error("❌ Error fetching user profile:", error);
         }
+    };
+
+    const handleOpenTerms = () => {
+        setTermsModalOpen(true);
+    };
+
+    const handleCloseTerms = () => {
+        setTermsModalOpen(false);
     };
 
     const handleOpenCancelConfirm = () => {
@@ -738,7 +848,7 @@ export default function ClassModal({
                         }
                     }}
                 >
-                    <CloseIcon sx={{ fontSize: 20 }} />
+                    <CloseIcon sx={{fontSize: 20}}/>
                 </IconButton>
 
                 {/* Time and trainer info at the top */}
@@ -756,15 +866,21 @@ export default function ClassModal({
                 >
                     <Typography
                         sx={{
-                            fontSize: { xs: "1rem", sm: "1.2rem" },
+                            fontSize: {xs: "1rem", sm: "1.2rem"},
                             color: "#aaa"
                         }}
                     >
-                        <strong>🕒 {new Date(cls.time).toLocaleString()}</strong>
+                        <strong>🕒 {new Date(cls.time).toLocaleString('et-EE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</strong>
                     </Typography>
                     <Typography
                         sx={{
-                            fontSize: { xs: "1rem", sm: "1.2rem" },
+                            fontSize: {xs: "1rem", sm: "1.2rem"},
                             color: "#aaa"
                         }}
                     >
@@ -773,14 +889,14 @@ export default function ClassModal({
                 </Box>
 
                 {/* Secondary info (WOD name and type) */}
-                <Box sx={{ px: 3, pt: 2 }}>
+                <Box sx={{px: 3, pt: 2}}>
                     {cls.wodName && (
                         <Typography
                             sx={{
                                 fontWeight: "bold",
                                 color: "#ff9800",
                                 mb: 1,
-                                fontSize: { xs: "1.5rem", sm: "1.8rem", md: "2rem" },
+                                fontSize: {xs: "1.5rem", sm: "1.8rem", md: "2rem"},
                                 lineHeight: 1.2
                             }}
                         >
@@ -794,7 +910,7 @@ export default function ClassModal({
                                 color: "#64b5f6",
                                 mb: 2,
                                 fontStyle: "italic",
-                                fontSize: { xs: "1.2rem", sm: "1.4rem", md: "1.6rem" },
+                                fontSize: {xs: "1.2rem", sm: "1.4rem", md: "1.6rem"},
                                 fontWeight: "500",
                             }}
                         >
@@ -880,7 +996,13 @@ export default function ClassModal({
                             </Typography>
                             <Typography>
                                 <strong>🕒 Time:</strong>{" "}
-                                {new Date(cls.time).toLocaleString()}
+                                {new Date(cls.time).toLocaleString('et-EE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                             </Typography>
                             <Typography>
                                 <strong>🏋️ Trainer:</strong> {cls.trainer || "N/A"}
@@ -908,8 +1030,8 @@ export default function ClassModal({
                         </Box>
                     </Grid>
 
-                    { cls.wodName || cls.wodType || cls.description ? (
-                        <Grid item xs={12} md={6} sx={{ display: { xs: 'none', sm: 'block' } }}>
+                    {cls.wodName || cls.wodType || cls.description ? (
+                        <Grid item xs={12} md={6} sx={{display: {xs: 'none', sm: 'block'}}}>
                             <Box
                                 sx={{
                                     backgroundColor: "#ccc",
@@ -936,7 +1058,7 @@ export default function ClassModal({
                                     alignItems: "center",
                                     justifyContent: "center"
                                 }}>
-                                    <FullscreenIcon fontSize="small" />
+                                    <FullscreenIcon fontSize="small"/>
                                 </Box>
 
                                 <Typography
@@ -945,33 +1067,33 @@ export default function ClassModal({
                                 >
                                     Workout Info
                                 </Typography>
-                                { cls.wodName && (
+                                {cls.wodName && (
                                     <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
                                         <strong>🔥{cls.wodName}</strong>
                                     </Typography>
                                 )}
-                                { cls.wodType && cls.wodType !== "NONE"  && (
+                                {cls.wodType && cls.wodType !== "NONE" && (
                                     <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                         <strong>{cls.wodType}</strong>
                                     </Typography>
                                 )}
-                                { cls.description && (
+                                {cls.description && (
 
                                     <>
-                                    <Box sx={{pb: 2}}>
-                                        <div
-                                            dangerouslySetInnerHTML={{
-                                                __html: DOMPurify.sanitize(cls.description, {
-                                                    ALLOWED_TAGS: ['b', 'i', 'span'],
-                                                    ALLOWED_ATTR: ['style'],
-                                                })
-                                            }}
-                                            style={{
-                                                color: "text.primary",
-                                                whiteSpace: "pre-line"
-                                            }}
-                                        />
-                                    </Box>
+                                        <Box sx={{pb: 2}}>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: DOMPurify.sanitize(cls.description, {
+                                                        ALLOWED_TAGS: ['b', 'i', 'span'],
+                                                        ALLOWED_ATTR: ['style'],
+                                                    })
+                                                }}
+                                                style={{
+                                                    color: "text.primary",
+                                                    whiteSpace: "pre-line"
+                                                }}
+                                            />
+                                        </Box>
                                         {/* Competition info section (conditionally rendered) */}
                                         {showCompetitionInfo && cls.competitionInfo && (
                                             <Box sx={{
@@ -981,7 +1103,7 @@ export default function ClassModal({
                                                 borderTop: '1px dashed #aaa',
                                                 color: 'text.primary'
                                             }}>
-                                                <Typography sx={{ fontWeight: "bold", mb: 1, color: "#ff9800" }}>
+                                                <Typography sx={{fontWeight: "bold", mb: 1, color: "#ff9800"}}>
                                                     Competition Extra:
                                                 </Typography>
                                                 <div
@@ -1002,7 +1124,8 @@ export default function ClassModal({
                                         {cls.competitionInfo && (
                                             <Button
                                                 onClick={toggleCompetitionInfo}
-                                                endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon/> :
+                                                    <KeyboardArrowDownIcon/>}
                                                 size="small"
                                                 sx={{
                                                     position: "absolute",
@@ -1043,7 +1166,7 @@ export default function ClassModal({
                                                     }
                                                 }}
                                             >
-                                                <AddIcon />
+                                                <AddIcon/>
                                             </IconButton>
                                         )}
                                     </>
@@ -1060,6 +1183,8 @@ export default function ClassModal({
 
                 {/* Register / Cancel / Waitlist sektsioon ainult REGULAR kasutajale */}
                 {userRole === "regular" && (
+
+
                     <Box mb={2}>
                         {isRegistered ? (
                             <Button
@@ -1067,7 +1192,7 @@ export default function ClassModal({
                                 color="error"
                                 disabled={isClassOver()}
                                 onClick={handleOpenCancelConfirm}
-                                sx={{ width: { xs: "100%", sm: "auto" } }}
+                                sx={{width: {xs: "100%", sm: "auto"}}}
                             >
                                 Cancel Registration
                             </Button>
@@ -1078,7 +1203,7 @@ export default function ClassModal({
                                 color="warning"
                                 disabled={isClassOver()}
                                 onClick={handleOpenWaitlistRemoveConfirm}
-                                sx={{ width: { xs: "100%", sm: "auto" } }}
+                                sx={{width: {xs: "100%", sm: "auto"}}}
                             >
                                 Remove from Waitlist
                             </Button>
@@ -1097,10 +1222,12 @@ export default function ClassModal({
                                     </Button>
                                 ) : (
                                     // Show "Book For" select and plan selection for waitlist
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
+
+
                                         {/* Book For selection - only shown if family members exist */}
                                         {familyMembers.length > 0 && (
-                                            <FormControl sx={{ minWidth: 200 }}>
+                                            <FormControl sx={{minWidth: 200}}>
                                                 <InputLabel id="book-for-select-label">Book For</InputLabel>
                                                 <Select
                                                     labelId="book-for-select-label"
@@ -1108,7 +1235,8 @@ export default function ClassModal({
                                                     label="Book For"
                                                     onChange={handleBookForChange}
                                                 >
-                                                    <MenuItem value="self">{userProfile?.fullName || "Yourself"}</MenuItem>
+                                                    <MenuItem
+                                                        value="self">{userProfile?.fullName || "Yourself"}</MenuItem>
                                                     {familyMembers.map((member) => (
                                                         <MenuItem key={member.id} value={member.id.toString()}>
                                                             {member.fullName}
@@ -1148,13 +1276,14 @@ export default function ClassModal({
                                         ) : hasAnyPlans ? (
                                             // Show message for plans that don't match training type
                                             <Typography color="error">
-                                                No compatible plans found for {selectedBookFor === "self" ? "yourself" : "this family member"}.
+                                                No compatible plans found
+                                                for {selectedBookFor === "self" ? "yourself" : "this family member"}.
                                             </Typography>
                                         ) : (
                                             // If no plans available at all
-                                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                            <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
 
-                                                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
                                                     <Typography color="error">
                                                         You have no valid plans.
                                                     </Typography>
@@ -1163,7 +1292,7 @@ export default function ClassModal({
                                                             variant="contained"
                                                             color="success"
                                                             onClick={handleBuyPlans}
-                                                            sx={{ width: { xs: "100%", sm: "auto" } }}
+                                                            sx={{width: {xs: "100%", sm: "auto"}}}
                                                         >
                                                             Buy Plans
                                                         </Button>
@@ -1177,22 +1306,77 @@ export default function ClassModal({
                         ) : (
                             // For registration with compatible plans check
                             <>
+
+                                {userRole === "regular" && !isRegistered && !isInWaitlist && (
+                                    <Box sx={{ mt: 2, mb: 2 }}>
+                                        {!termsAccepted && (
+                                            // Kui kasutaja pole veel nõustunud, näita checkboxi
+                                            <Box>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={false} // Alati alguses tühi
+                                                            onChange={async (e) => {
+                                                                if (e.target.checked) {
+                                                                    setIsAcceptingTerms(true);
+                                                                    try {
+                                                                        await acceptAffiliateTerms({
+                                                                            affiliateId: cls.affiliateId
+                                                                        });
+                                                                        setTermsAccepted(true); // See on tähtis - määrab, kas registreerimise nupp on aktiivne
+                                                                        showNotification("Terms accepted successfully", "success");
+                                                                    } catch (error) {
+                                                                        console.error("Failed to accept terms:", error);
+                                                                        showNotification("Failed to accept terms", "error");
+                                                                    } finally {
+                                                                        setIsAcceptingTerms(false);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            disabled={isAcceptingTerms}
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Typography variant="body2">
+                                                            I have read and agree to the {' '}
+                                                            <Link
+                                                                component="button"
+                                                                variant="body2"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleOpenTerms();
+                                                                }}
+                                                            >
+                                                                Terms and Conditions
+                                                            </Link>
+                                                        </Typography>
+                                                    }
+                                                />
+                                                {isAcceptingTerms && (
+                                                    <CircularProgress size={20} sx={{ ml: 2 }} />
+                                                )}
+                                            </Box>
+                                        )}
+                                    </Box>
+                                )}
+
+
                                 {cls.freeClass ? (
                                     // Free classes don't need plan selection
                                     <Button
                                         variant="contained"
                                         color="success"
-                                        disabled={isClassTimePassed()}
+                                        disabled={isClassTimePassed() || (!termsAccepted)}
                                         onClick={handleRegister}
                                     >
                                         Register
                                     </Button>
                                 ) : (
                                     // Show "Book For" select and plan selection for registration
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
                                         {/* Book For selection - only shown if family members exist */}
                                         {familyMembers.length > 0 && (
-                                            <FormControl sx={{ minWidth: 200 }}>
+                                            <FormControl sx={{minWidth: 200}}>
                                                 <InputLabel id="book-for-select-label">Book For</InputLabel>
                                                 <Select
                                                     labelId="book-for-select-label"
@@ -1200,7 +1384,8 @@ export default function ClassModal({
                                                     label="Book For"
                                                     onChange={handleBookForChange}
                                                 >
-                                                    <MenuItem value="self">{userProfile?.fullName || "Yourself"}</MenuItem>
+                                                    <MenuItem
+                                                        value="self">{userProfile?.fullName || "Yourself"}</MenuItem>
                                                     {familyMembers.map((member) => (
                                                         <MenuItem key={member.id} value={member.id.toString()}>
                                                             {member.fullName}
@@ -1214,16 +1399,16 @@ export default function ClassModal({
                                             // Change from horizontal to vertical layout on mobile
                                             <Box
                                                 sx={{
-                                                    display: { xs: "flex", sm: "flex" },
-                                                    flexDirection: { xs: "column", sm: "row" },
-                                                    alignItems: { xs: "stretch", sm: "center" },
+                                                    display: {xs: "flex", sm: "flex"},
+                                                    flexDirection: {xs: "column", sm: "row"},
+                                                    alignItems: {xs: "stretch", sm: "center"},
                                                     gap: 2
                                                 }}
                                             >
                                                 <FormControl
                                                     sx={{
                                                         minWidth: 200,
-                                                        width: { xs: "100%", sm: "auto" }
+                                                        width: {xs: "100%", sm: "auto"}
                                                     }}
                                                 >
                                                     <InputLabel id="plan-select-label">Select Plan</InputLabel>
@@ -1243,9 +1428,9 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="success"
-                                                    disabled={isClassTimePassed()}
+                                                    disabled={isClassTimePassed() || (!termsAccepted)}
                                                     onClick={handleRegister}
-                                                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                                                    sx={{width: {xs: "100%", sm: "auto"}}}
                                                 >
                                                     Register
                                                 </Button>
@@ -1253,14 +1438,15 @@ export default function ClassModal({
                                         ) : hasAnyPlans ? (
                                             // User has plans but none are compatible with this class type
                                             <Typography color="error">
-                                                No compatible plans found for {selectedBookFor === "self" ? "yourself" : "this family member"}.
+                                                No compatible plans found
+                                                for {selectedBookFor === "self" ? "yourself" : "this family member"}.
                                             </Typography>
                                         ) : (
 
                                             // User has no plans at all
-                                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                            <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
 
-                                                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                                <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
                                                     <Typography color="error">
                                                         You have no valid plans.
                                                     </Typography>
@@ -1269,7 +1455,7 @@ export default function ClassModal({
                                                             variant="contained"
                                                             color="success"
                                                             onClick={handleBuyPlans}
-                                                            sx={{ width: { xs: "100%", sm: "auto" } }}
+                                                            sx={{width: {xs: "100%", sm: "auto"}}}
                                                         >
                                                             Buy Plans
                                                         </Button>
@@ -1293,21 +1479,21 @@ export default function ClassModal({
                                     variant="contained"
                                     color="primary"
                                     onClick={handleOpenAddAttendeeModal}
-                                    startIcon={<PersonAddIcon />}
+                                    startIcon={<PersonAddIcon/>}
                                     size="small"
-                                    sx={{ ml: 1 }}
+                                    sx={{ml: 1}}
                                 >
 
                                 </Button>
                             )}
-                            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                            <Typography variant="h6" sx={{fontWeight: "bold"}}>
                                 Attendees
                             </Typography>
                             <Button
                                 variant="contained"
                                 color="primary"
                                 size="small"
-                                startIcon={<SendIcon />}
+                                startIcon={<SendIcon/>}
                                 onClick={handleSendMessage}
                                 disabled={attendees.length === 0}
                             >
@@ -1383,7 +1569,8 @@ export default function ClassModal({
                                                 <>
                                                     {attendee.isFamilyMember ? `Child. Parent: ${attendee.registrantName}` : null}
                                                     {attendee.firstTraining && (
-                                                        <Typography variant="caption" color="text.secondary" display="block">
+                                                        <Typography variant="caption" color="text.secondary"
+                                                                    display="block">
                                                             First Training
                                                         </Typography>
                                                     )}
@@ -1509,7 +1696,7 @@ export default function ClassModal({
                                 variant="contained"
                                 color="primary"
                                 onClick={() => setShowScoreForm(true)}
-                                sx={{mr: 2, width: { xs: "100%", sm: "auto" }}}
+                                sx={{mr: 2, width: {xs: "100%", sm: "auto"}}}
                             >
                                 {hasScore ? "Edit Score" : "Add Score"}
                             </Button>
@@ -1542,7 +1729,8 @@ export default function ClassModal({
                                 </RadioGroup>
 
                                 <Typography variant="caption">
-                                    Reps/Time/Weight. For example: 147, 5:30, 50. Your name and score will be visible to others.
+                                    Reps/Time/Weight. For example: 147, 5:30, 50. Your name and score will be visible to
+                                    others.
                                 </Typography>
 
                                 {/* Score field */}
@@ -1556,21 +1744,23 @@ export default function ClassModal({
                                 />
 
                                 {/* SAVE + CANCEL buttons */}
-                                <Box>
-                                    <Button
-                                        variant="contained"
-                                        color="success"
-                                        onClick={handleSaveScore}
-                                        sx={{mr: 2}}
-                                    >
-                                        Save
-                                    </Button>
+                                <Box sx={{display: "flex", justifyContent: "flex-end"}}>
+
+
                                     <Button
                                         variant="outlined"
-                                        color="secondary"
+
                                         onClick={() => setShowScoreForm(false)}
                                     >
                                         Cancel
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleSaveScore}
+                                        sx={{ml: 2}}
+                                    >
+                                        Save
                                     </Button>
                                 </Box>
                             </Box>
@@ -1580,7 +1770,7 @@ export default function ClassModal({
                 {(cls.wodName || cls.wodType || cls.description) && (
                     <Box
                         sx={{
-                            display: { xs: 'block', sm: 'none' },
+                            display: {xs: 'block', sm: 'none'},
                             mb: 2
                         }}
                     >
@@ -1610,7 +1800,7 @@ export default function ClassModal({
                                 alignItems: "center",
                                 justifyContent: "center"
                             }}>
-                                <FullscreenIcon fontSize="small" />
+                                <FullscreenIcon fontSize="small"/>
                             </Box>
 
                             <Typography
@@ -1619,17 +1809,17 @@ export default function ClassModal({
                             >
                                 Workout Info
                             </Typography>
-                            { cls.wodName && (
+                            {cls.wodName && (
                                 <Typography sx={{fontWeight: "bold", color: "text.primary"}}>
                                     <strong>🔥{cls.wodName}</strong>
                                 </Typography>
                             )}
-                            { cls.wodType && cls.wodType !== "NONE"  && (
+                            {cls.wodType && cls.wodType !== "NONE" && (
                                 <Typography sx={{color: "secondary.main", mb: 1, fontStyle: "italic"}}>
                                     <strong>{cls.wodType}</strong>
                                 </Typography>
                             )}
-                            { cls.description && (
+                            {cls.description && (
                                 <>
                                     <Box sx={{pb: 2}}>
                                         <div
@@ -1654,7 +1844,7 @@ export default function ClassModal({
                                             borderTop: '1px dashed #aaa',
                                             color: 'text.primary'
                                         }}>
-                                            <Typography sx={{ fontWeight: "bold", mb: 1, color: "#ff9800" }}>
+                                            <Typography sx={{fontWeight: "bold", mb: 1, color: "#ff9800"}}>
                                                 Competition Extra:
                                             </Typography>
                                             <div
@@ -1675,7 +1865,8 @@ export default function ClassModal({
                                     {cls.competitionInfo && (
                                         <Button
                                             onClick={toggleCompetitionInfo}
-                                            endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                            endIcon={showCompetitionInfo ? <KeyboardArrowUpIcon/> :
+                                                <KeyboardArrowDownIcon/>}
                                             size="small"
                                             sx={{
                                                 position: "absolute",
@@ -1716,7 +1907,7 @@ export default function ClassModal({
                                                 }
                                             }}
                                         >
-                                            <AddIcon />
+                                            <AddIcon/>
                                         </IconButton>
                                     )}
                                 </>
@@ -1739,33 +1930,47 @@ export default function ClassModal({
                         }
                     }}
                 >
-                    <EmojiEventsIcon />
+                    <EmojiEventsIcon/>
                 </IconButton>
                 {/* CHANGED: Use confirmation dialog for class deletion */}
                 {(userRole === 'affiliate' || userRole === 'trainer') && (
                     <>
-                        <Button onClick={() => onEdit(cls)} color="primary" variant="contained">
-                            Edit
-                        </Button>
-                        <Button onClick={handleOpenDeleteClassConfirm} color="error" variant="contained">
-                            Delete
-                        </Button>
+
+                        <IconButton
+                            onClick={handleOpenDeleteClassConfirm}
+                            aria-label="delete"
+                            sx={{
+                                color: 'white',
+                                bgcolor: '#d32f2f',
+                                '&:hover': {bgcolor: '#b71c1c'}
+                            }}
+                        >
+                            <DeleteIcon/>
+                        </IconButton>
+                        <IconButton
+                            color="primary"
+                            onClick={() => onEdit(cls)}
+                            aria-label="edit"
+                        >
+                            <EditIcon/>
+                        </IconButton>
                     </>
                 )}
 
-                <Button onClick={onClose} color="secondary" variant="contained">
+                <Button onClick={onClose} color="inherit" variant="contained">
                     Close
                 </Button>
             </DialogActions>
 
             {/* Full-screen workout info component */}
-            {isWorkoutInfoFullScreen && <WorkoutInfoFullScreen />}
+            {isWorkoutInfoFullScreen && <WorkoutInfoFullScreen/>}
 
             <LeaderboardModal
                 open={isLeaderboardOpen}
                 onClose={() => setLeaderboardOpen(false)}
                 classId={cls.id}
                 cls={cls}
+                hasScore={hasScore}
             />
             <ProfileModal
                 open={isProfileOpen}
@@ -1792,6 +1997,12 @@ export default function ClassModal({
                 fetchAttendees={fetchAttendees}
             />
 
+            <AffiliateTermsModal
+                open={termsModalOpen}
+                onClose={handleCloseTerms}
+                affiliateId={cls?.affiliateId}
+            />
+
             {/* Cancel Registration Confirmation Dialog */}
             <Dialog
                 open={cancelConfirmOpen}
@@ -1800,7 +2011,8 @@ export default function ClassModal({
                 <DialogTitle>Confirm Cancellation</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to cancel your registration for this class? You may lose your spot if the class is in high demand.
+                        Are you sure you want to cancel your registration for this class? You may lose your spot if the
+                        class is in high demand.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -1824,7 +2036,8 @@ export default function ClassModal({
                 <DialogTitle>Confirm Removal</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to remove yourself from the waitlist? You'll lose your current position if you decide to join again later.
+                        Are you sure you want to remove yourself from the waitlist? You'll lose your current position if
+                        you decide to join again later.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -1880,7 +2093,8 @@ export default function ClassModal({
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setNotificationOpen(false)} color="primary" autoFocus>
+                    <Button onClick={() => setNotificationOpen(false)} variant="contained"
+                            color="primary" autoFocus>
                         OK
                     </Button>
                 </DialogActions>
@@ -1894,7 +2108,8 @@ export default function ClassModal({
                 <DialogTitle>Confirm Class Deletion</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to delete this class? This will remove all registrations and cannot be undone.
+                        Are you sure you want to delete this class? This will remove all registrations and cannot be
+                        undone.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

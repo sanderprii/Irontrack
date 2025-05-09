@@ -24,7 +24,7 @@ import {
 import { getClassLeaderboard } from "../api/leaderboardApi";
 import { getUserProfile } from "../api/profileApi";
 
-export default function LeaderboardModal({ open, onClose, classId, cls }) {
+export default function LeaderboardModal({ open, onClose, classId, cls, hasScore }) {
     const [leaderboard, setLeaderboard] = useState([]);
     const [filter, setFilter] = useState("all");
     const [loading, setLoading] = useState(false);
@@ -36,6 +36,10 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
     const [userScore, setUserScore] = useState(null);
     const [userFullName, setUserFullName] = useState("");
     const [comment, setComment] = useState(""); // New state for comment
+
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState("");
+    const [notificationType, setNotificationType] = useState("success");
 
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -99,6 +103,12 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
         }
     };
 
+    const showNotification = (message, type = "info") => {
+        setNotificationMessage(message);
+        setNotificationType(type);
+        setNotificationOpen(true);
+    };
+
     // Show confirmation dialog
     const handleOpenConfirmation = () => {
         setError("");
@@ -126,7 +136,6 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
         setComment("");
     };
 
-    // Handle saving the record with comment
     const handleConfirmAddRecord = async () => {
         try {
             // Double check that user has a score
@@ -146,7 +155,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
                 name: cls.wodName ? cls.wodName.toUpperCase() : "WOD",
                 date: classDate,
                 score: userScore.score,
-                comment: comment // Add the comment to the payload
+                comment: comment
             };
 
             const token = localStorage.getItem('token');
@@ -165,7 +174,8 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
             }
 
             setConfirmDialogOpen(false);
-            alert("Successfully added to your records!");
+            // Asenda alert() showNotification funktsiooniga
+            showNotification("Successfully added to your records!", "success");
         } catch (err) {
             setError(err.message || "Error adding record");
         } finally {
@@ -268,15 +278,16 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
             </DialogContent>
             <DialogActions>
                 {/* Only show Add to Records button for WOD type classes */}
-                {cls && cls.trainingType === "WOD" && role === "regular" && (
+                {cls && cls.trainingType === "WOD" && role === "regular" && hasScore && (
                     <Button
                         onClick={handleOpenConfirmation}
+                        variant="contained"
                         color="primary"
                     >
                         Add to Records
                     </Button>
                 )}
-                <Button onClick={onClose} color="secondary">Close</Button>
+                <Button onClick={onClose} variant="outlined">Close</Button>
             </DialogActions>
 
             {/* Confirmation Dialog with Comment Field */}
@@ -346,6 +357,28 @@ export default function LeaderboardModal({ open, onClose, classId, cls }) {
                             )}
                         </Button>
                     )}
+                </DialogActions>
+            </Dialog>
+            {/* Notification Dialog */}
+            <Dialog
+                open={notificationOpen}
+                onClose={() => setNotificationOpen(false)}
+            >
+                <DialogTitle>
+                    {notificationType === "success" && "Success"}
+                    {notificationType === "error" && "Error"}
+                    {notificationType === "info" && "Information"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {notificationMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setNotificationOpen(false)} variant="contained"
+                            color="primary" autoFocus>
+                        OK
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Dialog>

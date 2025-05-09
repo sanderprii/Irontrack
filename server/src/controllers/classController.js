@@ -892,6 +892,10 @@ const registerForClass = async (req, res) => {
             where: {classId: parseInt(classId)}
         });
 
+
+
+
+
         if (enrolledCount >= classInfo.memberCapacity) {
             return res.status(400).json({error: "Class is full"});
         }

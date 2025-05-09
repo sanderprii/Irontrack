@@ -191,6 +191,7 @@ exports.getPurchaseHistory = async (req, res) => {
                     address: true,
                     emergencyContact: true,
                     dateOfBirth: true,
+
                 }
             });
             res.json(user);

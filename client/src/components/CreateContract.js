@@ -876,7 +876,7 @@ export default function CreateContract({ open, onClose, affiliateId, contractToE
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={onClose} color="inherit">
+                <Button onClick={onClose} color="inherit" variant="outlined">
                     Cancel
                 </Button>
                 <Button

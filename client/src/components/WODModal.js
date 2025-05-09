@@ -451,8 +451,10 @@ export default function WODModal({ open, onClose, selectedDate, selectedAffiliat
                 {wod.competitionInfo && <CompetitionInfoPreview />}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleSaveWOD} color="primary">Save</Button>
-                <Button onClick={onClose} color="secondary">Close</Button>
+
+                <Button onClick={onClose} variant="outlined" color="inherit">Close</Button>
+                <Button onClick={handleSaveWOD} variant="contained"
+                        color="primary">Save</Button>
             </DialogActions>
         </Dialog>
     );

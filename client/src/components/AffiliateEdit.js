@@ -222,7 +222,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
                 </FormHelperText>
 
                 <Button variant="contained" color="primary" onClick={handleSave} sx={{ mt: 2 }}>Save</Button>
-                <Button variant="outlined" color="secondary" onClick={onCancel} sx={{ mt: 2, ml: 2 }}>Cancel</Button>
+                <Button variant="outlined" color="inherit" onClick={onCancel} sx={{ mt: 2, ml: 2 }}>Cancel</Button>
             </CardContent>
         </Card>
     );

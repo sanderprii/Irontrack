@@ -62,7 +62,7 @@ export default function AddDefaultContractModal({ open, onClose, affiliateId }) 
                 </FormControl>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose} color="inherit">Cancel</Button>
+                <Button onClick={onClose} variant="outlined" color="inherit">Cancel</Button>
                 <Button onClick={handleSave} variant="contained" color="primary">
                     Save Template
                 </Button>

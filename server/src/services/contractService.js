@@ -732,7 +732,7 @@ async function sendCreditPaymentEmail(
         const emailBody = `
 <div class="invoice-details">
   <p><strong>Invoice #:</strong> ${invoiceNumber}</p>
-  <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+  <p><strong>Date:</strong> ${new Date().toLocaleDateString('et-EE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
   <p><strong>Customer:</strong> ${contract.user.fullName}</p>
   <p><strong>Email:</strong> ${contract.user.email}</p>
 </div>
@@ -802,7 +802,7 @@ ${isPaymentHoliday ?
 Good news! This payment has been fully covered by your available credit (€${appliedCredit.toFixed(2)} used). No further action is required.
 
 Invoice #: ${invoiceNumber}
-Date: ${new Date().toLocaleDateString()}
+Date: ${new Date().toLocaleDateString('et-EE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
 Amount: €${paymentAmount.toFixed(2)}
 Credit Applied: €${appliedCredit.toFixed(2)}
 Balance Due: €0.00

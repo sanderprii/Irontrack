@@ -148,7 +148,8 @@ export default function FamilyMembers({ user }) {
                 <Typography variant="h6">Registered Children</Typography>
                 {role === "regular" && (
                     <Button
-                        variant="outlined"
+                        variant="contained"
+                        color="primary"
                         startIcon={<PersonAddIcon />}
                         onClick={() => setShowAddForm(!showAddForm)}
                         size="small"
@@ -240,8 +241,11 @@ export default function FamilyMembers({ user }) {
                                             <IconButton
                                                 onClick={(e) => handleOpenDeleteConfirm(e, member.id)}
                                                 size="small"
-                                                color="error"
-                                                sx={{ mr: 1 }}
+                                                sx={{
+                                                    color: 'white',
+                                                    bgcolor: '#d32f2f',
+                                                    '&:hover': { bgcolor: '#b71c1c' }
+                                                }}
                                             >
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>

@@ -207,7 +207,7 @@ export default function AffiliateContracts({affiliateId}) {
             <p>Hello ${contract.user.fullName},</p>
             
             <p>You have received a new contract from <strong>${affiliateInfo?.name || 'your affiliate'}</strong> 
-            that requires your signature.</p>
+            that requires your signature and first payment.</p>
             
             <p><strong>Contract details:</strong></p>
             <ul>
@@ -220,6 +220,10 @@ export default function AffiliateContracts({affiliateId}) {
             </ul>
             
             <p>Please log in to your account to review and sign the contract.</p>
+            
+            
+            
+            <p>Profile -> Contracts</p>
             
             <p>Thank you,<br>
             <strong>${affiliateInfo?.name || 'Your Affiliate'} Team</strong></p>
@@ -519,7 +523,11 @@ export default function AffiliateContracts({affiliateId}) {
                                                         <EditIcon />
                                                     </IconButton>
                                                     <IconButton
-                                                        color="error"
+                                                        sx={{
+                                                            color: 'white',
+                                                            bgcolor: '#d32f2f',
+                                                            '&:hover': { bgcolor: '#b71c1c' }
+                                                        }}
                                                         size="small"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -533,7 +541,11 @@ export default function AffiliateContracts({affiliateId}) {
                                             ) : contract.status === 'Waiting for acceptance' ? (
                                                 // Keep the existing code for this condition
                                                 <IconButton
-                                                    color="error"
+                                                    sx={{
+                                                        color: 'white',
+                                                        bgcolor: '#d32f2f',
+                                                        '&:hover': { bgcolor: '#b71c1c' }
+                                                    }}
                                                     size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();

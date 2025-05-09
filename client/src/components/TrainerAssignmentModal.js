@@ -128,7 +128,7 @@ export default function TrainerAssignmentModal({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose} color="secondary">
+                <Button onClick={onClose} variant="outlined" color="inherit">
                     Cancel
                 </Button>
                 <Button

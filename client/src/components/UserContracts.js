@@ -59,6 +59,15 @@ export default function UserContracts({ user, affiliateId }) {
     const [selectedContractTermsId, setSelectedContractTermsId] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
+    // Dialog states
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState('');
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
+    const [confirmDialogMessage, setConfirmDialogMessage] = useState('');
+
     // Payment Holiday Modal state
     const [phModalOpen, setPhModalOpen] = useState(false);
     const [phContract, setPhContract] = useState(null);
@@ -138,7 +147,7 @@ export default function UserContracts({ user, affiliateId }) {
         }
 
         if (!parsedAffiliateId) {
-            alert('Puudub affiliateId! Palun võtke ühendust administraatoriga.');
+            showErrorMessage('Missing affiliateId! Please contact the administrator.');
             return;
         }
 
@@ -146,7 +155,7 @@ export default function UserContracts({ user, affiliateId }) {
         parsedAffiliateId = parseInt(parsedAffiliateId);
 
         if (isNaN(parsedAffiliateId)) {
-            alert('AffiliateId pole korrektses formaadis! Palun võtke ühendust administraatoriga.');
+            showErrorMessage('AffiliateId is not in the correct format! Please contact the administrator.');
             return;
         }
 
@@ -194,11 +203,25 @@ console.log("contract", contract);
         setPhData({ fromDate: '', toDate: '', reason: '' });
     };
 
+    // Show success message with dialog
     const showSuccessMessage = (message) => {
-        setSuccessMessage(message);
-        setTimeout(() => setSuccessMessage(null), 3000); // Auto-hide after 3 seconds
+        setDialogMessage(message);
+        setSuccessDialogOpen(true);
     };
 
+// Show error message
+    const showErrorMessage = (message) => {
+        setDialogMessage(message);
+        setErrorDialogOpen(true);
+    };
+
+// Show confirmation dialog
+    const showConfirmDialog = (title, message, onConfirm) => {
+        setConfirmDialogTitle(title);
+        setConfirmDialogMessage(message);
+        setConfirmAction(() => onConfirm);
+        setConfirmDialogOpen(true);
+    };
     // Väljade muutmise handler
     const handlePhDataChange = (e) => {
         const { name, value } = e.target;
@@ -220,18 +243,21 @@ console.log("contract", contract);
 
         const result = await createPaymentHoliday(payload);
         if (result && result.success) {
-            alert('Payment holiday request created successfully!');
+            showSuccessMessage('Payment holiday request created successfully!');
             const getAffiliateData = await getAffiliateById(phContract.affiliateId);
 
             const subject = 'Payment Holiday Request';
-            const body = `You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}. 
-Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.fullName}</strong> contract.`;
+            const body = `
+<p>You have received a payment holiday request from <strong>${user.fullName}</strong> for ${phData.month}.</p>
+
+
+<p>Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.fullName}</strong> contract.</p>`;
             const senderEmail = user.email;
 
             const affiliateEmail = getAffiliateData.email;
             await sendMessageToAffiliate(senderEmail, affiliateEmail, subject, body)
         } else {
-            alert('Error creating payment holiday request!');
+            showErrorMessage('Error updating payment holiday status!');
         }
 
         handleClosePhModal();
@@ -243,11 +269,10 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
         try {
             const result = await updatePaymentHoliday(phId, { accepted: newStatus });
             if (result && result.success) {
-                alert(`Payment holiday set to "${newStatus}" successfully!`);
+                showSuccessMessage(`Payment holiday set to "${newStatus}" successfully!`);
                 await loadContracts();
-
             } else {
-                alert('Error updating payment holiday status!');
+                showErrorMessage('Error updating payment holiday status!');
             }
         } catch (error) {
             console.error('Error updating payment holiday:', error);
@@ -358,18 +383,17 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                                             </TableCell>
                                             <TableCell>
                                                 { contract.status === 'accepted' && role === 'affiliate' && (
-                                                    <Button
-                                                        variant="outlined"
+                                                    <IconButton
                                                         color="secondary"
-                                                        size='small'
+                                                        size="small"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleOpenDeactivateDialog(contract);
                                                         }}
-                                                        sx={{fontSize: '0.7rem !important' }}
+                                                        aria-label="end date"
                                                     >
-                                                        End Date
-                                                    </Button>
+                                                        <CalendarMonthIcon />
+                                                    </IconButton>
                                                 )}
                                             </TableCell>
                                         </TableRow>
@@ -459,8 +483,8 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                                                                         {contract.status === 'accepted' && role === 'regular' && (
                                                                             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                                                                                 <Button
-                                                                                    variant="outlined"
-                                                                                    color="warning"
+                                                                                    variant="contained"
+                                                                                    color="primary"
                                                                                     startIcon={<EventIcon />}
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
@@ -741,7 +765,7 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
 
                                                                                 <Button
                                                                                     variant="contained"
-                                                                                    color="success"
+                                                                                    color="primary"
                                                                                     disabled={!acceptCheckbox[contract.id]}
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
@@ -896,6 +920,7 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                         <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
                             <Button
                                 variant="outlined"
+                                color="inherit"
                                 onClick={handleClosePhModal}
                                 color="secondary"
                             >
@@ -963,6 +988,69 @@ Go to Irontrack page -> My affiliate -> Contracts and choose <strong>${user.full
                         onClick={handleConfirmDeactivate}
                         color="secondary"
                         disabled={!newEndDate}
+                        variant="contained"
+                    >
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* Success Dialog */}
+            <Dialog
+                open={successDialogOpen}
+                onClose={() => setSuccessDialogOpen(false)}
+            >
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuccessDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Error Dialog */}
+            <Dialog
+                open={errorDialogOpen}
+                onClose={() => setErrorDialogOpen(false)}
+            >
+                <DialogTitle>Error</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setErrorDialogOpen(false)} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Confirmation Dialog */}
+            <Dialog
+                open={confirmDialogOpen}
+                onClose={() => setConfirmDialogOpen(false)}
+            >
+                <DialogTitle>{confirmDialogTitle}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {confirmDialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            if (confirmAction) confirmAction();
+                            setConfirmDialogOpen(false);
+                        }}
+                        color="primary"
                         variant="contained"
                     >
                         Confirm

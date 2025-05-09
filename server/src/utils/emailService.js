@@ -487,7 +487,7 @@ const sendOrderConfirmation = async (userData, orderDetails, planDetails, affili
       <div class="invoice-details">
       <p><strong>From:</strong> ${affiliateDetails.name}</p>
         <p><strong>Invoice #:</strong> ${orderDetails.invoiceNumber}</p>
-        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+        <p><strong>Date:</strong> ${new Date().toLocaleDateString('et-EE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
         <p><strong>Customer:</strong> ${userData.fullName}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
       </div>
@@ -539,7 +539,7 @@ const sendOrderConfirmation = async (userData, orderDetails, planDetails, affili
         const textContent = `
 Order Confirmation
 Invoice #: ${orderDetails.invoiceNumber}
-Date: ${new Date().toLocaleDateString()}
+Date: <p><strong>Date:</strong> ${new Date().toLocaleDateString('et-EE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
 Customer: ${userData.fullName}
 Email: ${userData.email}
 

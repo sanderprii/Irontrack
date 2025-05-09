@@ -657,7 +657,11 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                                             <IconButton
                                                 size="small"
-                                                color="error"
+                                                sx={{
+                                                    color: 'white',
+                                                    bgcolor: '#d32f2f',
+                                                    '&:hover': { bgcolor: '#b71c1c' }
+                                                }}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDeleteClick(plan);
@@ -737,7 +741,8 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                             </Typography>
 
                             <Button
-                                variant="outlined"
+                                variant="contained"
+                                color="primary"
                                 startIcon={<AddIcon />}
                                 onClick={handleAddDay}
                             >
@@ -814,10 +819,14 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
                                                                 <Box>
                                                                     <IconButton
-                                                                        color="error"
+
                                                                         onClick={() => handleRemoveSector(dayIndex, sectorIndex)}
                                                                         disabled={day.sectors.length <= 1}
-                                                                        sx={{ mr: 1 }}
+                                                                        sx={{
+                                                                            color: 'white',
+                                                                            bgcolor: '#d32f2f',
+                                                                            '&:hover': { bgcolor: '#b71c1c' }
+                                                                        }}
                                                                     >
                                                                         <DeleteIcon />
                                                                     </IconButton>
@@ -857,7 +866,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                                                 startIcon={<AddIcon />}
                                                                 size="small"
                                                                 onClick={() => handleAddYoutubeLink(dayIndex, sectorIndex)}
-                                                                sx={{ alignSelf: 'flex-end', mt: 1 }}
+                                                                variant="outlined"
                                                             >
                                                                 Add Link
                                                             </Button>
@@ -867,7 +876,8 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
                                                 <Grid item xs={12}>
                                                     <Button
-                                                        variant="outlined"
+                                                        variant="contained"
+                                                        color="primary"
                                                         startIcon={<AddIcon />}
                                                         onClick={() => handleAddSector(dayIndex)}
                                                         fullWidth
@@ -885,7 +895,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                 </DialogContent>
 
                 <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={handleClose} color="inherit">
+                    <Button onClick={handleClose} color="inherit" variant="outlined">
                         Cancel
                     </Button>
                     <Button

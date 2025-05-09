@@ -56,6 +56,7 @@ import AppTheme from "../shared-theme/AppTheme";
 import DOMPurify from "dompurify";
 
 import WeightliftingPercentageCalculator from "../components/WeightliftingPercentageCalculator";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 // Styled components
 const StyledContainer = styled(Container)(({ theme }) => ({
     paddingTop: theme.spacing(4),
@@ -879,6 +880,7 @@ export default function TrainingsPage() {
                                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                                     <Button
                                         type="submit"
+                                        color="primary"
                                         variant="contained"
                                         startIcon={<SaveIcon />}
                                         size="large"
@@ -1179,38 +1181,34 @@ export default function TrainingsPage() {
                                 <WeightliftingPercentageCalculator />
                             </Box>
                         )}
-                        {modalTraining?.type === 'WOD' && modalTraining?.wodName && !isEditing && (
-                            <Button
-                                onClick={handleAddToRecords}
-                                color="secondary"
-                                startIcon={<BookmarkAddIcon />}
-                            >
-                                Add to Records
-                            </Button>
-                        )}
+
 
                         {!isEditing ? (
                             <>
-                                <Button
-                                    variant="contained"
-                                    onClick={handleEdit}
-                                    startIcon={<EditIcon />}
-                                >
-                                    Edit
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
+                                <IconButton
                                     onClick={handleDelete}
-                                    startIcon={<DeleteIcon />}
+                                    aria-label="delete"
+                                    sx={{
+                                        color: 'white',
+                                        bgcolor: '#d32f2f',
+                                        '&:hover': { bgcolor: '#b71c1c' }
+                                    }}
                                 >
-                                    Delete
-                                </Button>
+                                    <DeleteIcon />
+                                </IconButton>
+                                <IconButton
+                                    color="primary"
+                                    onClick={handleEdit}
+                                    aria-label="edit"
+                                >
+                                    <EditIcon />
+                                </IconButton>
+
                             </>
                         ) : (
                             <Button
                                 variant="contained"
-                                color="success"
+                                color="primary"
                                 onClick={handleSave}
                                 startIcon={<SaveIcon />}
                             >
@@ -1218,8 +1216,17 @@ export default function TrainingsPage() {
                             </Button>
                         )}
 
+                        {modalTraining?.type === 'WOD' && modalTraining?.wodName && !isEditing && (
+                            <Button
+                                onClick={handleAddToRecords}
+                                variant="outlined"
+                                startIcon={<EmojiEventsIcon />}
+                            >
+                                Add to Records
+                            </Button>
+                        )}
                         <Button
-                            variant={isEditing ? "outlined" : "text"}
+                            variant="outlined"
                             onClick={isEditing ? () => setIsEditing(false) : closeModal}
                             color="inherit"
                         >

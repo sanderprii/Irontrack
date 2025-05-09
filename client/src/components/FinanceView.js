@@ -940,7 +940,7 @@ export default function FinanceView() {
                             variant="outlined"
                             fullWidth
                             onClick={handleLastYear}
-                            sx={{ mb: 1 }}
+                            sx={{ mb: 1, fontSize: "0.7" }}
                         >
                             Last Year
                         </Button>
@@ -1456,6 +1456,7 @@ export default function FinanceView() {
                                             variant="outlined"
                                             size="small"
                                             onClick={handleLastYear}
+                                            sx={{fontSize: "0.7em !important"}}
                                         >
                                             Last Year
                                         </Button>
@@ -1463,6 +1464,7 @@ export default function FinanceView() {
                                             variant="outlined"
                                             size="small"
                                             onClick={handleCurrentYear}
+                                            sx={{fontSize: "0.7em !important"}}
                                         >
                                             Current Year
                                         </Button>
@@ -1482,7 +1484,7 @@ export default function FinanceView() {
 
             {/* TRANSACTIONS TAB */}
             {activeTab === "transactions" && (
-                <Box my={2}>
+                <Box my={2} sx={{pl: 2, pr: 2}}>
                     <Typography variant="h6" sx={{ mb: 2 }}>Transactions</Typography>
 
                     {/* Search Box */}
@@ -1526,7 +1528,7 @@ export default function FinanceView() {
                                             <TableCell>User</TableCell>
                                             <TableCell>Amount (€)</TableCell>
                                             <TableCell>Description</TableCell>
-                                            <TableCell>Type</TableCell>
+
                                             <TableCell>Status</TableCell>
                                             <TableCell>Date</TableCell>
                                         </TableRow>
@@ -1551,7 +1553,7 @@ export default function FinanceView() {
                                                     <TableCell>{transaction.user?.fullName || "Unknown"}</TableCell>
                                                     <TableCell>€{transaction.amount.toFixed(2)}</TableCell>
                                                     <TableCell>{transaction.description}</TableCell>
-                                                    <TableCell>{transaction.type || "N/A"}</TableCell>
+
                                                     <TableCell>
                                                         <Chip
                                                             label={transaction.status || "N/A"}

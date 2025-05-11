@@ -111,7 +111,7 @@ const validatePasswordResetRequest = [
     body('email')
         .trim()
         .isEmail().withMessage('Please enter a valid email address')
-        .normalizeEmail(),
+        .normalizeEmail({ gmail_remove_dots: false }),  // Added comma here
 
     (req, res, next) => {
         const errors = validationResult(req);

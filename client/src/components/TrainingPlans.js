@@ -719,7 +719,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                 required
                             />
                         </Grid>
-
+                        {role !== "regular" && (
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -730,6 +730,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
                                 helperText={targetUserName ? `Creating plan for: ${targetUserName}` : 'Please select a user'}
                             />
                         </Grid>
+                        )}
                     </Grid>
 
                     <Divider sx={{ my: 3 }} />

@@ -272,7 +272,9 @@ const updateClass = async (req, res) => {
         wodName,
         wodType,
         description,
-        applyToAllFutureTrainings
+        applyToAllFutureTrainings,
+        freeClass,
+        canRegister
     } = req.body;
 
     // time võib tulla õiges formaadis kui ka dateTTime formaadis. Kontrollime ja teisendame õigesse formaati
@@ -312,7 +314,9 @@ const updateClass = async (req, res) => {
                 repeatWeekly,
                 wodName: wodName.toUpperCase(),
                 wodType,
-                description
+                description,
+                freeClass,
+                canRegister,
             }
         });
 
@@ -483,7 +487,9 @@ IronTrack Team
                             repeatWeekly,
                             wodName: wodName ? wodName.toUpperCase() : '',
                             wodType,
-                            description
+                            description,
+                            freeClass,
+                            canRegister,
                         }
                     });
                 }
@@ -893,15 +899,38 @@ const registerForClass = async (req, res) => {
         });
 
 
+        const checkIsFirstTraining = await prisma.firstTraining.findFirst(
+            {
+                where: {
+                    userId: parseInt(userId),
+                    affiliateId: parseInt(classInfo.affiliateId)
+                }
+            }
+        )
 
+
+        let firstTraining = false;
+        if (!checkIsFirstTraining) {
+
+            await prisma.firstTraining.create(
+                {
+                    data: {
+                        userId: parseInt(userId),
+                        affiliateId: parseInt(classInfo.affiliateId),
+                    }
+                }
+            )
+
+            firstTraining = true
+        }
 
 
         if (enrolledCount >= classInfo.memberCapacity) {
             return res.status(400).json({error: "Class is full"});
         }
-        console.log()
+
         // For free classes, we can register directly
-        if (classInfo.freeClass) {
+        if (classInfo.freeClass || firstTraining) {
             await prisma.classAttendee.create({
                 data: {
                     userId: parseInt(userId),
@@ -930,6 +959,8 @@ const registerForClass = async (req, res) => {
 
             }
         });
+
+
 
         if (!plan) {
             return res.status(400).json({error: "Invalid plan"});
@@ -1011,7 +1042,9 @@ const cancelRegistration = async (req, res) => {
                 where: {id: registration.id},
             });
 
-            if (!freeClass) {
+
+
+            if (!freeClass && registration.userPlanId > 0) {
                 // Return session to user
                 await tx.userPlan.update({
                     where: {id: registration.userPlanId},
@@ -1150,7 +1183,27 @@ const checkUserEnrollment = async (req, res) => {
             },
         });
 
-        res.json({enrolled: !!enrollment});
+        const classinfo = await prisma.classSchedule.findFirst({
+            where: {id: classId},
+        }
+        );
+
+        const isFirstTraining = await prisma.firstTraining.findFirst(
+            {
+                where: {
+                    userId: parseInt(userId),
+                    affiliateId: parseInt(classinfo.affiliateId)
+                }
+            }
+        )
+
+        let firstTraining = false;
+
+        if(!isFirstTraining) {
+            firstTraining = true
+        }
+
+        res.json({enrolled: !!enrollment, firstTraining});
     } catch (error) {
         console.error("❌ Error checking enrollment:", error);
         res.status(500).json({error: "Failed to check enrollment."});

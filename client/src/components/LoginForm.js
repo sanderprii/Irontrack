@@ -210,7 +210,6 @@ const LoginForm = () => {
     const handleRequestPasswordReset = async () => {
         if (!validateResetEmail()) return;
 
-        setIsSubmitting(true);
 
         try {
             const response = await fetch(`${API_URL}/auth/request-password-reset`, {

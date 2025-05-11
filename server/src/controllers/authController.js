@@ -318,8 +318,13 @@ exports.requestPasswordReset = async (req, res) => {
             return res.status(400).json({ error: 'Email is required.' });
         }
 
+        console.log("password reset attempt", { email });
+
         // Find user by email
         const user = await prisma.user.findUnique({ where: { email } });
+
+
+
         if (!user) {
             // For security reasons, don't reveal that the email doesn't exist
 
@@ -329,6 +334,8 @@ exports.requestPasswordReset = async (req, res) => {
         // Generate reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+
+
 
         // Save token to database
         await prisma.user.update({
@@ -385,6 +392,8 @@ exports.resetPassword = async (req, res) => {
     try {
         const { token, password } = req.body;
         const clientIP = req.clientIP || req.ip || 'unknown';
+
+        console.log("password reset attempt", { token, password });
 
         if (!token || !password) {
             return res.status(400).json({ error: 'Token and new password are required.' });

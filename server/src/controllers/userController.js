@@ -238,6 +238,9 @@ exports.getPurchaseHistory = async (req, res) => {
                 where: {
                     affiliateId: parseInt(affiliateId, 10),
                     userId,
+                    sessionsLeft: {
+                        gt: 0
+                    }
                 },
                 select: {
                     id: true,

@@ -117,7 +117,7 @@ export default function ClassModal({
 
     // Aitame tuvastada, kas kasutaja on *juba* registreerunud sellesse klassi
     const [isRegistered, setIsRegistered] = useState(false);
-
+const [ isFirstTraining, setIsFirstTraining] = useState(false);
     // Uued waitlisti jaoks vajalikud state'id
     const [isInWaitlist, setIsInWaitlist] = useState(false);
     const [isClassFull, setIsClassFull] = useState(false);
@@ -554,6 +554,7 @@ export default function ClassModal({
     async function checkIfCurrentUserIsRegistered() {
         const response = await checkUserEnrollment(cls.id);
         setIsRegistered(response.enrolled);
+        setIsFirstTraining(response.firstTraining);
     }
 
     const isClassTimePassed = () => {
@@ -566,7 +567,10 @@ export default function ClassModal({
 
     const handleRegister = async () => {
         try {
-            if (!cls.freeClass) {
+
+            const isFreeOrFirstTraining = cls.freeClass || isFirstTraining;
+
+            if (!isFreeOrFirstTraining) {
                 if (!selectedPlanId) {
                     showNotification("Please select a plan first!", "info");
                     return;
@@ -580,8 +584,9 @@ export default function ClassModal({
                 }
             }
 
-            // Käsitle tingimuste aktsepteerimist registreerimisel
-            if (userProfile?.isFirstTraining && !termsAccepted) {
+            // Handle terms acceptance at registration time
+            if (termsCheck && !termsAccepted) {
+                setIsAcceptingTerms(true);
                 try {
                     await acceptAffiliateTerms({
                         affiliateId: cls.affiliateId
@@ -590,8 +595,10 @@ export default function ClassModal({
                 } catch (error) {
                     console.error("Failed to accept terms:", error);
                     showNotification("Failed to accept terms", "error");
+                    setIsAcceptingTerms(false);
                     return;
                 }
+                setIsAcceptingTerms(false);
             }
 
             // Determine if booking for a family member
@@ -616,6 +623,8 @@ export default function ClassModal({
             showNotification(error.message || "Registration failed", "error");
         }
     };
+
+    console.log("isFirstTraining", isFirstTraining);
 
     // Tühista registreerimise funktsioon
     const handleCancelRegistration = async () => {
@@ -1210,7 +1219,7 @@ export default function ClassModal({
                         ) : isClassFull ? (
                             // If class is full and user is not waitlisted
                             <>
-                                {cls.freeClass ? (
+                                {cls.freeClass || isFirstTraining ? (
                                     // For free classes, no plan selection needed
                                     <Button
                                         variant="contained"
@@ -1315,24 +1324,8 @@ export default function ClassModal({
                                                 <FormControlLabel
                                                     control={
                                                         <Checkbox
-                                                            checked={false} // Alati alguses tühi
-                                                            onChange={async (e) => {
-                                                                if (e.target.checked) {
-                                                                    setIsAcceptingTerms(true);
-                                                                    try {
-                                                                        await acceptAffiliateTerms({
-                                                                            affiliateId: cls.affiliateId
-                                                                        });
-                                                                        setTermsAccepted(true); // See on tähtis - määrab, kas registreerimise nupp on aktiivne
-                                                                        showNotification("Terms accepted successfully", "success");
-                                                                    } catch (error) {
-                                                                        console.error("Failed to accept terms:", error);
-                                                                        showNotification("Failed to accept terms", "error");
-                                                                    } finally {
-                                                                        setIsAcceptingTerms(false);
-                                                                    }
-                                                                }
-                                                            }}
+                                                            checked={termsCheck}
+                                                            onChange={(e) => setTermsCheck(e.target.checked)}
                                                             disabled={isAcceptingTerms}
                                                         />
                                                     }
@@ -1361,12 +1354,12 @@ export default function ClassModal({
                                 )}
 
 
-                                {cls.freeClass ? (
+                                {cls.freeClass || isFirstTraining? (
                                     // Free classes don't need plan selection
                                     <Button
                                         variant="contained"
                                         color="success"
-                                        disabled={isClassTimePassed() || (!termsAccepted)}
+                                        disabled={isClassTimePassed() || (!termsCheck && !termsAccepted)}
                                         onClick={handleRegister}
                                     >
                                         Register
@@ -1428,9 +1421,8 @@ export default function ClassModal({
                                                 <Button
                                                     variant="contained"
                                                     color="success"
-                                                    disabled={isClassTimePassed() || (!termsAccepted)}
+                                                    disabled={isClassTimePassed() || (!termsCheck && !termsAccepted)}
                                                     onClick={handleRegister}
-                                                    sx={{width: {xs: "100%", sm: "auto"}}}
                                                 >
                                                     Register
                                                 </Button>
@@ -2016,13 +2008,14 @@ export default function ClassModal({
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseCancelConfirm} color="primary">
+                    <Button onClick={handleCloseCancelConfirm} variant="contained"
+                            color="primary">
                         No, Keep My Spot
                     </Button>
-                    <Button onClick={() => {
+                    <Button color="inherit" variant="outlined"  onClick={() => {
                         handleCancelRegistration();
                         handleCloseCancelConfirm();
-                    }} color="error">
+                    }}>
                         Yes, Cancel Registration
                     </Button>
                 </DialogActions>

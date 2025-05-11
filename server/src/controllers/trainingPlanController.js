@@ -321,9 +321,10 @@ exports.deleteTrainingPlan = async (req, res) => {
 // Add a comment to a training day
 exports.addComment = async (req, res) => {
     try {
-        const { trainingDayId, content } = req.body;
+        const {  content } = req.body;
         const userId = req.user.id;
-
+        const trainingDayId = req.params.id;
+console.log(trainingDayId, content, userId);
         // Validate required fields
         if (!trainingDayId || !content) {
             return res.status(400).json({ error: 'Missing required fields.' });
@@ -331,7 +332,7 @@ exports.addComment = async (req, res) => {
 
         // Check if training day exists
         const trainingDay = await prisma.trainingDay.findUnique({
-            where: { id: trainingDayId },
+            where: { id: parseInt(trainingDayId) },
             include: {
                 trainingPlan: true
             }
@@ -346,11 +347,11 @@ exports.addComment = async (req, res) => {
             return res.status(403).json({ error: 'You do not have permission to add comments to this training day.' });
         }
 
-        const comment = await prisma.comment.create({
+        const comment = await prisma.sectorComment.create({
             data: {
                 content,
                 userId,
-                trainingDayId
+                trainingDayId: parseInt(trainingDayId),
             }
         });
 

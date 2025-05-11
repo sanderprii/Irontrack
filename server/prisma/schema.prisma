@@ -56,6 +56,14 @@ model User {
   familyMembers          FamilyMember[]
   sessions               Session[]
   affiliateTermsAccepted AffiliateTermsAccepted[]
+  firstTraining          FirstTraining[]
+}
+
+model FirstTraining {
+  id          Int  @id @default(autoincrement())
+  userId      Int
+  affiliateId Int
+  user        User @relation(fields: [userId], references: [id])
 }
 
 model FamilyMember {

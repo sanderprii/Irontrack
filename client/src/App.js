@@ -225,7 +225,8 @@ function App() {
                             <Route path="/verify-email" element={<VerifyEmail/>}/>
                             <Route path="/reset-password" element={<ResetPassword/>}/>
                             <Route path="/checkin" element={<Checkin/>}/>
-
+                            <Route path="/checkout" element={<Checkout/>}/>
+                            <Route path="/after-checkout" element={<AfterCheckout/>}/>
                             {/* Protected routes - require authentication */}
                             <Route element={<ProtectedRoute />}>
                                 <Route path="/trainings" element={<TrainingsPage/>}/>
@@ -241,10 +242,10 @@ function App() {
                                 <Route path="/members" element={<Members/>}/>
                                 <Route path="/plans" element={<Plans/>}/>
                                 <Route path="/Messages" element={<Messages/>}/>
-                                <Route path="/checkout" element={<Checkout/>}/>
+
                                 <Route path="/trainer" element={<Trainer/>}/>
                                 <Route path="/admin" element={<Admin/>}/>
-                                <Route path="/after-checkout" element={<AfterCheckout/>}/>
+
                             </Route>
                         </Routes>
                     </Box>

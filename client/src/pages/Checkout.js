@@ -241,7 +241,7 @@ export default function Checkout(props) {
             // Check payment status (backend now handles buyPlan and acceptContract)
             checkPaymentStatus(orderToken)
                 .then(response => {
-console.log("Payment status response:", response);
+
                     if (response.paymentStatus === 'PAID') {
 
                     localStorage.setItem('token', response.sessionToken);
@@ -428,8 +428,7 @@ console.log("Payment status response:", response);
                 );
 
 
-               // await new Promise(resolve => setTimeout(resolve, 500));
-                // navigate('/after-checkout');
+
 
                 if (paymentResponse.payment_url) {
                     // Viivitus, et andmed jõuaksid salvestuda
@@ -437,8 +436,7 @@ console.log("Payment status response:", response);
                     // Suuna kasutaja maksele
                     window.location.href = paymentResponse.payment_url;
 
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    navigate('/after-checkout');
+
                 } else {
                     throw new Error('Error payment response');
                 }

@@ -262,6 +262,14 @@ export default function Checkout(props) {
         }
     }, [searchParams, navigate]);
 
+    // PWA tuvastamise funktsioon
+    const isPWA = () => {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone ||
+            document.referrer.includes('android-app://');
+    };
+
+
     // Funktsioon checkout andmete kustutamiseks
     const clearCheckoutData = () => {
         localStorage.removeItem('checkout_planData');
@@ -427,13 +435,21 @@ export default function Checkout(props) {
 
 
                 if (paymentResponse.payment_url) {
-                    // Viivitus, et andmed jõuaksid salvestuda
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    // Suuna kasutaja maksele
-                    window.location.href = paymentResponse.payment_url;
+                    // Kui on PWA, siis näita kohe Thank You sõnumit
+                    if (isPWA()) {
+                        // Märgi, et makse on alustatud
+                        localStorage.setItem('pwa_payment_started', 'true');
 
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    navigate('/after-checkout');
+                        // Näita kohe Thank You sõnumit
+                        setPaymentSuccess(true);
+                        setActiveStep(steps.length);
+
+                        // Ava Montonio väljaspool PWA-d
+                        window.open(paymentResponse.payment_url, '_blank');
+                    } else {
+                        // Tavaline brauser - suuna tavaliselt
+                        window.location.href = paymentResponse.payment_url;
+                    }
                 } else {
                     throw new Error('Error payment response');
                 }
@@ -443,6 +459,30 @@ export default function Checkout(props) {
             setPaymentError('Payment failed');
             setLoading(false);
         }
+    };
+
+    const renderPWAThankYou = () => {
+        if (!isPWA() || !paymentSuccess) return null;
+
+        return (
+            <Stack spacing={2}>
+                <Typography variant="h1">📦</Typography>
+                <Typography variant="h5">Aitäh tellimuse eest!</Typography>
+                <Typography variant="body1" sx={{color: 'text.secondary'}}>
+                    Sinu makse avatakse uues aknas. Peale makse lõpetamist võid selle akna kinni panna.
+                </Typography>
+                <Typography variant="body2" sx={{color: 'primary.main', fontWeight: 'bold'}}>
+                    Makse lõpetamise järel suuna ennast registreerima nupust allpool.
+                </Typography>
+                <Button
+                    variant="contained"
+                    sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
+                    onClick={() => navigate("/after-checkout")}
+                >
+                    Mine registreerima
+                </Button>
+            </Stack>
+        );
     };
 
     const handleNext = () => {

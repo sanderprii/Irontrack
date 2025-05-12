@@ -428,15 +428,17 @@ export default function Checkout(props) {
                 );
 
 
-
+                navigate('/after-checkout');
 
                 if (paymentResponse.payment_url) {
                     // Viivitus, et andmed jõuaksid salvestuda
                     await new Promise(resolve => setTimeout(resolve, 500));
+
                     // Suuna kasutaja maksele
                     window.location.href = paymentResponse.payment_url;
 
-
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    navigate('/after-checkout');
                 } else {
                     throw new Error('Error payment response');
                 }

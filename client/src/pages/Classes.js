@@ -588,36 +588,51 @@ export default function Classes() {
         <Container maxWidth={false} sx={{pl: {xs: 0, md: 2, lg: 2}, pr: {xs: 0, md: 2, lg: 2}}}>
             <Box textAlign="center" my={1}>
 
-                {selectedAffiliate?.name &&
-                    <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
-                <Typography variant="h5" color="primary">Class Schedule
+                <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    my={3}
+                    px={2} // Add some padding on sides if needed
+                >
+                    {/* Left side: Affiliate name and title */}
+                    <Box>
+                        {selectedAffiliate?.name && (
+                            <Typography variant="h4" color="primary" sx={{ mb: 0 }}>
+                                {selectedAffiliate.name}
+                            </Typography>
+                        )}
 
-                </Typography>
-                {userRole === "regular" && (
-                    <IconButton
-                        color="primary"
-                        onClick={handleOpenRegistrationsModal}
+                    </Box>
 
-                    >
-                        <EventAvailable/>
-                    </IconButton>
-                )}
-                {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
-                {hasWodClasses && !showWeekly && (
-                    <IconButton
-                        color="primary"
-                        onClick={handleOpenDayLeaderboard}
-                        sx={{
-                            ml: 1,
-                            color: "goldenrod",
-                            "&:hover": {
-                                backgroundColor: "rgba(218,165,32,0.1)"
-                            }
-                        }}
-                    >
-                        <EmojiEventsIcon/>
-                    </IconButton>
-                )}
+                    {/* Right side: All buttons */}
+                    <Box display="flex" alignItems="center" gap={1}>
+                        {userRole === "regular" && (
+                            <IconButton
+                                color="primary"
+                                onClick={handleOpenRegistrationsModal}
+                            >
+                                <EventAvailable/>
+                            </IconButton>
+                        )}
+
+                        {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
+                        {hasWodClasses && !showWeekly && (
+                            <IconButton
+                                color="primary"
+                                onClick={handleOpenDayLeaderboard}
+                                sx={{
+                                    color: "goldenrod",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(218,165,32,0.1)"
+                                    }
+                                }}
+                            >
+                                <EmojiEventsIcon/>
+                            </IconButton>
+                        )}
+                    </Box>
+                </Box>
 
                 {/* ✅ Ainult "owner" ja "trainer" rollid näevad nuppe */}
                 {(userRole === "affiliate" || userRole === "trainer") && (

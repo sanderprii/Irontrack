@@ -42,6 +42,7 @@ import {getAffiliate} from "../api/affiliateApi";
 import ClassWodView from "../components/ClassWodView";
 import {getClassLeaderboard} from "../api/leaderboardApi";
 import {getUserProfile} from "../api/profileApi";
+import {EventAvailable} from "@mui/icons-material";
 
 
 export default function Classes() {
@@ -96,6 +97,11 @@ export default function Classes() {
     const [notificationOpen, setNotificationOpen] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState('');
     const [notificationSeverity, setNotificationSeverity] = useState('info'); // 'success', 'info', 'warning', 'error'
+
+    // Registreeritud treeningute modal state
+    const [isRegistrationsModalOpen, setRegistrationsModalOpen] = useState(false);
+    const [userRegistrations, setUserRegistrations] = useState([]);
+    const [loadingRegistrations, setLoadingRegistrations] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("role");
@@ -229,8 +235,8 @@ export default function Classes() {
 
         if (affiliateId) {
 
-                fetchClasses();
-            }
+            fetchClasses();
+        }
 
     }, [affiliateId, fetchClasses]);
 
@@ -553,31 +559,65 @@ export default function Classes() {
         }
     };
 
+    const handleOpenRegistrationsModal = async () => {
+        setLoadingRegistrations(true);
+        setRegistrationsModalOpen(true);
+
+        try {
+            // Võtame juba olemasolevast classes state'st kasutaja registreeritud klassid
+            const now = new Date();
+
+            // Filtreeri välja registreeritud klassid, mis pole veel möödunud
+            const userRegistrationsFromClasses = classes.filter(cls => {
+                const classTime = new Date(cls.time);
+                return cls.isRegistered && classTime > now;
+            });
+
+            // Sorteeri kuupäeva järgi (lähimad esimesed)
+            userRegistrationsFromClasses.sort((a, b) => new Date(a.time) - new Date(b.time));
+
+            setUserRegistrations(userRegistrationsFromClasses);
+        } catch (error) {
+            console.error("Error processing user registrations:", error);
+            showErrorMessage("Error loading your registrations");
+        } finally {
+            setLoadingRegistrations(false);
+        }
+    };
     return (
         <Container maxWidth={false} sx={{pl: {xs: 0, md: 2, lg: 2}, pr: {xs: 0, md: 2, lg: 2}}}>
-            <Box textAlign="center" my={4}>
+            <Box textAlign="center" my={1}>
 
                 {selectedAffiliate?.name &&
                     <Typography variant="h4" color="primary">{selectedAffiliate.name}</Typography>}
                 <Typography variant="h5" color="primary">Class Schedule
-                    {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
-                    {hasWodClasses && !showWeekly && (
-                        <IconButton
-                            color="primary"
-                            onClick={handleOpenDayLeaderboard}
-                            sx={{
-                                ml: 1,
-                                color: "goldenrod",
-                                "&:hover": {
-                                    backgroundColor: "rgba(218,165,32,0.1)"
-                                }
-                            }}
-                        >
-                            <EmojiEventsIcon/>
-                        </IconButton>
-                    )}
-                </Typography>
 
+                </Typography>
+                {userRole === "regular" && (
+                    <IconButton
+                        color="primary"
+                        onClick={handleOpenRegistrationsModal}
+
+                    >
+                        <EventAvailable/>
+                    </IconButton>
+                )}
+                {/* Day Leaderboard Trophy Icon - only show if there are WOD classes that day */}
+                {hasWodClasses && !showWeekly && (
+                    <IconButton
+                        color="primary"
+                        onClick={handleOpenDayLeaderboard}
+                        sx={{
+                            ml: 1,
+                            color: "goldenrod",
+                            "&:hover": {
+                                backgroundColor: "rgba(218,165,32,0.1)"
+                            }
+                        }}
+                    >
+                        <EmojiEventsIcon/>
+                    </IconButton>
+                )}
 
                 {/* ✅ Ainult "owner" ja "trainer" rollid näevad nuppe */}
                 {(userRole === "affiliate" || userRole === "trainer") && (
@@ -617,20 +657,20 @@ export default function Classes() {
                         <IconButton
                             color="primary"
                             onClick={handlePrevWeek}
-                            sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}
+                            sx={{bgcolor: 'rgba(0, 0, 0, 0.04)'}}
                         >
-                            <ArrowBackIosNewIcon />
+                            <ArrowBackIosNewIcon/>
                         </IconButton>
 
                         {!showWeekly && (
                             <Box display="flex" alignItems="center">
-                                <Typography variant="h6" sx={{ mr: 1 }}>
+                                <Typography variant="h6" sx={{mr: 1}}>
                                     {getFormattedDate()}
                                 </Typography>
                                 <Button
                                     variant="outlined"
                                     size="small"
-                                    startIcon={<TodayIcon />}
+                                    startIcon={<TodayIcon/>}
                                     onClick={handleToday}
                                 >
                                     Today
@@ -647,9 +687,9 @@ export default function Classes() {
                         <IconButton
                             color="primary"
                             onClick={handleNextWeek}
-                            sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}
+                            sx={{bgcolor: 'rgba(0, 0, 0, 0.04)'}}
                         >
-                            <ArrowForwardIosIcon />
+                            <ArrowForwardIosIcon/>
                         </IconButton>
                     </Box>
 
@@ -851,13 +891,9 @@ export default function Classes() {
                                         >
                                             <TableCell>
                                                 <Typography variant="body2" sx={{fontWeight: 'bold'}}>
-                                                    {entry.classTime} - {entry.className}
+                                                    {entry.classTime}
                                                 </Typography>
-                                                {entry.wodName && (
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {entry.wodName}
-                                                    </Typography>
-                                                )}
+
                                             </TableCell>
                                             <TableCell>{entry.fullName}</TableCell>
                                             <TableCell>
@@ -949,6 +985,87 @@ export default function Classes() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* User Registrations Modal */}
+            <Dialog
+                open={isRegistrationsModalOpen}
+                onClose={() => setRegistrationsModalOpen(false)}
+                maxWidth={false} // Eemalda maxWidth piirang
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        m: {xs: 1}, // Mobiilis vaid väike margin
+                        width: {xs: 'calc(100% - 16px)', sm: 'auto'}, // Mobiilis peaaegu täislaius
+                        maxWidth: {xs: '100%', sm: '500px'}, // Määra maxWidth erinevalt seadmeti suuruse järgi
+                    }
+                }}
+            >
+                <DialogTitle>
+                    <Box display="flex" alignItems="center">
+                        <EventAvailable sx={{mr: 1, color: "primary.main"}}/>
+                        <Typography variant="h6">
+                            My Future Classes
+                        </Typography>
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    {loadingRegistrations ? (
+                        <Box display="flex" justifyContent="center" my={3}>
+                            <CircularProgress />
+                        </Box>
+                    ) : userRegistrations.length > 0 ? (
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Time</TableCell>
+                                        <TableCell>Class</TableCell>
+
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {userRegistrations.map((registration) => (
+                                        <TableRow key={registration.id}>
+                                            <TableCell>
+                                                {new Date(registration.time).toLocaleDateString('et-EE', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    year: 'numeric'
+                                                })}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(registration.time).toLocaleTimeString([], {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{fontWeight: 'bold'}}>
+                                                    {registration.trainingName}
+                                                </Typography>
+
+                                            </TableCell>
+
+
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    ) : (
+                        <Typography align="center" color="text.secondary">
+                            You have no upcoming registered classes.
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRegistrationsModalOpen(false)} color="primary">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <Snackbar
                 open={notificationOpen}
                 autoHideDuration={6000}

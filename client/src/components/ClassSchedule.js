@@ -48,6 +48,8 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
         }
     };
 
+
+
     return (
         <Box sx={{ width: "100%", pb: 0 }}>
             {sortedClasses.length === 0 ? (
@@ -60,41 +62,25 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                 </Typography>
             ) : (
                 sortedClasses.map((cls) => (
+
                     <Card
                         key={cls.id}
                         sx={{
                             cursor: "pointer",
-                            ":hover": { boxShadow: 6 },
+                            ":hover": { boxShadow: new Date() > new Date(cls.time) ? 2 : 6 },
                             bgcolor: getBackgroundColor(cls.trainingType),
                             width: "100%",
-                            mb: 2, // Lisame väikese vahe iga klassi vahele
-                            p: weeklyView ? 1 : 2, // Weekly vaates väiksem padding
-                            position: "relative", // For positioning the trophy icon
+                            mb: 2,
+                            p: weeklyView ? 1 : 2,
+                            position: "relative",
+                            // Möödunud klasside stiil
+                            opacity: new Date() > new Date(cls.time) ? 0.6 : 1,
+                            filter: new Date() > new Date(cls.time) ? 'grayscale(70%)' : 'none',
+                            transition: 'all 0.3s ease',
                         }}
                         onClick={() => onClassClick(cls)}
                     >
-                        {/* Trophy icon for WOD classes */}
-                        {cls.trainingType === "WOD" && (
-                            <IconButton
-                                sx={{
-                                    position: "absolute",
-                                    top: 5,
-                                    right: cls.isRegistered ? 40 : 5, // Kui registreeritud, siis nihutatakse vasakule
-                                    zIndex: 1,
-                                    color: "goldenrod",
-                                    backgroundColor: "rgba(255,255,255,0.5)",
-                                    '&:hover': {
-                                        backgroundColor: "rgba(255,255,255,0.8)",
-                                    },
-                                    width: 32,
-                                    height: 32,
-                                }}
-                                onClick={(e) => handleOpenLeaderboard(e, cls)}
-                                size="small"
-                            >
-                                <EmojiEventsIcon fontSize="small" />
-                            </IconButton>
-                        )}
+
 
                         {/* Register check mark icon */}
                         {cls.isRegistered && (

@@ -82,6 +82,14 @@ export default function Checkout(props) {
     const [isContractPayment, setIsContractPayment] = useState(false);
     const [isFamilyMember, setIsFamilyMember] = useState(false);
     const [familyMemberId, setFamilyMemberId] = useState(null);
+    const [pwaPaidWithoutConfirmation, setPwaPaidWithoutConfirmation] = useState(false);
+
+    // PWA tuvastamise funktsioon
+    const isPWA = () => {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone ||
+            document.referrer.includes('android-app://');
+    };
 
 
     // Lae andmed localStorage'ist esimesel renderil
@@ -262,12 +270,6 @@ export default function Checkout(props) {
         }
     }, [searchParams, navigate]);
 
-    // PWA tuvastamise funktsioon
-    const isPWA = () => {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone ||
-            document.referrer.includes('android-app://');
-    };
 
 
     // Funktsioon checkout andmete kustutamiseks
@@ -438,17 +440,18 @@ export default function Checkout(props) {
                     // Kui on PWA, siis näita kohe Thank You sõnumit
                     if (isPWA()) {
                         // Märgi, et makse on alustatud
-                        localStorage.setItem('pwa_payment_started', 'true');
 
-                        // Näita kohe Thank You sõnumit
-                        setPaymentSuccess(true);
+
+                        setPwaPaidWithoutConfirmation(true);
                         setActiveStep(steps.length);
-
                         // Ava Montonio väljaspool PWA-d
                         window.location.href = paymentResponse.payment_url;
+
+                        navigate('/after-checkout');
                     } else {
                         // Tavaline brauser - suuna tavaliselt
                         window.location.href = paymentResponse.payment_url;
+                        navigate('/after-checkout');
                     }
                 } else {
                     throw new Error('Error payment response');
@@ -462,24 +465,27 @@ export default function Checkout(props) {
     };
 
     const renderPWAThankYou = () => {
-        if (!isPWA() || !paymentSuccess) return null;
-
         return (
             <Stack spacing={2}>
                 <Typography variant="h1">📦</Typography>
-                <Typography variant="h5">Aitäh tellimuse eest!</Typography>
+                <Typography variant="h5">Thank you for your order!</Typography>
                 <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                    Sinu makse avatakse uues aknas. Peale makse lõpetamist võid selle akna kinni panna.
+                    {isPWA() ?
+                        'Your payment will open in a new window. You can close it after completing the payment.' :
+                        'Your payment is being processed. You will be redirected to the registration page shortly.'
+                    }
                 </Typography>
-                <Typography variant="body2" sx={{color: 'primary.main', fontWeight: 'bold'}}>
-                    Makse lõpetamise järel suuna ennast registreerima nupust allpool.
-                </Typography>
+                {isPWA() && (
+                    <Typography variant="body2" sx={{color: 'primary.main', fontWeight: 'bold'}}>
+                        After completing the payment, you can proceed to registration using the button below.
+                    </Typography>
+                )}
                 <Button
                     variant="contained"
                     sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
                     onClick={() => navigate("/after-checkout")}
                 >
-                    Mine registreerima
+                    Continue to Registration
                 </Button>
             </Stack>
         );
@@ -676,20 +682,7 @@ export default function Checkout(props) {
                         </Stepper>
 
                         {activeStep === steps.length ? (
-                            <Stack spacing={2}>
-                                <Typography variant="h1">📦</Typography>
-                                <Typography variant="h5">Aitäh tellimuse eest!</Typography>
-                                <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                                    Sinu makse on töötlemisel. Kohe suunatakse sind registreerimislehele.
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
-                                    onClick={() => navigate("/register-training")}
-                                >
-                                    Mine registreerima
-                                </Button>
-                            </Stack>
+                            renderPWAThankYou()
                         ) : (
                             <React.Fragment>
                                 {getStepContent(

@@ -1033,6 +1033,11 @@ export default function TrainingsPage() {
                                     center: 'title',
                                     right: 'today next'
                                 }}
+                                datesSet={(dateInfo) => {
+                                    // Kasuta kalendri aktuaalset kuupäeva, mitte vaate algust
+                                    const currentDate = dateInfo.view.calendar.getDate();
+                                    setCurrentMonth(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
+                                }}
                             />
                         </Box>
                     )}

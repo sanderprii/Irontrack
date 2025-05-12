@@ -176,7 +176,7 @@ const createMontonioPayment = async (req, res) => {
             // JWT expiration - 10 minutes from now
             exp: Math.floor(Date.now() / 1000) + 10 * 60
         };
-
+console.log("paymentData", paymentData)
         // Generate JWT token
         const token = jwt.sign(
             paymentData,
@@ -596,7 +596,7 @@ const handleMontonioWebhook = async (req, res) => {
 const handlePaymentReturn = async (req, res) => {
     try {
         const {'order-token': orderToken} = req.query;
-
+console.log("handlePaymentReturn", req.query)
         if (!orderToken) {
             return res.status(400).json({success: false, message: 'No order token provided'});
         }
@@ -635,7 +635,7 @@ const handlePaymentReturn = async (req, res) => {
 
 const checkPaymentStatus = async (req, res) => {
     const {token} = req.query;
-
+console.log("checkPaymentStatus", req.query)
     try {
         // Verify token with your secret key
         const decoded = jwt.verify(token, affiliateSecretKey);

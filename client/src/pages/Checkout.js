@@ -241,9 +241,10 @@ export default function Checkout(props) {
             // Check payment status (backend now handles buyPlan and acceptContract)
             checkPaymentStatus(orderToken)
                 .then(response => {
+                    localStorage.setItem('token', response.sessiontoken);
                     if (response.paymentStatus === 'PAID') {
 
-
+                    localStorage.setItem('token', response.sessiontoken);
 
 
                         // Suuna kasutaja registreerima
@@ -297,7 +298,7 @@ export default function Checkout(props) {
     // Uuendatud handlePlaceOrder ilma buyPlan ja acceptContract käskudeta
     // Inside the Checkout.jsx file, the handlePlaceOrder function needs to be modified
 
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
 
     const handlePlaceOrder = async () => {
         try {

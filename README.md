@@ -32,10 +32,10 @@ The IronTrack Application is a web-based workout diary where you can add your wo
 
 # Clone the repository
 ```
-git clone https://github.com/sanderprii/irontrack-react.git
+git clone https://github.com/sanderprii/irontrack.git
 ```
 ```
-cd irontrack-react
+cd irontrack
 ```
 # Install dependencies
 

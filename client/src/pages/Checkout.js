@@ -241,10 +241,10 @@ export default function Checkout(props) {
             // Check payment status (backend now handles buyPlan and acceptContract)
             checkPaymentStatus(orderToken)
                 .then(response => {
-                    localStorage.setItem('token', response.sessiontoken);
+console.log("Payment status response:", response);
                     if (response.paymentStatus === 'PAID') {
 
-                    localStorage.setItem('token', response.sessiontoken);
+                    localStorage.setItem('token', response.sessionToken);
 
 
                         // Suuna kasutaja registreerima

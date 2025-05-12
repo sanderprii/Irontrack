@@ -91,6 +91,23 @@ export default function Checkout(props) {
             document.referrer.includes('android-app://');
     };
 
+    useEffect(() => {
+        if (isPWA()) {
+            // Kontrollime, kas PWA-s on makse alustatud
+            const pwaPaymentStarted = localStorage.getItem('checkout_pwa_payment_started');
+            const returnToPayment = localStorage.getItem('checkout_return_to_payment');
+
+            if (pwaPaymentStarted === 'true' && returnToPayment === 'true') {
+                // Taasta Thank You ekraan
+                setPwaPaidWithoutConfirmation(true);
+                setActiveStep(steps.length);
+                setLoading(false);
+
+                // Eemalda märkused
+                localStorage.removeItem('checkout_return_to_payment');
+            }
+        }
+    }, []);
 
     // Lae andmed localStorage'ist esimesel renderil
     useEffect(() => {
@@ -439,15 +456,19 @@ export default function Checkout(props) {
                 if (paymentResponse.payment_url) {
                     // Kui on PWA, siis näita kohe Thank You sõnumit
                     if (isPWA()) {
-                        // Märgi, et makse on alustatud
-
-
+                        // PWA - näita Thank You ja ava makse uues aknas
                         setPwaPaidWithoutConfirmation(true);
                         setActiveStep(steps.length);
-                        // Ava Montonio väljaspool PWA-d
-                        window.location.href = paymentResponse.payment_url;
 
-                        navigate('/after-checkout');
+                        // Salvesta andmed localStorage'sse (PWA jaoks)
+                        localStorage.setItem('checkout_pwa_payment_started', 'true');
+                        localStorage.setItem('checkout_return_to_payment', 'true');
+
+                        // Kasuta window.open PWA-s (mitte window.location.href)
+                        window.open(paymentResponse.payment_url, '_blank');
+
+                        // ÄRA navigeeri ära PWA-s - jää checkout lehele
+                        setLoading(false);;
                     } else {
                         // Tavaline brauser - suuna tavaliselt
                         window.location.href = paymentResponse.payment_url;

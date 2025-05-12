@@ -38,20 +38,39 @@ git clone https://github.com/sanderprii/irontrack-react.git
 cd irontrack-react
 ```
 # Install dependencies
+
+```
+cd client
+```
+
 ```
 npm install
+```
+
+```
+npm start
 ```
 
 ### Running the Project
 
 # Start development server
+
+```
+cd server
+```
+
+```
+npm install
+```
+
 ```
 npx prisma migrate dev
 ```
 
 ```
-npm run dev
+node src/index.js
 ```
+
 # Build for production
 ```
 npm run build

@@ -40,7 +40,8 @@ export default function ProfileView({
                                         user,
                                         onEditProfile,
                                         onChangePassword,
-                                        onUploadProfilePicture
+                                        onUploadProfilePicture,
+                                        onSendMessage
                                     }) {
     const [showAddNote, setShowAddNote] = useState(false);
     const [newFlag, setNewFlag] = useState("red");
@@ -139,6 +140,7 @@ export default function ProfileView({
 
     return (
         <Box sx={{ maxWidth: 800, margin: '0 auto' }}>
+
             <Paper
                 elevation={3}
                 sx={{
@@ -265,6 +267,17 @@ export default function ProfileView({
                             size="small"
                             sx={{ mt: 1 }}
                         />
+                    )}
+                    {/* Add this for affiliate role */}
+                    {role === "affiliate" && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<EmailIcon/>}
+                            onClick={() => onSendMessage(user)}
+                            sx={{ml: 2}}
+                        >
+                        </Button>
                     )}
                 </Box>
 

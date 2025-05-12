@@ -590,7 +590,7 @@ const TrainingPlans = ({ userId, role, userName, userFullName }) => {
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" component="h2">
-                    Training Plans
+                    Plans
                 </Typography>
 
                 {/* Only affiliates and trainers can create plans */}

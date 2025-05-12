@@ -27,6 +27,9 @@ import {
     getOwnerAffiliateId,
     addMember,
 } from "../api/membersApi";
+
+import SendMessageModal from "../components/SendMessageModal";
+
 import ProfileView from "../components/ProfileView";
 import Statistics from "../components/Statistics";
 import PurchaseHistory from "../components/PurchaseHistory";
@@ -53,6 +56,10 @@ export default function Members() {
 
     // User role for components like TrainingPlans
     const [userRole, setUserRole] = useState('affiliate');
+
+    // Add these states
+    const [messageModalOpen, setMessageModalOpen] = useState(false);
+    const [messageUser, setMessageUser] = useState(null);
 
     const menuItems = [
         {id: "profile", label: "Profile", component: ProfileView},
@@ -156,6 +163,11 @@ export default function Members() {
 
     const ActiveComponent =
         menuItems.find((item) => item.id === activeComponent)?.component || ProfileView;
+
+    const handleSendMessage = (user) => {
+        setMessageUser(user);
+        setMessageModalOpen(true);
+    };
 
     return (
         <Container maxWidth={false} sx={{display: "flex", flexDirection: "column", p: 0}}>
@@ -470,6 +482,7 @@ export default function Members() {
                                             userName={selectedMember.email}
                                             userFullName={selectedMember.fullName}
                                             affiliateId={ownerAffiliateId}
+                                            onSendMessage={handleSendMessage}
                                         />
                                     </Grid>
                                 </Grid>
@@ -480,6 +493,13 @@ export default function Members() {
                     )}
                 </Box>
             </Box>
+            <SendMessageModal
+                open={messageModalOpen}
+                onClose={() => setMessageModalOpen(false)}
+                affiliate={ownerAffiliateId}
+                affiliateEmail={localStorage.getItem("email")} // or however you get affiliate email
+                preSelectedUsers={messageUser ? [messageUser] : []}
+            />
         </Container>
     );
 }

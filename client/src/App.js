@@ -47,7 +47,7 @@ import VerifyEmail from './components/VerifyEmail';
 import ResetPassword from './components/ResetPassword';
 import Checkin from './pages/Checkin';
 import Admin from './pages/Admin';
-import PullToRefresh from './components/PullToRefresh';
+
 import AfterCheckout  from "./pages/AfterCheckout";
 
 const HomeRedirect = () => {
@@ -66,7 +66,7 @@ const HomeRedirect = () => {
 
 function App() {
     const [isPWA, setIsPWA] = useState(false);
-    const [showRefreshMessage, setShowRefreshMessage] = useState(false);
+
 
     useEffect(() => {
         // Check if the app is running in PWA mode
@@ -103,26 +103,8 @@ function App() {
         };
     }, []);
 
-    // Function to refresh the application data
-    const handleRefresh = useCallback(async () => {
-        try {
-            // Simple delay to show the refreshing effect
-            await new Promise(resolve => setTimeout(resolve, 800));
 
-            // Refresh the page
-            window.location.reload();
 
-            return { success: true };
-        } catch (error) {
-            console.error("Refresh failed:", error);
-            throw error;
-        }
-    }, []);
-
-    // Close notification
-    const handleCloseMessage = () => {
-        setShowRefreshMessage(false);
-    };
 
     const hostname = window.location.hostname;
 
@@ -202,7 +184,7 @@ function App() {
                 </Helmet>
                 <ResponsiveNavbar/>
                 {/* Wrap the entire app content with PullToRefresh */}
-                <PullToRefresh onRefresh={handleRefresh}>
+
                     <Box
                         sx={{
                             height: '5px',
@@ -248,16 +230,9 @@ function App() {
                             </Route>
                         </Routes>
                     </Box>
-                </PullToRefresh>
 
-                {/* Notification about refreshing */}
-                <Snackbar
-                    open={showRefreshMessage}
-                    autoHideDuration={2000}
-                    onClose={handleCloseMessage}
-                    message="Refreshing..."
-                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                />
+
+
             </AppTheme>
         </HelmetProvider>
     );

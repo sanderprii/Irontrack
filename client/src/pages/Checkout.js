@@ -297,6 +297,8 @@ export default function Checkout(props) {
     // Uuendatud handlePlaceOrder ilma buyPlan ja acceptContract käskudeta
     // Inside the Checkout.jsx file, the handlePlaceOrder function needs to be modified
 
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
     const handlePlaceOrder = async () => {
         try {
             setLoading(true);
@@ -423,8 +425,10 @@ export default function Checkout(props) {
                     familyMemberId,
 
                 );
-                await new Promise(resolve => setTimeout(resolve, 500));
-                navigate('/after-checkout');
+
+
+               // await new Promise(resolve => setTimeout(resolve, 500));
+                // navigate('/after-checkout');
 
                 if (paymentResponse.payment_url) {
                     // Viivitus, et andmed jõuaksid salvestuda

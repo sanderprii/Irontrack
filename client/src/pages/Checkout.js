@@ -82,32 +82,7 @@ export default function Checkout(props) {
     const [isContractPayment, setIsContractPayment] = useState(false);
     const [isFamilyMember, setIsFamilyMember] = useState(false);
     const [familyMemberId, setFamilyMemberId] = useState(null);
-    const [pwaPaidWithoutConfirmation, setPwaPaidWithoutConfirmation] = useState(false);
 
-    // PWA tuvastamise funktsioon
-    const isPWA = () => {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone ||
-            document.referrer.includes('android-app://');
-    };
-
-    useEffect(() => {
-        if (isPWA()) {
-            // Kontrollime, kas PWA-s on makse alustatud
-            const pwaPaymentStarted = localStorage.getItem('checkout_pwa_payment_started');
-            const returnToPayment = localStorage.getItem('checkout_return_to_payment');
-
-            if (pwaPaymentStarted === 'true' && returnToPayment === 'true') {
-                // Taasta Thank You ekraan
-                setPwaPaidWithoutConfirmation(true);
-                setActiveStep(steps.length);
-                setLoading(false);
-
-                // Eemalda märkused
-                localStorage.removeItem('checkout_return_to_payment');
-            }
-        }
-    }, []);
 
     // Lae andmed localStorage'ist esimesel renderil
     useEffect(() => {
@@ -287,8 +262,6 @@ export default function Checkout(props) {
         }
     }, [searchParams, navigate]);
 
-
-
     // Funktsioon checkout andmete kustutamiseks
     const clearCheckoutData = () => {
         localStorage.removeItem('checkout_planData');
@@ -450,30 +423,17 @@ export default function Checkout(props) {
                     familyMemberId,
 
                 );
-
-
+                await new Promise(resolve => setTimeout(resolve, 500));
+                navigate('/after-checkout');
 
                 if (paymentResponse.payment_url) {
-                    // Kui on PWA, siis näita kohe Thank You sõnumit
-                    if (isPWA()) {
-                        // PWA - näita Thank You ja ava makse uues aknas
-                        setPwaPaidWithoutConfirmation(true);
-                        setActiveStep(steps.length);
+                    // Viivitus, et andmed jõuaksid salvestuda
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Suuna kasutaja maksele
+                    window.location.href = paymentResponse.payment_url;
 
-                        // Salvesta andmed localStorage'sse (PWA jaoks)
-                        localStorage.setItem('checkout_pwa_payment_started', 'true');
-                        localStorage.setItem('checkout_return_to_payment', 'true');
-
-                        // Kasuta window.open PWA-s (mitte window.location.href)
-                        window.location.href = paymentResponse.payment_url;
-
-                        // ÄRA navigeeri ära PWA-s - jää checkout lehele
-                        setLoading(false);;
-                    } else {
-                        // Tavaline brauser - suuna tavaliselt
-                        window.location.href = paymentResponse.payment_url;
-                        navigate('/after-checkout');
-                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    navigate('/after-checkout');
                 } else {
                     throw new Error('Error payment response');
                 }
@@ -483,33 +443,6 @@ export default function Checkout(props) {
             setPaymentError('Payment failed');
             setLoading(false);
         }
-    };
-
-    const renderPWAThankYou = () => {
-        return (
-            <Stack spacing={2}>
-                <Typography variant="h1">📦</Typography>
-                <Typography variant="h5">Thank you for your order!</Typography>
-                <Typography variant="body1" sx={{color: 'text.secondary'}}>
-                    {isPWA() ?
-                        'Your payment will open in a new window. You can close it after completing the payment.' :
-                        'Your payment is being processed. You will be redirected to the registration page shortly.'
-                    }
-                </Typography>
-                {isPWA() && (
-                    <Typography variant="body2" sx={{color: 'primary.main', fontWeight: 'bold'}}>
-                        After completing the payment, you can proceed to registration using the button below.
-                    </Typography>
-                )}
-                <Button
-                    variant="contained"
-                    sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
-                    onClick={() => navigate("/after-checkout")}
-                >
-                    Continue to Registration
-                </Button>
-            </Stack>
-        );
     };
 
     const handleNext = () => {
@@ -703,7 +636,20 @@ export default function Checkout(props) {
                         </Stepper>
 
                         {activeStep === steps.length ? (
-                            renderPWAThankYou()
+                            <Stack spacing={2}>
+                                <Typography variant="h1">📦</Typography>
+                                <Typography variant="h5">Aitäh tellimuse eest!</Typography>
+                                <Typography variant="body1" sx={{color: 'text.secondary'}}>
+                                    Sinu makse on töötlemisel. Kohe suunatakse sind registreerimislehele.
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    sx={{alignSelf: 'start', width: {xs: '100%', sm: 'auto'}}}
+                                    onClick={() => navigate("/register-training")}
+                                >
+                                    Mine registreerima
+                                </Button>
+                            </Stack>
                         ) : (
                             <React.Fragment>
                                 {getStepContent(

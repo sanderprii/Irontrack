@@ -598,16 +598,7 @@ Thank you for your purchase! Your plan is now active.
         // Send email
         await sendEmailViaMailerSend(params);
 
-        // Save message to database
-        await prisma.message.create({
-            data: {
-                recipientType: 'user',
-                affiliateId: affiliateDetails.id,
-                recipientId: userData.id,
-                subject: "Your Order Confirmation - IronTrack",
-                body: htmlContent,
-            },
-        });
+
 
         return { success: true, message: "Order confirmation email sent" };
     } catch (error) {

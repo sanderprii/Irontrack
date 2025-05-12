@@ -216,7 +216,7 @@ export default function MyProfile() {
             <Paper
                 sx={{
                     position: 'absolute',
-                    top: 0,
+                    top: 56,
                     left: 0,
                     right: 0,
                     zIndex: 1300,

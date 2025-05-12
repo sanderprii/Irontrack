@@ -445,7 +445,7 @@ export default function Checkout(props) {
                         setActiveStep(steps.length);
 
                         // Ava Montonio väljaspool PWA-d
-                        window.open(paymentResponse.payment_url, '_blank');
+                        window.location.href = paymentResponse.payment_url;
                     } else {
                         // Tavaline brauser - suuna tavaliselt
                         window.location.href = paymentResponse.payment_url;

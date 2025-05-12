@@ -32,7 +32,10 @@ import {
     FormControlLabel,
     useMediaQuery,
     useTheme,
-    TextareaAutosize
+    TextareaAutosize,
+    Card,
+    CardHeader,
+    CardContent,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -203,6 +206,11 @@ export default function TrainingsPage() {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const API_URL = process.env.REACT_APP_API_URL;
+
+    // Uued state-id kuu treeningute modali jaoks
+    const [monthTrainingsModalOpen, setMonthTrainingsModalOpen] = useState(false);
+    const [selectedType, setSelectedType] = useState('');
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     // --- 1) Load trainings on mount ---
     useEffect(() => {
@@ -573,7 +581,26 @@ export default function TrainingsPage() {
         setFormExpanded(!formExpanded);
     };
 
+// Funktsioon kuu treeningute filtreerimiseks tüübi järgi
+    const getMonthTrainingsByType = (type) => {
+        const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
 
+        return trainings
+            .filter(training => {
+                const trainingDate = new Date(training.date);
+                return training.type === type &&
+                    trainingDate >= startOfMonth &&
+                    trainingDate <= endOfMonth;
+            })
+            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Hilisemad esimesena
+    };
+
+// Funktsioon modali avamiseks
+    const handleTypeChipClick = (type) => {
+        setSelectedType(type);
+        setMonthTrainingsModalOpen(true);
+    };
 
     async function handleDelete() {
         if (!modalTraining) return;
@@ -908,9 +935,12 @@ export default function TrainingsPage() {
                             icon={<TimerIcon />}
                             trainingtype="WOD"
                             size="medium"
+                            onClick={() => handleTypeChipClick('WOD')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                         <TypeChip
@@ -918,9 +948,12 @@ export default function TrainingsPage() {
                             icon={<FitnessCenterIcon />}
                             trainingtype="Weightlifting"
                             size="medium"
+                            onClick={() => handleTypeChipClick('Weightlifting')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                         <TypeChip
@@ -928,9 +961,12 @@ export default function TrainingsPage() {
                             icon={<DirectionsRunIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Cardio"
                             size="medium"
+                            onClick={() => handleTypeChipClick('Cardio')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                         <TypeChip
@@ -938,9 +974,12 @@ export default function TrainingsPage() {
                             icon={<RowingIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Rowing"
                             size="medium"
+                            onClick={() => handleTypeChipClick('Rowing')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                         <TypeChip
@@ -948,9 +987,12 @@ export default function TrainingsPage() {
                             icon={<SportsGymnasticsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Gymnastics"
                             size="medium"
+                            onClick={() => handleTypeChipClick('Gymnastics')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                         <TypeChip
@@ -958,9 +1000,12 @@ export default function TrainingsPage() {
                             icon={<SportsMartialArtsIcon sx={{ color: 'inherit' }} />}
                             trainingtype="Other"
                             size="medium"
+                            onClick={() => handleTypeChipClick('Other')}
                             sx={{
                                 '& .MuiChip-label': { color: '#FFFFFF !important', fontSize: '0.7rem' },
-                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' }
+                                '& .MuiSvgIcon-root': { color: '#FFFFFF !important' },
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
                             }}
                         />
                     </Box>
@@ -1346,6 +1391,136 @@ export default function TrainingsPage() {
                             Confirm
                         </Button>
                     </DialogActions>
+                </Dialog>
+                {/* Month Trainings Feed Modal */}
+                <Dialog
+                    open={monthTrainingsModalOpen}
+                    onClose={() => setMonthTrainingsModalOpen(false)}
+                    maxWidth="md"
+                    fullWidth
+                    fullScreen={isMobile}
+                    sx={{ '& .MuiDialog-paper': { height: '90vh' } }}
+                >
+                    <DialogTitle sx={{ sticky: 'top', zIndex: 1, bgcolor: 'background.paper' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getTypeIcon(selectedType)}
+                                <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+                                    {selectedType} Trainings - {currentMonth.toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+                                </Typography>
+                            </Box>
+                            <IconButton onClick={() => setMonthTrainingsModalOpen(false)} edge="end">
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                    </DialogTitle>
+
+                    <DialogContent
+                        dividers
+                        sx={{
+                            p: 1,
+                            '&::-webkit-scrollbar': { width: '6px' },
+                            '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+                            '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.2)', borderRadius: '3px' }
+                        }}
+                    >
+                        {getMonthTrainingsByType(selectedType).length === 0 ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+                                <Typography variant="body1" color="text.secondary">
+                                    No {selectedType} trainings found for this month.
+                                </Typography>
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                {getMonthTrainingsByType(selectedType).map((training) => (
+                                    <Card
+                                        key={training.id}
+                                        sx={{
+                                            border: `2px solid ${theme.palette.divider}`,
+                                            borderRadius: 2,
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        {/* Header koos kuupäeva ja tüübiga */}
+                                        <CardHeader
+                                            avatar={getTypeIcon(training.type)}
+                                            title={
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Typography variant="h6">
+                                                        {new Date(training.date).toLocaleDateString('et', {
+                                                            day: 'numeric',
+                                                            month: 'long',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </Typography>
+                                                    {training.type === 'WOD' && training.wodName && (
+                                                        <Typography variant="h6" color="primary">
+                                                            - {training.wodName}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            }
+
+                                            action={
+                                                training.score && (
+                                                    <Box sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="body2" color="text.secondary">Score</Typography>
+                                                        <Typography variant="h6" color="primary">{training.score}</Typography>
+                                                    </Box>
+                                                )
+                                            }
+                                        />
+
+                                        {/* Harjutuste sisu */}
+                                        <CardContent sx={{ pt: 1 }}>
+                                            {training.exercises && (
+                                                <Paper
+                                                    elevation={0}
+                                                    sx={{
+                                                        bgcolor: 'grey.50',
+                                                        p: 2,
+                                                        borderRadius: 1,
+                                                        border: `1px solid ${theme.palette.divider}`
+                                                    }}
+                                                >
+                                                    {typeof training.exercises === 'string' ? (
+                                                        <div
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: DOMPurify.sanitize(training.exercises, {
+                                                                    ADD_ATTR: ['style'],
+                                                                    USE_PROFILES: {html: true}
+                                                                })
+                                                            }}
+                                                            style={{ whiteSpace: 'pre-line' }}
+                                                        />
+                                                    ) : Array.isArray(training.exercises) ? (
+                                                        <div
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: DOMPurify.sanitize(
+                                                                    training.exercises.map(ex => ex.exerciseData || '').join('<br>'),
+                                                                    {
+                                                                        ADD_ATTR: ['style'],
+                                                                        USE_PROFILES: {html: true}
+                                                                    }
+                                                                )
+                                                            }}
+                                                            style={{ whiteSpace: 'pre-line' }}
+                                                        />
+                                                    ) : (
+                                                        <Typography color="text.secondary" fontStyle="italic">
+                                                            No exercises recorded
+                                                        </Typography>
+                                                    )}
+                                                </Paper>
+                                            )}
+                                        </CardContent>
+
+
+                                    </Card>
+                                ))}
+                            </Box>
+                        )}
+                    </DialogContent>
                 </Dialog>
             </StyledContainer>
         </AppTheme>

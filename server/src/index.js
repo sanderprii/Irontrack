@@ -123,7 +123,7 @@ app.use(trackIP);
 // Server.js - muuda rate limiter seadistust
 const globalLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 1 minut
-    max: 500,
+    max: 50000,
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
@@ -142,7 +142,7 @@ app.use(globalLimiter);
 // More restrictive rate limiter for authentication routes
 const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour window
-    max: 10, // limit each IP to 10 requests per windowMs
+    max: 100, // limit each IP to 10 requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many authentication attempts. Please try again later.'

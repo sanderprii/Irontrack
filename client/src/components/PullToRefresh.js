@@ -12,32 +12,32 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const currentY = useRef(0);
     const pulling = useRef(false);
     const pullStartedAtTop = useRef(false);
+    const startScrollPosition = useRef(0); // Lisa scroll position jälgimine
     const distanceThreshold = 200;
-    const minVerticalDistance = 50; // Minimum vertical distance before showing visual feedback
-    const maxHorizontalRatio = 0.8; // Maximum allowed horizontal movement ratio
+    const minVerticalDistance = 50;
+    const maxHorizontalRatio = 0.8;
 
     // Helper function to check if we're at the top of the page
     const isAtTop = () => {
-        return window.scrollY === 0; // Only true when exactly at top
+        return window.scrollY <= 5; // Lisa väike tolerants (5px)
     };
 
     useEffect(() => {
         let touchStartTime = 0;
-        const touchStartDelay = 100; // ms delay before starting pull detection
+        const touchStartDelay = 100;
 
         const handleTouchStart = (e) => {
-            // Store the start position
             startY.current = e.touches[0].clientY;
             startX.current = e.touches[0].clientX;
             currentY.current = startY.current;
 
-            // Record if we're at the top when touch starts
+            // Salvesta ka algne scroll positsioon
+            startScrollPosition.current = window.scrollY;
+
+            // Kontrolli kas alustasime ülevalt
             pullStartedAtTop.current = isAtTop();
 
-            // Set timestamp for possible delayed pull activation
             touchStartTime = Date.now();
-
-            // Don't set pulling to true immediately
             pulling.current = false;
         };
 
@@ -45,21 +45,13 @@ const PullToRefresh = ({ onRefresh, children }) => {
             currentY.current = e.touches[0].clientY;
             const currentX = e.touches[0].clientX;
 
-            // Calculate vertical and horizontal distances
             const verticalDistance = currentY.current - startY.current;
             const horizontalDistance = Math.abs(currentX - startX.current);
 
-            // Check if movement is mostly vertical (not horizontal/diagonal)
-            const isVerticalMovement = horizontalDistance < verticalDistance * maxHorizontalRatio;
-
-            // Only allow pull if: started at top, moving downward, and mostly vertical movement
-            const canPull = pullStartedAtTop.current &&
-                verticalDistance > minVerticalDistance &&
-                isVerticalMovement;
-
-            // If we have a horizontal drag, don't enable pulling
-            if (horizontalDistance > 20 && horizontalDistance > verticalDistance) {
+            // Kui scrollisime allapoole pärast touch start, lõpeta pulling
+            if (window.scrollY > startScrollPosition.current + 10) {
                 pulling.current = false;
+                pullStartedAtTop.current = false;
                 setPullProgress(0);
                 if (containerRef.current) {
                     containerRef.current.style.transform = 'translateY(0)';
@@ -67,13 +59,32 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 return;
             }
 
-            // Only enable pulling after delay and if conditions are met
+            const isVerticalMovement = horizontalDistance < verticalDistance * maxHorizontalRatio;
+
+            // Rangem kontroll - pead alustama ülevalt JA olema endiselt ülaossa lähedal
+            const canPull = pullStartedAtTop.current &&
+                verticalDistance > minVerticalDistance &&
+                isVerticalMovement &&
+                window.scrollY <= 10; // Lisa extra kontroll praeguse positsiooni jaoks
+
+            // Horisontaalne liigutus - lõpeta pulling
+            if (horizontalDistance > 20 && horizontalDistance > verticalDistance) {
+                pulling.current = false;
+                pullStartedAtTop.current = false;
+                setPullProgress(0);
+                if (containerRef.current) {
+                    containerRef.current.style.transform = 'translateY(0)';
+                }
+                return;
+            }
+
+            // Aktiveeri pulling ainult pärast delay ja kui tingimused on täidetud
             if (!pulling.current && canPull && Date.now() - touchStartTime > touchStartDelay) {
                 pulling.current = true;
             }
 
-            // If not pulling or not at top, exit
-            if (!pulling.current) {
+            // Kui ei pulling või pole õiges kohas, resetida
+            if (!pulling.current || !pullStartedAtTop.current) {
                 setPullProgress(0);
                 if (containerRef.current) {
                     containerRef.current.style.transform = 'translateY(0)';
@@ -81,20 +92,16 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 return;
             }
 
-            // Only show visual indicator when pulling down
+            // Näita ainult kui tõmmume alla ja pulling on aktiivne
             if (verticalDistance > 0 && pulling.current) {
-                // Calculate progress as a percentage
                 const newProgress = Math.min(1, verticalDistance / distanceThreshold);
                 setPullProgress(newProgress);
 
-                // Apply transformation to the container
                 if (containerRef.current) {
-                    // More resistance for longer pulls
                     const resistance = 2.5 + (verticalDistance / 200);
                     containerRef.current.style.transform = `translateY(${Math.min(verticalDistance / resistance, distanceThreshold)}px)`;
                 }
 
-                // If pulling significantly, prevent default to avoid system behaviors
                 if (verticalDistance > 30) {
                     e.preventDefault();
                 }
@@ -102,18 +109,32 @@ const PullToRefresh = ({ onRefresh, children }) => {
         };
 
         const handleTouchEnd = async () => {
-            if (!pulling.current) return;
+            if (!pulling.current || !pullStartedAtTop.current) {
+                // Resetida kõik kui ei olnud proper pulling
+                pulling.current = false;
+                pullStartedAtTop.current = false;
+                setPullProgress(0);
+                if (containerRef.current) {
+                    containerRef.current.style.transition = 'transform 0.3s ease-out';
+                    containerRef.current.style.transform = 'translateY(0)';
+                    setTimeout(() => {
+                        if (containerRef.current) {
+                            containerRef.current.style.transition = '';
+                        }
+                    }, 300);
+                }
+                return;
+            }
 
             pulling.current = false;
-            pullStartedAtTop.current = false;
             const pullDistance = currentY.current - startY.current;
 
-            // Check if the pull was sufficient AND we're at the top
-            if (pullDistance > distanceThreshold && isAtTop()) {
+            // Refresh ainult kui tõmbasime küllaldaselt JA alustasime ülevalt
+            // Enam ei kontrolli praegust positsiooni, ainult seda kas alustasime ülevalt
+            if (pullDistance > distanceThreshold && pullStartedAtTop.current) {
                 setRefreshing(true);
 
                 try {
-                    // Call the refresh function
                     if (typeof onRefresh === 'function') {
                         await onRefresh();
                     }
@@ -124,13 +145,13 @@ const PullToRefresh = ({ onRefresh, children }) => {
                 }
             }
 
-            // Reset to initial state
+            // Reset kõik
+            pullStartedAtTop.current = false;
             setPullProgress(0);
             if (containerRef.current) {
                 containerRef.current.style.transition = 'transform 0.3s ease-out';
                 containerRef.current.style.transform = 'translateY(0)';
 
-                // Remove transition after animation completes
                 setTimeout(() => {
                     if (containerRef.current) {
                         containerRef.current.style.transition = '';
@@ -139,9 +160,10 @@ const PullToRefresh = ({ onRefresh, children }) => {
             }
         };
 
-        // Scroll handler to disable pulling when user scrolls away from top
+        // Scroll handler - olulisem kui enne
         const handleScroll = () => {
-            if (!isAtTop()) {
+            // Kui scrollime kaugemale, lõpeta pulling
+            if (window.scrollY > 15) { // 15px tolerants
                 pullStartedAtTop.current = false;
                 pulling.current = false;
                 setPullProgress(0);
@@ -156,7 +178,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
             containerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
             containerRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
             containerRef.current.addEventListener('touchend', handleTouchEnd);
-            window.addEventListener('scroll', handleScroll);
+            window.addEventListener('scroll', handleScroll, { passive: true });
         }
 
         // Clean up
@@ -195,7 +217,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
                         gap: 1,
                         bgcolor: 'rgba(255, 255, 255, 0.9)',
                         borderRadius: '20px',
-                        padding: '0',
+                        padding: '8px 12px',
                         boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                     }}
                 >

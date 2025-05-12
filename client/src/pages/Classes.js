@@ -668,7 +668,20 @@ export default function Classes() {
             ) : (
                 <>
                     {/* ✅ Nädala ja päeva vahetus */}
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mb={2}
+                        sx={{
+                            position: 'sticky',
+                            top: 0,
+                            backgroundColor: 'background.default', // Võib olla 'white' või theme.palette.background.default
+                            zIndex: 1000,
+                            py: 0, // Vertikaalne padding
+                            borderBottom: '1px solid rgba(0,0,0,0.12)', // Valikuline eraldaja
+                        }}
+                    >
                         <IconButton
                             color="primary"
                             onClick={handlePrevWeek}
@@ -710,12 +723,23 @@ export default function Classes() {
 
                     {/* ✅ Kui showWeekly = false -> päeva kaupa */}
                     {!showWeekly && (
-                        <Box display="flex" justifyContent="center" alignItems="center" gap={1} p={1}
-                             sx={{
-                                 overflowX: "auto",  // ✅ Lisab horisontaalse kerimise, kui väga kitsaks läheb
-                                 whiteSpace: "nowrap", // ✅ Väldib mitmerealist paigutust
-                                 flexWrap: "nowrap", // ✅ Hoiab kõik nupud ühel real
-                             }}>
+                        <Box
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            gap={1}
+                            p={1}
+                            sx={{
+                                position: 'sticky',
+                                top: 35, // Kohanda vastavalt eelmise sticky elemendi kõrgusele
+                                backgroundColor: 'background.default',
+                                zIndex: 999, // Madalam kui ülemisel navigatsioonil
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                overflowX: "auto",
+                                whiteSpace: "nowrap",
+                                flexWrap: "nowrap",
+                            }}
+                        >
                             {dayNames.map((day, index) => (
                                 <Button
                                     key={index}
@@ -723,10 +747,10 @@ export default function Classes() {
                                     color={selectedDayIndex === index ? "primary" : "default"}
                                     onClick={() => handleDaySelect(index)}
                                     sx={{
-                                        minWidth: {xs: "40px", sm: "80px"}, // ✅ Väiksematel ekraanidel vähendab suurust
-                                        flexGrow: 1, // ✅ Jaotab ruumi võrdselt
-                                        fontSize: {xs: "0.75rem", sm: "1rem"}, // ✅ Väiksem tekst kitsamal ekraanil
-                                        padding: {xs: "4px", sm: "8px"}, // ✅ Kohandatud padding väiksematel ekraanidel
+                                        minWidth: {xs: "40px", sm: "80px"},
+                                        flexGrow: 1,
+                                        fontSize: {xs: "0.75rem", sm: "1rem"},
+                                        padding: {xs: "4px", sm: "8px"},
                                     }}
                                 >
                                     {day}

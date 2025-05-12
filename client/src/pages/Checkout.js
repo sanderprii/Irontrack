@@ -465,7 +465,7 @@ export default function Checkout(props) {
                         localStorage.setItem('checkout_return_to_payment', 'true');
 
                         // Kasuta window.open PWA-s (mitte window.location.href)
-                        window.open(paymentResponse.payment_url, '_blank');
+                        window.location.href = paymentResponse.payment_url;
 
                         // ÄRA navigeeri ära PWA-s - jää checkout lehele
                         setLoading(false);;

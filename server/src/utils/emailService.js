@@ -278,12 +278,12 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
 
         // Find and prepare logo
         let logoAttachment = null;
-
+let affiliate = null;
         // Try to get affiliate logo if senderId is provided
         if (senderId) {
             try {
                 // Find the affiliate by ID
-                const affiliate = await prisma.affiliate.findUnique({
+                affiliate = await prisma.affiliate.findUnique({
                     where: { id: senderId },
                 });
 
@@ -297,6 +297,17 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
         // If affiliate logo not found, use default logo
         if (!logoAttachment) {
             logoAttachment = await getDefaultLogo();
+        }
+
+
+
+
+
+        let defaultSender2 = ""
+        if (!affiliate) {
+            defaultSender2 = defaultSender
+        } else {
+            defaultSender2 = new Sender("info@irontrack.ee", affiliate.name)
         }
 
         if (recipientType === 'user') {
@@ -316,7 +327,7 @@ const sendMessage = async ({ recipientType, senderId, recipientId, subject, body
 
             // Prepare email parameters
             const params = {
-                from: defaultSender,
+                from: defaultSender2,
                 recipients: [new Recipient(recipientEmail)],
                 replyTo: new Sender(affiliateEmail, "Reply To"),
                 subject: subject,
@@ -580,9 +591,23 @@ Thank you for your purchase! Your plan is now active.
         // Find affiliate's email (for reply-to)
         const affiliateEmail = affiliateDetails.email || 'noreply@irontrack.ee';
 
+        const affiliateName = await prisma.affiliate.findUnique({
+            where: { id: affiliateDetails.id },
+            select: { name: true },
+        })
+
+        console.log("Affiliate Name:", affiliateName);
+
+        let defaultSender2 = ""
+        if (!affiliateName) {
+            defaultSender2 = defaultSender
+        } else {
+            defaultSender2 = new Sender("info@irontrack.ee", affiliateName.name)
+        }
+
         // Prepare email parameters
         const params = {
-            from: defaultSender,
+            from: defaultSender2,
             recipients: [new Recipient(userData.email)],
             replyTo: new Sender(affiliateEmail, affiliateDetails.name || "IronTrack"),
             subject: `Your Order Confirmation - ${affiliateDetails.name}`,

@@ -140,10 +140,14 @@ async function sendWeeklyPaymentReminders() {
         const today = new Date();
 
         // Kontrolli, kas täna on esmaspäev (0 = pühapäev, 1 = esmaspäev, jne)
-        if (today.getDay() !== 1) {
+        if (today.getDay() !== 2) {
 
             return { success: true, notifiedCount: 0, skipped: true };
         }
+
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(today.getDate() - 10);
+
 
         // Otsi kõik pending tehingud
         const pendingTransactions = await prisma.transactions.findMany({
@@ -151,6 +155,9 @@ async function sendWeeklyPaymentReminders() {
                 status: 'pending',
                 contractId: {
                     not: null
+                },
+                createdAt: {
+                    lt: tenDaysAgo
                 }
             },
             include: {
@@ -253,7 +260,7 @@ async function processContractPayments() {
         const pendingPaymentsResult = await checkAndNotifyPendingPayments();
 
         let weeklyRemindersResult = { notifiedCount: 0 };
-        if (today.getDay() === 1) {
+        if (today.getDay() === 2) {
             weeklyRemindersResult = await sendWeeklyPaymentReminders();
         }
 

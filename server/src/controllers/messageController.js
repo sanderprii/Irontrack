@@ -339,6 +339,22 @@ const sendMessage = async (req, res) => {
             logoAttachment = await getDefaultLogo();
         }
 
+        const affiliateName = await prisma.affiliate.findUnique({
+            where: { id: senderId },
+            select: { name: true },
+        })
+
+
+
+        let defaultSender2 = ""
+        if (!affiliateName) {
+            defaultSender2 = defaultSender
+        } else {
+            defaultSender2 = new Sender("info@irontrack.ee", affiliateName.name)
+        }
+
+
+
         if (recipientType === 'user') {
             // Find user email
             let recipientEmail = null;
@@ -356,9 +372,11 @@ const sendMessage = async (req, res) => {
                 recipientEmail = "test@example.com"; // Or throw an error
             }
 
+
+
             // Prepare MailerSend email
             const params = {
-                from: defaultSender,
+                from: defaultSender2,
                 recipients: [new Recipient(recipientEmail)],
                 replyTo: new Sender(affiliateEmail, "Reply To"),
                 subject: subject,
@@ -403,7 +421,7 @@ const sendMessage = async (req, res) => {
             // 3. Send email to all group members
             for (const member of groupMembers) {
                 const params = {
-                    from: defaultSender,
+                    from: defaultSender2,
                     recipients: [new Recipient(member.user.email)],
                     replyTo: new Sender(affiliateEmail, "Reply To"),
                     subject: subject,
@@ -436,7 +454,7 @@ const sendMessage = async (req, res) => {
 
             for (const member of affiliateMembers) {
                 const params = {
-                    from: defaultSender,
+                    from: defaultSender2,
                     recipients: [new Recipient(member.user.email)],
                     replyTo: new Sender(affiliateEmail, "Reply To"),
                     subject: subject,

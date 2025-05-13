@@ -52,7 +52,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
         }
     };
 
-    // Find the next available class and scroll to it
+// Find the next available class and scroll to it
     useEffect(() => {
         if (sortedClasses.length === 0) return;
 
@@ -65,9 +65,10 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
         if (nextAvailableClass && classRefs.current[nextAvailableClass.id]) {
             // Small delay to ensure the component is fully rendered
             setTimeout(() => {
+                // Lihtsalt scrolli elemendi juurde ilma offset'ita esialgu
                 classRefs.current[nextAvailableClass.id].scrollIntoView({
                     behavior: 'smooth',
-                    block: 'start',
+                    block: 'center', // Proovi 'center' asemel 'start'
                     inline: 'nearest'
                 });
             }, 100);
@@ -110,6 +111,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                                 boxShadow: (!isPastClass && sortedClasses.find(c => new Date(c.time) > now) === cls)
                                     ? '0 4px 20px rgba(33, 150, 243, 0.3)'
                                     : 'initial',
+
                             }}
                             onClick={() => onClassClick(cls)}
                         >

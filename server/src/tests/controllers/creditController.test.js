@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+const config = require('../config');
 
 // Helper function to log in a user and get a token
 async function loginUser(request, email, password) {
     try {
         const loginData = { email, password };
-        const loginResponse = await request.post('http://localhost:5000/api/auth/login', {
+        const loginResponse = await request.post(`${config.baseURL}/api/auth/login`, {
             data: loginData
         });
 
@@ -40,7 +40,7 @@ test.describe('Credit Controller', () => {
                 console.log('Successfully logged in with affiliate owner');
 
                 // Get the first affiliate ID
-                const response = await request.get('http://localhost:5000/api/my-affiliate', {
+                const response = await request.get(`${config.baseURL}/api/my-affiliate`, {
                     headers: {
                         'Authorization': `Bearer ${affiliateData.token}`
                     }
@@ -65,11 +65,6 @@ test.describe('Credit Controller', () => {
 
         } catch (error) {
             console.error('Login setup error:', error);
-            await sendTestFailureReport(
-                'Credit Controller Test Setup Failure',
-                error,
-                { testUsers: ['d@d.d', 'c@c.c'] }
-            );
         }
     });
 
@@ -79,17 +74,22 @@ test.describe('Credit Controller', () => {
             // Skip test if login failed
             test.skip(!userData || !userData.token || !userData.userId, 'User auth data not available');
 
-            const response = await request.get(`http://localhost:5000/api/credit?userId=${userData.userId}`, {
+            const response = await request.get(`${config.baseURL}/api/credit?userId=${userData.userId}`, {
                 headers: {
                     'Authorization': `Bearer ${userData.token}`,
                     'role': 'regular'
                 }
             });
 
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error(`Get user credits failed with status ${response.status()}`);
+                console.error('Error response:', errorText);
+            }
+
             expect(response.ok()).toBeTruthy();
 
             const credits = await response.json();
-
 
             expect(Array.isArray(credits)).toBeTruthy();
 
@@ -101,16 +101,7 @@ test.describe('Credit Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Credits Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit',
-                    userId: userData?.userId,
-                    authTokenPresent: !!userData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Get user credits test failed:', error);
             throw error;
         }
     });
@@ -122,12 +113,18 @@ test.describe('Credit Controller', () => {
             test.skip(!userData || !userData.token || !userData.userId || !affiliateId,
                 'User auth data or affiliate ID not available');
 
-            const response = await request.get(`http://localhost:5000/api/credit?userId=${userData.userId}&affiliateId=${affiliateId}`, {
+            const response = await request.get(`${config.baseURL}/api/credit?userId=${userData.userId}&affiliateId=${affiliateId}`, {
                 headers: {
                     'Authorization': `Bearer ${affiliateData.token}`,
                     'role': 'affiliate'
                 }
             });
+
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error(`Get user credits for affiliate failed with status ${response.status()}`);
+                console.error('Error response:', errorText);
+            }
 
             expect(response.ok()).toBeTruthy();
 
@@ -144,17 +141,7 @@ test.describe('Credit Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Credits for Affiliate Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit',
-                    userId: userData?.userId,
-                    affiliateId,
-                    authTokenPresent: !!affiliateData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Get user credits for affiliate test failed:', error);
             throw error;
         }
     });
@@ -165,12 +152,18 @@ test.describe('Credit Controller', () => {
             // Skip test if login failed
             test.skip(!userData || !userData.token || !userData.userId, 'User auth data not available');
 
-            const response = await request.get(`http://localhost:5000/api/credit/history?userId=${userData.userId}`, {
+            const response = await request.get(`${config.baseURL}/api/credit/history?userId=${userData.userId}`, {
                 headers: {
                     'Authorization': `Bearer ${userData.token}`,
                     'role': 'regular'
                 }
             });
+
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error(`Get credit history failed with status ${response.status()}`);
+                console.error('Error response:', errorText);
+            }
 
             expect(response.ok()).toBeTruthy();
 
@@ -187,16 +180,7 @@ test.describe('Credit Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Credit History Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit/history',
-                    userId: userData?.userId,
-                    authTokenPresent: !!userData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Get credit history test failed:', error);
             throw error;
         }
     });
@@ -215,9 +199,12 @@ test.describe('Credit Controller', () => {
                 description: 'Test credit addition via API test'
             };
 
-            const response = await request.post('http://localhost:5000/api/credit', {
+            console.log('Adding credit with data:', JSON.stringify(creditData, null, 2));
+
+            const response = await request.post(`${config.baseURL}/api/credit`, {
                 headers: {
-                    'Authorization': `Bearer ${affiliateData.token}`
+                    'Authorization': `Bearer ${affiliateData.token}`,
+                    'Content-Type': 'application/json'
                 },
                 data: creditData
             });
@@ -233,23 +220,15 @@ test.describe('Credit Controller', () => {
                 expect(result).toHaveProperty('amount', 10);
                 expect(result).toHaveProperty('description', 'Test credit addition via API test');
             } else {
-                console.log(`Adding credit failed with status: ${response.status()}`);
+                const errorText = await response.text();
+                console.error(`Adding credit failed with status: ${response.status()}`);
+                console.error('Error response:', errorText);
                 // This should not be a server error
                 expect(response.status()).not.toBe(500);
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Add Credit Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit',
-                    userId: userData?.userId,
-                    affiliateId,
-                    authTokenPresent: !!affiliateData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Add credit test failed:', error);
             throw error;
         }
     });
@@ -260,11 +239,17 @@ test.describe('Credit Controller', () => {
             // Skip test if login failed
             test.skip(!userData || !userData.token || !userData.userId, 'User auth data not available');
 
-            const response = await request.get(`http://localhost:5000/api/credit/transactions?userId=${userData.userId}`, {
+            const response = await request.get(`${config.baseURL}/api/credit/transactions?userId=${userData.userId}`, {
                 headers: {
                     'Authorization': `Bearer ${userData.token}`
                 }
             });
+
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error(`Get user transactions failed with status ${response.status()}`);
+                console.error('Error response:', errorText);
+            }
 
             expect(response.ok()).toBeTruthy();
 
@@ -281,16 +266,7 @@ test.describe('Credit Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Transactions Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit/transactions',
-                    userId: userData?.userId,
-                    authTokenPresent: !!userData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Get user transactions test failed:', error);
             throw error;
         }
     });
@@ -302,11 +278,17 @@ test.describe('Credit Controller', () => {
             test.skip(!affiliateData || !affiliateData.token || !affiliateId,
                 'Affiliate auth data or affiliate ID not available');
 
-            const response = await request.get(`http://localhost:5000/api/credit/affiliate-transactions?affiliateId=${affiliateId}`, {
+            const response = await request.get(`${config.baseURL}/api/credit/affiliate-transactions?affiliateId=${affiliateId}`, {
                 headers: {
                     'Authorization': `Bearer ${affiliateData.token}`
                 }
             });
+
+            if (!response.ok()) {
+                const errorText = await response.text();
+                console.error(`Get affiliate transactions failed with status ${response.status()}`);
+                console.error('Error response:', errorText);
+            }
 
             expect(response.ok()).toBeTruthy();
 
@@ -323,17 +305,50 @@ test.describe('Credit Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Affiliate Transactions Test Failure',
-                error,
-                {
-                    endpoint: '/api/credit/affiliate-transactions',
-                    affiliateId,
-                    authTokenPresent: !!affiliateData?.token,
-                    timestamp: new Date().toISOString()
-                }
-            );
+            console.error('Get affiliate transactions test failed:', error);
             throw error;
         }
+    });
+
+    // Test Debug: Check credit system prerequisites
+    test('Debug: Check credit system prerequisites', async ({ request }) => {
+        console.log('\n=== CREDIT DEBUG INFO ===');
+        console.log('AffiliateId:', affiliateId);
+        console.log('User ID:', userData?.userId);
+        console.log('Has affiliate token:', !!affiliateData?.token);
+        console.log('Has user token:', !!userData?.token);
+
+        // Check existing credits
+        if (userData && userData.token) {
+            const userCreditsResponse = await request.get(`${config.baseURL}/api/credit?userId=${userData.userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${userData.token}`,
+                    'role': 'regular'
+                }
+            });
+
+            if (userCreditsResponse.ok()) {
+                const credits = await userCreditsResponse.json();
+                console.log('User has credits:', credits.length);
+                console.log('Credits:', JSON.stringify(credits, null, 2));
+            } else {
+                console.log('Failed to get user credits:', userCreditsResponse.status());
+            }
+        }
+
+        // Check existing transactions
+        if (userData && userData.token) {
+            const transactionsResponse = await request.get(`${config.baseURL}/api/credit/transactions?userId=${userData.userId}`, {
+                headers: { 'Authorization': `Bearer ${userData.token}` }
+            });
+
+            if (transactionsResponse.ok()) {
+                const transactions = await transactionsResponse.json();
+                console.log('User has transactions:', transactions.length);
+            } else {
+                console.log('Failed to get user transactions:', transactionsResponse.status());
+            }
+        }
+        console.log('==========================\n');
     });
 });

@@ -42,7 +42,6 @@ const menuItems = [
     { id: 'transactions', label: 'Transactions', component: Transactions },
     { id: 'credit', label: 'Credit', component: CreditView },
     { id: 'user-contracts', label: 'Contracts', component: UserContracts },
-    { id: 'transactions', label: 'Transactions', component: Transactions },
     { id: 'statistics', label: 'Statistics', component: Statistics },
 ];
 

@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
 const config = require('../config');
 
 // Helper function to log in a user and get a token
@@ -16,7 +15,11 @@ async function loginUser(request, email, password) {
         }
 
         const responseBody = await loginResponse.json();
-        return responseBody.token;
+        return {
+            token: responseBody.token,
+            userId: responseBody.userId || responseBody.id,
+            role: responseBody.role
+        };
     } catch (error) {
         console.error('Login helper error:', error);
         return null;
@@ -35,30 +38,45 @@ let affiliateId = null;  // The affiliate ID to test with
 let userId = null;       // User ID for testing
 
 test.describe('Payment Controller', () => {
-    let token;
-    let userId;
-    let affiliateId;
 
     test.beforeAll(async ({ request }) => {
-        // Login and get token
-        const loginResponse = await request.post(`${config.baseURL}/api/auth/login`, {
-            data: {
-                email: 'test@example.com',
-                password: 'password123'
-            }
-        });
-        const loginData = await loginResponse.json();
-        token = loginData.token;
+        try {
+            // Login with both user types
+            const userData = await loginUser(request, 'c@c.c', 'cccccc');
+            const affiliateData = await loginUser(request, 'd@d.d', 'dddddd');
 
-        // Get user profile to get user ID and affiliate ID
-        const profileResponse = await request.get(`${config.baseURL}/api/user`, {
-            headers: {
-                Authorization: `Bearer ${token}`
+            if (userData && userData.token) {
+                userToken = userData.token;
+                userId = userData.userId;
+                console.log('Successfully logged in with regular user');
+            } else {
+                console.error('Failed to login with regular user');
             }
-        });
-        const profileData = await profileResponse.json();
-        userId = profileData.id;
-        affiliateId = profileData.affiliateId;
+
+            if (affiliateData && affiliateData.token) {
+                affiliateToken = affiliateData.token;
+                console.log('Successfully logged in with affiliate owner');
+
+                // Get the first affiliate ID
+                const affiliateResponse = await request.get(`${config.baseURL}/api/my-affiliate`, {
+                    headers: {
+                        'Authorization': `Bearer ${affiliateToken}`
+                    }
+                });
+
+                if (affiliateResponse.ok()) {
+                    const data = await affiliateResponse.json();
+                    if (data.affiliate && data.affiliate.id) {
+                        affiliateId = data.affiliate.id;
+                        console.log(`Found affiliate ID: ${affiliateId}`);
+                    }
+                }
+            } else {
+                console.error('Failed to login with affiliate owner');
+            }
+        } catch (error) {
+            console.error('Login setup error:', error);
+        }
     });
 
     test.describe('createMontonioPayment', () => {
@@ -77,12 +95,16 @@ test.describe('Payment Controller', () => {
                         phone: '+3725555555',
                         fullName: 'Test User'
                     },
-                    affiliateId: affiliateId
+                    affiliateId: affiliateId,
+                    sessionToken: 'test-session-token-123'
                 };
+
+                console.log('Creating payment with data:', JSON.stringify(paymentData, null, 2));
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
                     },
                     data: paymentData
                 });
@@ -97,25 +119,15 @@ test.describe('Payment Controller', () => {
                     expect(result).toHaveProperty('orderUuid');
                 } else {
                     // The test might fail due to missing configuration in the test environment
-                    console.log(`Payment creation failed with status: ${response.status()}`);
-                    const errorBody = await response.json();
-                    console.log('Error details:', errorBody);
+                    const errorText = await response.text();
+                    console.error(`Payment creation failed with status: ${response.status()}`);
+                    console.error('Error response:', errorText);
 
                     // Test this is not a server error
                     expect(response.status()).not.toBe(500);
                 }
             } catch (error) {
-                await sendTestFailureReport(
-                    'Create Montonio Payment Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        affiliateId,
-                        userId,
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Create Montonio payment test failed:', error);
                 throw error;
             }
         });
@@ -135,6 +147,8 @@ test.describe('Payment Controller', () => {
                 let contractId = null;
                 if (contractsResponse.ok()) {
                     const contracts = await contractsResponse.json();
+                    console.log(`Found ${contracts.length} contracts for affiliate ${affiliateId}`);
+
                     const userContract = contracts.find(contract => contract.userId === userId);
                     if (userContract) {
                         contractId = userContract.id;
@@ -156,12 +170,16 @@ test.describe('Payment Controller', () => {
                         fullName: 'Test User'
                     },
                     affiliateId: affiliateId,
-                    contractId: contractId
+                    contractId: contractId,
+                    sessionToken: 'test-session-token-123'
                 };
+
+                console.log('Creating contract payment with data:', JSON.stringify(paymentData, null, 2));
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
                     },
                     data: paymentData
                 });
@@ -174,25 +192,15 @@ test.describe('Payment Controller', () => {
                     expect(result).toHaveProperty('paymentUrl');
                     expect(result).toHaveProperty('orderUuid');
                 } else {
-                    console.log(`Contract payment creation failed with status: ${response.status()}`);
-                    const errorBody = await response.json();
-                    console.log('Error details:', errorBody);
+                    const errorText = await response.text();
+                    console.error(`Contract payment creation failed with status: ${response.status()}`);
+                    console.error('Error response:', errorText);
 
                     // Test this is not a server error
                     expect(response.status()).not.toBe(500);
                 }
             } catch (error) {
-                await sendTestFailureReport(
-                    'Create Contract Payment Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        affiliateId,
-                        userId,
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Create contract payment test failed:', error);
                 throw error;
             }
         });
@@ -204,14 +212,19 @@ test.describe('Payment Controller', () => {
                     orderId: generateRandomOrderId(),
                     description: 'Test payment without auth',
                     userData: {
+                        id: 1,
                         email: 'test@example.com',
                         phone: '+3725555555',
                         fullName: 'Test User'
                     },
-                    affiliateId: affiliateId || 1 // Use real affiliate ID if available
+                    affiliateId: affiliateId || 1, // Use real affiliate ID if available
+                    sessionToken: 'test-session-token-123'
                 };
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     data: paymentData
                 });
 
@@ -222,24 +235,15 @@ test.describe('Payment Controller', () => {
                 console.log('Unauthorized response:', errorBody);
                 expect(errorBody).toHaveProperty('error');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Payment Without Auth Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        testCase: 'missing auth',
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Payment without auth test failed:', error);
                 throw error;
             }
         });
 
-
         test('should validate affiliateId', async ({ request }) => {
             try {
                 // Skip test if login failed
-                test.skip(!userToken, 'User token not available');
+                test.skip(!userToken || !userId, 'User token or user ID not available');
 
                 // Missing affiliateId
                 const invalidPaymentData = {
@@ -247,16 +251,19 @@ test.describe('Payment Controller', () => {
                     orderId: generateRandomOrderId(),
                     description: 'Test validation - missing affiliateId',
                     userData: {
-                        email: 'test@example.com',
+                        id: userId,
+                        email: 'c@c.c',
                         phone: '+3725555555',
                         fullName: 'Test User'
-                    }
+                    },
+                    sessionToken: 'test-session-token-123'
                     // Missing affiliateId
                 };
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
                     },
                     data: invalidPaymentData
                 });
@@ -270,16 +277,7 @@ test.describe('Payment Controller', () => {
                 expect(errorBody).toHaveProperty('message');
                 expect(errorBody.message).toContain('AffiliateId is required');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Payment Validation - Missing AffiliateId Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        testCase: 'missing affiliateId',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Payment validation missing affiliateId test failed:', error);
                 throw error;
             }
         });
@@ -287,7 +285,7 @@ test.describe('Payment Controller', () => {
         test('should validate affiliateId format', async ({ request }) => {
             try {
                 // Skip test if login failed
-                test.skip(!userToken, 'User token not available');
+                test.skip(!userToken || !userId, 'User token or user ID not available');
 
                 // Invalid affiliateId format
                 const invalidPaymentData = {
@@ -295,16 +293,19 @@ test.describe('Payment Controller', () => {
                     orderId: generateRandomOrderId(),
                     description: 'Test validation - non-numeric affiliateId',
                     userData: {
-                        email: 'test@example.com',
+                        id: userId,
+                        email: 'c@c.c',
                         phone: '+3725555555',
                         fullName: 'Test User'
                     },
-                    affiliateId: 'not-a-number'
+                    affiliateId: 'not-a-number',
+                    sessionToken: 'test-session-token-123'
                 };
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
                     },
                     data: invalidPaymentData
                 });
@@ -318,16 +319,7 @@ test.describe('Payment Controller', () => {
                 expect(errorBody).toHaveProperty('message');
                 expect(errorBody.message).toContain('Invalid affiliateId format');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Payment Validation - Non-numeric AffiliateId Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        testCase: 'non-numeric affiliateId',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Payment validation non-numeric affiliateId test failed:', error);
                 throw error;
             }
         });
@@ -335,7 +327,7 @@ test.describe('Payment Controller', () => {
         test('should validate affiliate exists', async ({ request }) => {
             try {
                 // Skip test if login failed
-                test.skip(!userToken, 'User token not available');
+                test.skip(!userToken || !userId, 'User token or user ID not available');
 
                 // Non-existent affiliateId
                 const invalidPaymentData = {
@@ -343,16 +335,19 @@ test.describe('Payment Controller', () => {
                     orderId: generateRandomOrderId(),
                     description: 'Test validation - non-existent affiliateId',
                     userData: {
-                        email: 'test@example.com',
+                        id: userId,
+                        email: 'c@c.c',
                         phone: '+3725555555',
                         fullName: 'Test User'
                     },
-                    affiliateId: 999999 // Assuming this ID doesn't exist
+                    affiliateId: 999999, // Assuming this ID doesn't exist
+                    sessionToken: 'test-session-token-123'
                 };
 
                 const response = await request.post(`${config.baseURL}/api/payments/montonio`, {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
                     },
                     data: invalidPaymentData
                 });
@@ -366,16 +361,7 @@ test.describe('Payment Controller', () => {
                 expect(errorBody).toHaveProperty('message');
                 expect(errorBody.message).toContain('Payment configuration not found');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Payment Validation - Non-existent AffiliateId Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio',
-                        testCase: 'non-existent affiliateId',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Payment validation non-existent affiliateId test failed:', error);
                 throw error;
             }
         });
@@ -389,7 +375,12 @@ test.describe('Payment Controller', () => {
                     orderToken: 'mock-token-for-testing'
                 };
 
+                console.log('Testing webhook with data:', JSON.stringify(webhookData, null, 2));
+
                 const response = await request.post(`${config.baseURL}/api/payments/montonio-webhook`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     data: webhookData
                 });
 
@@ -407,66 +398,43 @@ test.describe('Payment Controller', () => {
                     expect(result).toHaveProperty('message');
                 }
             } catch (error) {
-                await sendTestFailureReport(
-                    'Handle Montonio Webhook Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio-webhook',
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Handle Montonio webhook test failed:', error);
                 throw error;
             }
         });
 
-        test('should handle webhook with payment data', async ({ request }) => {
+        test('should handle webhook without orderToken', async ({ request }) => {
             try {
-                // Create a more complete webhook payload that mimics Montonio's structure
-                // This is based on the controller code showing decodedToken structure
-                const webhookData = {
-                    orderToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXltZW50TGlua1V1aWQiOiJ0ZXN0LXV1aWQtMTIzIiwicGF5bWVudFN0YXR1cyI6IlBBSUQiLCJtZXJjaGFudFJlZmVyZW5jZSI6ImNvbnRyYWN0LTEyMy0yMDIzMDcxNTE1MzAiLCJncmFuZFRvdGFsIjo1MCwiY3VycmVuY3kiOiJFVVIifQ.fake-signature'
-                };
-
+                // Empty payload
                 const response = await request.post(`${config.baseURL}/api/payments/montonio-webhook`, {
-                    data: webhookData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: {}
                 });
 
-                // Should still return 200 even for simulated data
+                // Should still return 200
                 expect(response.status()).toBe(200);
 
                 const result = await response.json();
-                console.log('Structured webhook response:', result);
+                console.log('Empty webhook response:', result);
 
-                // Always returns success to acknowledge the webhook
-                expect(result).toHaveProperty('success');
+                expect(result).toHaveProperty('success', false);
+                expect(result).toHaveProperty('message');
+                expect(result.message).toContain('No order token provided');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Handle Structured Webhook Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio-webhook',
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Handle empty webhook test failed:', error);
                 throw error;
             }
         });
     });
 
     test.describe('Payment Status', () => {
-        test('should check payment status', async ({ request }) => {
+        test('should check payment status with invalid token', async ({ request }) => {
             try {
-                // Skip test if login failed
-                test.skip(!userToken, 'User token not available');
+                // This endpoint doesn't require authentication per the controller
 
-                // This endpoint requires a token query parameter
-                // Since we don't have a real token, we'll test error handling
-
-                const response = await request.get(`${config.baseURL}/api/payments/montonio/status?token=invalid-token`, {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`
-                    }
-                });
+                const response = await request.get(`${config.baseURL}/api/payments/montonio/status?token=invalid-token`);
 
                 // It should return 400 for an invalid token
                 expect(response.status()).toBe(400);
@@ -478,17 +446,68 @@ test.describe('Payment Controller', () => {
                 expect(result).toHaveProperty('message');
                 expect(result.message).toContain('Invalid token');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Check Payment Status Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/payments/montonio/status',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+                console.error('Check payment status test failed:', error);
                 throw error;
             }
         });
+
+        test('should check payment status without token', async ({ request }) => {
+            try {
+                // No token query parameter
+                const response = await request.get(`${config.baseURL}/api/payments/montonio/status`);
+
+                // Should return 400 for missing token
+                expect(response.status()).toBe(400);
+
+                const result = await response.json();
+                console.log('Payment status check without token response:', result);
+
+                expect(result).toHaveProperty('success', false);
+                expect(result).toHaveProperty('message');
+            } catch (error) {
+                console.error('Check payment status without token test failed:', error);
+                throw error;
+            }
+        });
+    });
+
+    // Debug test to check payment prerequisites
+    test('Debug: Check payment prerequisites', async ({ request }) => {
+        console.log('\n=== PAYMENT DEBUG INFO ===');
+        console.log('AffiliateId:', affiliateId);
+        console.log('User ID:', userId);
+        console.log('Has affiliate token:', !!affiliateToken);
+        console.log('Has user token:', !!userToken);
+
+        // Check if affiliate has API keys
+        if (affiliateToken && affiliateId) {
+            const apiKeysResponse = await request.get(`${config.baseURL}/api/my-affiliate`, {
+                headers: { 'Authorization': `Bearer ${affiliateToken}` }
+            });
+
+            if (apiKeysResponse.ok()) {
+                const affiliateData = await apiKeysResponse.json();
+                console.log('Affiliate data:', JSON.stringify(affiliateData, null, 2));
+            } else {
+                console.log('Failed to get affiliate data:', apiKeysResponse.status());
+            }
+        }
+
+        // Check for existing contracts
+        if (affiliateToken && affiliateId) {
+            const contractsResponse = await request.get(`${config.baseURL}/api/contracts?affiliateId=${affiliateId}`, {
+                headers: { 'Authorization': `Bearer ${affiliateToken}` }
+            });
+
+            if (contractsResponse.ok()) {
+                const contracts = await contractsResponse.json();
+                console.log('Available contracts:', contracts.length);
+                const userContracts = contracts.filter(c => c.userId === userId);
+                console.log('User contracts:', userContracts.length);
+            } else {
+                console.log('Failed to get contracts:', contractsResponse.status());
+            }
+        }
+        console.log('===========================\n');
     });
 });

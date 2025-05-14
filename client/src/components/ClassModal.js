@@ -467,7 +467,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
             // 2. Plans with no sessions left (sessionsLeft === 0)
             const activePlans = timeValidPlans.filter(plan => {
                 // Skip plans on payment holiday
-                if (plan.paymentHoliday) return false;
+
 
                 // Skip plans with no sessions left
                 if (plan.sessionsLeft === 0) return false;

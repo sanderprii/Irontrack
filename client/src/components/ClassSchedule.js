@@ -71,7 +71,7 @@ export default function ClassSchedule({ classes, attendeesCount, onClassClick, w
                     block: 'center', // Proovi 'center' asemel 'start'
                     inline: 'nearest'
                 });
-            }, 100);
+            }, 50);
         }
     }, [sortedClasses]);
 

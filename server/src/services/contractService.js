@@ -140,7 +140,7 @@ async function sendWeeklyPaymentReminders() {
         const today = new Date();
 
         // Kontrolli, kas täna on esmaspäev (0 = pühapäev, 1 = esmaspäev, jne)
-        if (today.getDay() !== 2) {
+        if (today.getDay() !== 3) {
 
             return { success: true, notifiedCount: 0, skipped: true };
         }
@@ -260,7 +260,7 @@ async function processContractPayments() {
         const pendingPaymentsResult = await checkAndNotifyPendingPayments();
 
         let weeklyRemindersResult = { notifiedCount: 0 };
-        if (today.getDay() === 2) {
+        if (today.getDay() === 3) {
             weeklyRemindersResult = await sendWeeklyPaymentReminders();
         }
 
@@ -559,7 +559,8 @@ console.log(`Prorated info: ${proratedInfo}`);
                         status: "success",
                         contractId: contract.id,
                         userId: contract.userId,
-                        affiliateId: contract.affiliateId
+                        affiliateId: contract.affiliateId,
+                        creditAmount: appliedCredit,
                     }
                 });
 
@@ -679,6 +680,7 @@ async function recordPendingPayment(
                 contractId: contract.id,
                 userId: contract.userId,
                 affiliateId: contract.affiliateId,
+                creditAmount: appliedCredit,
             }
         });
 

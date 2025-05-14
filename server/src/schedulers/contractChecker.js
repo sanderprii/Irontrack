@@ -5,7 +5,7 @@ const { processContractPayments } = require('../services/contractService');
 function startScheduler() {
     console.log('Contract payment scheduler initialized');
 
-    cron.schedule('58 09 * * *', async () => {
+    cron.schedule('42 09 * * *', async () => {
         console.log('Running contract payment job at:', new Date().toISOString());
         try {
             await processContractPayments();

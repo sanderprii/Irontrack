@@ -391,6 +391,22 @@ const acceptContractInternal = async (contractId, userId, affiliateId, contractT
             },
         });
 
+        if(appliedCredit > 0) {
+            await prisma.credit.update({
+                where: {
+                    userId_affiliateId: {
+                        userId: userId,
+                        affiliateId: affiliateId
+                    }
+                },
+                data: {
+                    credit: {
+                        decrement: parseInt(appliedCredit)
+                    }
+                }
+            })
+        }
+
         // Create or update UserPlan as in your original function...
         if (!contract.userPlan || contract.userPlan.length === 0) {
             // Calculate end date logic...

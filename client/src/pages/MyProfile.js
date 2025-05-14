@@ -36,7 +36,6 @@ const menuItems = [
     { id: 'my-profile', label: 'My Profile', component: ProfileView },
     { id: 'active-plans', label: 'Active Plans', component: ActivePlansAndHistory },
     { id: 'visit-history', label: 'Visit History', component: VisitHistory },
-    { id: 'family-members', label: 'Children', component: FamilyMembers },
     { id: 'training-plans', label: 'Training Plans', component: TrainingPlans },
     { id: 'family-members', label: 'Children', component: FamilyMembers },
     { id: 'transactions', label: 'Transactions', component: Transactions },

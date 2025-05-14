@@ -264,6 +264,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         if (cls && cls.id && userRole === "regular" && open) {
             fetchUserScore(cls.id);
         }
+
     }, [cls, userRole, open]);
 
 
@@ -554,7 +555,11 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
     async function checkIfCurrentUserIsRegistered() {
         const response = await checkUserEnrollment(cls.id);
         setIsRegistered(response.enrolled);
-        setIsFirstTraining(response.firstTraining);
+        if(response.firstTraining === true && (cls.trainingType === "WOD" || cls.trainingType === "Basic")) {
+            setIsFirstTraining(response.firstTraining);
+        } else {
+            setIsFirstTraining(false);
+        }
     }
 
     const isClassTimePassed = () => {

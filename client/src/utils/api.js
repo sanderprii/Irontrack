@@ -26,7 +26,7 @@ window.showRateLimitMessage = function() {
         window.isRateLimited = true;
         // Salvesta localStorage
         try {
-            const limitExpires = new Date(Date.now() + 60000);
+            const limitExpires = new Date(Date.now() + 120000);
             localStorage.setItem('rateLimitedUntil', limitExpires.toISOString());
 
         } catch (err) {

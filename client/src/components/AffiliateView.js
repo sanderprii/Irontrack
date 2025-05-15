@@ -24,6 +24,7 @@ import DomainIcon from '@mui/icons-material/Domain';
 import EditIcon from '@mui/icons-material/Edit';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import PaymentIcon from '@mui/icons-material/Payment';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import AffiliateEdit from './AffiliateEdit';
 import { uploadAffiliateLogo } from '../api/logoApi';
@@ -52,6 +53,30 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
             alert(error.message);
         }
     };
+
+    // Parse freeFirstTrainingList from JSON string if needed
+    const getFreeTrainingList = () => {
+        if (!affiliate.freeFirstTrainingList) return [];
+
+        try {
+            // If it's already an array, return it
+            if (Array.isArray(affiliate.freeFirstTrainingList)) {
+                return affiliate.freeFirstTrainingList;
+            }
+
+            // If it's a string, try to parse it
+            if (typeof affiliate.freeFirstTrainingList === 'string') {
+                return JSON.parse(affiliate.freeFirstTrainingList);
+            }
+
+            return [];
+        } catch (error) {
+            console.error('Error parsing freeFirstTrainingList:', error);
+            return [];
+        }
+    };
+
+    const freeTrainingList = getFreeTrainingList();
 
     if (editing) {
         return (
@@ -189,6 +214,59 @@ export default function AffiliateView({ token, affiliate, trainers, onUpdateAffi
                                 </Paper>
                             </Grid>
                         </Grid>
+                    </CardContent>
+                </Card>
+
+                {/* Free First Training List card */}
+                <Card sx={{ mt: 3, bgcolor: 'background.paper', boxShadow: 2, borderRadius: 2 }}>
+                    <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FitnessCenterIcon fontSize="small" />
+                            Free First Training
+                        </Typography>
+
+                        {freeTrainingList && freeTrainingList.length > 0 ? (
+                            <Grid container spacing={2}>
+                                {freeTrainingList.map((training, index) => (
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
+                                        <Paper
+                                            elevation={0}
+                                            sx={{
+                                                p: 2,
+                                                bgcolor: 'background.default',
+                                                borderRadius: 2,
+                                                transition: 'all 0.3s',
+                                                '&:hover': {
+                                                    boxShadow: 1,
+                                                    transform: 'translateY(-2px)'
+                                                }
+                                            }}
+                                        >
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                                <Avatar
+                                                    sx={{
+                                                        bgcolor: 'success.main',
+                                                        width: 40,
+                                                        height: 40
+                                                    }}
+                                                >
+                                                    <FitnessCenterIcon />
+                                                </Avatar>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Typography variant="body1" fontWeight={500}>
+                                                        {training}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        ) : (
+                            <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2, textAlign: 'center' }}>
+                                <Typography color="text.secondary">No free first training programs available.</Typography>
+                            </Paper>
+                        )}
                     </CardContent>
                 </Card>
 

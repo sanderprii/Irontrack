@@ -35,7 +35,7 @@ const getClasses = async (req, res) => {
     // Kontrolli ja teisenda kuupäevad õigesse formaati
     let startDate = new Date(start);
     let endDate = new Date(end);
-const userId = req.user?.id;
+    const userId = req.user?.id;
 
     // Kui start või end on kehtetu, määrame vaikimisi käesoleva nädala alguse ja lõpu
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
@@ -219,8 +219,8 @@ const createClass = async (req, res) => {
 
 // Seejärel uuenda sama klassi, määrates seriesId = id
         const updatedClass = await prisma.classSchedule.update({
-            where: { id: newClass.id },
-            data: { seriesId: newClass.id }
+            where: {id: newClass.id},
+            data: {seriesId: newClass.id}
         });
 
         // if repeatWeekly is true, create new classes for the next 52 weeks. seriedId is the id of the first class in the series
@@ -290,14 +290,14 @@ const updateClass = async (req, res) => {
     try {
         // Leia praegune klass, et kontrollida vana mahutavust
         const currentClass = await prisma.classSchedule.findUnique({
-            where: { id: classId },
+            where: {id: classId},
             include: {
                 affiliate: true
             }
         });
 
         if (!currentClass) {
-            return res.status(404).json({ error: "Class not found" });
+            return res.status(404).json({error: "Class not found"});
         }
 
         // Uuenda klass uute andmetega
@@ -329,7 +329,7 @@ const updateClass = async (req, res) => {
         if (capacityIncrease > 0) {
             // Leia praegune osalejate arv
             const enrolledCount = await prisma.classAttendee.count({
-                where: { classId }
+                where: {classId}
             });
 
             // Arvuta vabad kohad
@@ -338,8 +338,8 @@ const updateClass = async (req, res) => {
             if (availableSpots > 0) {
                 // Leia inimesed ootelististist (vanemad kõigepealt)
                 const waitlistEntries = await prisma.waitlist.findMany({
-                    where: { classId },
-                    orderBy: { createdAt: 'asc' },
+                    where: {classId},
+                    orderBy: {createdAt: 'asc'},
                     include: {
                         user: true,
                         userPlan: true
@@ -352,7 +352,7 @@ const updateClass = async (req, res) => {
                     // Tasuliste klasside puhul kontrolli, kas plaan on kehtiv
                     if (!currentClass.freeClass && entry.userPlanId > 0) {
                         const plan = await prisma.userPlan.findUnique({
-                            where: { id: entry.userPlanId }
+                            where: {id: entry.userPlanId}
                         });
 
                         if (!plan || plan.sessionsLeft <= 0) {
@@ -384,8 +384,8 @@ const updateClass = async (req, res) => {
                         // Kui see on tasuline klass, vähenda sessioone
                         if (!currentClass.freeClass && entry.userPlanId > 0) {
                             await tx.userPlan.update({
-                                where: { id: entry.userPlanId },
-                                data: { sessionsLeft: { decrement: 1 } }
+                                where: {id: entry.userPlanId},
+                                data: {sessionsLeft: {decrement: 1}}
                             });
                         }
 
@@ -472,10 +472,10 @@ IronTrack Team
 
                     // Create a new date object for each class
                     const newTime = new Date(classTime);
-                    newTime.setDate(newTime.getDate() + (i+1) * 7);
+                    newTime.setDate(newTime.getDate() + (i + 1) * 7);
 
                     await prisma.classSchedule.update({
-                        where: { id: futureClass.id },
+                        where: {id: futureClass.id},
                         data: {
                             trainingType,
                             trainingName,
@@ -961,7 +961,6 @@ const registerForClass = async (req, res) => {
         });
 
 
-
         if (!plan) {
             return res.status(400).json({error: "Invalid plan"});
         }
@@ -1005,7 +1004,7 @@ const cancelRegistration = async (req, res) => {
 
         const classData = await prisma.classSchedule.findFirst(
             {
-                where: { id: parseInt(classId) },
+                where: {id: parseInt(classId)},
             }
         )
 
@@ -1041,7 +1040,6 @@ const cancelRegistration = async (req, res) => {
             await tx.classAttendee.delete({
                 where: {id: registration.id},
             });
-
 
 
             if (!freeClass && registration.userPlanId > 0) {
@@ -1184,8 +1182,8 @@ const checkUserEnrollment = async (req, res) => {
         });
 
         const classinfo = await prisma.classSchedule.findFirst({
-            where: {id: classId},
-        }
+                where: {id: classId},
+            }
         );
 
         const isFirstTraining = await prisma.firstTraining.findFirst(
@@ -1197,10 +1195,37 @@ const checkUserEnrollment = async (req, res) => {
             }
         )
 
+        const affiliateFreeFirstTrainingList = await prisma.affiliate.findFirst(
+            {
+                where: {
+                    id: parseInt(classinfo.affiliateId)
+                }, select: {
+                    freeFirstTrainingList: true
+                }
+            }
+        )
+
         let firstTraining = false;
 
-        if(!isFirstTraining) {
-            firstTraining = true
+        // Check if user hasn't used their first training yet
+        if (!isFirstTraining) {
+            // Parse the freeFirstTrainingList from JSON string
+            let freeTrainingTypes = [];
+            try {
+                if (affiliateFreeFirstTrainingList?.freeFirstTrainingList) {
+                    freeTrainingTypes = JSON.parse(affiliateFreeFirstTrainingList.freeFirstTrainingList);
+                }
+            } catch (error) {
+                console.error("❌ Error parsing freeFirstTrainingList:", error);
+                freeTrainingTypes = [];
+            }
+
+            // Check if this training type is eligible for free first training
+            // Either the specific training type is included OR "All Classes" is included
+            if (freeTrainingTypes.includes(classinfo.trainingType) ||
+                freeTrainingTypes.includes("All classes")) {
+                firstTraining = true;
+            }
         }
 
         res.json({enrolled: !!enrollment, firstTraining});

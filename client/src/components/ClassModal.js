@@ -555,11 +555,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
     async function checkIfCurrentUserIsRegistered() {
         const response = await checkUserEnrollment(cls.id);
         setIsRegistered(response.enrolled);
-        if(response.firstTraining === true && (cls.trainingType === "WOD" || cls.trainingType === "Basic")) {
-            setIsFirstTraining(response.firstTraining);
-        } else {
-            setIsFirstTraining(false);
-        }
+       setIsFirstTraining(response.firstTraining);
     }
 
     const isClassTimePassed = () => {

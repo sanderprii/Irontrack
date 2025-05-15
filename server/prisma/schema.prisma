@@ -314,6 +314,7 @@ model Affiliate {
   website                String?
   logo                   String?
   paymentHolidayFee      Float?
+  freeFirstTrainingList  String?
   subdomain              String?                  @unique
   owner                  User                     @relation(fields: [ownerId], references: [id])
   trainers               AffiliateTrainer[]

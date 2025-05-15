@@ -1,5 +1,19 @@
-import React, { useState } from "react";
-import { TextField, Button, Card, CardContent, Typography, List, ListItem, IconButton, FormHelperText } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+    TextField,
+    Button,
+    Card,
+    CardContent,
+    Typography,
+    List,
+    ListItem,
+    IconButton,
+    FormHelperText,
+    FormGroup,
+    FormControlLabel,
+    Checkbox,
+    Box
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { searchTrainers } from "../api/affiliateApi";
 
@@ -8,6 +22,44 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
     const [selectedTrainers, setSelectedTrainers] = useState([...trainers]);
     const [trainerSearch, setTrainerSearch] = useState("");
     const [searchResults, setSearchResults] = useState([]);
+
+    // Training options
+    const trainingOptions = [
+        'All classes',
+        'WOD',
+        'Weightlifting',
+        'Rowing',
+        'Gymnastics',
+        'Open Gym',
+        'Cardio',
+        'Kids',
+        'Basic',
+        'Other'
+    ];
+
+    // Parse existing freeFirstTrainingList and set as initial state
+    const [selectedTrainings, setSelectedTrainings] = useState(
+        (() => {
+            if (!affiliate.freeFirstTrainingList) return [];
+
+            try {
+                // If it's already an array, return it
+                if (Array.isArray(affiliate.freeFirstTrainingList)) {
+                    return affiliate.freeFirstTrainingList;
+                }
+
+                // If it's a string, try to parse it
+                if (typeof affiliate.freeFirstTrainingList === 'string') {
+                    return JSON.parse(affiliate.freeFirstTrainingList);
+                }
+
+                return [];
+            } catch (error) {
+                console.error('Error parsing freeFirstTrainingList:', error);
+                return [];
+            }
+        })()
+    );
 
     // Add errors state to track validation errors
     const [errors, setErrors] = useState({
@@ -24,6 +76,17 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
         if (errors[name]) {
             setErrors({ ...errors, [name]: false });
         }
+    };
+
+    // Handle training checkbox changes
+    const handleTrainingChange = (trainingType) => {
+        setSelectedTrainings(prev => {
+            if (prev.includes(trainingType)) {
+                return prev.filter(t => t !== trainingType);
+            } else {
+                return [...prev, trainingType];
+            }
+        });
     };
 
     const handleRemoveTrainer = (trainerId) => {
@@ -81,6 +144,7 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
                 ...form,
                 id: form.id || affiliate.id, // Kasuta ID-d, mis saadi `MyAffiliate.js` kaudu
                 website: websiteValue,
+                freeFirstTrainingList: JSON.stringify(selectedTrainings), // Convert to JSON string for backend
                 trainers: selectedTrainers.map(trainer => ({
                     trainerId: trainer.trainerId,
                     fullName: trainer.fullName,
@@ -193,6 +257,28 @@ export default function AffiliateEdit({ affiliate, trainers, onSave, onCancel })
                     value={form.paymentHolidayFee || ''}
                     onChange={handleChange}
                 />
+
+                {/* Free First Training Selection */}
+                <Box sx={{ mt: 3, mb: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Free First Training Options
+                    </Typography>
+                    <FormGroup>
+                        {trainingOptions.map((training) => (
+                            <FormControlLabel
+                                key={training}
+                                control={
+                                    <Checkbox
+                                        checked={selectedTrainings.includes(training)}
+                                        onChange={() => handleTrainingChange(training)}
+                                        name={training}
+                                    />
+                                }
+                                label={training}
+                            />
+                        ))}
+                    </FormGroup>
+                </Box>
 
                 <Typography variant="h6" sx={{ mt: 2 }}>Search Trainers</Typography>
                 <TextField label="Search" fullWidth value={trainerSearch} onChange={handleTrainerSearch} />

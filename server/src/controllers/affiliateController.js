@@ -89,7 +89,8 @@ const searchUsers = async (req, res) => {
 const createOrUpdateAffiliate = async (req, res) => {
     try {
         const userId = req.user?.id;
-        const { id, name, address, trainingType, trainers, email, phone, iban, bank, paymentHolidayFee, website, feedback } = req.body;
+        const { id, name, address, trainingType, trainers, email, phone, iban, bank, paymentHolidayFee, website, feedback,
+        freeFirstTrainingList} = req.body;
 
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized: Missing userId" });
@@ -98,6 +99,8 @@ const affiliateId = parseInt(id)
         const trainerIds = Array.isArray(trainers)
             ? trainers.map((t) => parseInt(t.trainerId)).filter((id) => !isNaN(id))
             : [];
+
+
 
         if (affiliateId) {
             const existing = await prisma.affiliate.findUnique({
@@ -128,6 +131,7 @@ const affiliateId = parseInt(id)
                     bankName: bank,
                     paymentHolidayFee: parseInt(paymentHolidayFee),
                     feedback,
+                    freeFirstTrainingList
                 },
             });
 
@@ -183,6 +187,7 @@ const affiliateId = parseInt(id)
                     bankName: bank,
                     paymentHolidayFee: parseInt(paymentHolidayFee),
                     feedback,
+                    freeFirstTrainingList
                 },
             });
 

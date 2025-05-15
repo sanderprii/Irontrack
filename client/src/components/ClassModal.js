@@ -138,26 +138,25 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
     const [notificationType, setNotificationType] = useState("success");
 
     const profileFetchedRef = useRef(false);
+    const userProfileRef = useRef(null);
 
     const [termsModalOpen, setTermsModalOpen] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
     const [termsCheck, setTermsCheck] = useState(false);
 
-    // Asenda mitu getUserProfile kutset ühe konsolideeritud useEffect-iga
+    // PEAMINE USEEFFECT - laeb kõik vajalikud andmed ühes kohas
     useEffect(() => {
-        // Kui modal on avatud ja kasutaja on "regular"
         if (open && userRole === "regular" && !profileFetchedRef.current) {
             const fetchUserData = async () => {
                 try {
-                    // Märgi, et profiil on laaditud
                     profileFetchedRef.current = true;
 
-                    // Lae profiil ainult üks kord
+                    // Lae profiil ainult üks kord ja salvesta ref'i
                     const profile = await getUserProfile();
                     setUserProfile(profile);
+                    userProfileRef.current = profile; // Cache profiil
 
-                    // Tee kõik vajalikud toimingud profilega
                     if (cls?.affiliateId) {
                         // Lae pereliikmed
                         const members = await getFamilyMembers();
@@ -167,9 +166,9 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
                         await loadUserPlans(cls.affiliateId);
                     }
 
-                    // Kontrolli ootejärjekorra staatust
+
+                    // Kontrolli ootejärjekorda - kasuta cached profiili
                     if (cls?.id) {
-                        // Kasuta profiili andmeid ootejärjekorras
                         const waitlist = await getWaitlist(cls.id);
                         const userId = profile.id;
 
@@ -178,7 +177,6 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
                                 const itemUserId = typeof item.userId === 'string' ? parseInt(item.userId) : item.userId;
                                 return itemUserId === userId;
                             });
-
                             setIsInWaitlist(userInWaitlist);
                         } else {
                             setIsInWaitlist(false);
@@ -195,6 +193,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         // Lähtesta ref kui modal suletakse
         if (!open) {
             profileFetchedRef.current = false;
+            userProfileRef.current = null;
         }
     }, [open, userRole, cls]);
 
@@ -208,26 +207,6 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
     const toggleWorkoutInfoFullScreen = () => {
         setWorkoutInfoFullScreen(!isWorkoutInfoFullScreen);
     };
-
-    const checkTermsAcceptance = async () => {
-        try {
-
-            const accepted = await isUserAcceptedAffiliateTerms(cls.affiliateId);
-            setTermsAccepted(accepted);
-        } catch (error) {
-            console.error("Error checking terms acceptance:", error);
-            setTermsAccepted(false);
-        } finally {
-
-        }
-    };
-
-    // Kontrolli tingimuste staatust kui modal avatakse ja kasutaja on 'regular'
-    useEffect(() => {
-        if (open && userRole === "regular") {
-            checkTermsAcceptance();
-        }
-    }, [open, userRole, userProfile]);
 
     // Kontrollime, kas klass on täis
     useEffect(() => {
@@ -250,22 +229,20 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
     // ja uurime, kas kasutaja on nende hulgas.
     useEffect(() => {
         const role = localStorage.getItem("role");
-        if (role) {
+        if (role === "affiliate" || role === "trainer") {
             if (!cls || !cls.id) return;
             fetchAttendees();
 
             if (userRole === "affiliate" || userRole === "trainer") {
                 fetchWaitlistEntries();
             }
+        } else if (role === "regular") {
+            if (!cls || !cls.id) return;
+            checkIfCurrentUserIsRegistered()
         }
     }, [cls, open, userRole]);
 
-    useEffect(() => {
-        if (cls && cls.id && userRole === "regular" && open) {
-            fetchUserScore(cls.id);
-        }
 
-    }, [cls, userRole, open]);
 
 
     // Update filtered plans when selectedBookFor changes
@@ -273,25 +250,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         filterCompatiblePlans();
     }, [selectedBookFor, compatiblePlans]);
 
-    // Load user profile and family members
-    const loadUserData = async () => {
-        try {
-            // Load user profile
-            const profile = await getUserProfile();
-            setUserProfile(profile);
 
-            // Load family members
-            const members = await getFamilyMembers();
-            setFamilyMembers(members || []);
-
-            // Load user plans
-            if (cls?.affiliateId) {
-                await loadUserPlans(cls.affiliateId);
-            }
-        } catch (error) {
-            console.error("Error loading user data:", error);
-        }
-    };
 
     // Filter compatible plans based on selected book-for person
     const filterCompatiblePlans = () => {
@@ -323,22 +282,21 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         }
     };
 
-    // Kontrollime, kas kasutaja on juba waitlistis
     async function checkWaitlistStatus() {
         try {
             if (!cls || !cls.id) return;
 
             const waitlist = await getWaitlist(cls.id);
-            const user = await getUserProfile();
-            const userId = user.id;
+            // Kasuta cached profiili, ära kutsu uuesti getUserProfile
+            const userId = userProfileRef.current?.id;
+
+            if (!userId) return; // Kui profiil pole veel laetud
 
             if (waitlist && waitlist.length > 0) {
-                // Use explicit type conversion to ensure correct comparison
                 const userInWaitlist = waitlist.some(item => {
                     const itemUserId = typeof item.userId === 'string' ? parseInt(item.userId) : item.userId;
                     return itemUserId === userId;
                 });
-
                 setIsInWaitlist(userInWaitlist);
             } else {
                 setIsInWaitlist(false);
@@ -367,24 +325,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         }
     }
 
-    // LAEME KASUTAJA SCORE, et teha kindlaks, kas on juba sisestatud
-    async function fetchUserScore(classId) {
-        try {
-            const result = await getUserClassScore(classId);
-            // Oletame, et API tagastab { hasScore: true/false, scoreType: "...", score: "..." }
-            if (result.hasScore) {
-                setHasScore(true);
-                setScoreType(result.scoreType || "rx");
-                setScoreValue(result.score || "");
-            } else {
-                setHasScore(false);
-                setScoreType("rx");
-                setScoreValue("");
-            }
-        } catch (error) {
-            console.error("Error fetching user score:", error);
-        }
-    }
+
 
     // SALVESTA / UUENDA SKOOR
     async function handleSaveScore() {
@@ -538,14 +479,11 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
 
     async function fetchAttendees() {
         try {
-            await checkIfCurrentUserIsRegistered();
+
             const data = await getClassAttendees(cls.id);
             setAttendees(data || []);
 
-            // Pärast attendees uuendamist kontrolli uuesti waitlist staatust
-            if (userRole === "regular") {
-                await checkWaitlistStatus();
-            }
+
         } catch (error) {
             console.error("Error fetching attendees:", error);
             setAttendees([]);
@@ -556,6 +494,17 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
         const response = await checkUserEnrollment(cls.id);
         setIsRegistered(response.enrolled);
        setIsFirstTraining(response.firstTraining);
+        setTermsAccepted(response.accepted);
+        if (response.hasScore) {
+            setHasScore(true);
+            setScoreType(response.scoreType || "rx");
+            setScoreValue(response.score || "");
+        } else {
+            setHasScore(false);
+            setScoreType("rx");
+            setScoreValue("");
+        }
+
     }
 
     const isClassTimePassed = () => {
@@ -1964,6 +1913,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
                 classId={cls.id}
                 cls={cls}
                 hasScore={hasScore}
+                userProfile={userProfile}
             />
             <ProfileModal
                 open={isProfileOpen}

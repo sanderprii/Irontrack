@@ -1186,6 +1186,13 @@ const checkUserEnrollment = async (req, res) => {
             }
         );
 
+        const accepted = await prisma.affiliateTermsAccepted.findFirst({
+            where: {
+                affiliateId: parseInt(classinfo.affiliateId),
+                userId: parseInt(userId)
+            }
+        });
+
         const isFirstTraining = await prisma.firstTraining.findFirst(
             {
                 where: {
@@ -1204,6 +1211,8 @@ const checkUserEnrollment = async (req, res) => {
                 }
             }
         )
+
+
 
         let firstTraining = false;
 
@@ -1227,8 +1236,19 @@ const checkUserEnrollment = async (req, res) => {
                 firstTraining = true;
             }
         }
+        let hasScore = false;
+        const existing = await prisma.classLeaderboard.findFirst({
+            where: {classId: parseInt(classId), userId},
+        });
 
-        res.json({enrolled: !!enrollment, firstTraining});
+        if (existing) {
+            hasScore = true
+        }
+
+        const scoreType = existing?.scoreType || null;
+        const score = existing?.score || null;
+
+        res.json({enrolled: !!enrollment, firstTraining, hasScore, scoreType, score, accepted: !!accepted});
     } catch (error) {
         console.error("❌ Error checking enrollment:", error);
         res.status(500).json({error: "Failed to check enrollment."});

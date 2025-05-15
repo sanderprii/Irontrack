@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import {
     Dialog,
     DialogTitle,
@@ -21,10 +21,10 @@ import {
     DialogContentText,
     TextField
 } from "@mui/material";
-import { getClassLeaderboard } from "../api/leaderboardApi";
-import { getUserProfile } from "../api/profileApi";
+import {getClassLeaderboard} from "../api/leaderboardApi";
+import {getUserProfile} from "../api/profileApi";
 
-export default function LeaderboardModal({ open, onClose, classId, cls, hasScore }) {
+export default function LeaderboardModal({open, onClose, classId, cls, hasScore, userProfile}) {
     const [leaderboard, setLeaderboard] = useState([]);
     const [filter, setFilter] = useState("all");
     const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
     const [addingRecord, setAddingRecord] = useState(false);
     const [error, setError] = useState("");
     const [userScore, setUserScore] = useState(null);
-    const [userFullName, setUserFullName] = useState("");
+
     const [comment, setComment] = useState(""); // New state for comment
 
     const [notificationOpen, setNotificationOpen] = useState(false);
@@ -43,49 +43,24 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
 
     const API_URL = process.env.REACT_APP_API_URL;
 
-    // Get user profile info when the component loads
-    useEffect(() => {
-        const role = localStorage.getItem('role');
 
-            const fetchUserProfile = async () => {
-
-                try {
-                    const profile = await getUserProfile();
-                    if (profile && profile.fullName) {
-                        setUserFullName(profile.fullName);
-                    } else {
-                        // Fallback to localStorage if available
-                        const storedName = localStorage.getItem('fullName');
-                        if (storedName) setUserFullName(storedName);
-                    }
-                } catch (error) {
-                    console.error("Error fetching user profile:", error);
-                    // Fallback to localStorage
-                    const storedName = localStorage.getItem('fullName');
-                    if (storedName) setUserFullName(storedName);
-                }
-
-            };
-            if (role) {
-                fetchUserProfile();
-            }
-    }, []);
 
     useEffect(() => {
         if (open && classId) {
             fetchLeaderboard();
         }
-    }, [open, classId, userFullName]);
-
+    }, [open, classId, userProfile]);
+    console.log("userProfile", userProfile);
     const fetchLeaderboard = async () => {
         try {
             const response = await getClassLeaderboard(classId);
             setLeaderboard(response || []);
 
+
             // Find user's score by matching their full name
-            if (userFullName && response && response.length > 0) {
+            if (userProfile.fullName && response && response.length > 0) {
                 const score = response.find(entry =>
-                    entry.fullName === userFullName
+                    entry.fullName === userProfile.fullName
                 );
 
 
@@ -115,8 +90,8 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
         setComment(""); // Reset comment when opening dialog
 
         // Re-check if we have the user's score
-        if (userFullName && leaderboard && leaderboard.length > 0) {
-            const score = leaderboard.find(entry => entry.fullName === userFullName);
+        if (userProfile.fullName  && leaderboard && leaderboard.length > 0) {
+            const score = leaderboard.find(entry => entry.fullName === userProfile.fullName);
             setUserScore(score || null);
 
             if (!score) {
@@ -196,10 +171,10 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                 fullWidth
                 PaperProps={{
                     sx: {
-                        m: { xs: 0 },  // Mobiilis eemaldame ääred
-                        width: { xs: '100%' },  // Mobiilis täislaius
-                        maxWidth: { xs: '100%' },  // Mobiilis täislaius
-                        borderRadius: { xs: 0 }  // Mobiilis eemaldame ümarad nurgad
+                        m: {xs: 0},  // Mobiilis eemaldame ääred
+                        width: {xs: '100%'},  // Mobiilis täislaius
+                        maxWidth: {xs: '100%'},  // Mobiilis täislaius
+                        borderRadius: {xs: 0}  // Mobiilis eemaldame ümarad nurgad
                     }
                 }}>
             <DialogTitle>Leaderboard</DialogTitle>
@@ -209,7 +184,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                     exclusive
                     onChange={handleFilterChange}
                     aria-label="Filter results"
-                    sx={{ mb: 2 }}
+                    sx={{mb: 2}}
                 >
                     <ToggleButton value="all">All</ToggleButton>
                     <ToggleButton value="rx">Rx</ToggleButton>
@@ -228,7 +203,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                                     <Typography
                                         component="span"
                                         color="text.secondary"
-                                        sx={{ ml: 1, fontSize: '0.9em' }}
+                                        sx={{ml: 1, fontSize: '0.9em'}}
                                     >
                                         (previous)
                                     </Typography>
@@ -242,7 +217,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                                     <TableRow
                                         key={entry.id}
                                         // Highlight the current user's row
-                                        sx={entry.fullName === userFullName ? {
+                                        sx={entry.fullName === userProfile.fullName ? {
                                             backgroundColor: 'rgba(25, 118, 210, 0.08)'
                                         } : {}}
                                     >
@@ -255,7 +230,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                                                     <Typography
                                                         component="span"
                                                         color="text.secondary"
-                                                        sx={{ ml: 1, fontSize: '0.9em' }}
+                                                        sx={{ml: 1, fontSize: '0.9em'}}
                                                     >
                                                         ({entry.previousScore})
                                                     </Typography>
@@ -295,7 +270,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                 <DialogTitle>Add to Records</DialogTitle>
                 <DialogContent>
                     {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
+                        <Alert severity="error" sx={{mb: 2}}>
                             {error}
                         </Alert>
                     )}
@@ -306,9 +281,11 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                                 Do you want to add this WOD result to your records?
                             </DialogContentText>
 
-                            <Box sx={{ mt: 2 }}>
-                                <Typography><strong>WOD:</strong> {cls?.wodName ? cls.wodName.toUpperCase() : "WOD"}</Typography>
-                                <Typography><strong>Date:</strong> {new Date(cls?.time).toLocaleDateString()}</Typography>
+                            <Box sx={{mt: 2}}>
+                                <Typography><strong>WOD:</strong> {cls?.wodName ? cls.wodName.toUpperCase() : "WOD"}
+                                </Typography>
+                                <Typography><strong>Date:</strong> {new Date(cls?.time).toLocaleDateString()}
+                                </Typography>
                                 <Typography><strong>Your Score:</strong> {userScore.score}</Typography>
                                 <Typography><strong>Type:</strong> {userScore.scoreType?.toUpperCase()}</Typography>
                             </Box>
@@ -328,7 +305,8 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                         </>
                     ) : (
                         <DialogContentText>
-                            You haven't added a score for this class yet. Please add your score first before adding to records.
+                            You haven't added a score for this class yet. Please add your score first before adding to
+                            records.
                         </DialogContentText>
                     )}
                 </DialogContent>
@@ -349,7 +327,7 @@ export default function LeaderboardModal({ open, onClose, classId, cls, hasScore
                         >
                             {addingRecord ? (
                                 <>
-                                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                                    <CircularProgress size={20} sx={{mr: 1}}/>
                                     Saving...
                                 </>
                             ) : (

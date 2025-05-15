@@ -65,8 +65,10 @@ const Help = () => {
                         <ol>
                             <li>Click on the "Join Us" button on the homepage</li>
                             <li>Fill in your personal details</li>
+                            <li>Validate Email</li>
                             <li>Check the Terms and Conditions checkbox</li>
                             <li>Click "Join Us" to create your account</li>
+                            <li>Check your email for a confirmation link</li>
                         </ol>
                         <Typography variant="subtitle2" sx={{ mt: 2 }}>
                             Note: If you're an affiliate owner, make sure to check the "Are you an Affiliate Owner?" option during registration.
@@ -125,9 +127,9 @@ const Help = () => {
                             The Irontrack dashboard provides easy access to all features:
                         </Typography>
                         <ul>
-                            <li><strong>Main Menu:</strong> Access all features from the sidebar or top navigation</li>
+                            <li><strong>Training Log:</strong> Create, Edit and View your trainings</li>
                             <li><strong>Profile:</strong> View and edit your personal information</li>
-                            <li><strong>Classes:</strong> View available classes and schedule</li>
+                            <li><strong>Trainings:</strong> Choose gym, buy plan and register for training</li>
                             <li><strong>Records:</strong> Track your personal records and achievements</li>
                         </ul>
                         <Typography paragraph>
@@ -141,52 +143,7 @@ const Help = () => {
                 tags: ['dashboard', 'navigation', 'menu', 'features', 'layout', 'mobile navigation'],
                 roles: ['all']
             },
-            {
-                title: 'Understanding Membership Plans',
-                content: (
-                    <>
-                        <Typography paragraph>
-                            Irontrack offers different membership plans to fit your needs:
-                        </Typography>
-                        <ul>
-                            <li><strong>Limited Session Plans:</strong> These plans give you a specific number of sessions to use within a validity period</li>
-                            <li><strong>Unlimited Plans:</strong> These plans allow unlimited attendance during the validity period</li>
-                            <li><strong>Training Type Specific:</strong> Some plans may be restricted to specific types of classes (WOD, Weightlifting, etc.)</li>
-                        </ul>
-                        <Typography paragraph>
-                            Your gym may offer various plans. Contact your affiliate owner for more details about available plans and pricing.
-                        </Typography>
-                        <Typography variant="subtitle2" sx={{ mt: 2, color: 'primary.main' }}>
-                            When purchasing a plan, check the "Training Types" section to ensure it covers the classes you want to attend.
-                        </Typography>
-                    </>
-                ),
-                tags: ['plans', 'membership', 'pricing', 'sessions'],
-                roles: ['all']
-            },
-            {
-                title: 'Understanding the User Interface',
-                content: (
-                    <>
-                        <Typography paragraph>
-                            Irontrack offers an intuitive interface for all users:
-                        </Typography>
-                        <ul>
-                            <li><strong>Top Navigation:</strong> Access main features and log out</li>
-                            <li><strong>Bottom Navigation (Mobile):</strong> Quick access to key features on mobile devices</li>
-                            <li><strong>Help Icon:</strong> Click the question mark icon in the top bar to access this help section</li>
-                        </ul>
-                        <Typography paragraph>
-                            The interface adapts based on your device size and your selected role, showing only relevant options.
-                        </Typography>
-                        <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 2 }}>
-                            Tip: On mobile devices, you can easily navigate between main sections using the bottom navigation bar.
-                        </Typography>
-                    </>
-                ),
-                tags: ['interface', 'navigation', 'mobile', 'responsive', 'UI'],
-                roles: ['all']
-            },
+
         ],
         regularUsers: [
             {
@@ -223,13 +180,13 @@ const Help = () => {
                             To register for a training class:
                         </Typography>
                         <ol>
-                            <li>Navigate to the "Classes" page from the main menu</li>
+                            <li>Navigate to the "Trainings" or "Register for training" page from the main menu</li>
+                            <li>Find gym, click "View Classes".</li>
                             <li>Browse available classes by date using the week navigation or toggle to weekly view</li>
                             <li>Use the Day selector at the top to choose which day's classes to display</li>
                             <li>Click on a class to view details</li>
                             <li>In the class details modal, click the "Register" button</li>
                             <li>If needed, select a payment plan</li>
-                            <li>Confirm your registration</li>
                         </ol>
                         <Typography paragraph>
                             Different class types have distinct background colors in the schedule, making it easy to identify the type of workout.
@@ -536,6 +493,9 @@ const Help = () => {
                             <li><strong>Rowing:</strong> Specialized rowing sessions</li>
                             <li><strong>Gymnastics:</strong> Body weight and skill-focused movements</li>
                             <li><strong>Open Gym:</strong> Flexible training sessions where you work on your own</li>
+                            <li><strong>Kids:</strong> Classes designed for children</li>
+                            <li><strong>Basic:</strong> Basic training sessions for beginners</li>
+                            <li><strong>Other:</strong> Any other training type not covered by the above categories</li>
                         </ul>
                         <Typography paragraph>
                             When purchasing plans, check which training types are included. Your plan must cover a specific training type for you to register for classes of that type.
@@ -627,13 +587,13 @@ const Help = () => {
                             <li>Enter the WOD name, type, and description</li>
                             <li>Specify exercises, reps, and other details</li>
                             <li>Save your WOD</li>
-                            <li>Click "Apply WOD" to add it to all training sessions on that day</li>
+                            <li>Click "Apply WOD" to add it to all training sessions with training type "WOD" on that day</li>
                         </ol>
                         <Typography paragraph>
-                            You can also search and use previous WODs as templates to save time. The WOD will be visible to members who register for classes on that day.
+                            You can also search and use previous WODs as templates to save time. The WOD will be visible to all users, who open class.
                         </Typography>
                         <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
-                            When you click "Apply WOD," it will be applied to all relevant training sessions on that day, saving you time from manually updating each class.
+                            When you click "Apply WOD," it will be applied to all classes, with training type "WOD", saving you time from manually updating each class.
                         </Typography>
                     </>
                 ),
@@ -693,31 +653,7 @@ const Help = () => {
                 tags: ['messages', 'communication', 'email', 'notifications'],
                 roles: ['trainer', 'affiliate']
             },
-            {
-                title: 'Monitoring Member Progress',
-                content: (
-                    <>
-                        <Typography paragraph>
-                            To help track your members' progress:
-                        </Typography>
-                        <ol>
-                            <li>Go to the "Members" section</li>
-                            <li>Click on a member's profile</li>
-                            <li>View their attendance history, records, and statistics</li>
-                            <li>Add notes about their progress or coaching tips</li>
-                            <li>Review their performance in recent classes</li>
-                        </ol>
-                        <Typography paragraph>
-                            You can use the color-coded flags (red, yellow, green) to highlight members who need special attention or have specific requirements.
-                        </Typography>
-                        <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
-                            Regular monitoring of member progress helps you provide personalized coaching and identify those who might need extra motivation or guidance.
-                        </Typography>
-                    </>
-                ),
-                tags: ['progress', 'monitoring', 'coaching', 'member development'],
-                roles: ['trainer', 'affiliate']
-            },
+
         ],
         affiliateOwners: [
             {
@@ -732,7 +668,7 @@ const Help = () => {
                             <li>View and edit basic information (name, address, contact details)</li>
                             <li>Upload your gym's logo</li>
                             <li>Manage trainer assignments by searching and adding trainers</li>
-                            <li>Update bank details for payments</li>
+                            <li>Add first training free classes. If classes are chosen, first time register for those classes will be free.</li>
                             <li>Set payment holiday fees</li>
                         </ol>
                         <Typography paragraph>
@@ -740,6 +676,18 @@ const Help = () => {
                         </Typography>
                         <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
                             A professional logo and complete contact information help make a good first impression on potential new members.
+                        </Typography>
+                        <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
+                            Add your affiliate Terms and conditions:
+                        </Typography>
+                        <ol>
+                            <li>Go to "My Affiliate" in the main menu</li>
+                            <li>Click on "Terms and conditions"</li>
+                            <li>Enter your terms and conditions text</li>
+                            <li>Click "Save" to apply changes</li>
+                        </ol>
+                        <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
+                            User on their first registration will be asked to accept your terms and conditions. You can also edit or remove them at any time.
                         </Typography>
                     </>
                 ),
@@ -759,13 +707,14 @@ const Help = () => {
                             <li>Select a member from the search dropdown</li>
                             <li>Enter contract details:</li>
                             <ul>
-                                <li>Contract type</li>
+                                <li>Training types</li>
+                                <li>Contract Name</li>
                                 <li>Payment amount</li>
-                                <li>Payment interval (monthly, quarterly, etc.)</li>
+                                <li>Payment interval</li>
                                 <li>Payment day</li>
-                                <li>Training types included</li>
+                                <li>Contract starting date (user plan will be active on that day)</li>
                             </ul>
-                            <li>Set the contract terms and click "Save Contract"</li>
+                            <li>Set the contract content and click "Save Contract"</li>
                             <li>Click "Send" to send the contract to the member for approval</li>
                         </ol>
                         <Typography paragraph>
@@ -806,11 +755,12 @@ const Help = () => {
                                 <li>Number of sessions (or set to 9999 for unlimited)</li>
                                 <li>Training types included</li>
                                 <li>Additional information</li>
+                                <li>Active (By unchecking the box, the plan will not be displayed for users, but you can assign plan for user.)</li>
                             </ul>
                             <li>Save the plan</li>
                         </ol>
                         <Typography paragraph>
-                            You can edit existing plans by clicking on them and updating the information. The system also allows you to highlight premium plans with special formatting.
+                            You can edit existing plans by clicking on them and updating the information.
                         </Typography>
                         <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
                             Be sure to select all relevant training types for each plan. Members can only register for classes that match the training types included in their plan.
@@ -956,6 +906,7 @@ const Help = () => {
                             <li>Navigate to the "Classes" section</li>
                             <li>Click "Add Training" to create a new class time slot</li>
                             <li>Set date, time, capacity, and assign a trainer</li>
+
                             <li>Click "Add WOD" to create the workout for the day</li>
                             <li>Name the WOD and add exercise details</li>
                             <li>You can apply the same WOD to multiple classes</li>
@@ -965,8 +916,25 @@ const Help = () => {
                             You can view classes in either daily or weekly view, and navigate between weeks easily. The class schedule is visible to all members and allows them to register for available slots.
                         </Typography>
                         <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
-                            Use the "Apply WOD" button after creating a workout to automatically add it to all relevant classes for that day, saving time compared to updating each class individually.
+                            Use the "Apply WOD" button after creating a workout to automatically add it to all classes with training type "WOD" for that day, saving time compared to updating each class individually.
                         </Typography>
+
+                        <Typography variant="subtitle2" sx={{ color: 'primary.main', mt: 1 }}>
+                            Repeat weekly:
+                        </Typography>
+                        <ol>
+                            <li>When creating a new training, set "Repeat Weekly" to "Yes"</li>
+                            <li>Select the day of the week and time for the recurring class</li>
+                            <li>Click "Save" to create the repeated weekly class</li>
+                        </ol>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                            To manage repeating classes:
+                        </Typography>
+                        <ul>
+                            <li><strong>To stop repetition:</strong> Open the last occurrence you want to keep, click "Edit", set "Repeat Weekly" to "No", and save</li>
+                            <li><strong>To remove a single occurrence:</strong> Simply delete that specific class. The weekly repetition will continue for future dates</li>
+                            <li><strong>To modify all future occurrences:</strong> Open any class in the series, click "Edit", make your changes, set "Apply For All Future Trainings" to "Yes", and save</li>
+                        </ul>
                     </>
                 ),
                 tags: ['classes', 'schedule', 'wod', 'workout', 'programming', 'training'],
@@ -1233,11 +1201,9 @@ const Help = () => {
                             If you encounter payment issues:
                         </Typography>
                         <ol>
-                            <li>Check that your credit card information is up-to-date</li>
                             <li>Verify that you have sufficient funds</li>
                             <li>Check if your bank is blocking the transaction</li>
-                            <li>Try a different payment method</li>
-                            <li>Use available credit in your account if you have any</li>
+
                         </ol>
                         <Typography paragraph>
                             For regular members: Contact your gym owner for assistance.
@@ -1314,7 +1280,7 @@ const Help = () => {
                             <li>Check this help section for guidance on your specific issue</li>
                             <li>Try refreshing the page or logging out and back in</li>
                             <li>Clear your browser cache and cookies</li>
-                            <li>Contact our support team at <Link href="mailto:support@irontrack.ee">support@irontrack.ee</Link></li>
+                            <li>Contact our support team at <Link href="mailto:info@irontrack.ee">info@irontrack.ee</Link></li>
                         </ol>
                         <Typography paragraph>
                             When contacting support, please include:
@@ -1734,7 +1700,7 @@ const Help = () => {
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        href="mailto:support@irontrack.ee"
+                                        href="mailto:info@irontrack.ee"
                                         startIcon={<HelpOutlineIcon />}
                                     >
                                         Contact Support

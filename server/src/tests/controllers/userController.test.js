@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 // Helper function to log in a user and get a token
 async function loginUser(request, email, password) {
@@ -64,11 +64,7 @@ test.describe('User Controller', () => {
 
         } catch (error) {
             console.error('Login setup error:', error);
-            await sendTestFailureReport(
-                'User Controller Test Setup Failure',
-                error,
-                { testUsers: ['c@c.c', 'd@d.d'] }
-            );
+
         }
     });
 
@@ -93,15 +89,7 @@ test.describe('User Controller', () => {
             expect(userData).toHaveProperty('email', 'c@c.c');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Data Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/user-data',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -128,15 +116,7 @@ test.describe('User Controller', () => {
             expect(user).toHaveProperty('fullName');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Profile Test Failure',
-                error,
-                {
-                    endpoint: '/api/user',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -169,16 +149,7 @@ test.describe('User Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Plans By Affiliate Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/user-plans',
-                    affiliateId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -210,15 +181,7 @@ test.describe('User Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Visit History Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/user-visit-history',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -263,15 +226,7 @@ test.describe('User Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Purchase History Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/user-purchase-history',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -314,15 +269,7 @@ test.describe('User Controller', () => {
             expect(result.message).toContain('updated successfully');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Update User Data Test Failure',
-                error,
-                {
-                    endpoint: '/api/user',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -346,7 +293,7 @@ test.describe('User Controller', () => {
             // Update with the same data (effectively no change)
             const updateData = {
                 fullName: originalProfile.fullName || '',
-                email: originalProfile.email || '',
+                dateOfBirth: originalProfile.dateOfBirth || '',
                 phone: originalProfile.phone || '',
                 address: originalProfile.address || '',
 
@@ -385,15 +332,7 @@ test.describe('User Controller', () => {
             expect(result.message).toContain('updated successfully');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Edit Profile Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/profile',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -455,15 +394,7 @@ test.describe('User Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get User Attendees Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/attendees',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -498,15 +429,7 @@ test.describe('User Controller', () => {
             expect(result.error).toContain('Invalid current password');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Change Password Test Failure',
-                error,
-                {
-                    endpoint: '/api/user/change-password',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -548,15 +471,7 @@ test.describe('User Controller', () => {
                 expect(stats).toHaveProperty('yearlyTrainings');
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get Statistics Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/statistics',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -583,15 +498,7 @@ test.describe('User Controller', () => {
                 expect(stats).toHaveProperty('records');
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get All Statistics Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/statistics/all',
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -673,16 +580,7 @@ test.describe('User Controller', () => {
                 console.log('Created note with ID:', createdNoteId);
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Add User Note Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/user/notes/{id}/notes',
-                        userId,
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -727,17 +625,7 @@ test.describe('User Controller', () => {
                 expect(result).toHaveProperty('id', createdNoteId);
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Delete User Note Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/user/notes/{id}/notes/{noteId}',
-                        userId,
-                        noteId: createdNoteId,
-                        authTokenPresent: !!affiliateToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });

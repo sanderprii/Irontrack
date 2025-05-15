@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 // Helper function to log in a user and get a token
 async function loginUser(request, email, password) {
@@ -41,11 +41,7 @@ test.describe.serial('Training Controller', () => {
 
         } catch (error) {
             console.error('Login setup error:', error);
-            await sendTestFailureReport(
-                'Training Controller Test Setup Failure',
-                error,
-                { testUser: 'c@c.c' }
-            );
+
         }
     });
 
@@ -74,15 +70,7 @@ test.describe.serial('Training Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Trainings Test Failure',
-                error,
-                {
-                    endpoint: '/api/training',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -123,15 +111,7 @@ test.describe.serial('Training Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Create Training Test Failure',
-                error,
-                {
-                    endpoint: '/api/training',
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -169,16 +149,7 @@ test.describe.serial('Training Controller', () => {
             expect(result.training).toHaveProperty('wodName', 'UPDATED-WOD');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Update Training Test Failure',
-                error,
-                {
-                    endpoint: `/api/training/${createdTrainingId}`,
-                    trainingId: createdTrainingId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -203,16 +174,7 @@ test.describe.serial('Training Controller', () => {
             expect(result.message).toContain('deleted successfully');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Delete Training Test Failure',
-                error,
-                {
-                    endpoint: `/api/training/${createdTrainingId}`,
-                    trainingId: createdTrainingId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -238,15 +200,7 @@ test.describe.serial('Training Controller', () => {
                 expect(Array.isArray(records)).toBeTruthy();
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get Records Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/records',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -292,15 +246,7 @@ test.describe.serial('Training Controller', () => {
                 }
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Create Record Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/records',
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -325,16 +271,7 @@ test.describe.serial('Training Controller', () => {
                 expect(result.message).toContain('deleted successfully');
 
             } catch (error) {
-                await sendTestFailureReport(
-                    'Delete Record Test Failure',
-                    error,
-                    {
-                        endpoint: `/api/records/${createdRecordId}`,
-                        recordId: createdRecordId,
-                        authTokenPresent: !!userToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });

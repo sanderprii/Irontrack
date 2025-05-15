@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 test.describe('Trainer Controller', () => {
     let authToken;
@@ -17,12 +17,7 @@ test.describe('Trainer Controller', () => {
             const loginData = await loginResponse.json();
             authToken = loginData.token;
         } catch (error) {
-            await sendTestFailureReport({
-                testName: 'Trainer Controller - Authentication',
-                error: error.message,
-                endpoint: '/api/auth/login',
-                timestamp: new Date().toISOString()
-            });
+
             throw error;
         }
     });
@@ -41,12 +36,7 @@ test.describe('Trainer Controller', () => {
                 expect(Array.isArray(data)).toBe(true);
                 // Don't check for specific properties since the array might be empty
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Trainer Controller - Get Trainer Affiliates',
-                    error: error.message,
-                    endpoint: '/api/trainer/affiliates',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -56,12 +46,7 @@ test.describe('Trainer Controller', () => {
                 const response = await request.get('/api/trainer/affiliates');
                 expect(response.status()).toBe(401);
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Trainer Controller - Get Trainer Affiliates Unauthorized',
-                    error: error.message,
-                    endpoint: '/api/trainer/affiliates',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });

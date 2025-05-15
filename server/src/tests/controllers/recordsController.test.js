@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 test.describe('Records Controller', () => {
     let authToken;
@@ -19,12 +19,7 @@ test.describe('Records Controller', () => {
             authToken = loginData.token;
             userId = loginData.userId;
         } catch (error) {
-            await sendTestFailureReport({
-                testName: 'Records Controller - Authentication',
-                error: error.message,
-                endpoint: '/api/auth/login',
-                timestamp: new Date().toISOString()
-            });
+            console.error('Authentication setup error:', error);
             throw error;
         }
     });
@@ -47,12 +42,7 @@ test.describe('Records Controller', () => {
                     expect(data[0]).toHaveProperty('date');
                 }
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Get Records',
-                    error: error.message,
-                    endpoint: '/api/records?type=WOD',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -62,12 +52,7 @@ test.describe('Records Controller', () => {
                 const response = await request.get('/api/records?type=WOD');
                 expect(response.status()).toBe(401);
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Get Records Unauthorized',
-                    error: error.message,
-                    endpoint: '/api/records?type=WOD',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -96,12 +81,7 @@ test.describe('Records Controller', () => {
                 expect(data).toHaveProperty('message');
                 expect(data.message).toBe('Record added successfully!');
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Create Record',
-                    error: error.message,
-                    endpoint: '/api/records',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -121,12 +101,7 @@ test.describe('Records Controller', () => {
                 });
                 expect(response.status()).toBe(500);
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Create Invalid Record',
-                    error: error.message,
-                    endpoint: '/api/records',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -182,12 +157,7 @@ test.describe('Records Controller', () => {
                 expect(data).toHaveProperty('message');
                 expect(data.message).toBe('Record updated successfully!');
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Update Record',
-                    error: error.message,
-                    endpoint: '/api/records/:id',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -205,12 +175,7 @@ test.describe('Records Controller', () => {
                 });
                 expect(response.status()).toBe(404);
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Update Non-existent Record',
-                    error: error.message,
-                    endpoint: '/api/records/999999',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -272,12 +237,7 @@ test.describe('Records Controller', () => {
                 const deletedRecord = remainingRecords.find(r => r.id === createdRecord.id);
                 expect(deletedRecord).toBeUndefined();
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Delete Record',
-                    error: error.message,
-                    endpoint: '/api/records/:id',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });
@@ -291,12 +251,7 @@ test.describe('Records Controller', () => {
                 });
                 expect(response.status()).toBe(404);
             } catch (error) {
-                await sendTestFailureReport({
-                    testName: 'Records Controller - Delete Non-existent Record',
-                    error: error.message,
-                    endpoint: '/api/records/999999',
-                    timestamp: new Date().toISOString()
-                });
+
                 throw error;
             }
         });

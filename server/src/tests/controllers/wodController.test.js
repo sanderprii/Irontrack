@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 // Helper function to log in a user and get a token
 async function loginUser(request, email, password) {
@@ -65,11 +65,7 @@ test.describe('WOD Controller', () => {
 
         } catch (error) {
             console.error('Login setup error:', error);
-            await sendTestFailureReport(
-                'WOD Controller Test Setup Failure',
-                error,
-                { testUsers: ['d@d.d', 'c@c.c'] }
-            );
+
         }
     });
 
@@ -104,16 +100,7 @@ test.describe('WOD Controller', () => {
             expect(result.message).toMatch(/WOD (added|updated) successfully/);
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Save Today WOD Test Failure',
-                error,
-                {
-                    endpoint: '/api/today-wod',
-                    affiliateId,
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -149,16 +136,7 @@ test.describe('WOD Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Today WOD Test Failure',
-                error,
-                {
-                    endpoint: '/api/get-today-wod',
-                    affiliateId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -192,16 +170,7 @@ test.describe('WOD Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Get Week WODs Test Failure',
-                error,
-                {
-                    endpoint: '/api/get-week-wods',
-                    affiliateId,
-                    authTokenPresent: !!userToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -249,16 +218,7 @@ test.describe('WOD Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Apply WOD to Trainings Test Failure',
-                error,
-                {
-                    endpoint: '/api/apply-wod',
-                    affiliateId,
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -292,16 +252,7 @@ test.describe('WOD Controller', () => {
             }
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Search Default WODs Test Failure',
-                error,
-                {
-                    endpoint: '/api/search-default-wods',
-                    query: 'FRAN',
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -326,16 +277,7 @@ test.describe('WOD Controller', () => {
             expect(responseBody.error).toContain('required');
 
         } catch (error) {
-            await sendTestFailureReport(
-                'Empty WOD Search Query Test Failure',
-                error,
-                {
-                    endpoint: '/api/search-default-wods',
-                    testCase: 'empty query',
-                    authTokenPresent: !!affiliateToken,
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });

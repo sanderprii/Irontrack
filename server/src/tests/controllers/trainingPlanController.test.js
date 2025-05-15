@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { sendTestFailureReport } = require('../helpers/emailHelper');
+
 
 test.describe('Training Plan Controller', () => {
     let authToken;
@@ -19,14 +19,7 @@ test.describe('Training Plan Controller', () => {
             authToken = loginData.token;
             userId = loginData.user.id;
         } catch (error) {
-            await sendTestFailureReport(
-                'Training Plan Controller - Authentication Setup Failure',
-                error,
-                {
-                    testUser: 'd@d.d',
-                    timestamp: new Date().toISOString()
-                }
-            );
+
             throw error;
         }
     });
@@ -50,16 +43,7 @@ test.describe('Training Plan Controller', () => {
                     expect(data[0]).toHaveProperty('userId');
                 }
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get Training Plans Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/trainer/plans',
-                        userId: userId,
-                        authTokenPresent: !!authToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -87,14 +71,7 @@ test.describe('Training Plan Controller', () => {
                 const response = await request.get(`http://localhost:5000/api/trainer/plans?role=trainer&selectedUserId=${userId}`);
                 expect(response.status()).toBe(401);
             } catch (error) {
-                await sendTestFailureReport(
-                    'Unauthorized Training Plans Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/trainer/plans',
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -146,16 +123,7 @@ test.describe('Training Plan Controller', () => {
                 expect(data).toHaveProperty('userId');
                 expect(data).toHaveProperty('trainingDays');
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get Training Plan By ID Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/trainer/plans/:id',
-                        userId: userId,
-                        authTokenPresent: !!authToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -169,15 +137,7 @@ test.describe('Training Plan Controller', () => {
                 });
                 expect(response.status()).toBe(404);
             } catch (error) {
-                await sendTestFailureReport(
-                    'Get Non-existent Training Plan Test Failure',
-                    error,
-                    {
-                        endpoint: '/api/trainer/plans/999999',
-                        authTokenPresent: !!authToken,
-                        timestamp: new Date().toISOString()
-                    }
-                );
+
                 throw error;
             }
         });
@@ -498,18 +458,23 @@ test.describe('Training Plan Controller', () => {
             expect(createResponse.status()).toBe(201);
             const createdPlan = await createResponse.json();
 
-            const sectorData = {
-                sectorId: createdPlan.trainingDays[0].sectors[0].id,
-                completed: true
-            };
 
-            const response = await request.put('/api/trainer/plans/sector/complete', {
+
+                const sectorId = createdPlan.trainingDays[0].sectors[0].id
+
+
+            const completed = true
+
+
+            const response = await request.put(`/api/training-plans/sectors/${sectorId}/complete`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
                 },
-                data: sectorData
+                data: { completed }
             });
+
+
             expect(response.status()).toBe(200);
             
             const data = await response.json();
@@ -518,7 +483,7 @@ test.describe('Training Plan Controller', () => {
         });
 
         test('should return 404 for non-existent sector', async ({ request }) => {
-            const response = await request.put('/api/trainer/plans/sector/complete', {
+            const response = await request.put('/api/trainer/plans/sectors/0/complete', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'

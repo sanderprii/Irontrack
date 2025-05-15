@@ -91,12 +91,23 @@ test.describe('Payment Controller', () => {
                     description: 'Test payment via API test',
                     userData: {
                         id: userId,
+                        fullName: 'Test User',
                         email: 'c@c.c',
-                        phone: '+3725555555',
-                        fullName: 'Test User'
                     },
                     affiliateId: affiliateId,
-                    sessionToken: 'test-session-token-123'
+                    sessionToken: 'test-session-token-123',
+                    planData: {
+                        id: 4,
+                        name: 'test sessions',
+                        validityDays: 60,
+                        price: 100,
+                        sessions: 10,
+                        additionalData: '',
+                        affiliateId: affiliateId,
+                        trainingType: [ 'All classes' ],
+                        active: true
+                    },
+
                 };
 
                 console.log('Creating payment with data:', JSON.stringify(paymentData, null, 2));

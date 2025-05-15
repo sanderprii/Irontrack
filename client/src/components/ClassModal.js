@@ -564,7 +564,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
                 isFamilyMember,
                 familyMemberId
             );
-
+            setIsRegistered(true)
             // Refresh data
             await fetchAttendees();
             await refreshClasses();
@@ -587,6 +587,7 @@ const [ isFirstTraining, setIsFirstTraining] = useState(false);
                 // Refresh waitlist after cancellation to reflect changes
                 await fetchWaitlistEntries();
             }
+            setIsRegistered(false)
             await refreshClasses();
         } catch (error) {
             console.error("Error canceling registration:", error);
